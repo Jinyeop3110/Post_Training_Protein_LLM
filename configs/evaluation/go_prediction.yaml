@@ -1,14 +1,24 @@
+# GO (Gene Ontology) Term Prediction Evaluation Configuration
+#
+# This configuration controls the evaluation of GO term prediction.
+# GO terms are categorized into three namespaces:
+# - MF: Molecular Function
+# - BP: Biological Process
+# - CC: Cellular Component
+
 name: go_prediction
 task: Gene Ontology term prediction
 
-metrics:
-  - accuracy
-  - f1_macro
-  - f1_micro
-  - aupr
-
+# Dataset configuration
 dataset:
-  name: go_terms
+  # Path to the test dataset (JSON or FASTA format)
+  # If not provided, a demo dataset will be used
+  path: null
+
+  # Format of the dataset: "json" or "fasta"
+  format: json
+
+  # Dataset split to use
   split: test
 
 # GO namespaces to evaluate
@@ -16,3 +26,78 @@ namespaces:
   - molecular_function
   - biological_process
   - cellular_component
+
+# Metrics to compute
+metrics:
+  # Overall metrics
+  - accuracy          # Exact match accuracy
+  - f1_micro          # Micro-averaged F1 score
+  - f1_macro          # Macro-averaged F1 score
+  - f1_samples        # Sample-averaged F1 score
+  - aupr              # Area under precision-recall curve
+
+  # Per-sample metrics
+  - precision_micro
+  - recall_micro
+  - precision_macro
+  - recall_macro
+
+  # Per-category metrics (MF, BP, CC)
+  - mf_precision
+  - mf_recall
+  - mf_f1
+  - bp_precision
+  - bp_recall
+  - bp_f1
+  - cc_precision
+  - cc_recall
+  - cc_f1
+
+# Evaluation settings
+evaluation:
+  # Number of samples to evaluate (null = all)
+  max_samples: null
+
+  # Batch size for inference
+  batch_size: 4
+
+  # Maximum tokens to generate
+  max_new_tokens: 256
+
+  # Generation parameters (deterministic by default)
+  do_sample: false
+  temperature: 1.0
+
+  # Custom prompt template (optional)
+  # Use {sequence} as placeholder for the protein sequence
+  prompt_template: null
+
+  # Example custom prompt:
+  # prompt_template: |
+  #   Given the protein sequence below, predict its Gene Ontology terms.
+  #
+  #   Sequence: {sequence}
+  #
+  #   List all applicable GO terms in the format GO:XXXXXXX.
+
+# Logging configuration
+logging:
+  # Save detailed results to JSON file
+  save_results: true
+
+  # Output directory for results
+  output_dir: ./outputs/go_prediction
+
+  # Weights & Biases logging
+  wandb:
+    enabled: false
+    project: protein-llm-evaluation
+    entity: null
+    tags:
+      - go_prediction
+      - evaluation
+
+  # TensorBoard logging
+  tensorboard:
+    enabled: false
+    log_dir: ./runs/go_prediction
