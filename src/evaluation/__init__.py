@@ -4,7 +4,7 @@ This module provides evaluation functions for various protein prediction tasks:
 
 - GO Prediction: Evaluate Gene Ontology term prediction
 - PPI Prediction: Evaluate protein-protein interaction prediction
-- Stability: Evaluate protein stability prediction
+- Stability: Evaluate protein stability prediction (ddG)
 - Benchmarks: Run all evaluation benchmarks
 
 Example usage:
@@ -26,6 +26,16 @@ Example usage:
     >>>
     >>> # Run full PPI evaluation
     >>> metrics = evaluate_ppi(cfg, checkpoint_path="path/to/checkpoint")
+    >>>
+    >>> # Stability Prediction example
+    >>> from src.evaluation import evaluate_stability, parse_stability_prediction
+    >>>
+    >>> # Parse stability prediction from model output
+    >>> ddg, stability_class = parse_stability_prediction("The ddG is -2.5 kcal/mol. Stabilizing.")
+    >>> print(ddg, stability_class)  # -2.5, 'stabilizing'
+    >>>
+    >>> # Run full stability evaluation
+    >>> metrics = evaluate_stability(cfg, checkpoint_path="path/to/checkpoint")
 """
 
 from .go_prediction import (
@@ -59,8 +69,26 @@ from .ppi_prediction import (
     evaluate_ppi_from_predictions,
 )
 
-# These will be imported when implemented
-# from .stability import evaluate_stability
+from .stability import (
+    # Main evaluation function
+    evaluate_stability,
+    # Data classes
+    StabilityTestSample,
+    StabilityPredictionResult,
+    # Helper functions
+    parse_stability_prediction,
+    classify_ddg,
+    compute_stability_metrics,
+    load_stability_test_dataset,
+    create_stability_prompt,
+    # Utility functions
+    evaluate_stability_from_predictions,
+    # Constants
+    STABILITY_CLASSES,
+    STABILIZING_THRESHOLD,
+    DESTABILIZING_THRESHOLD,
+)
+
 # from .benchmarks import run_all_benchmarks
 
 __all__ = [
@@ -83,4 +111,17 @@ __all__ = [
     "load_ppi_test_dataset",
     "create_ppi_prompt",
     "evaluate_ppi_from_predictions",
+    # Stability Prediction
+    "evaluate_stability",
+    "StabilityTestSample",
+    "StabilityPredictionResult",
+    "parse_stability_prediction",
+    "classify_ddg",
+    "compute_stability_metrics",
+    "load_stability_test_dataset",
+    "create_stability_prompt",
+    "evaluate_stability_from_predictions",
+    "STABILITY_CLASSES",
+    "STABILIZING_THRESHOLD",
+    "DESTABILIZING_THRESHOLD",
 ]

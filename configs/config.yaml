@@ -1,5 +1,5 @@
 defaults:
-  - model: qwen2_7b
+  - model: qwen3_4b
   - encoder: esm2_650m
   - data: mol_instructions
   - training: sft_qlora

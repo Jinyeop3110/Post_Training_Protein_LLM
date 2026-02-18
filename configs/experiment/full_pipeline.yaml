@@ -4,7 +4,7 @@
 # Run Phase 1 first, then Phase 2
 
 defaults:
-  - override /model: qwen2_7b
+  - override /model: qwen3_4b
   - override /encoder: esm2_650m
   - override /data: mol_instructions
 

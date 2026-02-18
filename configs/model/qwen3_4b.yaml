@@ -1,0 +1,17 @@
+name: qwen3_4b
+path: Qwen/Qwen3-4B
+type: causal_lm
+
+architecture:
+  hidden_size: 2560
+  num_attention_heads: 32
+  num_key_value_heads: 8
+  num_layers: 36
+  vocab_size: 151643
+  intermediate_size: 9728
+
+generation:
+  max_new_tokens: 512
+  temperature: 0.7
+  top_p: 0.9
+  do_sample: true

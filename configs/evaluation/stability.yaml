@@ -1,12 +1,134 @@
 name: stability
 task: Protein stability prediction
 
-metrics:
-  - spearman
-  - pearson
-  - mse
-  - mae
+# Description:
+# This evaluation measures the model's ability to predict changes in protein
+# thermostability (ddG) caused by point mutations.
+#
+# ddG (Delta-Delta G) interpretation:
+# - Negative values: Stabilizing mutations (protein becomes more stable)
+# - Positive values: Destabilizing mutations (protein becomes less stable)
+# - Near zero: Neutral mutations (little effect on stability)
+#
+# Classification thresholds (kcal/mol):
+# - Stabilizing: ddG < -1.0
+# - Neutral: -1.0 <= ddG <= 1.0
+# - Destabilizing: ddG > 1.0
 
+# Metrics to compute
+metrics:
+  # Regression metrics (when ddG values are extractable)
+  regression:
+    - pearson      # Pearson correlation coefficient
+    - spearman     # Spearman rank correlation
+    - rmse         # Root mean squared error
+    - mae          # Mean absolute error
+    - r2           # Coefficient of determination
+
+  # Classification metrics
+  classification:
+    - accuracy     # Overall classification accuracy
+    - f1_macro     # Macro-averaged F1 score
+    - f1_micro     # Micro-averaged F1 score
+    - f1_stabilizing    # F1 for stabilizing class
+    - f1_neutral        # F1 for neutral class
+    - f1_destabilizing  # F1 for destabilizing class
+    - confusion_matrix  # 3x3 confusion matrix
+
+# Dataset configuration
 dataset:
   name: stability_benchmark
   split: test
+  # path: /path/to/stability_dataset.json  # Uncomment and set path to use custom dataset
+  # format: json  # Supported: json, csv
+
+  # For JSON format, expected structure:
+  # [
+  #   {
+  #     "protein_id": "1BNI_A123G",
+  #     "sequence": "MKTAYIAK...",           # Mutant sequence
+  #     "wild_type_sequence": "MKTAYIAK...", # Optional: Wild-type sequence
+  #     "mutation": "A123G",                 # Format: OriginalAA + Position + NewAA
+  #     "ddg_value": 2.5,                    # ddG in kcal/mol
+  #     "stability_class": "destabilizing",  # Optional: auto-assigned if not provided
+  #     "pdb_id": "1BNI",                    # Optional: PDB ID
+  #     "source": "ProTherm"                 # Optional: Data source
+  #   },
+  #   ...
+  # ]
+
+  # For CSV format, expected columns:
+  # protein_id, sequence, wild_type_sequence, mutation, ddg_value, stability_class, pdb_id, source
+
+# Evaluation settings
+evaluation:
+  batch_size: 1
+  max_new_tokens: 256
+  max_samples: null  # Set to limit number of samples for testing
+
+  # Classification thresholds (kcal/mol)
+  stabilizing_threshold: -1.0
+  destabilizing_threshold: 1.0
+
+  # Prompt template (optional, uses default if not specified)
+  # Available placeholders: {sequence}, {mutation}, {wild_type_sequence}
+  # prompt_template: |
+  #   Wild-type protein sequence: {wild_type_sequence}
+  #
+  #   Mutation: {mutation}
+  #
+  #   Predict the change in protein stability (ddG) caused by this mutation.
+  #   Provide the ddG value in kcal/mol and classify as stabilizing (ddG < -1),
+  #   neutral (-1 <= ddG <= 1), or destabilizing (ddG > 1).
+
+# Logging configuration
+logging:
+  save_results: true
+  output_dir: ./outputs/stability_evaluation
+
+  wandb:
+    enabled: false
+    project: protein-llm-evaluation
+    entity: null
+
+  tensorboard:
+    enabled: false
+    log_dir: ./runs/stability_evaluation
+
+# Demo dataset info (used when no dataset path is provided)
+# Contains mutations from well-characterized proteins:
+#
+# Barnase (1BNI):
+#   - I88V: ddG=-0.8 (stabilizing) - Hydrophobic core
+#   - I88A: ddG=2.3 (destabilizing) - Hydrophobic core disruption
+#   - Y17A: ddG=4.1 (destabilizing) - Aromatic residue removal
+#   - H102A: ddG=3.5 (destabilizing) - Active site
+#   - K27A: ddG=0.5 (neutral) - Surface charge removal
+#
+# T4 Lysozyme (2LZM):
+#   - L99A: ddG=5.1 (destabilizing) - Cavity creation
+#   - A98V: ddG=-1.5 (stabilizing) - Cavity filling
+#   - T152S: ddG=0.3 (neutral) - Conservative substitution
+#   - M102L: ddG=-0.6 (neutral) - Hydrophobic
+#   - F153A: ddG=3.8 (destabilizing) - Aromatic removal
+#   - I3A: ddG=2.8 (destabilizing) - N-terminal destabilization
+#
+# Staphylococcal Nuclease (1STN):
+#   - V66L: ddG=-1.2 (stabilizing) - Improved packing
+#   - V66A: ddG=2.1 (destabilizing) - Cavity creation
+#   - G88V: ddG=-0.9 (neutral) - Cavity filling
+#   - P117G: ddG=1.5 (destabilizing) - Flexibility change
+#   - A58G: ddG=0.2 (neutral) - Surface mutation
+#
+# Myoglobin (1MBN):
+#   - V68A: ddG=1.8 (destabilizing) - Heme pocket
+#   - L29A: ddG=2.5 (destabilizing) - Hydrophobic core
+#   - H64A: ddG=1.2 (destabilizing) - Distal histidine
+#   - F46A: ddG=3.2 (destabilizing) - Aromatic packing
+#   - I107V: ddG=0.4 (neutral) - Conservative substitution
+#
+# Reference datasets for production use:
+# - Megascale: High-throughput stability measurements
+# - S669: Curated single-point mutations
+# - FireProtDB: Protein stability database
+# - ProTherm: Thermodynamic database (legacy)

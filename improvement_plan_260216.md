@@ -898,5 +898,346 @@ python scripts/train.py --multirun training.lr=1e-4,2e-4
 
 ---
 
-*Plan created: 2026-02-16*
+## Part 6: SFT Data Preparation
+
+### 6.1 Current SFT Data Status
+
+| Dataset | Format | Size | SFT Ready? |
+|---------|--------|------|------------|
+| **Mol-Instructions** | `{instruction, input, output}` | ~505K pairs | ✅ Ready |
+| **Swiss-Prot** | `{sequence, annotations, GO_terms, function}` | ~570K sequences | ❌ Needs conversion |
+| **IPD-PDB** | `{sequence, 3D_coords, structure_features}` | ~556K chains | ❌ Needs conversion |
+
+### 6.2 Mol-Instructions (Ready to Use)
+
+**Source**: `zjunlp/Mol-Instructions` (HuggingFace)
+**Subset**: `Protein-oriented Instructions`
+**Paper**: [ICLR 2024](https://arxiv.org/abs/2306.08018)
+
+**Tasks covered**:
+- Protein Design
+- Catalytic Activity Prediction
+- Protein Function Prediction
+- Functional Description Generation
+- Domain/Motif Prediction
+
+**Data format (already SFT-ready)**:
+```python
+{
+    "instruction": "Predict the function of this protein.",
+    "input": "MKTLLIAAAVAA...",  # protein sequence
+    "output": "This protein is a kinase that phosphorylates..."
+}
+```
+
+**Loader**: `src/data/mol_instructions.py` ✅ Implemented
+
+---
+
+### 6.3 Swiss-Prot → SFT Conversion
+
+**Raw Format**:
+```python
+{
+    "accession": "P12345",
+    "sequence": "MKTLLIAAAVAA...",
+    "protein_name": "Kinase ABC",
+    "organism": "Homo sapiens",
+    "go_terms": ["GO:0005524", "GO:0016301", "GO:0004672"],
+    "function": "Catalyzes the phosphorylation of serine residues...",
+    "subcellular_location": "Cytoplasm",
+    "keywords": ["Kinase", "ATP-binding", "Transferase"]
+}
+```
+
+**SFT Conversion Templates**:
+
+| Task | Instruction Template | Output |
+|------|---------------------|--------|
+| Function Prediction | "What is the function of this protein?" | `{function}` |
+| GO Term Prediction | "Predict the Gene Ontology terms for this protein." | `{go_terms}` formatted |
+| Subcellular Localization | "Where is this protein located in the cell?" | `{subcellular_location}` |
+| Protein Naming | "What is this protein called and what organism is it from?" | `{protein_name} from {organism}` |
+| Keyword Extraction | "List the functional keywords for this protein." | `{keywords}` formatted |
+
+**Conversion Script**: `scripts/convert_swissprot_to_sft.py` (to be implemented)
+
+```python
+# Example conversion logic
+def convert_swissprot_to_sft(entry: dict) -> List[dict]:
+    """Convert a Swiss-Prot entry to multiple SFT instruction pairs."""
+    sft_samples = []
+
+    # Task 1: Function prediction
+    if entry.get("function"):
+        sft_samples.append({
+            "instruction": "What is the function of this protein?",
+            "input": entry["sequence"],
+            "output": entry["function"]
+        })
+
+    # Task 2: GO term prediction
+    if entry.get("go_terms"):
+        go_str = ", ".join(entry["go_terms"])
+        sft_samples.append({
+            "instruction": "Predict the Gene Ontology (GO) terms for this protein.",
+            "input": entry["sequence"],
+            "output": f"The GO terms for this protein are: {go_str}"
+        })
+
+    # Task 3: Subcellular localization
+    if entry.get("subcellular_location"):
+        sft_samples.append({
+            "instruction": "Where is this protein located in the cell?",
+            "input": entry["sequence"],
+            "output": f"This protein is located in the {entry['subcellular_location']}."
+        })
+
+    # Task 4: Multi-task combined
+    sft_samples.append({
+        "instruction": "Describe this protein's function, location, and key features.",
+        "input": entry["sequence"],
+        "output": f"{entry['protein_name']} is a protein from {entry['organism']}. "
+                  f"Function: {entry.get('function', 'Unknown')}. "
+                  f"Location: {entry.get('subcellular_location', 'Unknown')}. "
+                  f"GO terms: {', '.join(entry.get('go_terms', []))}."
+    })
+
+    return sft_samples
+```
+
+**Expected Output**: ~2-3M SFT pairs (4-5 tasks × 570K proteins)
+
+---
+
+### 6.4 IPD-PDB → SFT Conversion
+
+**Raw Format**:
+```python
+{
+    "chain_id": "1ABC_A",
+    "sequence": "MKTLLIAAAVAA...",
+    "coordinates": torch.Tensor([L, 14, 3]),  # 3D atom coordinates
+    "resolution": 2.1,  # Ångströms
+    "secondary_structure": "HHHHHCCCCEEEEE...",  # H=helix, E=sheet, C=coil
+    "chain_length": 256
+}
+```
+
+**SFT Conversion Templates**:
+
+| Task | Instruction Template | Output |
+|------|---------------------|--------|
+| Secondary Structure | "Predict the secondary structure of this protein." | `{secondary_structure}` |
+| Structure Quality | "What is the resolution of this protein's structure?" | `{resolution}Å` |
+| Length Estimation | "How many residues are in this protein?" | `{chain_length} residues` |
+| Structure Description | "Describe the structural properties of this protein." | Combined description |
+
+**Conversion Script**: `scripts/convert_pdb_to_sft.py` (to be implemented)
+
+```python
+def convert_pdb_to_sft(entry: dict) -> List[dict]:
+    """Convert an IPD-PDB entry to SFT instruction pairs."""
+    sft_samples = []
+
+    # Task 1: Secondary structure prediction
+    if entry.get("secondary_structure"):
+        # Convert to human-readable format
+        ss = entry["secondary_structure"]
+        helix_pct = ss.count('H') / len(ss) * 100
+        sheet_pct = ss.count('E') / len(ss) * 100
+        coil_pct = ss.count('C') / len(ss) * 100
+
+        sft_samples.append({
+            "instruction": "Predict the secondary structure composition of this protein.",
+            "input": entry["sequence"],
+            "output": f"This protein contains approximately {helix_pct:.1f}% alpha-helix, "
+                      f"{sheet_pct:.1f}% beta-sheet, and {coil_pct:.1f}% coil/loop regions."
+        })
+
+    # Task 2: Structure quality assessment
+    if entry.get("resolution"):
+        quality = "high" if entry["resolution"] < 2.0 else "medium" if entry["resolution"] < 3.0 else "low"
+        sft_samples.append({
+            "instruction": "Assess the quality of this protein's experimental structure.",
+            "input": entry["sequence"],
+            "output": f"This protein has a {quality}-resolution structure at {entry['resolution']}Å."
+        })
+
+    # Task 3: Length-based properties
+    length = entry.get("chain_length", len(entry["sequence"]))
+    size_class = "small" if length < 100 else "medium" if length < 300 else "large"
+    sft_samples.append({
+        "instruction": "Describe the size of this protein.",
+        "input": entry["sequence"],
+        "output": f"This is a {size_class} protein with {length} amino acid residues."
+    })
+
+    return sft_samples
+```
+
+**Expected Output**: ~1-2M SFT pairs (3-4 tasks × 556K chains)
+
+---
+
+### 6.5 Combined SFT Dataset Strategy
+
+**Phase 1 - Initial Training**:
+- Use Mol-Instructions only (~505K pairs)
+- Validates pipeline works end-to-end
+
+**Phase 2 - Extended Training**:
+- Convert Swiss-Prot → SFT format (~2M pairs)
+- Combine with Mol-Instructions
+- Focus on function/GO prediction tasks
+
+**Phase 3 - Structure-Aware Training**:
+- Convert IPD-PDB → SFT format (~1.5M pairs)
+- Add structure-related tasks
+- Total: ~4M SFT pairs
+
+---
+
+### 6.6 Data Conversion Implementation Plan
+
+#### Files to Create
+
+```
+src/data/
+├── swissprot_converter.py    # Swiss-Prot → SFT conversion
+├── pdb_converter.py          # IPD-PDB → SFT conversion
+└── combined_dataset.py       # Unified SFT dataset loader
+
+scripts/
+├── convert_swissprot_to_sft.py   # CLI for Swiss-Prot conversion
+├── convert_pdb_to_sft.py         # CLI for PDB conversion
+└── merge_sft_datasets.py         # Merge multiple SFT sources
+
+configs/data/
+├── swissprot_sft.yaml        # Swiss-Prot SFT config
+├── pdb_sft.yaml              # PDB SFT config
+└── combined_sft.yaml         # Combined dataset config
+```
+
+#### Config Example: `configs/data/swissprot_sft.yaml`
+
+```yaml
+name: swissprot_sft
+source: converted  # Pre-converted SFT format
+
+paths:
+  raw: ${paths.raw_dir}/swissprot
+  processed: ${paths.processed_dir}/swissprot_sft
+
+# Conversion settings
+conversion:
+  tasks:
+    - function_prediction
+    - go_term_prediction
+    - subcellular_localization
+    - keyword_extraction
+
+  # Instruction variations for diversity
+  instruction_variations: true
+  num_variations_per_task: 3
+
+# Filtering
+filters:
+  min_sequence_length: 50
+  max_sequence_length: 1000
+  require_function: true
+  require_go_terms: false
+
+# Splits
+splits:
+  train: 0.9
+  validation: 0.05
+  test: 0.05
+```
+
+#### Config Example: `configs/data/combined_sft.yaml`
+
+```yaml
+name: combined_sft
+source: multiple
+
+datasets:
+  - mol_instructions:
+      weight: 1.0  # Original weight
+  - swissprot_sft:
+      weight: 0.5  # Downweight to balance
+  - pdb_sft:
+      weight: 0.3  # Structure tasks less common
+
+# Sampling strategy
+sampling:
+  strategy: weighted  # weighted, uniform, or temperature
+  temperature: 1.0
+  shuffle: true
+
+paths:
+  processed: ${paths.processed_dir}/combined_sft
+
+splits:
+  train: 0.9
+  validation: 0.05
+  test: 0.05
+```
+
+---
+
+### 6.7 Instruction Diversity
+
+To improve model generalization, use multiple instruction phrasings per task:
+
+**Function Prediction Variations**:
+```python
+FUNCTION_INSTRUCTIONS = [
+    "What is the function of this protein?",
+    "Describe the biological function of this protein.",
+    "What does this protein do?",
+    "Explain the role of this protein in the cell.",
+    "Predict the molecular function of this protein sequence.",
+]
+```
+
+**GO Term Prediction Variations**:
+```python
+GO_INSTRUCTIONS = [
+    "Predict the Gene Ontology terms for this protein.",
+    "What GO terms are associated with this protein?",
+    "List the GO annotations for this protein sequence.",
+    "Identify the Gene Ontology classifications for this protein.",
+    "What molecular functions, biological processes, and cellular components are associated with this protein?",
+]
+```
+
+**Subcellular Localization Variations**:
+```python
+LOCATION_INSTRUCTIONS = [
+    "Where is this protein located in the cell?",
+    "Predict the subcellular localization of this protein.",
+    "In which cellular compartment is this protein found?",
+    "Identify the cellular location of this protein.",
+    "Where in the cell does this protein function?",
+]
+```
+
+---
+
+### 6.8 Data Quality Considerations
+
+| Consideration | Strategy |
+|---------------|----------|
+| **Sequence length** | Filter to 50-1000 aa for training stability |
+| **Annotation completeness** | Require at least one annotation type |
+| **Duplicate removal** | Cluster at 90% identity, keep representatives |
+| **Data leakage** | Ensure train/val/test splits by protein family |
+| **Label noise** | Prefer reviewed (Swiss-Prot) over unreviewed (TrEMBL) |
+| **Class imbalance** | Oversample rare GO terms/functions |
+
+---
+
+*Updated: 2026-02-18*
+*Added: SFT Data Preparation section*
 *Status: Ready for implementation*

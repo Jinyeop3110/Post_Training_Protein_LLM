@@ -1,7 +1,7 @@
 # @package _global_
 
 defaults:
-  - override /model: qwen2_7b
+  - override /model: qwen3_4b
   - override /encoder: esm2_650m
   - override /data: mol_instructions
   - override /training: sft_qlora
