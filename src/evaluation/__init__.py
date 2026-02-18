@@ -16,6 +16,16 @@ Example usage:
     >>>
     >>> # Run full GO evaluation
     >>> metrics = evaluate_go(cfg, checkpoint_path="path/to/checkpoint")
+    >>>
+    >>> # PPI Prediction example
+    >>> from src.evaluation import evaluate_ppi, parse_ppi_prediction, compute_ppi_metrics
+    >>>
+    >>> # Parse PPI prediction from model output
+    >>> label, confidence = parse_ppi_prediction("Yes, these proteins interact.")
+    >>> print(label, confidence)  # 1, 0.8
+    >>>
+    >>> # Run full PPI evaluation
+    >>> metrics = evaluate_ppi(cfg, checkpoint_path="path/to/checkpoint")
 """
 
 from .go_prediction import (
@@ -34,8 +44,22 @@ from .go_prediction import (
     evaluate_go_from_predictions,
 )
 
+from .ppi_prediction import (
+    # Main evaluation function
+    evaluate_ppi,
+    # Data classes
+    PPITestSample,
+    PPIPredictionResult,
+    # Helper functions
+    parse_ppi_prediction,
+    compute_ppi_metrics,
+    load_ppi_test_dataset,
+    create_ppi_prompt,
+    # Utility functions
+    evaluate_ppi_from_predictions,
+)
+
 # These will be imported when implemented
-# from .ppi_prediction import evaluate_ppi
 # from .stability import evaluate_stability
 # from .benchmarks import run_all_benchmarks
 
@@ -50,4 +74,13 @@ __all__ = [
     "load_go_test_dataset",
     "create_go_prompt",
     "evaluate_go_from_predictions",
+    # PPI Prediction
+    "evaluate_ppi",
+    "PPITestSample",
+    "PPIPredictionResult",
+    "parse_ppi_prediction",
+    "compute_ppi_metrics",
+    "load_ppi_test_dataset",
+    "create_ppi_prompt",
+    "evaluate_ppi_from_predictions",
 ]

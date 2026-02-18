@@ -1,13 +1,58 @@
 name: ppi
 task: Protein-protein interaction prediction
 
+# Metrics to compute
 metrics:
   - accuracy
+  - auroc
+  - aupr
+  - f1
+  - mcc
   - precision
   - recall
-  - f1
-  - auroc
+  - specificity
 
+# Dataset configuration
 dataset:
   name: ppi_benchmark
   split: test
+  # path: /path/to/ppi_dataset.json  # Uncomment and set path to use custom dataset
+  # format: json  # Supported: json, tsv, biosnap
+
+# Evaluation settings
+evaluation:
+  batch_size: 1
+  max_new_tokens: 256
+  max_samples: null  # Set to limit number of samples for testing
+  thresholds: [0.5, 0.7, 0.9]  # Thresholds for precision/recall at thresholds
+
+  # Prompt template (optional, uses default if not specified)
+  # prompt_template: |
+  #   Protein A: {sequence_1}
+  #   Protein B: {sequence_2}
+  #
+  #   Do these two proteins physically interact?
+  #   Answer with "Yes" or "No" and explain your reasoning.
+
+# Logging configuration
+logging:
+  save_results: true
+  output_dir: ./outputs/ppi_evaluation
+
+  wandb:
+    enabled: false
+    project: protein-llm-evaluation
+    entity: null
+
+  tensorboard:
+    enabled: false
+    log_dir: ./runs/ppi_evaluation
+
+# Demo dataset info (used when no dataset path is provided)
+# Contains known interacting pairs:
+#   - Insulin - Insulin receptor (INS-INSR)
+#   - p53 - MDM2 (TP53-MDM2)
+#   - Hemoglobin alpha - beta (HBA-HBB)
+#   - TNF-alpha - TNF receptor 1 (TNF-TNFR1)
+#   - EGF - EGFR (EGF-EGFR)
+# And non-interacting controls
