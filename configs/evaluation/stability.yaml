@@ -1,0 +1,12 @@
+name: stability
+task: Protein stability prediction
+
+metrics:
+  - spearman
+  - pearson
+  - mse
+  - mae
+
+dataset:
+  name: stability_benchmark
+  split: test

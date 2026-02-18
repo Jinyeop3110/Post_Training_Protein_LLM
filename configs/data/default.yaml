@@ -1,0 +1,3 @@
+# Default data config (inherits from mol_instructions)
+defaults:
+  - mol_instructions

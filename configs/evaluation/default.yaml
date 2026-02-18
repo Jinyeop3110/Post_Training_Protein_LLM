@@ -1,0 +1,3 @@
+# Default evaluation config
+defaults:
+  - go_prediction

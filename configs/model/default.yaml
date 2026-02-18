@@ -1,0 +1,3 @@
+# Default model config (inherits from qwen2_7b)
+defaults:
+  - qwen2_7b

@@ -1,0 +1,18 @@
+name: go_prediction
+task: Gene Ontology term prediction
+
+metrics:
+  - accuracy
+  - f1_macro
+  - f1_micro
+  - aupr
+
+dataset:
+  name: go_terms
+  split: test
+
+# GO namespaces to evaluate
+namespaces:
+  - molecular_function
+  - biological_process
+  - cellular_component

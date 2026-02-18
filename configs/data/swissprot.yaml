@@ -1,0 +1,19 @@
+name: swissprot
+source: UniProt Swiss-Prot
+
+# Dataset paths
+paths:
+  raw: ${paths.raw_dir}/swissprot
+  processed: ${paths.processed_dir}/swissprot
+
+# Processing settings
+processing:
+  max_seq_length: 1024
+  include_annotations: true
+  include_go_terms: true
+
+# Filtering
+filters:
+  min_length: 50
+  max_length: 1000
+  reviewed_only: true

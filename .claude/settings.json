@@ -1,0 +1,55 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pytest:*)",
+      "Bash(python:*)",
+      "Bash(python3:*)",
+      "Bash(pip install:*)",
+      "Bash(pip show:*)",
+      "Bash(source:*)",
+      "Bash(module load:*)",
+      "Bash(nvidia-smi:*)",
+      "Bash(ls:*)",
+      "Bash(tree:*)",
+      "Bash(mkdir:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git branch:*)",
+      "Bash(git checkout:*)",
+      "Bash(gh:*)",
+      "Bash(ruff:*)",
+      "Bash(wget:*)",
+      "Bash(curl:*)",
+      "Bash(tar:*)",
+      "Bash(wandb:*)",
+      "Bash(huggingface-cli:*)",
+      "Read(*)",
+      "Edit(src/**)",
+      "Edit(configs/**)",
+      "Edit(tests/**)",
+      "Edit(scripts/**)"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "env": {
+    "INSIDE_CLAUDE_CODE": "1",
+    "PYTHONPATH": "${workspaceFolder}/src"
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ruff check --fix $FILE 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
+}

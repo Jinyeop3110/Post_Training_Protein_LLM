@@ -1,0 +1,19 @@
+name: mol_instructions
+source: zjunlp/Mol-Instructions
+subset: Protein-oriented Instructions
+
+# Dataset paths
+paths:
+  raw: ${paths.raw_dir}/mol_instructions
+  processed: ${paths.processed_dir}/mol_instructions
+
+# Processing settings
+processing:
+  max_seq_length: 2048
+  include_structure: false
+
+# Split ratios
+splits:
+  train: 0.9
+  validation: 0.05
+  test: 0.05

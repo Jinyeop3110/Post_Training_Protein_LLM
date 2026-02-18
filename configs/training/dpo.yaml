@@ -1,0 +1,29 @@
+method: dpo
+framework: trl
+
+# DPO-specific settings
+dpo:
+  beta: 0.1  # KL penalty coefficient
+  loss_type: sigmoid  # sigmoid, hinge, ipo
+  label_smoothing: 0.0
+
+# Training parameters
+lr: 5e-6
+epochs: 1
+batch_size: 4
+gradient_accumulation_steps: 8
+max_seq_length: 2048
+max_grad_norm: 1.0
+
+# LoRA (same as SFT)
+lora:
+  r: 8
+  alpha: 16
+  dropout: 0.05
+  target_modules:
+    - k_proj
+    - v_proj
+
+# Checkpointing
+save_steps: 100
+eval_steps: 50

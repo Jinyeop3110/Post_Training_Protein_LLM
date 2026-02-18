@@ -1,0 +1,3 @@
+# Default encoder config (inherits from esm2_650m)
+defaults:
+  - esm2_650m

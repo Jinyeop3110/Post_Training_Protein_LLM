@@ -1,0 +1,43 @@
+defaults:
+  - model: qwen2_7b
+  - encoder: esm2_650m
+  - data: mol_instructions
+  - training: sft_qlora
+  - _self_
+
+# Project metadata
+project_name: protein_llm
+experiment_name: ${now:%Y-%m-%d}_${model.name}_${training.method}
+
+# Paths
+paths:
+  data_dir: ${oc.env:DATA_DIR,./data}
+  raw_dir: ${paths.data_dir}/raw
+  processed_dir: ${paths.data_dir}/processed
+  checkpoint_dir: ${paths.data_dir}/checkpoints/${experiment_name}
+  log_dir: ./logs/${experiment_name}
+
+# Hardware
+hardware:
+  n_gpus: 8
+  precision: bf16
+  use_flash_attention: true
+
+# Logging
+logging:
+  wandb:
+    enabled: true
+    project: ${project_name}
+    name: ${experiment_name}
+  tensorboard:
+    enabled: true
+    log_dir: ${paths.log_dir}/tensorboard
+
+# Hydra settings
+hydra:
+  run:
+    dir: ${paths.log_dir}
+  sweep:
+    dir: ${paths.log_dir}/multirun
+  job:
+    chdir: false

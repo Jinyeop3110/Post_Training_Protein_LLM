@@ -1,0 +1,19 @@
+name: ipd_pdb
+source: IPD PDB Database
+
+# Dataset paths
+paths:
+  raw: ${paths.raw_dir}/pdb_2021aug02_sample
+  processed: ${paths.processed_dir}/ipd_pdb
+
+# Processing settings
+processing:
+  max_seq_length: 1024
+  include_structure: true
+  structure_format: pt  # Pre-computed structure features
+
+# Split files
+splits:
+  train_clusters: ${paths.raw}/train_clusters.txt
+  valid_clusters: ${paths.raw}/valid_clusters.txt
+  test_clusters: ${paths.raw}/test_clusters.txt

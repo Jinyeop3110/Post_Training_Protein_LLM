@@ -1,0 +1,21 @@
+name: esm2_650m
+model_name: esm2_t33_650M_UR50D
+embedding_dim: 1280
+num_layers: 33
+
+# Always frozen - CRITICAL
+freeze: true
+
+# Pooling strategy
+pooling:
+  method: attention  # attention, mean, cls, last
+  window_size: 80    # For BoM-Pooling
+
+# Projector settings
+projector:
+  type: mlp
+  hidden_dim: 2048
+  output_dim: ${model.architecture.hidden_size}
+  num_layers: 2
+  activation: gelu
+  dropout: 0.1

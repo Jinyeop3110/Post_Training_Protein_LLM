@@ -1,0 +1,13 @@
+name: ppi
+task: Protein-protein interaction prediction
+
+metrics:
+  - accuracy
+  - precision
+  - recall
+  - f1
+  - auroc
+
+dataset:
+  name: ppi_benchmark
+  split: test

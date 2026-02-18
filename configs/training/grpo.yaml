@@ -1,0 +1,37 @@
+method: grpo
+framework: verl
+
+# GRPO-specific settings
+grpo:
+  group_size: 4          # Number of completions per prompt
+  temperature: 1.0
+  use_kl_penalty: false  # DAPO improvement
+  normalize_advantages: false  # Dr. GRPO improvement
+
+# Training parameters
+lr: 5e-6  # Much lower than SFT!
+epochs: 1
+batch_size: 4
+gradient_accumulation_steps: 8
+max_seq_length: 2048
+max_grad_norm: 1.0
+
+# LoRA (same as SFT)
+lora:
+  r: 8
+  alpha: 16
+  dropout: 0.05
+  target_modules:
+    - k_proj
+    - v_proj
+
+# Rollout settings
+rollout:
+  engine: vllm
+  temperature: 1.0
+  top_p: 0.95
+  max_tokens: 512
+
+# Checkpointing
+save_steps: 100
+eval_steps: 50

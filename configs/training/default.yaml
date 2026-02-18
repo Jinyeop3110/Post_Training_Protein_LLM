@@ -1,0 +1,3 @@
+# Default training config (inherits from sft_qlora)
+defaults:
+  - sft_qlora
