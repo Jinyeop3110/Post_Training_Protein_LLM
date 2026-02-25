@@ -97,6 +97,10 @@ data/checkpoints/
 # Keep data directory structure
 !data/.gitkeep
 
+# Experiment results and training artifacts
+results/
+reports/
+
 # Logs
 logs/
 *.log
@@ -123,3 +127,7 @@ Thumbs.db
 .env.*.local
 credentials.json
 secrets.yaml
+
+# Temporary files
+*.tmp
+*.bak
