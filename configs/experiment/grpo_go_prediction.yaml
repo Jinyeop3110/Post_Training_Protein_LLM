@@ -1,0 +1,36 @@
+# @package _global_
+
+# GRPO experiment: GO Term Prediction
+# Uses CAFA 5 data with GO term set-F1 reward.
+# Chain from a trained SFT checkpoint via parent_experiment.
+#
+# Usage:
+#   python scripts/train.py experiment=grpo_go_prediction \
+#     parent_experiment=sft_esm3_mlp_XXXX
+
+defaults:
+  - override /model: qwen3_8b
+  - override /encoder: esm3_small
+  - override /data: cafa5_go
+  - override /training: grpo
+
+approach: esm3
+experiment_name: grpo_go_${model.name}_${now:%m%d_%H%M%S}
+
+# Data task for reward routing
+data:
+  task: go_prediction
+
+training:
+  grpo:
+    group_size: 4
+
+  # GO term outputs are short lists
+  rollout:
+    max_tokens: 256
+
+  wandb:
+    tags:
+      - grpo
+      - go_prediction
+      - ${model.name}

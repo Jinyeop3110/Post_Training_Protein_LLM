@@ -1,0 +1,43 @@
+name: esm3_small
+model_name: esm3-sm-open-v1
+encoder_type: esm3
+embedding_dim: 1536
+num_layers: 48
+
+# Always frozen - CRITICAL: never modify ESM-3 weights
+freeze: true
+
+# Inference dtype: bf16 halves memory vs float32 (same exponent range, no overflow)
+dtype: bfloat16
+
+# Sub-batch size for ESM-3 forward passes (decoupled from LLM batch size)
+# ESM-3's geometric attention is O(L² × B) so keep this conservative
+encoder_batch_size: 4
+
+# Pooling strategy
+pooling:
+  method: attention  # attention, mean, cls
+  num_output_tokens: 32
+  num_heads: 8
+  dropout: 0.1
+  layer_norm: true
+
+# Projector settings
+# type: "mlp" (AttentionPooling + MLP) or "perceiver" (PerceiverResampler)
+# input_dim is derived from embedding_dim (1536)
+# output_dim is derived from model hidden_size via interpolation
+projector:
+  type: mlp  # or "perceiver"
+  input_dim: ${encoder.embedding_dim}
+  hidden_dim: 5120
+  output_dim: ${model.architecture.hidden_size}
+  num_layers: 2
+  activation: gelu
+  dropout: 0.1
+  # Perceiver-specific (only used when type=perceiver)
+  # latent_dim: internal working dimension for attention layers
+  # 1024 with 2 layers = ~29.4M params (comparable to MLP's ~30.5M)
+  perceiver_layers: 2
+  perceiver_heads: 8
+  perceiver_ffn_dim: 2048
+  perceiver_latent_dim: 1024

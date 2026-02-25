@@ -5,13 +5,13 @@ import torch
 from omegaconf import OmegaConf
 
 from src.models.pooling import (
-    AttentionPooling,
-    MeanPooling,
-    CLSPooling,
-    BasePooling,
-    get_pooling,
-    build_pooling_from_config,
     POOLING_REGISTRY,
+    AttentionPooling,
+    BasePooling,
+    CLSPooling,
+    MeanPooling,
+    build_pooling_from_config,
+    get_pooling,
 )
 
 
@@ -373,7 +373,7 @@ class TestBuildPoolingFromConfig:
         """Test building pooling from nested config structure."""
         config = OmegaConf.create({
             "encoder": {
-                "name": "esm2",
+                "name": "esm3",
                 "pooling": {
                     "method": "attention",
                     "embed_dim": 1280,

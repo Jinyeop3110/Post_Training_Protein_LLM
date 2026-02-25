@@ -10,9 +10,11 @@ Review code changes for the protein-LLM project.
 ## Review Checklist
 
 ### Critical (Must Fix)
-- [ ] ESM-2 weights remain frozen
-- [ ] LoRA applied to k/v matrices only
-- [ ] Attention pooling used (not mean pooling)
+- [ ] ESM-3 encoder weights remain frozen (requires_grad=False)
+- [ ] LoRA applied to all linear layers (q/k/v/o + gate/up/down), NOT just k/v
+- [ ] Attention pooling used (not mean pooling) for MLP path
+- [ ] Model configs use Instruct variants (e.g., Qwen3-4B-Instruct-2507)
+- [ ] Training uses chat template format with system prompt
 - [ ] No secrets or credentials in code
 - [ ] CUDA operations are safe
 
@@ -80,7 +82,7 @@ with torch.no_grad():
 ### Config Hardcoding
 ```python
 # Bad
-model = AutoModel.from_pretrained("Qwen/Qwen2.5-7B")
+model = AutoModel.from_pretrained("Qwen/Qwen3-4B-Instruct-2507")
 
 # Good
 model = AutoModel.from_pretrained(cfg.model.path)

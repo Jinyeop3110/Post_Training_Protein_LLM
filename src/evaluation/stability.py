@@ -28,12 +28,12 @@ import json
 import logging
 import math
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 
 try:
     from scipy.stats import pearsonr, spearmanr
@@ -44,10 +44,10 @@ except ImportError:
 try:
     from sklearn.metrics import (
         accuracy_score,
-        f1_score,
         confusion_matrix,
-        mean_squared_error,
+        f1_score,
         mean_absolute_error,
+        mean_squared_error,
         r2_score,
     )
     SKLEARN_AVAILABLE = True
@@ -750,6 +750,42 @@ def compute_stability_metrics(
     else:
         metrics.update(_compute_classification_basic(y_true_class, y_pred_class))
 
+    # Additional fine-grained classification at tighter thresholds (-0.5, +0.5)
+    # This gives stabilizing: ddG < -0.5, neutral: -0.5 <= ddG <= 0.5, destabilizing: ddG > 0.5
+    FINE_STAB_THRESHOLD = -0.5
+    FINE_DESTAB_THRESHOLD = 0.5
+
+    def _classify_fine(ddg_val: float) -> str:
+        if ddg_val < FINE_STAB_THRESHOLD:
+            return "stabilizing"
+        elif ddg_val > FINE_DESTAB_THRESHOLD:
+            return "destabilizing"
+        else:
+            return "neutral"
+
+    y_true_fine = [_classify_fine(p.ground_truth_ddg) for p in predictions]
+    # For predicted class under fine thresholds, use predicted ddG if available,
+    # otherwise fall back to keyword-based class (already stored)
+    y_pred_fine = []
+    for p in predictions:
+        if p.predicted_ddg is not None:
+            y_pred_fine.append(_classify_fine(p.predicted_ddg))
+        else:
+            y_pred_fine.append(p.predicted_class)
+
+    if SKLEARN_AVAILABLE:
+        class_to_idx_fine = {c: i for i, c in enumerate(STABILITY_CLASSES)}
+        y_true_fine_idx = [class_to_idx_fine[c] for c in y_true_fine]
+        y_pred_fine_idx = [class_to_idx_fine[c] for c in y_pred_fine]
+        metrics["fine_accuracy"] = accuracy_score(y_true_fine_idx, y_pred_fine_idx)
+        metrics["fine_f1_macro"] = f1_score(
+            y_true_fine_idx, y_pred_fine_idx, average="macro", zero_division=0
+        )
+    else:
+        correct_fine = sum(1 for t, p in zip(y_true_fine, y_pred_fine) if t == p)
+        metrics["fine_accuracy"] = correct_fine / len(y_true_fine) if y_true_fine else 0.0
+        metrics["fine_f1_macro"] = 0.0
+
     # Sample statistics
     metrics["num_samples"] = len(predictions)
     class_distribution = {}
@@ -839,12 +875,14 @@ def _compute_classification_basic(y_true: List[str], y_pred: List[str]) -> Dict[
 def evaluate_stability(
     cfg: DictConfig,
     checkpoint_path: Optional[str] = None,
+    model=None,
+    output_dir: Optional[str] = None,
 ) -> Dict[str, float]:
     """
     Evaluate protein stability prediction.
 
     This function:
-    1. Loads the model from checkpoint
+    1. Loads the model from checkpoint (unless pre-loaded model is provided)
     2. Loads the stability test dataset
     3. Generates predictions for each mutation
     4. Parses ddG values and classes from generated text
@@ -858,24 +896,26 @@ def evaluate_stability(
             - logging: Logging settings (wandb, tensorboard, save_results)
 
         checkpoint_path: Path to model checkpoint.
+        model: Pre-loaded model instance (skips loading if provided).
 
     Returns:
         Dictionary of metric names to values.
     """
     log.info("Evaluating stability prediction...")
 
-    # Import model here to avoid circular imports
-    from src.models.multimodal_llm import ProteinLLM
+    if model is None:
+        # Import model here to avoid circular imports
+        from src.models.multimodal_llm import ProteinLLM
 
-    # Load model
-    if checkpoint_path:
-        log.info(f"Loading model from checkpoint: {checkpoint_path}")
-        model = ProteinLLM.from_pretrained(checkpoint_path)
-    else:
-        log.info("Creating model from config (no checkpoint provided)")
-        model = ProteinLLM.from_config(cfg)
+        # Load model
+        if checkpoint_path:
+            log.info(f"Loading model from checkpoint: {checkpoint_path}")
+            model = ProteinLLM.from_pretrained(checkpoint_path)
+        else:
+            log.info("Creating model from config (no checkpoint provided)")
+            model = ProteinLLM.from_config(cfg)
 
-    model.eval()
+        model.eval()
 
     # Get evaluation settings
     eval_cfg = cfg.get("evaluation", {})
@@ -961,12 +1001,12 @@ def evaluate_stability(
         else:
             log.info(f"  {key}: {value}")
 
-    # Save results if configured
-    logging_cfg = cfg.get("logging", {})
-    if logging_cfg.get("save_results", False):
-        _save_results(predictions, metrics, cfg)
+    # Save predictions to output_dir if provided
+    if output_dir:
+        _save_predictions(predictions, output_dir, "stability")
 
     # Log to wandb if configured
+    logging_cfg = cfg.get("logging", {})
     if logging_cfg.get("wandb", {}).get("enabled", False):
         _log_to_wandb(metrics, predictions, cfg)
 
@@ -977,38 +1017,33 @@ def evaluate_stability(
     return metrics
 
 
-def _save_results(
+def _save_predictions(
     predictions: List[StabilityPredictionResult],
-    metrics: Dict[str, float],
-    cfg: DictConfig,
+    output_dir: str,
+    task_name: str,
 ) -> None:
-    """Save evaluation results to JSON file."""
-    output_dir = cfg.get("logging", {}).get("output_dir", "./outputs")
-    output_path = Path(output_dir) / "stability_prediction_results.json"
+    """Save individual predictions to JSON file."""
+    output_path = Path(output_dir) / f"{task_name}_predictions.json"
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    results = {
-        "metrics": {k: v if not isinstance(v, float) or not math.isnan(v) else None
-                    for k, v in metrics.items()},
-        "predictions": [
-            {
-                "protein_id": p.protein_id,
-                "mutation": p.mutation,
-                "predicted_ddg": p.predicted_ddg,
-                "predicted_class": p.predicted_class,
-                "ground_truth_ddg": p.ground_truth_ddg,
-                "ground_truth_class": p.ground_truth_class,
-                "parse_success": p.parse_success,
-                "generated_text": p.generated_text,
-            }
-            for p in predictions
-        ],
-    }
+    records = [
+        {
+            "protein_id": p.protein_id,
+            "mutation": p.mutation,
+            "predicted_ddg": p.predicted_ddg,
+            "predicted_class": p.predicted_class,
+            "ground_truth_ddg": p.ground_truth_ddg,
+            "ground_truth_class": p.ground_truth_class,
+            "parse_success": p.parse_success,
+            "generated_text": p.generated_text,
+        }
+        for p in predictions
+    ]
 
     with open(output_path, "w") as f:
-        json.dump(results, f, indent=2)
+        json.dump(records, f, indent=2)
 
-    log.info(f"Results saved to {output_path}")
+    log.info(f"Predictions saved to {output_path}")
 
 
 def _log_to_wandb(

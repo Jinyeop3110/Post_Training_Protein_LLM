@@ -1,21 +1,56 @@
 defaults:
   - model: qwen3_4b
-  - encoder: esm2_650m
+  - encoder: esm3_small
   - data: mol_instructions
   - training: sft_qlora
+  - optional experiment: null
   - _self_
+
+# Approach selection: text | esm3
+# - text: No encoder, raw protein sequence fed as text tokens to LLM
+# - esm3: Frozen ESM-3 encoder -> attention pooling -> MLP projector -> LLM
+approach: esm3
 
 # Project metadata
 project_name: protein_llm
-experiment_name: ${now:%Y-%m-%d}_${model.name}_${training.method}
 
-# Paths
+# System prompt for protein expert identity (used in training and inference)
+system_prompt: >-
+  You are a protein science expert. Given a protein amino acid sequence,
+  you analyze its properties, predict its function, structure, and
+  biological associations based on your knowledge of protein biology.
+
+# Experiment management
+# Override on CLI: experiment_name=my_sft_run
+experiment_name: ${training.method}_${approach}_${model.name}_${now:%m%d_%H%M%S}
+
+# Pipeline lineage: set parent_experiment for GRPO/DPO to chain from SFT
+# Example: python scripts/train.py training=grpo parent_experiment=sft_esm3_mlp_50k
+parent_experiment: null
+parent_checkpoint: null  # Auto-resolved from parent_experiment if null
+
+# Paths — all under results/{experiment_name}/
 paths:
+  results_dir: ./results
+  experiment_dir: ${paths.results_dir}/${experiment_name}
+  checkpoint_dir: ${paths.experiment_dir}/checkpoints
+  log_dir: ${paths.experiment_dir}/logs
+  eval_dir: ${paths.experiment_dir}/eval
+  # Data paths unchanged
   data_dir: ${oc.env:DATA_DIR,./data}
   raw_dir: ${paths.data_dir}/raw
   processed_dir: ${paths.data_dir}/processed
-  checkpoint_dir: ${paths.data_dir}/checkpoints/${experiment_name}
-  log_dir: ./logs/${experiment_name}
+
+# Evaluation settings (used by scripts/evaluate.py)
+eval_mode: protein_llm  # protein_llm | vanilla
+checkpoint_path: null  # Path to trained model checkpoint (protein_llm dir)
+evaluation:
+  name: go_prediction  # go_prediction | ppi | stability | sft | all
+  max_samples: null  # Limit eval samples (null = use all)
+  batch_size: 1
+  max_new_tokens: 256
+  prompt_template: null  # Custom prompt template (null = use default)
+  sft_gen_samples: 200  # Number of samples for SFT generation metrics
 
 # Hardware
 hardware:
@@ -27,13 +62,19 @@ hardware:
 logging:
   wandb:
     enabled: true
-    project: ${project_name}
+    # Project name comes from training config (protein-llm-sft or protein-llm-rl)
+    project: ${training.wandb.project}
     name: ${experiment_name}
+    # Tags always include: method, model, dataset, lr, epochs
+    tags: ${training.wandb.tags}
+    extra_tags:
+      - "lr_${training.lr}"
+      - "ep_${training.epochs}"
   tensorboard:
-    enabled: true
+    enabled: false
     log_dir: ${paths.log_dir}/tensorboard
 
-# Hydra settings
+# Hydra settings — output goes to experiment logs dir
 hydra:
   run:
     dir: ${paths.log_dir}

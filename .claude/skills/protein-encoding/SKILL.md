@@ -1,21 +1,20 @@
 ---
 name: protein-encoding
-description: ESM-2 protein embeddings, encoder integration, pooling strategies
+description: ESM-3 protein embeddings, encoder integration, pooling strategies
 allowed-tools: [Read, Edit, Grep, Glob, Bash]
 ---
 
 # Protein Encoding Skill
 
 ## Critical Rules
-1. **NEVER modify ESM-2 weights** - always keep frozen during training
-2. **Use attention pooling** (BoM-Pooling, window=80), NOT mean pooling
+1. **NEVER modify ESM-3 encoder weights** - always keep frozen during training
+2. **Use attention pooling** (32 output tokens), NOT mean pooling
 3. **LoRA on k/v matrices only** for protein tasks (differs from NLP)
 
-## ESM-2 Models
+## ESM-3 Model
 | Model | Parameters | Embedding Dim | Recommended |
 |-------|------------|---------------|-------------|
-| esm2_t33_650M_UR50D | 650M | 1,280 | Best efficiency |
-| esm2_t36_3B_UR50D | 3B | 2,560 | More capacity |
+| esm3-sm-open-v1 | 1.4B | 1,536 | Default |
 
 ## Key Files
 - src/models/protein_encoder.py - Encoder implementations
@@ -24,27 +23,26 @@ allowed-tools: [Read, Edit, Grep, Glob, Bash]
 
 ## Integration Pattern
 ```
-ESM-2 (frozen) → Per-residue [L, 1280]
+ESM-3 (frozen) → Per-residue [L, 1536]
     ↓
-Attention Pooling → [1, 1280]
+Attention Pooling → [32, 1536]
     ↓
-MLP Projector → [1, LLM_dim]
+MLP Projector → [32, LLM_dim]
     ↓
 LLM (with LoRA)
 ```
 
 ## Usage Examples
 ```python
-from src.models.protein_encoder import ESM2Encoder
+from src.models.protein_encoder import ESM3Encoder
 
-encoder = ESM2Encoder(
-    model_name="esm2_t33_650M_UR50D",
-    pooling="attention",
+encoder = ESM3Encoder(
+    model_name="esm3-sm-open-v1",
     freeze=True  # ALWAYS True
 )
 
 # Get embeddings
-embeddings = encoder(sequences)  # [batch, hidden_dim]
+embeddings = encoder(sequences)  # [batch, seq_len, 1536]
 ```
 
 ## Pooling Comparison

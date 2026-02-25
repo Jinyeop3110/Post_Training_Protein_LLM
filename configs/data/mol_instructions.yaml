@@ -1,6 +1,7 @@
 name: mol_instructions
 source: zjunlp/Mol-Instructions
 subset: Protein-oriented Instructions
+task: sft  # Task type for reward routing (sft | go_prediction | stability | esmfold)
 
 # Dataset paths
 paths:
@@ -11,9 +12,13 @@ paths:
 processing:
   max_seq_length: 2048
   include_structure: false
+  max_protein_length: null  # Max protein AA length (null = no limit, drops samples if set)
 
 # Split ratios
 splits:
-  train: 0.9
-  validation: 0.05
-  test: 0.05
+  train: 0.95
+  validation: 0.025
+  test: 0.025
+
+# Optional: limit number of samples (null = use all)
+limit: null

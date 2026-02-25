@@ -1,0 +1,21 @@
+name: wikipedia_protein
+source: Wikipedia + RCSB PDB
+paths:
+  raw: ${paths.raw_dir}/pdb_2021aug02_sample   # Reuses IPD-PDB raw data
+  processed: ${paths.processed_dir}/wikipedia_protein
+
+processing:
+  max_seq_length: 1024
+
+filters:
+  min_length: 50
+  max_length: 1000
+  limit: null  # Max PDB IDs to process (null = all)
+
+splits:
+  train: 0.9
+  validation: 0.05
+  test: 0.05
+
+# Optional: limit number of samples (null = use all)
+limit: null

@@ -1,5 +1,5 @@
-name: qwen3_4b
-path: Qwen/Qwen3-4B
+name: qwen3_4b_it
+path: Qwen/Qwen3-4B-Instruct-2507
 type: causal_lm
 
 architecture:

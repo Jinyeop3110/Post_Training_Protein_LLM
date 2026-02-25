@@ -24,6 +24,167 @@
 
 ## Development Log
 
+### 2026-02-20: Unified Experiment Pipeline
+
+**Milestone**: Implemented unified experiment directory structure for the full base→SFT→GRPO pipeline.
+
+**Changes**:
+- All artifacts now stored under `results/{experiment_name}/` (config, lineage, checkpoints, logs, eval)
+- `lineage.json` tracks stage, parent_experiment, parent_checkpoint, encoder, approach, timestamps
+- GRPO chains from SFT via `parent_experiment=<name>` (auto-resolves checkpoint path)
+- `experiment_name` auto-generated or user-set; Hydra output now goes to `results/{name}/logs/`
+- `src/utils/experiment.py`: write_lineage, read_lineage, complete_lineage, resolve_parent_checkpoint, list_experiments
+- SFT/GRPO trainers save `training_args.json` and `metrics.json` at experiment root (not inside checkpoints)
+- Evaluate can auto-detect checkpoint from `experiment_name`
+- All 414 existing tests still pass
+
+**Files modified**: configs/config.yaml, scripts/train.py, scripts/evaluate.py, src/training/sft_trainer.py, src/training/grpo_trainer.py
+**Files created**: src/utils/experiment.py
+
+---
+
+### 2026-02-20: Perceiver Resampler GPU Testing & Efficiency Analysis
+
+**Milestone**: Full GPU integration testing and efficiency comparison of Perceiver Resampler vs MLP.
+
+**Key results** (100 samples, single H100):
+| Metric | MLP | Perceiver 2L | Ratio |
+|--------|-----|-------------|-------|
+| Trainable params | ~20M | ~132M | 6.6x |
+| GPU peak | 18.35 GB | 19.4 GB | 1.06x |
+| Training speed | 1.28 steps/s | 1.14 steps/s | 0.89x |
+| Final eval_loss | 4.384 | 4.371 | ~same |
+| Checkpoint size | ~34 MB | 520 MB | 15x |
+
+**Decision**: Default Perceiver layers changed from 6→2 (6L = 382M params, too expensive for marginal gain).
+
+---
+
+### 2026-02-20: Research -- Projection-Only Multimodal LLM Architectures (2024-2026)
+
+**Milestone**: Comprehensive survey of state-of-the-art "projection-only" multimodal LLM architectures that map non-text features into LLM embedding space WITHOUT modifying the LLM architecture (no cross-attention layers added). Full findings below in [Projection-Only Multimodal LLM Survey](#projection-only-multimodal-llm-survey-2026-02-20).
+
+**Key Takeaways for Our Project**:
+
+1. **Pixel shuffle / space-to-depth is the dominant token reduction technique**. InternVL, DeepSeek-VL2, and Qwen2-VL all use 2x2 spatial merging to achieve 4x token reduction. Our attention pooling (L residues -> 32 tokens) serves an analogous role but is more aggressive. The field consensus is: reduce tokens before the LLM, not inside it.
+
+2. **2-layer MLP with GELU/SiLU is the universal projector**. Every top-performing system (LLaVA, InternVL, DeepSeek-VL2, Qwen2-VL) uses a 2-layer MLP. The projector is NOT the bottleneck -- data quality and training recipe matter far more than connector complexity (confirmed by MM1/MM1.5 ablations).
+
+3. **Multi-stage training is essential**. All architectures use at least 2 stages: (1) alignment (projector-only, encoder+LLM frozen) on large paired data, then (2) instruction tuning (projector+LLM trainable, encoder frozen or with very low LR). Our current approach matches this pattern exactly.
+
+4. **Dynamic resolution and tiling are critical for vision but less relevant for proteins**. Vision models spend enormous effort on multi-scale processing. For proteins, sequence length variation is the analogous challenge, and our attention pooling already handles it by compressing variable-length sequences to fixed 32 tokens.
+
+5. **Multi-encoder fusion (Cambrian-1) is interesting for proteins**. Cambrian-1 combines 4 vision encoders via cross-attention. An analogous protein approach could combine ESM-3 (sequence+structure) with a GNN encoder (graph topology) or ProtTrans (different pretraining objective). The Spatial Vision Aggregator pattern could be adapted.
+
+6. **Molmo's approach is closest to ours architecturally**: attention pooling on 2x2 windows + MLP projection + SwiGLU activation. Their key insight is that careful data curation matters more than architectural novelty.
+
+---
+
+### 2026-02-20: Research -- Protein Generation / Embedding-to-Sequence Decoding
+
+**Milestone**: Literature review on the "reverse direction" problem: generating protein sequences and structures from LLM hidden states or text descriptions.
+
+**Research Summary**: Surveyed 20+ models/frameworks spanning autoregressive protein generation, text-conditioned design, diffusion-based generation, bidirectional understanding+generation, and embedding-to-sequence decoding. Full findings below in [Protein Generation Research](#protein-generation-research-2026-02-20).
+
+**Key Takeaways for Our Project**:
+
+1. **Adding a protein decoder head to Qwen3-4B is feasible**. The simplest approach: a linear head mapping LLM hidden states (2560-dim) to a 20-amino-acid vocabulary, trained with next-token prediction loss on protein sequences. This is exactly what ProGen, ProtGPT2, and ProLLaMA do. Our LLM already knows natural language; we would fine-tune it to also output protein tokens.
+
+2. **The ProteinDT / unCLIP paradigm is the closest analogy to our architecture**. ProteinDT uses: (a) contrastive pretraining to align text and protein embeddings (like our SFT alignment stage), (b) a "facilitator" that maps text embeddings to protein embeddings, and (c) a decoder (autoregressive T5 or diffusion) that generates sequences from those embeddings. We already have steps (a) and partially (b) via our projector. We would need to add step (c).
+
+3. **Two practical paths for our system**:
+   - **Path A (Simple)**: Train Qwen3-4B to output amino acid tokens directly in its text vocabulary. Use `<protein>MKTL...</protein>` tags. The LLM generates protein sequences as text. This is what ProLLaMA and InstructProtein do. Requires protein sequence SFT data.
+   - **Path B (Advanced)**: Add a separate protein decoder that takes LLM hidden states and generates amino acid sequences. This decouples protein generation from text generation. ProteinDT and Pinal use this approach.
+
+4. **For structure generation**, the best path is to use ESM-3 or ESMFold as a downstream tool. Generate a sequence first (via Path A or B), then fold it with ESMFold/ESM-3/AlphaFold. Pinal takes the inverse approach: generate structure tokens first, then design sequences to fold into that structure.
+
+5. **RL/DPO for protein generation is an active area**. CtrlProt uses multi-listwise preference optimization for controllable protein generation. g-DPO adapts DPO for experimentally labeled protein data. This aligns directly with our planned GRPO stage.
+
+---
+
+### 2026-02-19: SFT Training & Evaluation Pipeline
+
+**Milestone**: Multimodal SFT training at scale, evaluation pipeline preparation
+
+**Training Experiments** (ESM-3 + Qwen3-4B, LoRA k/v, differential LR):
+
+| Run | Samples | Epochs | Config | Loss Start → End | Notes |
+|-----|---------|--------|--------|-------------------|-------|
+| 500-sample test | 500 | 3 | lr=2e-4, projector_lr=2e-3 | 17.35 → 4.08 | First multimodal success |
+| 10K baseline | 10,000 | 3 | lr=2e-4, warmup=100 | 35.80 → 27.84 | ~96 min |
+| 500 freeze_lora | 500 | 5 | freeze LoRA, train projector only | 37.5 → 31.7 | Flat loss, abandoned |
+| **50K full** | **50,000** | **5** | **lr=2e-4, projector_lr=2e-3, warmup=50** | **34.25 → 31.26 (step 100)** | **Running ~8.5hr** |
+
+**Key Fixes This Session**:
+1. **Differential learning rate**: Added `projector_lr: 2e-3` (10x base) for randomly-initialized pooling + projector (LLaVA-style)
+2. **use_qlora flag**: Fixed ProteinLLM to save `use_qlora: false` for non-quantized LoRA training
+3. **from_pretrained**: Fixed to pass `encoder_embed_dim` from saved config
+4. **generate method**: Fixed output slicing to exclude prompt tokens when using `inputs_embeds`
+5. **Evaluation config**: Added `evaluation`, `checkpoint_path`, `output_dir` to config.yaml
+6. **Zero-init / gating**: Both cause NaN explosion with bf16 + gradient checkpointing. Reverted.
+7. **freeze_lora**: LoRA freezing doesn't help - joint training needed for LLM to attend to prefix tokens
+
+**Training Parameters (50K run)**:
+- Model: ESM-3 (frozen, 1536-dim) → AttentionPooling (32 tokens) → MLP (1536→2048→2560) → Qwen3-4B (LoRA k/v)
+- Trainable: pooling 9.5M + projector 8.4M + LoRA 2M = ~20M (0.49% of 4B)
+- LR: base=2e-4 (LoRA), projector=2e-3, cosine schedule, warmup=50 steps
+- Batch: 4 × 8 grad_accum = 32 effective, 7815 total steps
+
+**Evaluation Pipeline** (prepared, ready to test):
+- GO prediction (demo dataset, 10 proteins)
+- PPI prediction
+- Stability prediction
+- All benchmarks aggregated
+- Config: `python scripts/evaluate.py checkpoint_path=<path>/protein_llm evaluation.name=go_prediction`
+
+**Checkpoint**: `data/checkpoints/2026-02-19_esm3_qwen3_4b_sft_lora/` (saving every 500 steps)
+**wandb**: https://wandb.ai/sjinyeop/protein-llm-sft/runs/qnrez9g6
+
+---
+
+### 2026-02-18: ESM-3 + Qwen3-4B Integration Sprint
+
+**Milestone**: Multi-agent sprint to integrate ESM-3 encoder and Qwen3-4B LLM into the pipeline
+
+**Sprint Focus**: ESM-3 + Qwen3-4B integration, approach-based architecture, RL investigation
+
+**Changes Made** (14 files, 782+ lines modified):
+- **ESM-3 encoder implementation** (`src/models/protein_encoder.py`): Added ESM-3 small (esm3-sm-open-v1, 1.4B params, 1536-dim embeddings). Status: partial, being verified on GPU.
+- **Approach-based architecture** (`configs/config.yaml`): Added `approach: text|esm3` config switching. Each approach selects its own encoder, data processing, and model architecture.
+- **ESM-3 encoder config** (`configs/encoder/esm3_small.yaml`): New config with 1536-dim embeddings, attention pooling (32 tokens), MLP projector (1536->2048->2560).
+- **Qwen3-4B model config** (`configs/model/qwen3_4b.yaml`): Added as default LLM (hidden_size=2560).
+- **Multimodal LLM wrapper** (`src/models/multimodal_llm.py`): Updated to support approach-based model selection and ESM-3 encoder path.
+- **SFT trainer** (`src/training/sft_trainer.py`): Updated for approach-aware training, wandb project separation.
+- **GRPO trainer** (`src/training/grpo_trainer.py`): Expanded with reward functions (GO, PPI, stability). Gradient flow bug found and being fixed.
+- **wandb separation**: DONE. SFT logs to `protein-llm-sft`, RL logs to `protein-llm-rl`.
+- **Training configs** (`configs/training/*.yaml`): Updated all training configs (sft_qlora, sft_lora, grpo, dpo) with wandb project tags.
+- **Train script** (`scripts/train.py`): Updated for approach-based dispatch.
+- **Evaluation** (`src/evaluation/go_prediction.py`): Confirmed encoder-agnostic. Bugs found in evaluate.py argument parsing.
+- **ESM-3 test** (`tests/models/test_esm3_encoder.py`): New unit test for ESM-3 encoder loading and forward pass.
+- **Documentation** (`PROJECT_GOALS.md`, `REVIEW_POINTS.md`, `SWE_AGENT_TEAM.md`): New project management docs for agent team coordination.
+
+**RL Investigation**:
+- GRPO reward functions work (GO F1, PPI binary, stability Gaussian)
+- Gradient flow bug found: gradients not propagating through generation step
+- Fix in progress -- need to verify with actual training run
+
+**Evaluation Suite**:
+- Encoder-agnostic confirmed: evaluation works regardless of approach (text/esm3)
+- Bugs found in `scripts/evaluate.py` argument parsing (being fixed)
+
+**Issues Encountered**:
+- GRPO gradient flow issue: reward computation works but gradients do not flow back through the model correctly
+- ESM-3 encoder needs GPU verification (cannot test on login node)
+
+**Next Steps**:
+- [ ] Complete ESM-3 encoder GPU verification
+- [ ] Fix GRPO gradient flow bug
+- [ ] Run first ESM-3 + Qwen3-4B SFT experiment
+- [ ] Fix evaluate.py argument parsing bugs
+- [ ] Validate end-to-end: encode -> pool -> project -> LLM forward pass
+
+---
+
 ### 2026-02-16: Model Loading Test Script
 
 **Milestone**: Created model loading test script for Qwen 3 1.5B verification
@@ -65,7 +226,7 @@ python scripts/test_model_loading.py --check-only
 **Next Steps**:
 - [ ] Run test on compute node with GPU
 - [ ] Verify Qwen 3 1.5B loads correctly
-- [ ] Test with ESM-2 encoder integration
+- [x] ESM-3 encoder integration verified
 
 ---
 
@@ -138,8 +299,8 @@ Post_Training_Protein_LLM/
 │   ├── commands/      # /train, /eval, /data-prep, /debug
 │   └── skills/        # protein-encoding, rl-training, hydra-configs
 ├── configs/           # Hydra hierarchical configs
-│   ├── model/         # qwen2_7b, llama3_8b
-│   ├── encoder/       # esm2_650m, esm2_3b
+│   ├── model/         # qwen3_4b (default), llama3_8b
+│   ├── encoder/       # esm3_small (default)
 │   ├── training/      # sft_qlora, grpo, dpo
 │   └── experiment/    # baseline_sft, full_pipeline
 ├── scripts/           # Entry points
@@ -197,6 +358,16 @@ Post_Training_Protein_LLM/
 
 ## Decision Log
 
+### 2026-02-18: Sprint Decisions
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Default protein encoder | ESM-3 small (esm3-sm-open-v1) | Project pivot to ESM-3 per PROJECT_GOALS.md |
+| Default LLM | Qwen3-4B-Instruct-2507 | Smaller model for fast iteration |
+| Architecture pattern | Approach-based (`text\|esm3`) | Modular, config-driven, easy to extend |
+| wandb separation | SFT -> `protein-llm-sft`, RL -> `protein-llm-rl` | Cleaner experiment tracking |
+| ESM-3 projector dims | 1536 -> 2048 -> 2560 | Match ESM-3 embedding dim to Qwen3-4B hidden_size |
+
 ### 2026-02-16: Project Structure Decisions
 
 | Decision | Choice | Rationale |
@@ -210,9 +381,10 @@ Post_Training_Protein_LLM/
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Protein encoder | ESM-2 650M | Best efficiency/performance ratio |
-| Keep encoder frozen | Yes | Preserve protein knowledge |
+| Protein encoder | ESM-3 small | Multimodal (sequence + structure), best for our use case |
+| Keep encoder frozen | Yes | Preserve protein knowledge (applies to ALL encoders) |
 | LoRA targets | k/v matrices only | Protein-specific finding |
+| LoRA rank | r=8 (minimum r=4) | Sufficient for protein tasks |
 | Pooling method | Attention pooling | 4% better than mean pooling |
 | RL method | GRPO | 50% less memory than PPO |
 
@@ -247,6 +419,477 @@ All major decisions and their rationale are recorded here.
 
 ## Agent Interactions Log
 
+### Session: Mid-Training Taxonomy and Protein-LLM Training Stages
+**Date**: 2026-02-21
+**Objective**: Research the taxonomy of LLM training stages (pre-training, mid-training, post-training), how protein-LLMs implement each stage, and best practices from both the multimodal LLM and protein-LLM literature.
+
+---
+
+#### 1. Taxonomy of LLM Training Stages
+
+The modern LLM training pipeline has evolved from a simple pretrain-then-finetune paradigm into a multi-stage process. The terminology is not yet fully standardized, but the following taxonomy captures the current consensus from multiple surveys (arXiv 2510.06826, arXiv 2510.23081, Raschka 2024).
+
+| Stage | Also Called | Purpose | Data | Trainable |
+|-------|-----------|---------|------|-----------|
+| **Pre-training** | Foundation training | Learn general language from scratch | Web-scale (1-15T tokens), noisy, diverse | All weights |
+| **Mid-training** | Continued pre-training (CPT), domain adaptation, annealing | Specialize the model for a domain or capability (code, math, bio, long-context) | Curated, high-quality, domain-specific (10B-1T tokens) | All weights (lower LR) |
+| **SFT** | Supervised fine-tuning, instruction tuning | Learn to follow instructions and produce structured outputs | Instruction-response pairs (100K-1M) | All weights or LoRA |
+| **RLHF/RL** | Alignment, preference optimization, post-training | Align outputs with human preferences or verifiable rewards | Preference pairs, reward signals | Policy weights (often LoRA) |
+
+**Key distinctions**:
+- **Pre-training vs Mid-training**: Pre-training starts from random init on diverse web data. Mid-training continues from a pre-trained checkpoint on higher-quality, domain-concentrated data with a lower learning rate. Mid-training uses the *same objective* (next-token prediction) but on better data.
+- **Mid-training vs SFT**: Mid-training uses a language modeling objective on raw text/documents. SFT uses a language modeling objective only on the *response* portion of instruction-response pairs (the prompt tokens are masked from the loss).
+- **SFT vs RL**: SFT teaches the model *what* to say via supervised examples. RL teaches the model *how well* it said it via reward signals, improving quality beyond what supervised data alone provides.
+
+**The mid-training survey** (arXiv 2510.06826) identifies three primary dimensions of mid-training:
+1. **Data distribution**: Shifting from noisy web data to curated, high-quality sources (code, math, scientific text, synthetic textbooks). Quality outweighs quantity.
+2. **Learning rate scheduling**: Typically cosine or WSD (warmup-stable-decay). The key insight is that mid-training uses a *lower peak LR* than pre-training, often with re-warming.
+3. **Long-context extension**: RoPE frequency remapping (NTK-aware, YaRN, LongRoPE) to extend context from 4K to 32K-128K tokens.
+
+**Examples from major labs**:
+- **Apple**: 3-stage pre-training: (1) broad pre-training, (2) 1T tokens mid-training with math/code emphasis, (3) 100B tokens for context extension to 32K.
+- **Qwen-2**: Pre-training then 2-phase post-training: 500K SFT examples then DPO alignment.
+- **OLMo 2**: Uses curriculum learning during mid-training with controlled data distribution shifts.
+- **DeepSeek-R1**: Pre-training then mid-training then SFT then GRPO (the full 4-stage pipeline).
+
+Sources: [Mid-Training Survey](https://arxiv.org/abs/2510.06826), [LLM Mid-Training Survey](https://arxiv.org/abs/2510.23081), [Raschka: New LLM Paradigms](https://magazine.sebastianraschka.com/p/new-llm-pre-training-and-post-training)
+
+---
+
+#### 2. Multimodal LLM Training Stages (Vision-Language Analogy)
+
+Multimodal LLMs face the same challenge as protein-LLMs: bridging a frozen encoder's embedding space to an LLM's token space via a projector. The vision-language literature has converged on a 2-3 stage recipe that is directly applicable.
+
+**LLaVA / LLaVA-1.5 (the canonical recipe)**:
+
+| Stage | What | Frozen | Trainable | Data | Duration |
+|-------|------|--------|-----------|------|----------|
+| Stage 1: Feature Alignment | Teach projector to translate visual features into LLM-compatible tokens | Vision encoder + LLM | MLP projector only | 558K image-caption pairs (LAION-CC-SBU) | ~6h on 8xA100 |
+| Stage 2: Visual Instruction Tuning | Teach the full system to follow multimodal instructions | Vision encoder | MLP projector + LLM (full finetune or LoRA) | 665K instruction-following + VQA data | ~20h on 8xA100 |
+
+LLaVA-1.5 key insight: replacing the linear projector with a 2-layer MLP (with GELU) significantly improved alignment quality. The projector architecture matters.
+
+**Qwen-VL (3-stage recipe)**:
+
+| Stage | What | Frozen | Trainable |
+|-------|------|--------|-----------|
+| Stage 1: Pre-training | Broad multimodal alignment | LLM | Vision encoder + adapter |
+| Stage 2: Multi-task Fine-tuning | Curated fine-grained tasks (captioning, VQA, OCR) | Nothing frozen | Vision encoder + adapter + LLM |
+| Stage 3: Instruction Tuning | Conversational alignment | Vision encoder | Adapter + LLM |
+
+**Why the 2-stage recipe works**: Stage 1 (projector warm-up) prevents catastrophic interference. If you train the projector and LLM jointly from scratch, the randomly-initialized projector produces garbage embeddings that corrupt the LLM's pre-trained representations. By first training only the projector while the LLM is frozen, you establish a meaningful mapping without destabilizing the LLM. This is exactly the "random projector init causes loss ~35" problem observed in our project.
+
+Sources: [LLaVA](https://llava-vl.github.io/), [LLaVA-1.5 Paper (CVPR 2024)](https://openaccess.thecvf.com/content/CVPR2024/papers/Liu_Improved_Baselines_with_Visual_Instruction_Tuning_CVPR_2024_paper.pdf), [Qwen-VL](https://arxiv.org/abs/2409.12191), [LLaVA Architecture Guide](https://learnopencv.com/llava-training-a-visual-assistant/)
+
+---
+
+#### 3. How Protein-LLMs Implement Each Training Stage
+
+The protein-LLM literature has adopted the multimodal LLM recipe with domain-specific adaptations. Here is a comprehensive comparison of training pipelines across major protein-LLM papers:
+
+**A. Two-Stage: Alignment then Instruction Tuning**
+
+| Model | Year | Encoder | Projector | Stage 1 (Alignment) | Stage 2 (Instruction) | LLM |
+|-------|------|---------|-----------|---------------------|----------------------|-----|
+| **ProteinGPT** | 2024 | ESM-2 3B + ESM-IF1 (both frozen) | Linear projection | Train projector only (encoders+LLM frozen), 132K proteins | Train projector + LLM, 3.7M QA pairs | LLaMA-3 |
+| **EvoLlama** | 2024 | ESM-2 + ProteinMPNN (both frozen in S1, trainable in S2) | Two MLPs (seq+struct), element-wise addition | Train MLPs only (all else frozen), 369K Swiss-Prot pairs | Train MLPs + encoders (LLM frozen!), 10 PEER/Mol-Instructions tasks | LLaMA-3 |
+| **ProtChatGPT** | 2024 | ESM-1b + ESM-IF1 (frozen) | PLP-former + FC layers | Train PLP-former (contrastive+generative losses), 553K pairs | Train FC adapter only (all else frozen), 143K PDB pairs | Vicuna-13B |
+
+**B. Single-Stage: Joint Training**
+
+| Model | Year | Encoder | Projector | Training | LLM |
+|-------|------|---------|-----------|----------|-----|
+| **Prot2Chat** | 2025 | ProteinMPNN (frozen) | Cross-attention adapter (89.7M params) | Joint: adapter (full) + LLM (LoRA), Mol-Instructions 404K | LLaMA-3 |
+| **ProtLLM** | 2024 | Protein-as-Word tokenizer | Interleaved embedding | Multi-task pre-training on InterPT dataset | InternLM2-7B |
+
+**C. Notable Architectural Choices**:
+
+- **ProteinGPT**: Simplest projector (linear), largest instruction dataset (3.7M QA). Follows LLaVA most closely. In Stage 2, both projector AND LLM are unfrozen.
+- **EvoLlama**: Unique in that Stage 2 unfreezes the protein encoders but keeps the LLM frozen. Uses element-wise addition of sequence and structure features to reduce token count by ~50%.
+- **ProtChatGPT**: Most complex Stage 1, using three losses simultaneously (contrastive, generative, matching). Stage 2 trains only the adapter.
+- **Prot2Chat**: Skips the alignment stage entirely; trains adapter + LoRA jointly from scratch. Claims "early fusion" (combining seq+struct at the encoder level) makes separate alignment unnecessary.
+- **ProtLLM**: Completely different approach: tokenizes proteins as discrete words and interleaves them with text tokens, avoiding the projector problem entirely.
+
+**Key finding**: There is no consensus on whether to freeze the LLM in Stage 2. ProteinGPT unfreezes it, EvoLlama keeps it frozen, ProtChatGPT keeps it frozen. Prot2Chat uses LoRA on the LLM. Our project's approach (LoRA on k/v only) is a reasonable middle ground.
+
+Sources: [ProteinGPT](https://arxiv.org/abs/2408.11363), [EvoLlama](https://arxiv.org/abs/2412.11618), [ProtChatGPT](https://arxiv.org/abs/2402.09649), [Prot2Chat](https://arxiv.org/abs/2502.06846), [ProtLLM](https://arxiv.org/abs/2403.07920)
+
+---
+
+#### 4. The Projector Warm-Up / Feature Alignment Stage in Detail
+
+This is the most critical stage for our project. The key question: should we train the projector alone first, or jointly with LoRA?
+
+**Evidence for projector-only warm-up (Stage 1)**:
+- LLaVA, ProteinGPT, EvoLlama, ProtChatGPT all use it
+- Prevents randomly-initialized projector from corrupting LLM representations
+- LLaVA shows it takes only ~6 hours (much cheaper than Stage 2)
+- Our own observation: random projector init causes loss ~35 (vs expected ~11.9)
+
+**Evidence against (or for skipping)**:
+- Prot2Chat achieves competitive results with single-stage joint training (adapter + LoRA)
+- The LLaVA team noted in LLaVA-1.5 that with a stronger projector (2-layer MLP vs linear), Stage 1 becomes less critical
+- LLaVA-OneVision-1.5 experiments suggest the projector warm-up may be less important when using LoRA on the LLM instead of full fine-tuning
+
+**Best practice recommendation for our project**:
+1. **Stage 1 (Projector Warm-Up)**: Train only pooling + projector (freeze LLM, freeze encoder). Use simple protein-description pairs (Swiss-Prot). ~50K-370K samples, ~1-3 epochs. LR: 1e-3 to 2e-3 (higher than SFT). This teaches the projector to produce embeddings the LLM can interpret.
+2. **Stage 2 (SFT with LoRA)**: Unfreeze LoRA adapters on LLM. Continue training projector + LoRA jointly on instruction-following data (Mol-Instructions). LR: 1e-4 to 2e-4 for LLM, keep projector LR higher (2e-3). This teaches the system to follow instructions.
+3. **Stage 3 (RL / GRPO)**: Optional. Train LoRA (possibly freeze projector) with reward signals. This optimizes for specific properties (structure quality, functional accuracy).
+
+---
+
+#### 5. Reinforcement Learning for Protein LLMs
+
+RL for protein models is an active area with several recent papers (2024-2025):
+
+**ProtRL** (AI4PDLab, 2024-2025):
+- Framework implementing wDPO and GRPO for protein language models
+- Applied to autoregressive pLMs like ZymCTRL
+- Key result: designed low-nanomolar EGFR inhibitors using GRPO
+- GRPO preferred over DPO due to greater flexibility with non-preference data distributions
+- Works with synthetic data and few RL iterations
+
+**ProteinZero** (2025):
+- Self-improving protein generation via online RL
+- Uses ESMFold as a proxy reward model (similar to our GRPO reward setup)
+- Balances multi-reward maximization + KL divergence + diversity regularization
+- Reduces design failure rates by 36-48% vs baselines (ProteinMPNN, ESM-IF)
+- Runs on a single 8xGPU node in 3 days
+
+**"From Supervision to Exploration"** (arXiv 2510.01571, 2025):
+- Key insight: RL does NOT teach the model new capabilities beyond pre-training
+- Instead, RL improves sampling efficiency toward high-reward regions already implicit in the model
+- Analogy: "hill-climbing where task difficulty sets the height, reward accuracy sets direction, policy capacity sets starting altitude"
+- GRPO showed superior exploration in antimicrobial peptide tasks through group-based loss
+- Trade-off: RL reduces diversity and novelty (concentrates on high-fitness regions)
+
+**Functional Alignment via RL** (bioRxiv, 2025):
+- Aligns protein language models to functional objectives using RL
+- Demonstrates that RL can steer generation toward experimentally validated properties
+
+**Implications for our project**:
+- Our ESMFold-based GRPO reward is well-aligned with current best practices (ProteinZero uses the same approach)
+- GRPO is the preferred algorithm over DPO for protein tasks due to flexibility with non-preference rewards
+- RL should be applied AFTER a well-trained SFT model (it refines, not creates, capabilities)
+- KL divergence regularization is important to prevent mode collapse
+
+Sources: [ProtRL](https://github.com/AI4PDLab/ProtRL), [ProteinZero](https://arxiv.org/abs/2506.07459), [Supervision to Exploration](https://arxiv.org/abs/2510.01571), [Functional Alignment](https://www.biorxiv.org/content/10.1101/2025.05.02.651993v1)
+
+---
+
+#### 6. Continued Pre-training (Mid-training) for Biomedical/Protein Domains
+
+Several papers have applied continued pre-training to adapt general LLMs to the biomedical domain:
+
+| Model | Base | CPT Data | CPT Duration | Result |
+|-------|------|----------|-------------|--------|
+| **PMC-LLaMA** | LLaMA 7B/13B | 4.8M biomedical papers + 30K textbooks | Not specified | First biomedical domain-specific LLM |
+| **BioMistral** | Mistral 7B | PubMed articles | 20h on 32xA100 | 0.9-point decrease initially; +2.9 with model merging |
+| **BioMedGPT** | LLaMA2-Chat-7B | S2ORC biomedical literature | Not specified | Uses ESM-2 3B as protein encoder after CPT |
+| **ESM-DBP** | ESM (general) | 170K DNA-binding protein sequences | Not specified | Domain-adaptive pre-training for protein subcategory |
+
+**Key insight from BioMistral**: Continued pre-training can initially *decrease* performance on general benchmarks (catastrophic forgetting). Model merging with the original model (averaging weights) can recover general capabilities while retaining domain knowledge. This "forgetting then recovering" pattern is a known risk.
+
+**Relevance to our project**: We do NOT do continued pre-training of the LLM (Qwen3). Instead, we use the frozen protein encoder (ESM-3) to inject domain knowledge via the projector. This is architecturally similar to how LLaVA avoids re-training the LLM on image data -- the encoder already has domain knowledge, the projector translates it. Our "mid-training" is actually the SFT stage (Stage 2), not continued pre-training in the traditional sense.
+
+Sources: [BioMistral](https://arxiv.org/abs/2402.10373), [PMC-LLaMA](https://arxiv.org/abs/2304.14454), [ESM-DBP](https://www.nature.com/articles/s41467-024-52293-7)
+
+---
+
+#### 7. Summary: Where Our Project Sits in the Taxonomy
+
+Our project's training pipeline maps to the multimodal LLM paradigm as follows:
+
+```
+Standard LLM:    Pre-train  -->  Mid-train (CPT)  -->  SFT  -->  RLHF/GRPO
+Multimodal LLM:  [Frozen encoder]  -->  Projector Warm-up  -->  Instruction Tuning  -->  RL
+Our Project:     [Frozen ESM-3]    -->  ??? (not yet)       -->  SFT (current)       -->  GRPO (planned)
+```
+
+**What we are currently doing** (single-stage SFT):
+- Jointly training projector + LoRA from scratch on Mol-Instructions
+- This combines Stages 1 and 2 into a single stage
+- Differential LR (projector_lr=2e-3 vs base lr=2e-4) partially compensates
+
+**What the literature recommends** (two-stage):
+- Stage 1: Projector warm-up with simple protein-description pairs, LLM frozen
+- Stage 2: Joint SFT with instruction data, projector + LoRA both trainable
+
+**Recommendation**: Implement a projector warm-up stage before SFT. The evidence strongly suggests this will:
+1. Reduce the initial loss spike (from ~35 to closer to ~12)
+2. Speed up overall convergence
+3. Produce better final performance
+4. Only cost ~1-3 hours of additional training (based on LLaVA's 6h for 558K samples)
+
+The Swiss-Prot protein-description pairs used by EvoLlama (369K samples) and ProtChatGPT (553K samples) would be suitable Stage 1 data. We already have Swiss-Prot processing capability in `src/data/swissprot_converter.py`.
+
+---
+
+### Session: Protein-Language Multimodal Model Survey (2023-2026)
+**Date**: 2026-02-20
+**Objective**: Survey how existing protein-language multimodal models project protein embeddings into LLM space, analogous to vision-language model approaches
+
+---
+
+### Comprehensive Survey: Protein-Language Multimodal Models
+
+#### 1. ProteinGPT (2024, ICLR 2025)
+
+**Paper**: "ProteinGPT: Multimodal LLM for Protein Property Prediction and Structure Understanding" ([arXiv 2408.11363](https://arxiv.org/abs/2408.11363))
+
+| Aspect | Detail |
+|--------|--------|
+| **Protein Encoder** | ESM-2 3B (esm2_t36_3B_UR50D, frozen) for sequence; ESM-IF1 (esm_if1_gvp4_t16_142M_UR50, frozen) for 3D structure |
+| **Projection** | Linear projection layers (one per encoder), aligning to LLM embedding space |
+| **Protein Tokens** | Residue-level tokens from both encoders, concatenated with special tokens `<Protein><Struct><Seq>` |
+| **LLM Backbone** | Tested on Vicuna, LLaMA-2, LLaMA-3, Mistral |
+| **Training Stage 1** | Modality Alignment: freeze encoders, train linear projectors only (10 epochs, lr=1e-4) |
+| **Training Stage 2** | Instruction Tuning: fine-tune projectors + LLM on 3.7M QA pairs from 132K proteins (10 epochs, lr=1e-5) |
+| **Frozen** | Both protein encoders (always frozen) |
+| **Generation** | Understanding only (protein to text); no protein sequence generation |
+| **Performance** | ~80% accuracy on closed-ended QA; BERTScore F1 0.70-0.82; outperforms GPT-3.5/GPT-4 on protein tasks |
+
+**Relevance to our project**: Very similar to our architecture (frozen ESM encoder + linear/MLP projection + LLM). Key difference: they use ESM-2 3B + ESM-IF1 dual encoders, while we use ESM-3 (which already captures structure). Their 2-stage training (alignment then instruction tuning) is the standard recipe we follow.
+
+---
+
+#### 2. ProtChatGPT (2024)
+
+**Paper**: "ProtChatGPT: Towards Understanding Proteins with Large Language Models" ([arXiv 2402.09649](https://arxiv.org/abs/2402.09649))
+
+| Aspect | Detail |
+|--------|--------|
+| **Protein Encoder** | ESM-1b (768-dim, frozen) for sequence; ESM-IF1 (512-dim, frozen) for structure |
+| **Projection** | PLP-Former (Protein-Language Pretraining Transformer): 32 learnable query tokens (dim 768), cross-attention to ESM-1b features, contrastive + text-gen + matching objectives. Then a Multi-Level Projection Adapter (2 FC layers) maps to LLM space |
+| **Protein Tokens** | 32 tokens (from learned queries) + structure projection, concatenated as soft prompts |
+| **LLM Backbone** | Vicuna-13B (frozen) |
+| **Training Stage 1** | PLP-Former training (20K epochs) on ProtDescribe dataset (553K sequence-description pairs) with 3 joint objectives |
+| **Training Stage 2** | Adapter training (1K epochs) on RCSB-PDB (143.5K structure-description pairs); PLP-Former frozen in this stage |
+| **Frozen** | Both protein encoders always frozen; LLM always frozen; PLP-Former frozen in stage 2 |
+| **Generation** | Understanding only (protein to text) |
+| **Performance** | BLEU-4: 0.394, ROUGE-L: 0.489, SPICE: 0.316, PubMed BERTScore: 0.457 |
+
+**Relevance to our project**: The PLP-Former is essentially a Q-Former (from BLIP-2) adapted for proteins. Its advantage over our MLP projector is the fixed 32-token output regardless of protein length, plus the contrastive pre-training step. However, the added complexity (3 training objectives, separate PLP-Former stage) may not justify the gains. Our attention pooling to 32 tokens achieves a similar token compression with less complexity.
+
+---
+
+#### 3. Prot2Chat (2025)
+
+**Paper**: "Prot2Chat: Protein LLM with Early Fusion of Sequence and Structure" ([arXiv 2502.06846](https://arxiv.org/abs/2502.06846), Bioinformatics 2025)
+
+| Aspect | Detail |
+|--------|--------|
+| **Protein Encoder** | Modified ProteinMPNN (frozen): 9 pre-trained models concatenated (128x9=1152 dim). Structure via 3D coords (N, Ca, C, O), sequence via embedding initialization ("early fusion") |
+| **Projection** | Cross-attention adapter with 256 learnable queries (BLIP-2 inspired). Queries attend to projected protein features via multi-head cross-attention |
+| **Protein Tokens** | 256 tokens (from query count) fed as soft prompts to LLM |
+| **LLM Backbone** | LLaMA-3 8B-Instruct |
+| **Training** | Full adapter training (89.7M params) + LoRA on LLM (3.4M params), 2 epochs. Total: 93M trainable |
+| **Frozen** | ProteinMPNN encoder |
+| **Generation** | Understanding only (protein to text) |
+| **Performance** | Mol-Instructions: BLEU-2=33.25, ROUGE-L=47.90; significantly outperforms sequence-only baselines |
+
+**Relevance to our project**: The "early fusion" of sequence and structure within ProteinMPNN is interesting -- ESM-3 already achieves something similar natively with its multimodal pre-training. Their 256-query cross-attention adapter is heavier than our 32-token attention pooling. They demonstrate that joint sequence+structure encoding significantly outperforms sequence-only, which supports our choice of ESM-3 (which encodes both).
+
+---
+
+#### 4. InstructProtein (2024, ACL 2024)
+
+**Paper**: "InstructProtein: Aligning Human and Protein Language via Knowledge Instruction" ([ACL Anthology](https://aclanthology.org/2024.acl-long.62/))
+
+| Aspect | Detail |
+|--------|--------|
+| **Protein Encoder** | No separate encoder -- protein sequences are directly tokenized as amino acid characters and fed into the LLM |
+| **Projection** | None -- unified vocabulary for protein and text tokens |
+| **Protein Tokens** | Each amino acid = one token (character-level), interleaved with natural language |
+| **LLM Backbone** | Pre-trained on combined protein + natural language corpora (approach is model-agnostic) |
+| **Training Stage 1** | Pre-training on both protein sequences and natural language text |
+| **Training Stage 2** | Supervised instruction tuning with knowledge-graph-based instruction dataset |
+| **Frozen** | Not applicable (single unified model) |
+| **Generation** | BIDIRECTIONAL: protein to text (function description) AND text to protein (sequence generation) |
+| **Performance** | Outperforms OPT, LLaMA, Alpaca on bidirectional protein-text tasks by large margins |
+
+**Relevance to our project**: This is our "text" approach baseline. By tokenizing proteins as characters, it avoids the engineering of projectors entirely. However, it requires expensive pre-training on protein corpora (not just fine-tuning). The bidirectional generation capability is notable -- our embedding-based approach cannot generate protein sequences. If protein generation is needed, the text approach or a hybrid is required.
+
+---
+
+#### 5. ProLLaMA (2024)
+
+**Paper**: "ProLLaMA: A Protein Large Language Model for Multi-Task Protein Language Processing" ([arXiv 2402.16445](https://arxiv.org/abs/2402.16445))
+
+| Aspect | Detail |
+|--------|--------|
+| **Protein Encoder** | No separate encoder -- amino acids tokenized directly using Pruned Vocabulary Partition (PVP): retain only uppercase AA letters + special tokens |
+| **Projection** | None -- proteins share LLM vocabulary (pruned per stage) |
+| **Protein Tokens** | Each amino acid = one token (character-level) |
+| **LLM Backbone** | LLaMA-2 |
+| **Training Stage 1** | Continual Learning: LoRA (rank=128, high rank) on all attention + FFN + embedding + head layers, on UniRef50 protein sequences |
+| **Training Stage 2** | Instruction Tuning: LoRA (rank=64) on same targets, on UniRef50 + InterPro property texts (~13M instruction samples) |
+| **Frozen** | Original LLaMA-2 weights frozen; only LoRA adapters trainable (~10% params) |
+| **Generation** | BIDIRECTIONAL: protein understanding (67.1% superfamily exact match) AND unconditional/controllable protein generation |
+| **Performance** | pLDDT 66.49 (comparable to natural proteins 68.25); TM-scores 0.71-0.93; +4.3% biophysical, +14.5% structural vs. baselines |
+
+**Relevance to our project**: Demonstrates that text-based approaches (no encoder) can achieve both understanding and generation when equipped with enough protein pre-training. The high LoRA rank (128) for protein language learning is notable -- much higher than our r=8 for k/v only. This reflects the fundamental difference: they are teaching the LLM protein language from scratch, while we inject pre-computed embeddings from a dedicated protein model.
+
+---
+
+#### 6. ProteinCLIP (2024)
+
+**Paper**: "ProteinCLIP: Enhancing Protein Language Models with Natural Language" ([bioRxiv 2024.05.14.594226](https://www.biorxiv.org/content/10.1101/2024.05.14.594226v1))
+
+| Aspect | Detail |
+|--------|--------|
+| **Protein Encoder** | ESM-2 (supports 6/12/30/33/36-layer variants) + ProtT5; encoder frozen, adapter added on top |
+| **Text Encoder** | OpenAI text-embedding-3-large (frozen) |
+| **Projection** | MLP adapter with single hidden layer: input_dim to hidden (GELU + LayerNorm) to 128-dim shared space (L2-normalized) |
+| **Training** | CLIP-style symmetric cross-entropy contrastive loss with learnable temperature, on 465K UniProt sequence-function pairs |
+| **Frozen** | Both encoders frozen; only adapter MLP trainable (~293K params for ESM-2 12-layer) |
+| **Generation** | Neither -- alignment method only. Produces improved embeddings for downstream classifiers |
+| **Performance** | Improves mutation sensitivity in 37/41 cases; PPI AUPRC: 0.697; CATH S20 homology top-1: ~0.661 |
+
+**Relevance to our project**: ProteinCLIP is not a generative model but an alignment pre-training step. It demonstrates that CLIP-style contrastive alignment between protein embeddings and text descriptions can dramatically improve protein representations. This could be used as a pre-alignment step before our SFT training. The adapter is tiny (~293K params), making it very efficient.
+
+---
+
+#### 7. EvoLlama (2024)
+
+**Paper**: "EvoLlama: Enhancing LLMs' Understanding of Proteins via Multimodal Structure and Sequence Representations" ([arXiv 2412.11618](https://arxiv.org/abs/2412.11618))
+
+| Aspect | Detail |
+|--------|--------|
+| **Protein Encoder** | ESM-2 650M (sequence) + ProteinMPNN encoder (structure); dual encoder |
+| **Projection** | Separate MLPs for each encoder, mapping to LLM dimension. Then ELEMENT-WISE ADDITION of sequence + structure features (not concatenation). Reduces tokens by ~50% vs concat |
+| **Protein Tokens** | Residue-level (L tokens for L residues after fusion) |
+| **LLM Backbone** | LLaMA-3 8B |
+| **Training Stage 1** | Projection Tuning: only MLP projectors train; both encoders + LLM frozen |
+| **Training Stage 2** | Supervised Fine-tuning: projectors + protein encoders trainable; LLM frozen. Total trainable: 7.9% of model |
+| **Frozen** | LLM always frozen (no LoRA); encoders frozen in stage 1, trainable in stage 2 |
+| **Generation** | Understanding only (protein to text) |
+| **Performance** | +1-8% over baselines in zero-shot; +6% average over SOTA with supervised fine-tuning |
+
+**Relevance to our project**: EvoLlama uses element-wise addition of sequence+structure features (instead of concatenation) to keep token count manageable. Since ESM-3 already encodes both modalities, we get this "free." Notable: they unfreeze the protein encoders in stage 2 (we keep ESM-3 frozen always). Their LLM is fully frozen (no LoRA), relying entirely on the projectors -- opposite to our approach where LoRA adapts the LLM.
+
+---
+
+#### 8. ProtLLM (2024, ACL 2024)
+
+**Paper**: "ProtLLM: An Interleaved Protein-Language LLM with Protein-as-Word Pre-Training" ([ACL Anthology](https://aclanthology.org/2024.acl-long.484/))
+
+| Aspect | Detail |
+|--------|--------|
+| **Protein Encoder** | ProtST (ESM-2 backbone + 2-layer MLP projection head, pre-trained with contrastive learning on protein-text pairs) |
+| **Projection** | Input-layer: trainable projection matrix (protein to LLM space). Output-layer: reverse projection (LLM to protein space) for retrieval |
+| **Protein Tokens** | Entire protein = 1 token ("protein-as-word"). Each protein encoded into a single vector, treated like a vocabulary word |
+| **LLM Backbone** | LLaMA-7B with LoRA on all linear modules |
+| **Training** | Protein-as-word language modeling on InterPT dataset (interleaved protein-text from annotations + papers). Protein cache for pre-computed vectors |
+| **Frozen** | Protein encoder frozen during some tasks, trainable for others |
+| **Generation** | Protein retrieval (not de novo generation); handles interleaved protein+text input with arbitrary protein count |
+| **Performance** | EC Fmax: 0.860; GO-CC Fmax: 0.596; PPI accuracy: 89.87%; zero-shot + in-context learning demonstrated |
+
+**Relevance to our project**: The "protein-as-word" paradigm (1 token per protein) is the extreme compression end of the spectrum, opposite to residue-level approaches. It works well for protein-level tasks (EC, GO, PPI) but loses residue-level information. Their PPI accuracy (89.87%) with in-context learning is impressive.
+
+---
+
+#### 9. BioMedGPT (2023-2024)
+
+**Paper**: "BioMedGPT: Open Multimodal Generative Pre-trained Transformer for BioMedicine" ([arXiv 2308.09442](https://ar5iv.labs.arxiv.org/html/2308.09442))
+
+| Aspect | Detail |
+|--------|--------|
+| **Protein Encoder** | ESM-2 3B (36-layer transformer, frozen initially, then fine-tuned) |
+| **Projection** | Fully-connected layer (modality adaptor) mapping residue features to LLM space |
+| **Protein Tokens** | Each amino acid residue = one token in unified representation |
+| **LLM Backbone** | BioMedGPT-LM-7B (Llama2-Chat-7B fine-tuned on 4.2M biomedical articles, 26B+ tokens) |
+| **Training Stage 1** | Fine-tune Llama2-Chat-7B on biomedical literature to create BioMedGPT-LM-7B |
+| **Training Stage 2** | Multimodal alignment: freeze LLM, train protein encoder + adaptors on UniProtQA |
+| **Frozen** | LLM frozen during multimodal alignment |
+| **Generation** | Understanding only (protein to text QA) |
+| **Performance** | ROUGE-1: 0.743, BLEU-4: 0.535, METEOR: 0.754 on UniProtQA |
+
+**Relevance to our project**: BioMedGPT uses the simplest possible projector (single FC layer), similar to early LLaVA. The domain-specific LLM pre-training (biomedical literature) before multimodal alignment is an extra step we do not currently do. Their strong results suggest domain-specific LLM adaptation helps significantly.
+
+---
+
+#### 10. Galactica (2022, Meta AI)
+
+**Paper**: "Galactica: A Large Language Model for Science" ([arXiv 2211.09085](https://arxiv.org/abs/2211.09085))
+
+| Aspect | Detail |
+|--------|--------|
+| **Protein Encoder** | No separate encoder -- amino acid sequences directly tokenized |
+| **Projection** | None -- proteins are inline text with special tokens |
+| **Protein Tokens** | Each amino acid = one character token, wrapped in `[START_AMINO]`...`[END_AMINO]` special tokens |
+| **LLM Backbone** | Galactica (decoder-only transformer, GeLU activation, learned positional embeddings, BPE vocabulary, no bias) |
+| **Training** | Trained from scratch on 106B tokens of scientific literature, including protein sequences and SMILES |
+| **Frozen** | N/A (trained from scratch) |
+| **Generation** | Bidirectional: can generate text about proteins and generate protein sequences |
+
+**Relevance to our project**: Galactica is a predecessor to the text-approach paradigm. The `[START_AMINO]`/`[END_AMINO]` special token wrapping is exactly what our text approach uses with `<protein>`/`</protein>` tags.
+
+---
+
+#### 11. Prot2Text (2024, AAAI 2024)
+
+**Paper**: "Prot2Text: Multimodal Protein's Function Generation with GNNs and Transformers" ([AAAI 2024](https://ojs.aaai.org/index.php/AAAI/article/view/28948))
+
+| Aspect | Detail |
+|--------|--------|
+| **Protein Encoder** | ESM-2 (sequence) + RGCN (Relational Graph Convolution Network, for structure graphs) |
+| **Projection** | Cross-attention between GNN graph embeddings and ESM sequence embeddings, fed into GPT-2 decoder |
+| **Protein Tokens** | Fused graph+sequence representations |
+| **LLM Backbone** | GPT-2 (smaller decoder, 398M total) |
+| **Training** | End-to-end on 256K SwissProt proteins with textual descriptions |
+| **Generation** | Understanding only (protein to text function description) |
+
+---
+
+#### 12. Newer Methods (2025-2026)
+
+**InstructPLM-mu (2025)** ([arXiv 2510.03370](https://arxiv.org/abs/2510.03370)): Compares three multimodal fusion strategies for ESM-2 + structure encoders: Cross Attention, Channel-wise Concat, and Token-wise Concat. Uses MLP projector with "disentangled attention." Fine-tuned models match or surpass ESM-3 on mutation prediction, suggesting simpler models + good fusion can compete with massive multimodal pre-training.
+
+**MULAN (2025)** ([Bioinformatics Advances](https://academic.oup.com/bioinformaticsadvances/article/5/1/vbaf117/8139638)): Multimodal PLM for sequence + angle-based structure encoding. Uses a parameter-efficient "Structure Adapter" fused with pre-trained sequence encoder.
+
+**Design Space Study (2025, ByteDance)** ([arXiv 2504.11454](https://arxiv.org/abs/2504.11454)): "Elucidating the Design Space of Multimodal Protein Language Models" systematically studies design choices. Key finding: tokenization loss and inaccurate structure token predictions are the major bottlenecks. Their 650M model achieves RMSD 2.36 on PDB testset (down from 5.52), outperforming 3B baselines.
+
+---
+
+### Comparative Summary Table
+
+| Model | Year | Protein Encoder | Projector Type | Protein Tokens | LLM | Bidirectional? |
+|-------|------|----------------|----------------|----------------|-----|----------------|
+| **ProteinGPT** | 2024 | ESM-2 3B + ESM-IF1 (frozen) | Linear projection | Per-residue | Vicuna/LLaMA/Mistral | No |
+| **ProtChatGPT** | 2024 | ESM-1b + ESM-IF1 (frozen) | PLP-Former (Q-Former) + FC | 32 (learned queries) | Vicuna-13B (frozen) | No |
+| **Prot2Chat** | 2025 | ProteinMPNN x9 (frozen) | Cross-attn (256 queries) | 256 | LLaMA-3 8B | No |
+| **InstructProtein** | 2024 | None (text tokens) | None | Per-AA character | Custom pre-trained | Yes |
+| **ProLLaMA** | 2024 | None (text tokens) | None | Per-AA character | LLaMA-2 | Yes |
+| **ProteinCLIP** | 2024 | ESM-2/ProtT5 (frozen) | MLP adapter to 128d | N/A (alignment) | N/A | N/A |
+| **EvoLlama** | 2024 | ESM-2 650M + ProteinMPNN | MLPs + elem-wise add | Per-residue | LLaMA-3 8B (frozen) | No |
+| **ProtLLM** | 2024 | ProtST/ESM-2 (frozen) | Projection matrix | 1 (protein-as-word) | LLaMA-7B + LoRA | Retrieval |
+| **BioMedGPT** | 2023 | ESM-2 3B | Single FC layer | Per-residue | Llama2-Chat-7B | No |
+| **Galactica** | 2022 | None (text tokens) | None | Per-AA character | Galactica (scratch) | Yes |
+| **Our Project** | 2026 | ESM-3 small (frozen) | AttentionPooling + 2-layer MLP | 32 (pooled) | Qwen3-4B + LoRA k/v | No |
+
+---
+
+### Key Takeaways for Our Project
+
+1. **Our architecture is well-positioned.** The ESM-3 (frozen) + Attention Pooling (32 tokens) + MLP Projector + LLM (LoRA) pattern closely mirrors the most successful approaches (ProteinGPT, EvoLlama, BioMedGPT). Using ESM-3 instead of ESM-2 + separate structure encoder simplifies the pipeline while capturing both sequence and structure.
+
+2. **32 tokens is a reasonable compression.** ProtChatGPT uses 32 (Q-Former), Prot2Chat uses 256 (cross-attention), ProtLLM uses 1 (protein-as-word). Our 32-token attention pooling is a good middle ground -- enough to preserve important residue-level patterns without overwhelming the LLM context.
+
+3. **Two-stage training is universal.** Every successful model uses Stage 1 (alignment/projection training with frozen LLM) followed by Stage 2 (instruction tuning with LLM adaptation). Our single-stage joint training is simpler but may benefit from separating stages.
+
+4. **MLP projection is sufficient.** Despite the existence of Q-Former, cross-attention adapters, and other complex projection methods, simple MLP projectors (ProteinGPT, EvoLlama, BioMedGPT) perform comparably. The LLaVA lesson applies to proteins: MLP works.
+
+5. **Consider contrastive pre-alignment.** ProteinCLIP shows that a cheap contrastive alignment step (~293K params) between protein embeddings and text significantly improves downstream performance. Adding a CLIP-style pre-alignment of ESM-3 embeddings before SFT could be beneficial.
+
+6. **Protein generation requires text-based approach.** All models that support bidirectional protein generation (InstructProtein, ProLLaMA, Galactica) use text-based tokenization, not embeddings. If protein generation is a goal, our `text` approach baseline is the path forward.
+
+7. **Domain LLM pre-training helps.** BioMedGPT's pre-training on biomedical literature before multimodal alignment improved performance. Our use of Qwen3-4B (general-purpose) could potentially benefit from intermediate biomedical text fine-tuning.
+
+8. **High LoRA rank for text-based approaches.** ProLLaMA uses rank=128 when teaching the LLM protein language from scratch. Our rank=8 is appropriate for the embedding-based approach (where the protein encoder does the heavy lifting), but if we explore the text approach, higher ranks are needed.
+
+---
+
 ### Session: Initial Research Phase
 **Date**: 2026-02-14
 **Objective**: Conduct literature review for protein-LLM post-training
@@ -273,7 +916,7 @@ All major decisions and their rationale are recorded here.
 | Ankh | 1.15B | ~1,536 | Efficient training |
 
 #### Key Insights:
-1. **ESM-2 650M recommended** for best performance/efficiency trade-off
+1. **ESM-3 small** selected as default encoder (multimodal: sequence + structure)
 2. Performance levels off around 650M parameters - larger models don't significantly outperform
 3. **ESM-3** is the first multimodal generative model with sequence, structure, AND function tokens
 4. **ProtT5** encoder-only version fits on 8GB GPU in half-precision
@@ -352,11 +995,11 @@ All major decisions and their rationale are recorded here.
 #### Recommended Architecture for Proteins:
 
 ```
-ESM-2 650M (frozen) → Per-residue [L, 1280]
+ESM-3 small (frozen) → Per-residue [L, 1536]
        ↓
-Mean Pooling OR Attention Pooling
+Attention Pooling (32 tokens)
        ↓
-MLP Projector (1280 → LLM_dim)
+MLP Projector (1536 → LLM_dim)
        ↓
 [protein_tokens] + [text_tokens] → LLM (with LoRA)
 ```
@@ -364,8 +1007,8 @@ MLP Projector (1280 → LLM_dim)
 #### Training Recipe:
 | Stage | Frozen | Trainable | Data |
 |-------|--------|-----------|------|
-| 1. Alignment | ESM-2 + LLM | Projector only | Protein-text pairs |
-| 2. Instruction | ESM-2 | Projector + LLM (LoRA) | QA + text-only |
+| 1. Alignment | ESM-3 + LLM | Projector only | Protein-text pairs |
+| 2. Instruction | ESM-3 | Projector + LLM (LoRA) | QA + text-only |
 
 #### Variable Length Handling:
 - **Direct mapping**: Each residue → one token (preserves info)
@@ -411,6 +1054,198 @@ MLP Projector (1280 → LLM_dim)
 
 ---
 
+## Protein Generation Research (2026-02-20)
+
+### Overview: The Reverse Direction Problem
+
+Our current pipeline goes: Protein -> ESM-3 embedding -> Projector -> LLM -> Text output. The "reverse direction" asks: can we go from LLM hidden states or text descriptions BACK to protein sequences or structures? This is critical for protein design applications.
+
+### 1. Autoregressive Protein Generation Models
+
+These models generate proteins token-by-token, exactly like GPT generates text.
+
+| Model | Params | Architecture | Conditioning | Key Result |
+|-------|--------|-------------|-------------|------------|
+| **ProGen** | 1.2B | Decoder Transformer | Family/function tags | Functional lysozymes validated experimentally |
+| **ProGen2** | up to 6.4B | Decoder Transformer | Unconditional + conditional | Explores boundaries of protein LMs |
+| **ProtGPT2** | 738M | GPT-2 style | Unconditional | 88% globular proteins, natural-like |
+| **xTrimoPGLM** | 100B | Unified (MLM + AR) | Programmable after SFT | SOTA on 18 benchmarks + generation |
+| **ProLLaMA** | LLaMA-based | Decoder Transformer | Text descriptions | 67.1% superfamily prediction, controllable gen |
+| **MP4** | Transformer | Decoder | Natural language prompts | 84% expression rate, Tm >62C |
+
+**How they work**: Standard next-token prediction over a vocabulary of 20 amino acids (+ special tokens). ProGen adds control tags (taxonomy, function, localization) as prefix tokens. ProLLaMA fine-tunes LLaMA on both protein sequences and natural language instructions.
+
+**Relevance to our project**: The simplest path to protein generation. Our Qwen3-4B already has amino acid characters in its tokenizer. We could fine-tune it to generate protein sequences autoregressively using `<protein>...</protein>` delimiters. ProLLaMA demonstrates this works with LLaMA.
+
+### 2. Text-Conditioned Protein Design Frameworks
+
+These take natural language descriptions and produce protein sequences.
+
+#### ProteinDT (Nature Machine Intelligence, 2025)
+- **Architecture**: Three-stage pipeline inspired by DALL-E 2 / unCLIP
+  1. **ProteinCLAP**: Contrastive learning to align text and protein embeddings (like CLIP)
+  2. **ProteinFacilitator**: Maps text embeddings -> protein representation space (Gaussian mapping, L2 loss)
+  3. **Decoder**: Generates sequences from protein representations
+- **Decoder variants tested**:
+  - Autoregressive T5-Base (best performance)
+  - Diffusion with RNN transition
+  - Diffusion with BERT-Base transition
+- **Training data**: SwissProtCLAP (441K text-protein pairs)
+- **Performance**: >90% accuracy on text-guided generation
+- **Key insight**: The AR decoder outperformed diffusion decoders for text-to-protein
+
+#### Pinal (bioRxiv, 2024)
+- **Architecture**: Two-stage decomposition (16B parameters total)
+  1. **T2struct**: Text -> structural tokens (encoder-decoder, up to 15B params)
+  2. **SaProt-T**: Structure + text -> amino acid sequence
+- **Training data**: 1.7 billion text-protein pairs
+- **Text encoder**: PubMedBERT (109M)
+- **Key insight**: Generates structure FIRST, then designs sequence to fold into it. 4/8 designed ADH enzymes showed functional activity.
+
+#### BioM3 (bioRxiv, 2024)
+- **Architecture**: Three-stage framework
+  1. Contrastive alignment of protein and text representations
+  2. Text embedding refinement
+  3. Conditional generation via discrete autoregressive diffusion
+- **Validation**: In vivo and in vitro tests of designed SH3 domain proteins with native-like folds
+
+#### MP4 (bioRxiv, 2025)
+- **Architecture**: Transformer-based generative model
+- **Input**: Natural language prompts encoding fitness criteria, physical properties, source organism
+- **Training**: 3.2B data points, 138K tokens
+- **Validation**: 96 prompts tested; 84% expression rate, Tm >62C, some approaching 90C
+- **Key insight**: Generalist model -- single model handles diverse functions
+
+### 3. Bidirectional Models (Understand AND Generate)
+
+| Model | Base | Direction | Key Feature |
+|-------|------|-----------|-------------|
+| **InstructProtein** | Custom LLM | Text <-> Protein | Knowledge graph instruction tuning |
+| **ProLLaMA** | LLaMA | Text <-> Protein | EPGF framework for biological viability |
+| **xTrimoPGLM** | Custom 100B | Understanding + Generation | Unified MLM + autoregressive pretraining |
+| **Prot2Token** | PLM + decoder | Understanding + Generation | All tasks as next-token prediction |
+
+**InstructProtein** is the most relevant: it pre-trains on both protein and natural language corpora, then uses supervised instruction tuning to align the two languages. It can take a protein sequence and predict its function (understanding) OR take a text description and generate a protein sequence (generation). Training uses knowledge-graph-based instructions.
+
+### 4. Diffusion-Based Protein Generation
+
+| Model | Domain | Conditioning | Notes |
+|-------|--------|-------------|-------|
+| **RFdiffusion** | 3D backbone structures | Symmetry, motif scaffolding, shape | State-of-the-art structure generation |
+| **Chroma** | 3D structures + sequences | Symmetry, shape, class, **natural language** | Text-conditioned structure generation |
+| **FrameDiff** | 3D backbone frames | Unconditional | SE(3) diffusion on frames |
+| **EvoDiff** | Sequences only | Motif scaffolding, unconditional | First sequence-space diffusion model |
+
+**Chroma** is notable: it accepts natural language text prompts to condition protein structure generation. RFdiffusion uses 2D constraints. EvoDiff operates purely in sequence space using discrete diffusion, generating proteins inaccessible to structure-based models (e.g., disordered regions).
+
+### 5. Embedding-to-Sequence Decoding
+
+#### CHEAP Embeddings (Cell Patterns, 2025)
+- Compresses ESMFold latent space into compact "CHEAP" embeddings
+- Sequence decoder: 2-layer FC network (hidden=1024) maps embeddings back to amino acid sequences
+- Achieves 128x channel compression and 8x length compression while retaining <2A structure accuracy
+- Demonstrates that continuous protein embeddings CAN be decoded back to discrete sequences
+
+#### ESMFold / AlphaFold as Downstream Tools
+- ESMFold uses ESM-2 token embeddings to predict 3D structure end-to-end (no MSA needed)
+- Structure prediction accuracy correlates with language model perplexity
+- Can be used as a "folding oracle" after sequence generation: generate sequence -> fold with ESMFold
+
+### 6. Structure Generation from LLM Outputs
+
+**Direct structure prediction from embeddings is possible but complex.** The practical approach:
+1. Generate amino acid sequence using LLM
+2. Fold it with ESMFold (fast, single-sequence) or AlphaFold (accurate, needs MSA)
+3. Validate designability (does the generated sequence actually fold into a stable structure?)
+
+ESM-3 can directly generate both sequences AND structures simultaneously by reasoning over joint sequence/structure/function tokens. It generated esmGFP (58% identity to nearest natural GFP), equivalent to simulating 500M years of evolution.
+
+### 7. RL/DPO for Protein Generation
+
+| Method | Paper | Key Idea |
+|--------|-------|----------|
+| **CtrlProt** | AAAI 2025 | Multi-listwise preference optimization for controllable protein generation |
+| **g-DPO** | 2024 | Adapts DPO for experimentally labeled protein data (scalar labels -> preferences) |
+| **ResiDPO** | 2025 | Residue-level structural feedback for designability optimization |
+| **KPO** | 2025 | Knowledge preference optimization for safe/controllable protein generation |
+
+**CtrlProt** fine-tunes a protein LLM with multi-listwise preference optimization to support multi-attribute controllable generation. **g-DPO** addresses the challenge that protein datasets have scalar fitness labels rather than pairwise preferences (converts scalar to preference pairs). Both are directly applicable to our GRPO stage.
+
+### 8. Practical Recommendations for Our Project
+
+#### Immediate Path: Text-Based Protein Generation (Path A)
+```
+User: "Design a thermostable enzyme that catalyzes alcohol dehydrogenation"
+     |
+     v
+Qwen3-4B (LoRA) -> "<protein>MKTLIVG...LASTAA</protein>"
+     |
+     v
+ESMFold -> 3D structure prediction + validation
+```
+
+**Implementation**:
+1. Add protein sequences to our training data with `<protein>...</protein>` tags
+2. Create instruction pairs: "Design a protein with [function]" -> "<protein>[sequence]</protein>"
+3. Fine-tune Qwen3-4B with SFT on these pairs (same as current pipeline)
+4. Use GRPO with structural validation rewards (ESMFold pLDDT, pTM)
+
+**Training data needed**: Swiss-Prot function descriptions paired with sequences (~570K pairs)
+
+#### Advanced Path: Dedicated Protein Decoder (Path B)
+```
+User: "Design a protein that binds to insulin receptor"
+     |
+     v
+Qwen3-4B -> hidden states [batch, seq_len, 2560]
+     |
+     v
+Protein Decoder Head (2560 -> 20 amino acids)
+     |
+     v
+Generated sequence: "MKTLIVG..."
+```
+
+**Implementation**:
+1. Add a linear projection head: `nn.Linear(2560, 20)` (20 standard amino acids)
+2. Train with cross-entropy loss on protein sequence prediction
+3. During generation, use special `<generate_protein>` token to trigger protein decoding mode
+4. Optionally, use a small autoregressive decoder (like T5-small) instead of single linear head
+
+#### Structure Generation Pipeline
+```
+Generated sequence -> ESMFold/ESM-3 -> 3D structure
+                   -> ESM-3 (with structure track) -> refined structure
+                   -> AlphaFold -> high-accuracy structure
+```
+
+### 9. Key References
+
+| Paper | Year | URL |
+|-------|------|-----|
+| ProteinDT | 2025 | https://www.nature.com/articles/s42256-025-01011-z |
+| Pinal | 2024 | https://www.biorxiv.org/content/10.1101/2024.08.01.606258v4 |
+| BioM3 | 2024 | https://github.com/PraljakReps/BioM3 |
+| MP4 | 2025 | https://www.biorxiv.org/content/10.1101/2025.03.21.644400v2 |
+| InstructProtein | 2023 | https://arxiv.org/abs/2310.03269 |
+| ProLLaMA | 2024 | https://arxiv.org/abs/2402.16445 |
+| xTrimoPGLM | 2025 | https://www.nature.com/articles/s41592-025-02636-z |
+| ProGen | 2023 | https://www.nature.com/articles/s41587-022-01618-2 |
+| ProtGPT2 | 2022 | https://www.nature.com/articles/s41467-022-32007-7 |
+| ESM-3 | 2024 | https://www.science.org/doi/10.1126/science.ads0018 |
+| RFdiffusion | 2023 | https://www.nature.com/articles/s41586-023-06728-8 |
+| Chroma | 2023 | https://www.pnas.org/doi/10.1073/pnas.2311500121 |
+| EvoDiff | 2024 | https://github.com/microsoft/evodiff |
+| CHEAP | 2025 | https://www.cell.com/patterns/fulltext/S2666-3899(25)00137-0 |
+| Prot2Token | 2024 | https://arxiv.org/abs/2505.20589 |
+| Prot2Chat | 2025 | https://arxiv.org/html/2502.06846v1 |
+| CtrlProt | 2025 | https://arxiv.org/abs/2501.15007 |
+| g-DPO | 2024 | https://arxiv.org/pdf/2510.19474v1 |
+| EvoLlama | 2024 | https://arxiv.org/html/2412.11618v1 |
+| ProteinGPT | 2024 | https://arxiv.org/html/2408.11363v1 |
+
+---
+
 ## Open Questions for Discussion
 
 1. [QUESTION] Which base LLM should we use? (LLaMA-3, Mistral, Qwen, etc.)
@@ -446,14 +1281,17 @@ MLP Projector (1280 → LLM_dim)
 - [x] Set up test structure (`tests/`)
 
 ### In Progress
-- [ ] Select training framework (TRL vs veRL vs other)
-  - **Current thinking**: TRL for SFT, veRL for GRPO
-- [ ] Select base LLM (Qwen-2.5 7B vs Llama-3 8B)
+- [ ] ESM-3 + Qwen3-4B integration (GPU verification pending)
+- [ ] Fix GRPO gradient flow bug
+- [ ] Fix evaluate.py argument parsing bugs
+- [x] Select training framework: TRL for SFT, custom for GRPO
+- [x] Select base LLM: **Qwen3-4B-Instruct-2507** (default), Qwen-2.5-7B and Llama-3.1-8B as alternatives
+- [x] Select protein encoder: **ESM-3 small** (default)
 
 ### TODO: Model Testing
 - [ ] Run `scripts/test_model_loading.py` on compute node with GPU
 - [ ] Verify Qwen/Qwen3-1.5B loads and runs inference
-- [ ] Test ESM-2 encoder loading
+- [x] ESM-3 encoder loading verified
 - [ ] Test combined encoder + LLM memory usage
 
 ### TODO: Implementation
@@ -497,7 +1335,7 @@ Post_Training_Protein_LLM/
 ├── configs/                      # Hydra configuration
 │   ├── config.yaml               # Main config
 │   ├── model/                    # qwen2_7b, llama3_8b
-│   ├── encoder/                  # esm2_650m, esm2_3b
+│   ├── encoder/                  # esm3_small
 │   ├── data/                     # mol_instructions, ipd_pdb
 │   ├── training/                 # sft_qlora, grpo, dpo
 │   ├── evaluation/               # go_prediction, ppi, stability
@@ -549,21 +1387,348 @@ Post_Training_Protein_LLM/
 ## Next Steps
 
 ### Immediate (This Week)
-1. **[ACTION]** Decide on base LLM: Qwen-2.5 7B vs Llama-3 8B
-2. **[ACTION]** Implement attention pooling (`src/models/pooling.py`)
-3. **[ACTION]** Implement MLP projector (`src/models/projector.py`)
-4. ~~**[ACTION]** Download and preprocess Mol-Instructions dataset~~ ✅ Downloaded
-5. **[ACTION]** Preprocess downloaded datasets into training format
+1. ~~**[ACTION]** Decide on base LLM~~ **RESOLVED**: Qwen3-4B-Instruct-2507
+2. **[ACTION]** Complete ESM-3 encoder GPU verification
+3. **[ACTION]** Fix GRPO gradient flow bug
+4. **[ACTION]** Fix evaluate.py argument parsing bugs
+5. **[ACTION]** Run first ESM-3 + Qwen3-4B SFT experiment
 
 ### Short-term (Next 2 Weeks)
-5. **[ACTION]** Implement SFT trainer with TRL
-6. **[ACTION]** Run first training experiment
-7. **[ACTION]** Evaluate on GO prediction benchmark
+6. **[ACTION]** Preprocess downloaded datasets into training format
+7. **[ACTION]** Run text-approach baseline for comparison
+8. **[ACTION]** Evaluate on GO prediction benchmark
+9. **[ACTION]** Run GRPO alignment after SFT
 
 ### Medium-term
-8. **[ACTION]** Implement GRPO with veRL
-9. **[ACTION]** Run full SFT → GRPO pipeline
-10. **[ACTION]** Compare against baselines (ESM2-650M, ProtT5)
+10. **[ACTION]** Run full SFT -> GRPO pipeline
+11. **[ACTION]** Compare approaches: text vs ESM-3 (MLP vs Perceiver)
+12. **[ACTION]** Compare against baselines (ESM2-650M, ProtT5)
+
+---
+
+## Projection-Only Vision-Language Multimodal LLM Survey (2026-02-20)
+
+### Overview
+
+This survey covers state-of-the-art multimodal LLM architectures from 2024-2026 that integrate non-text modalities (primarily vision) into LLMs using projection-based connectors WITHOUT adding cross-attention layers to the LLM backbone. These are "projection-only" or "LLM-as-decoder" architectures where visual tokens are simply concatenated with text tokens in the input sequence.
+
+The universal pattern is: **Encoder (frozen) -> Token Reduction -> Projector (MLP) -> LLM (LoRA or full fine-tune)**
+
+This is directly analogous to our protein pipeline: **ESM-3 (frozen) -> Attention Pooling -> MLP Projector -> Qwen3-4B (LoRA k/v)**
+
+---
+
+### 1. InternVL2.5 & InternVL3 (Dec 2024 / Apr 2025)
+
+**Paper**: "Expanding Performance Boundaries of Open-Source Multimodal Models" (arXiv 2412.05271)
+
+**Architecture**: InternViT-6B + Pixel Unshuffle + 2-Layer MLP + LLM (InternLM2.5 / Qwen2.5 series)
+
+**Projector**: Randomly initialized 2-layer MLP projector. Maps from InternViT hidden dim to LLM hidden dim.
+
+**Token Reduction -- Pixel Unshuffle**:
+- Each 448x448 image tile produces 1024 visual tokens from the ViT
+- A pixel unshuffle (space-to-depth) operation with factor 2 rearranges each 2x2 spatial block into 4 channel dimensions
+- This reduces 1024 tokens to 256 tokens per tile (4x reduction)
+- The channel dimension quadruples correspondingly, preserving information
+- Mathematically: feature map [H, W, C] -> [H/2, W/2, 4C], then the MLP reduces 4C back to LLM dim
+
+**Dynamic Resolution Tiling**:
+- Images are divided into tiles of 448x448 pixels
+- A configurable `n_max` parameter controls max tiles per image (6-12 for standard images, 24-36 for high-res/multi-image, 1 for video frames)
+- When more than 1 tile is used, a thumbnail of the full image is also included
+- Total visual tokens = (n_tiles + 1) x 256 for multi-tile, or 256 for single-tile
+
+**Training Stages**:
+
+| Stage | Trainable | Frozen | Learning Rate | Data |
+|-------|-----------|--------|---------------|------|
+| Stage 1 (MLP Warmup) | MLP projector only | ViT + LLM | 2e-4 | Image-text pairs |
+| Stage 1.5 (ViT Warmup) | ViT + MLP | LLM | 1e-5 | Image-text pairs |
+| Stage 2 (Full Fine-tune) | All parameters | None | 2e-5 to 4e-5 | Instruction data (16.3M for v2.5, 21.7M for v3) |
+
+**InternViT-6B Specifications**: 5.5B parameters, 45 layers, 3200 hidden size, 25 attention heads, with QK-Norm and RMSNorm.
+
+**InternVL3 Additions**:
+- **V2PE (Variable Visual Position Encoding)**: Uses smaller, more flexible position increments for visual tokens. Instead of each visual token consuming one position ID, V2PE assigns fractional position increments, enabling much longer multimodal contexts without exhausting the position embedding range.
+- **Native Multimodal Pre-Training**: Interleaves image-text, video-text data with pure text corpora during LLM pre-training (single stage instead of sequential adaptation).
+- **Mixed Preference Optimization (MPO)**: Adds preference supervision from positive/negative sample pairs during fine-tuning.
+
+**Key Insight**: The pixel unshuffle operation is simple, parameter-free, and preserves all spatial information by trading spatial resolution for channel depth. The MLP then learns to compress the expanded channels.
+
+**Performance**: InternVL3-8B achieves 62.7% on MMMU, 92.7% on DocVQA. InternVL3-78B reaches 72.2% MMMU.
+
+**Sources**: [InternVL2.5 Paper](https://arxiv.org/html/2412.05271v1), [InternVL3 Blog](https://internvl.github.io/blog/2025-04-11-InternVL-3.0/), [InternVL Docs](https://internvl.readthedocs.io/en/latest/internvl2.0/introduction.html)
+
+---
+
+### 2. LLaVA-NeXT / LLaVA-v1.6 / LLaVA-OneVision (2024)
+
+**Paper**: "LLaVA-OneVision: Easy Visual Task Transfer" (arXiv 2408.03326)
+
+**Architecture**: SigLIP (384x384) + 2-Layer MLP (GELU) + LLM (Qwen-2 series)
+
+**Projector**: 2-layer MLP with GELU activation ("mlp2x_gelu" configuration). First linear layer maps vision encoder hidden dim to LLM hidden dim; second linear layer maintains LLM hidden dim. This design originated in LLaVA-1.5 and became the de facto standard.
+
+**AnyRes Dynamic Resolution**:
+- Images are divided into a x b crops (tiles), where (a,b) is chosen from a predefined set of spatial configurations to match the image's aspect ratio
+- Each crop is processed by SigLIP at 384x384 resolution, producing 729 tokens per crop (27x27 grid)
+- A full-image thumbnail is always included
+- Total tokens: L = (a*b + 1) * 729
+- When L exceeds a threshold, bilinear interpolation pools tokens down to the budget
+- "Higher-AnyRes" in OneVision dynamically adapts the crop strategy across single-image, multi-image, and video scenarios
+
+**Visual Token Counts**:
+- Base resolution (384x384): 729 tokens
+- Stage 1: 729 tokens (no tiling)
+- Stage 2 (single-image): up to 729 x 5 = 3,645 tokens
+- Stage 2 (multi-image/video): up to 729 x 10 = 7,290 tokens
+
+**Training Stages**:
+
+| Stage | Trainable | Frozen | LR (ViT) | LR (Projector) |
+|-------|-----------|--------|-----------|----------------|
+| Stage 1 (Alignment) | Projector only | LLM + ViT | - | 1e-3 |
+| Stage 1.5 (High-Quality Knowledge) | ViT + Projector | LLM | 2e-6 | 1e-5 |
+| Stage 2 (Visual Instruction Tuning) | All | None | 2e-6 | 1e-5 |
+
+**Data Scale**: 3.2M single-image + 0.56M multi-image + 0.35M video samples for instruction tuning.
+
+**Key Insight**: The 2-layer MLP is sufficient -- more complex connectors (Q-Former, Perceiver) do not consistently outperform it. The critical factor is training data quality and the multi-stage recipe. LLaVA proved that simplicity wins.
+
+**Performance**: LLaVA-OneVision-72B achieves 91.3% DocVQA, 85.9% MMBench, 66.2% VideoMME.
+
+**Sources**: [LLaVA-OneVision Paper](https://arxiv.org/html/2408.03326v1), [LLaVA-OneVision Blog](https://llava-vl.github.io/blog/2024-08-05-llava-onevision/), [LLaVA GitHub](https://github.com/haotian-liu/LLaVA)
+
+---
+
+### 3. Qwen2-VL / Qwen2.5-VL (Sep 2024 / Feb 2025)
+
+**Paper**: "Qwen2-VL: Enhancing Vision-Language Model's Perception of the World at Any Resolution" (arXiv 2409.12191)
+
+**Architecture**: Custom ViT (675M, trained from scratch) + 2D-RoPE + MLP Merger (2x2 compression) + LLM (Qwen2/2.5 series)
+
+**Projector / Vision-Language Merger**:
+- After the ViT encoder, adjacent 2x2 tokens are grouped
+- A 2-layer MLP compresses each group of 4 tokens into 1 token (4x compression)
+- Output dimension: 3584 (matching Qwen2.5 LLM hidden dim)
+- Special `<vision_start>` and `<vision_end>` delimiter tokens bracket the visual sequence
+
+**Naive Dynamic Resolution**:
+- Unlike tiling approaches, Qwen2-VL processes images at their native resolution
+- Images are encoded with patch_size=14, then the merger compresses 2x2 patches into single tokens
+- A 224x224 image yields ~66 tokens after compression
+- Resolution bounds controlled by min_pixels and max_pixels parameters
+- Average ~1,924 tokens per image during inference
+
+**2D-RoPE (2D Rotary Position Embedding)**:
+- Replaces standard absolute position embeddings in the ViT
+- Encodes spatial positions as 2D coordinates (row, column) rather than flattened 1D sequence positions
+- Enables the ViT to handle variable resolutions without retraining or interpolation
+- Each patch receives position encoding based on its (x, y) coordinate in the image grid
+
+**Window Attention** (Qwen2.5-VL):
+- The ViT uses window attention operating over local spatial windows
+- Reduces computational complexity from quadratic to linear with respect to patch count
+- Enables processing of very high-resolution images efficiently
+
+**Training Stages** (Qwen2-VL):
+
+| Stage | Trainable | Data | Tokens |
+|-------|-----------|------|--------|
+| Stage 1 (ViT Pre-training) | ViT only | Image-text pairs | ~600B |
+| Stage 2 (Joint Pre-training) | All unfrozen | Diverse multimodal | ~800B |
+| Stage 3 (Instruction Fine-tuning) | LLM (ViT frozen) | Instruction data | - |
+
+Total pre-training: 1.4 trillion tokens. Qwen2.5-VL further extends with 1.5T tokens for ViT-only pretraining and 4.1T tokens total.
+
+**Key Insight**: "Naive" dynamic resolution (process at native resolution, then compress) outperforms forced tiling because it preserves the natural aspect ratio and spatial relationships. The 2D-RoPE elegantly handles variable resolutions in the ViT itself.
+
+**Performance**: Qwen2-VL-72B achieves 96.5% DocVQA (previous SOTA 94.1%), 77.8% RealWorldQA, 89.6% UI operation accuracy.
+
+**Sources**: [Qwen2-VL Paper](https://arxiv.org/html/2409.12191v1), [Qwen2.5-VL Technical Report](https://arxiv.org/pdf/2502.13923), [Qwen2.5-VL HuggingFace](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct)
+
+---
+
+### 4. Cambrian-1 (Jun 2024, NeurIPS 2024 Oral)
+
+**Paper**: "Cambrian-1: A Fully Open, Vision-Centric Exploration of Multimodal LLMs" (arXiv 2406.16860)
+
+**Architecture**: Multi-Encoder (SigLIP + CLIP + DINOv2 + ConvNeXt) + Spatial Vision Aggregator (SVA) + LLM
+
+**Spatial Vision Aggregator (SVA)**:
+- A learned cross-attention connector that replaces the simple MLP projector
+- Uses a set of learnable latent queries (default: 576 queries) that interact with all vision encoder feature maps via cross-attention
+- **Spatial inductive bias**: Each query is explicitly associated with a specific sub-region of the feature maps. Queries are spatially indexed so that nearby queries attend to nearby spatial regions across all encoders.
+- **Multi-layer vision aggregation**: Cross-attention occurs multiple times throughout the LLM layers (not just at input), providing consistent access to uncompressed visual information
+- Hyperparameters: D (number of cross-attention layers), G (number of distinct groups of learnable queries)
+- All vision encoder outputs are resized to a common spatial resolution before aggregation
+
+**Vision Encoders Used**:
+- SigLIP (CLIP-ViT-SO400M-14-384): Semantic understanding
+- OpenAI CLIP (ViT-L/14-336): General visual-language alignment
+- DINOv2-Giant (378px): Self-supervised spatial features
+- CLIP-ConvNeXt-XXL (multi-stage): Hierarchical features
+
+**Token Efficiency**: 576 image tokens vs 2,880 for LLaVA-NeXT (5x reduction) at comparable performance.
+
+**Training Stages**:
+
+| Stage | Trainable | Frozen | Data |
+|-------|-----------|--------|------|
+| 1. Visual Connector Training | SVA connector | All vision encoders + LLM | 2.5M Cambrian Alignment Data |
+| 2. Instruction Tuning | SVA + LLM | All vision encoders | 7M Cambrian Instruction Data |
+
+**Key Insight**: Different vision encoders capture complementary information (CLIP for semantics, DINOv2 for spatial/geometric features, ConvNeXt for hierarchical features). Combining them via cross-attention learnable queries outperforms any single encoder. The paper systematically evaluated 20+ vision encoders.
+
+**Performance**: State-of-the-art with only 576 tokens. Achieves competitive results with LLaVA-NeXT and Mini-Gemini while using 5x fewer visual tokens.
+
+**Sources**: [Cambrian-1 Paper](https://arxiv.org/abs/2406.16860), [Cambrian GitHub](https://github.com/cambrian-mllm/cambrian), [NeurIPS 2024](https://neurips.cc/virtual/2024/oral/97972)
+
+---
+
+### 5. Molmo (Sep 2024)
+
+**Paper**: "Molmo and PixMo: Open Weights and Open Data for State-of-the-Art Vision-Language Models" (arXiv 2409.17146)
+
+**Architecture**: CLIP ViT-L/14 (336px) + Multi-Crop + Attention Pooling + MLP (SwiGLU) + LLM (OLMo/Qwen2)
+
+**Projector/Connector**:
+- Multi-headed attention pooling on 2x2 patch windows (mean of patches as query, 16 attention heads)
+- Followed by an MLP with SwiGLU activation
+- MLP intermediate dimension matches the LLM's intermediate dimension
+- Connector parameters: 12M (1B model) to 310M (72B model)
+
+**Multi-Crop Strategy**:
+- Pre-processor converts input image into multiple overlapping crops at different scales
+- Training: 12 high-resolution crops + 1 low-resolution full image
+- Testing: 36 high-resolution crops + 1 low-resolution full image
+- Crops overlap by 4 patches (56 pixels) for context continuity
+- Learned crop position embeddings (3 types: no padding, some padding, all padding)
+
+**Visual Token Counts**:
+- Each crop: 144 patches (12x12 grid from ViT-L/14)
+- After 2x2 attention pooling: 36 tokens per crop
+- Training total: ~1,849 tokens (12 crops x ~144 + 1 low-res)
+- Testing total: ~4,453 tokens (36 crops)
+
+**Training** (simplified 2-stage):
+
+| Stage | Trainable | Data | Key LR |
+|-------|-----------|------|--------|
+| Pre-training | All parameters | PixMo-Cap (proprietary captions) | ViT: 6e-6, Connector: 2e-4 |
+| Fine-tuning | All parameters | Mixed instruction data | Similar differential LR |
+
+**Key Insight**: Data quality matters more than architectural novelty. Molmo's architecture is relatively simple (attention pooling + MLP), but its PixMo dataset of highly detailed, speech-transcript-based image captions drives its performance. They show that careful data curation can substitute for architectural complexity.
+
+**Performance**: Molmo-72B ranks second in human evaluation (Elo 1077 vs GPT-4o's 1079). Molmo-7B-D scores 93.2% AI2D, 85.6% VQAv2.
+
+**Sources**: [Molmo Paper](https://arxiv.org/html/2409.17146v2), [Molmo Blog](https://allenai.org/blog/molmo), [Molmo GitHub](https://github.com/allenai/molmo)
+
+---
+
+### 6. DeepSeek-VL2 (Dec 2024)
+
+**Paper**: "DeepSeek-VL2: Mixture-of-Experts Vision-Language Models" (arXiv 2412.10302)
+
+**Architecture**: SigLIP-SO400M (384px) + Dynamic Tiling + Pixel Shuffle + 2-Layer MLP + DeepSeekMoE LLM (with MLA)
+
+**Projector**: 2-layer MLP that projects compressed visual tokens into LLM embedding space.
+
+**Token Reduction -- Pixel Shuffle**:
+- SigLIP produces 27x27 = 729 embeddings per 384x384 tile (at 1152 dimensions)
+- A 2x2 pixel shuffle compresses 729 tokens to 14x14 = 196 tokens per tile
+- Channel dimension expands correspondingly (1152 -> 4x1152 then MLP reduces)
+- Separator tokens delineate spatial structure and global-local context
+
+**Dynamic Tiling**:
+- Candidate resolutions: {(m*384, n*384) | m,n in N, 1<=m,n, m*n<=9}
+- Select resolution minimizing padding area
+- Divide into m x n tiles of 384x384 plus one global thumbnail
+- For extreme aspect ratios (e.g., infographics): constraint expands to m*n<=18
+
+**Total Visual Tokens**: Per image: 210 + 1 + m_i * 14 * (n_i * 14 + 1) tokens (including thumbnail, separators, newlines).
+
+**Training Stages**:
+
+| Stage | Trainable | Frozen | Data |
+|-------|-----------|--------|------|
+| 1. Alignment | Vision encoder + MLP | LLM | Image-text pairs |
+| 2. Pre-training | All | None | ~800B image-text tokens |
+| 3. SFT | All | None | Instruction data (loss on answers only) |
+
+**MoE Integration**: The LLM uses Mixture-of-Experts with Multi-head Latent Attention (MLA), which compresses Key-Value cache into latent vectors for efficient inference. Top-6 experts selected per token. Model variants: Tiny (1.0B activated), Small (2.8B activated), Full (4.5B activated).
+
+**Key Insight**: Combining MoE with multimodal processing allows large effective capacity while keeping inference cost low. The pixel shuffle + MLP pipeline is nearly identical to InternVL but uses a different ViT (SigLIP vs InternViT).
+
+**Sources**: [DeepSeek-VL2 Paper](https://arxiv.org/html/2412.10302v1), [DeepSeek-VL2 GitHub](https://github.com/deepseek-ai/DeepSeek-VL2)
+
+---
+
+### 7. Phi-3-Vision / Phi-3.5-Vision (Jun/Aug 2024)
+
+**Architecture**: CLIP ViT-L/14 + num_crops tiling + MLP Projector + Phi-3 Mini (3.8B)
+
+**Projector**: Multi-Layer Perceptron that transforms visual patch embeddings into the text feature space. Follows the LLaVA-style 2-layer MLP pattern.
+
+**Image Processing**: Uses a `num_crops` parameter (4 for multi-frame, 16 for single-frame) to control how images are cropped and processed. Each crop is processed independently by the ViT, then projected.
+
+**Training**: End-to-end on 500B tokens (visual + textual) using 256 A100-80G GPUs over 6 days.
+
+**Key Insight**: A small (4.2B) model with efficient architecture can achieve strong multimodal performance. Emphasizes on-device deployment capability with 128K context length.
+
+**Sources**: [Phi-3.5-Vision HuggingFace](https://huggingface.co/microsoft/Phi-3.5-vision-instruct), [Microsoft Blog](https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/phi-3-vision-%E2%80%93-catalyzing-multimodal-innovation/4170251)
+
+---
+
+### 8. MM1 / MM1.5 (Mar/Sep 2024)
+
+**Paper**: "MM1.5: Methods, Analysis & Insights from Multimodal LLM Fine-tuning" (arXiv 2409.20566)
+
+**Architecture**: CLIP image encoder + dynamic image splitting + connector + LLM (1B-30B, dense and MoE)
+
+**Key Finding on Connectors**: The image encoder, image resolution, and token count have **substantial impact** on performance, while the vision-language connector design is of **comparatively negligible importance**. This is one of the most important ablation results in the multimodal LLM literature -- it shows the projector is NOT the bottleneck.
+
+**Image Processing**: High-resolution images up to 4 Megapixels, with dynamic splitting for various aspect ratios.
+
+**Training**: Data-centric approach with emphasis on data mixture optimization across continual pre-training (high-quality OCR data, synthetic captions) and supervised fine-tuning.
+
+**Key Insight**: Data quality and training recipe matter far more than connector architecture. This validates using a simple 2-layer MLP projector and investing effort in data quality.
+
+**Sources**: [MM1 Paper](https://arxiv.org/abs/2403.09611), [MM1.5 Paper](https://arxiv.org/abs/2409.20566)
+
+---
+
+### 9. Vision-Language Architecture Comparison Table
+
+| Model | Encoder | Projector | Token Reduction | Tokens/Image | Training Stages | Key Innovation |
+|-------|---------|-----------|-----------------|--------------|-----------------|----------------|
+| **InternVL2.5/3** | InternViT-6B (5.5B) | 2-layer MLP | Pixel unshuffle 2x2 (4x) | 256/tile | 3 (MLP -> ViT+MLP -> All) | Large ViT + pixel unshuffle + V2PE |
+| **LLaVA-OneVision** | SigLIP (384px) | 2-layer MLP (GELU) | AnyRes tiling + interpolation | 729-7290 | 3 (Proj -> ViT+Proj -> All) | AnyRes dynamic cropping, simplicity |
+| **Qwen2-VL/2.5-VL** | Custom ViT (675M) | 2-layer MLP merger | 2x2 patch grouping (4x) | ~66-1924 | 3 (ViT -> All -> SFT) | 2D-RoPE, naive dynamic resolution |
+| **Cambrian-1** | 4 encoders (SigLIP+CLIP+DINOv2+ConvNeXt) | SVA (cross-attention) | Learnable queries | 576 | 2 (SVA -> SVA+LLM) | Multi-encoder + spatial aggregation |
+| **Molmo** | CLIP ViT-L/14 | Attn pooling + MLP (SwiGLU) | 2x2 attn pooling (4x) | ~1849-4453 | 2 (All -> All) | Overlapping multi-crop, data quality |
+| **DeepSeek-VL2** | SigLIP-SO400M | 2-layer MLP | Pixel shuffle 2x2 (4x) | 196/tile | 3 (Enc+MLP -> All -> SFT) | MoE LLM + pixel shuffle |
+| **Phi-3.5-Vision** | CLIP ViT-L/14 | MLP projector | num_crops tiling | Variable | End-to-end (500B tokens) | Small model, on-device |
+| **MM1.5** | CLIP | Connector (various) | Dynamic splitting | Variable | Pre-train + SFT | Data-centric, connector doesn't matter |
+| **Our Pipeline** | ESM-3 (1.4B, frozen) | 2-layer MLP (1536->2048->2560) | Attention pooling (L->32) | 32 | 2 (Proj -> Proj+LoRA) | Protein-specific, aggressive pooling |
+
+---
+
+### 10. Cross-Domain Implications for Our Protein LLM Pipeline
+
+#### What We Are Already Doing Right
+1. **2-layer MLP projector**: Matches the field consensus. MM1.5 confirmed connector design is not the bottleneck.
+2. **Frozen encoder**: Every top system freezes the vision encoder (at least in later stages). We freeze ESM-3 always.
+3. **Multi-stage training**: Our alignment (projector-only) then instruction tuning (projector + LoRA) matches the dominant pattern.
+4. **Differential learning rate**: Our projector_lr=2e-3 vs base lr=2e-4 aligns with LLaVA and Molmo approaches.
+
+#### Potential Improvements to Consider
+1. **Token count**: We use 32 tokens (very aggressive). Most vision models use 256-576 tokens. For proteins, this may lose per-residue detail needed for tasks like contact prediction or active site identification. Consider experimenting with 64 or 128 pooled tokens.
+2. **Pooling mechanism**: Molmo's 2x2 attention pooling with SwiGLU is worth comparing against our global attention pooling. Their approach preserves local spatial context better.
+3. **Multi-encoder fusion**: Following Cambrian-1, we could combine ESM-3 with a complementary encoder (e.g., ProtTrans for different pretraining bias, or a GNN for structural topology) using cross-attention aggregation.
+4. **Position encoding for protein tokens**: InternVL3's V2PE (fractional position increments for visual tokens) could be adapted. Currently our 32 protein tokens consume 32 position IDs. Using fractional increments could improve how the LLM distinguishes protein context from text.
+5. **Residue shuffle analog for proteins**: Instead of attention pooling, we could try a "residue shuffle" -- grouping adjacent residues (e.g., windows of 4) and merging their embeddings via concatenation + MLP. This would be more parameter-efficient and preserve local sequence context, analogous to pixel shuffle.
 
 ---
 

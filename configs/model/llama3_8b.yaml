@@ -1,4 +1,4 @@
-name: llama3_8b
+name: llama3_8b_it
 path: meta-llama/Llama-3.1-8B-Instruct
 type: causal_lm
 

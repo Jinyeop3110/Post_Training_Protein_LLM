@@ -16,12 +16,12 @@ Download:
     tar xvf pdb_2021aug02_sample.tar.gz
 """
 
-import os
 import csv
-import torch
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
-from torch.utils.data import Dataset, DataLoader
+from typing import Any, Dict, List, Optional
+
+import torch
+from torch.utils.data import DataLoader, Dataset
 
 
 class PDBProteinDataset(Dataset):
@@ -284,7 +284,7 @@ if __name__ == "__main__":
 
     # Test single sample
     sample = dataset[0]
-    print(f"\nSample 0:")
+    print("\nSample 0:")
     print(f"  Chain ID: {sample['chain_id']}")
     print(f"  Sequence length: {sample['length']}")
     print(f"  Sequence: {sample['sequence'][:50]}...")

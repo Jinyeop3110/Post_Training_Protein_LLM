@@ -5,7 +5,7 @@
 
 defaults:
   - override /model: qwen3_4b
-  - override /encoder: esm2_650m
+  - override /encoder: esm3_small
   - override /data: mol_instructions
 
 experiment_name: full_pipeline_${now:%Y%m%d_%H%M%S}

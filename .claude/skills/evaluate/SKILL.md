@@ -28,8 +28,7 @@ Evaluate the protein-LLM model:
    ```
 
 5. Compare baselines:
-   - ESM2-650M (no fine-tuning)
-   - ESM2-3B (no fine-tuning)
+   - ESM-3 small (no fine-tuning)
    - ProtT5-XL
 
 6. Generate report:

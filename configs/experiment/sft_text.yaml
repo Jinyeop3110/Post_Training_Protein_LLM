@@ -1,0 +1,35 @@
+# @package _global_
+
+# SFT experiment: Text-only approach (no encoder)
+# Raw protein sequence as <protein>MKTL...</protein> tokens to LLM
+# Trainable: ~2M params (LoRA only, no pooling/projector)
+#
+# Usage: python scripts/train.py experiment=sft_text
+
+defaults:
+  - override /model: qwen3_8b
+  - override /encoder: esm3_small  # Ignored when approach=text, but Hydra needs it
+  - override /data: mol_instructions
+  - override /training: sft_lora
+
+approach: text
+experiment_name: sft_text_${model.name}_${now:%m%d_%H%M%S}
+
+training:
+  # Text-only: no projector, so no differential LR needed
+  projector_lr: null
+
+  # Token-budget dynamic batching: no encoder overhead, larger budget
+  max_tokens_per_batch: 16384
+  max_batch_size: 32
+  gradient_accumulation_steps: 2
+
+  epochs: 3
+  lr: 2e-4
+  max_seq_length: 2048  # Protein sequences can be long as text tokens
+
+  wandb:
+    tags:
+      - sft_lora
+      - text_only
+      - ${model.name}

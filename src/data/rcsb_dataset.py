@@ -10,18 +10,17 @@ Supported formats:
     - .ent (PDB format with .ent extension)
 """
 
-import os
 import gzip
+import os
 import urllib.request
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any, Union
-from collections import defaultdict
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader, Dataset
 
 try:
-    from Bio.PDB import PDBParser, MMCIFParser
+    from Bio.PDB import MMCIFParser, PDBParser
     from Bio.PDB.Polypeptide import is_aa, protein_letters_3to1
     HAS_BIOPYTHON = True
 
@@ -407,7 +406,7 @@ if __name__ == "__main__":
 
     if len(dataset) > 0:
         sample = dataset[0]
-        print(f"\nSample 0:")
+        print("\nSample 0:")
         print(f"  PDB ID: {sample['pdb_id']}")
         print(f"  Chain: {sample['chain_id']}")
         print(f"  Sequence length: {sample['length']}")

@@ -57,7 +57,7 @@ def load_checkpoint(
     if not path.exists():
         raise FileNotFoundError(f"Checkpoint not found: {path}")
 
-    state = torch.load(path, map_location=map_location)
+    state = torch.load(path, map_location=map_location, weights_only=True)
     log.info(f"Checkpoint loaded from {path}")
 
     return state

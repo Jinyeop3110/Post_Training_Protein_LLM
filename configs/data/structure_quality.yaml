@@ -1,0 +1,22 @@
+name: structure_quality
+source: AlphaFold_DB
+task: esmfold  # Task type for reward routing in GRPOTrainer
+
+# Dataset paths
+paths:
+  raw: ${paths.raw_dir}/structure_quality
+  processed: ${paths.processed_dir}/structure_quality
+
+# Processing settings
+processing:
+  max_seq_length: 2048
+  include_structure: false
+
+# Split ratios
+splits:
+  train: 0.9
+  validation: 0.05
+  test: 0.05
+
+# Optional: limit number of samples (null = use all)
+limit: null

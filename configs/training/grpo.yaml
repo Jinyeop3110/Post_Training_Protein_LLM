@@ -8,8 +8,13 @@ grpo:
   use_kl_penalty: false  # DAPO improvement
   normalize_advantages: false  # Dr. GRPO improvement
 
+# Quantization (disabled for GRPO — FSDP2 incompatible with bitsandbytes)
+quantization:
+  enabled: false
+
 # Training parameters
 lr: 5e-6  # Much lower than SFT!
+projector_lr: 2e-5  # 10x base LR for pooling+projector (randomly initialized)
 epochs: 1
 batch_size: 4
 gradient_accumulation_steps: 8
@@ -22,8 +27,13 @@ lora:
   alpha: 16
   dropout: 0.05
   target_modules:
+    - q_proj
     - k_proj
     - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
 
 # Rollout settings
 rollout:
@@ -35,3 +45,14 @@ rollout:
 # Checkpointing
 save_steps: 100
 eval_steps: 50
+
+# Logging
+logging_steps: 10
+
+# wandb settings (override global logging.wandb)
+wandb:
+  project: protein-llm-rl
+  tags:
+    - grpo
+    - ${model.name}
+    - mol_instructions

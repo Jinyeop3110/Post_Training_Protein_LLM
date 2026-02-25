@@ -41,7 +41,7 @@ python scripts/train.py --multirun training.lr=1e-4,2e-4,5e-4
 # config.yaml
 defaults:
   - model: qwen2_7b
-  - encoder: esm2_650m
+  - encoder: esm3_small
   - data: mol_instructions
   - training: sft_qlora
   - _self_

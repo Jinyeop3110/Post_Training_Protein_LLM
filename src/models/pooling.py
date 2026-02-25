@@ -2,7 +2,7 @@
 Pooling Module for Protein Embeddings
 
 This module provides different pooling strategies to transform per-residue
-ESM-2 embeddings [B, L, D] into fixed-size representations suitable for
+ESM-3 embeddings [B, L, D] into fixed-size representations suitable for
 use as LLM prefix tokens.
 
 Pooling Strategies:
@@ -14,11 +14,10 @@ Pooling Strategies:
 """
 
 from abc import ABC, abstractmethod
-from typing import Optional, Union, Dict, Any
+from typing import Any, Dict, Optional
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 
 class BasePooling(nn.Module, ABC):
@@ -84,7 +83,7 @@ class AttentionPooling(BasePooling):
 
         Args:
             embed_dim: Embedding dimension (must match input embedding dim).
-                      Default is 1280 for ESM-2 650M.
+                      Default is 1280.
             num_output_tokens: Number of output tokens to produce.
             num_heads: Number of attention heads.
             dropout: Dropout probability for attention weights.

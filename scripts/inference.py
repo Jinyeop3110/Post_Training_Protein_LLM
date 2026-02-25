@@ -1,101 +1,93 @@
 #!/usr/bin/env python3
-"""Inference/demo script for protein-LLM."""
+"""Inference/demo script for protein-LLM.
+
+Usage::
+
+    # ProteinLLM checkpoint (ESM-3 approach)
+    python scripts/inference.py --checkpoint results/.../checkpoints/protein_llm \
+        --sequence MKTAYIAKQRQISFVKSHFSRQLEERLGLIEVQAPILSRVGDGTQ \
+        --prompt "Describe the function of this protein."
+
+    # Custom prompt with max tokens
+    python scripts/inference.py --checkpoint results/.../checkpoints/protein_llm \
+        --sequence MKTAYIAK --prompt "What domains does this protein have?" \
+        --max-tokens 256 --temperature 0.3
+"""
 
 import argparse
 import logging
+import os
+import sys
 from pathlib import Path
 
-import torch
+# Set Triton cache to local filesystem (CRITICAL: must be before any torch import)
+os.environ.setdefault("TRITON_CACHE_DIR", f"/tmp/triton_cache_{os.environ.get('USER', 'unknown')}")
+
+# Ensure project root on path
+_PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
+
+from src.models.multimodal_llm import ProteinLLM
 
 log = logging.getLogger(__name__)
 
 
-def load_model(checkpoint_path: str, device: str = "cuda"):
-    """Load trained model from checkpoint.
-
-    Args:
-        checkpoint_path: Path to model checkpoint.
-        device: Device to load model on.
-
-    Returns:
-        Loaded model and tokenizer.
-    """
-    from transformers import AutoModelForCausalLM, AutoTokenizer
-    from peft import PeftModel
-
-    # Load base model and tokenizer
-    # (Actual implementation depends on your model architecture)
-    log.info(f"Loading model from {checkpoint_path}")
-
-    # Placeholder - implement based on your model
-    raise NotImplementedError("Implement model loading based on your architecture")
-
-
-def run_inference(
-    model,
-    tokenizer,
-    protein_sequence: str,
-    prompt: str,
-    max_new_tokens: int = 512,
-):
-    """Run inference on a protein sequence.
-
-    Args:
-        model: Loaded model.
-        tokenizer: Tokenizer.
-        protein_sequence: Input protein sequence.
-        prompt: Text prompt/question about the protein.
-        max_new_tokens: Maximum tokens to generate.
-
-    Returns:
-        Generated response.
-    """
-    # Format input
-    input_text = f"Protein: {protein_sequence}\n\nQuestion: {prompt}\n\nAnswer:"
-
-    inputs = tokenizer(input_text, return_tensors="pt").to(model.device)
-
-    with torch.no_grad():
-        outputs = model.generate(
-            **inputs,
-            max_new_tokens=max_new_tokens,
-            do_sample=True,
-            temperature=0.7,
-            top_p=0.9,
-        )
-
-    response = tokenizer.decode(outputs[0], skip_special_tokens=True)
-    return response
-
-
 def main():
     parser = argparse.ArgumentParser(description="Protein-LLM Inference")
-    parser.add_argument("--checkpoint", required=True, help="Path to checkpoint")
-    parser.add_argument("--sequence", required=True, help="Protein sequence")
-    parser.add_argument("--prompt", required=True, help="Question about the protein")
+    parser.add_argument("--checkpoint", required=True, help="Path to protein_llm checkpoint dir")
+    parser.add_argument("--sequence", required=True, help="Protein amino acid sequence")
+    parser.add_argument("--prompt", default="Describe the function of this protein.",
+                        help="Question about the protein")
     parser.add_argument("--device", default="cuda", help="Device (cuda/cpu)")
     parser.add_argument("--max-tokens", type=int, default=512, help="Max output tokens")
-
+    parser.add_argument("--temperature", type=float, default=0.7, help="Sampling temperature")
     args = parser.parse_args()
 
-    logging.basicConfig(level=logging.INFO)
-
-    # Load model
-    model, tokenizer = load_model(args.checkpoint, args.device)
-
-    # Run inference
-    response = run_inference(
-        model,
-        tokenizer,
-        args.sequence,
-        args.prompt,
-        args.max_tokens,
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
 
-    print("\n" + "="*50)
+    # Load model
+    log.info(f"Loading model from {args.checkpoint}")
+    model = ProteinLLM.from_pretrained(args.checkpoint, device=args.device)
+    model.eval()
+    log.info(f"Model loaded: approach={model.approach}, projector_type={model.projector_type}")
+
+    # Build prompt with protein placeholder
+    if model.approach in ("esm3",):
+        user_content = f"{args.prompt}\n<|protein_start|><|protein_embed|><|protein_end|>"
+    else:
+        user_content = f"{args.prompt}\n<protein>{args.sequence}</protein>"
+
+    prompt = model.tokenizer.apply_chat_template(
+        [
+            {"role": "system", "content": "You are a protein science expert."},
+            {"role": "user", "content": user_content},
+        ],
+        tokenize=False,
+        add_generation_prompt=True,
+        enable_thinking=False,
+    )
+
+    # Generate
+    log.info(f"Protein: {args.sequence[:50]}{'...' if len(args.sequence) > 50 else ''}")
+    log.info(f"Prompt: {args.prompt}")
+
+    outputs = model.generate(
+        protein_sequences=[args.sequence],
+        prompt=prompt,
+        max_new_tokens=args.max_tokens,
+        temperature=args.temperature,
+        do_sample=True,
+    )
+
+    print(f"\n{'='*60}")
     print("Response:")
-    print("="*50)
-    print(response)
+    print(f"{'='*60}")
+    print(outputs[0])
 
 
 if __name__ == "__main__":

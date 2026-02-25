@@ -2,14 +2,15 @@
 MLP Projector Module
 
 This module provides the MLPProjector class for mapping protein embeddings
-from ESM-2 (1280-dim) to LLM hidden size (4096-dim) as prefix tokens.
+from the ESM-3 encoder (1536-dim) to LLM hidden size as prefix tokens.
 
 The projector serves as a bridge between the protein encoder and the language model,
 transforming protein representations into a format compatible with the LLM's
 embedding space.
 """
 
-from typing import Dict, Any, Optional, Callable, Union
+from typing import Any, Callable, Dict, Union
+
 import torch
 import torch.nn as nn
 from omegaconf import DictConfig
@@ -19,11 +20,11 @@ class MLPProjector(nn.Module):
     """
     Multi-Layer Perceptron Projector for mapping protein embeddings to LLM space.
 
-    This module projects ESM-2 embeddings to the LLM's hidden dimension,
+    This module projects ESM-3 embeddings to the LLM's hidden dimension,
     enabling the use of protein representations as prefix tokens for the LLM.
 
     Args:
-        input_dim: Dimension of input embeddings (ESM-2 output). Default: 1280.
+        input_dim: Dimension of input embeddings (ESM-3 output). Default: 1280.
         hidden_dim: Dimension of intermediate hidden layers. Default: 2048.
         output_dim: Dimension of output embeddings (LLM hidden size). Default: 4096.
         num_layers: Number of MLP layers. Default: 2.
@@ -97,6 +98,7 @@ class MLPProjector(nn.Module):
         For num_layers=1: input_dim -> output_dim
         For num_layers=2: input_dim -> hidden_dim -> output_dim
         For num_layers>2: input_dim -> hidden_dim -> ... -> hidden_dim -> output_dim
+
         """
         layers = []
         activation_cls = self.ACTIVATIONS[self.activation_name]
@@ -220,7 +222,9 @@ def get_projector(projector_type: str = "mlp", **kwargs) -> nn.Module:
     Factory function to get a projector by type.
 
     Args:
-        projector_type: Type of projector ("mlp" currently supported).
+        projector_type: Type of projector. Supported:
+            - "mlp": MLPProjector (default)
+            - "perceiver": PerceiverResampler (replaces both pooling + projection)
         **kwargs: Arguments passed to the projector constructor.
 
     Returns:
@@ -229,6 +233,10 @@ def get_projector(projector_type: str = "mlp", **kwargs) -> nn.Module:
     Raises:
         ValueError: If projector_type is not recognized.
     """
+    if projector_type.lower() == "perceiver":
+        from src.models.perceiver import PerceiverResampler
+        return PerceiverResampler(**kwargs)
+
     projectors = {
         "mlp": MLPProjector,
     }
@@ -236,7 +244,7 @@ def get_projector(projector_type: str = "mlp", **kwargs) -> nn.Module:
     if projector_type.lower() not in projectors:
         raise ValueError(
             f"Unknown projector type: {projector_type}. "
-            f"Available: {list(projectors.keys())}"
+            f"Available: {list(projectors.keys()) + ['perceiver']}"
         )
 
     return projectors[projector_type.lower()](**kwargs)

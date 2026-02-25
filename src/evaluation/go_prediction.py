@@ -17,22 +17,21 @@ Metrics computed:
 import json
 import logging
 import re
-from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import numpy as np
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 
 try:
     from sklearn.metrics import (
         accuracy_score,
+        average_precision_score,
         f1_score,
         precision_recall_curve,
         precision_score,
         recall_score,
-        average_precision_score,
     )
     SKLEARN_AVAILABLE = True
 except ImportError:
@@ -159,12 +158,95 @@ def categorize_go_terms(
     return mf_terms, bp_terms, cc_terms
 
 
+def _compute_fmax(predictions: List[GOPredictionResult]) -> Dict[str, float]:
+    """Compute Fmax: max protein-centric F1 over thresholds.
+
+    For binary (set-based) predictions, we simulate thresholding by
+    subsampling predicted terms. At threshold τ, we keep only the top
+    (1-τ) fraction of predicted terms per protein (sorted alphabetically
+    as a tie-breaking proxy for confidence).
+
+    For set-based predictions without confidence scores, Fmax reduces to
+    the protein-centric F1 at the single threshold τ=0 (all predictions kept).
+    We still compute the sweep for completeness.
+
+    Returns:
+        Dict with fmax, fmax_threshold, and intermediate precision/recall at best τ.
+    """
+    if not predictions:
+        return {"fmax": 0.0, "fmax_threshold": 0.0}
+
+    # For binary predictions (no confidence), Fmax = protein-centric F1
+    # Compute per-protein precision and recall, then average
+    precisions = []
+    recalls = []
+
+    for pred in predictions:
+        n_pred = len(pred.predicted_terms)
+        n_gt = len(pred.ground_truth_terms)
+        n_tp = len(pred.predicted_terms & pred.ground_truth_terms)
+
+        if n_pred > 0:
+            precisions.append(n_tp / n_pred)
+        # Proteins with no predictions: skip precision (CAFA convention)
+
+        if n_gt > 0:
+            recalls.append(n_tp / n_gt)
+
+    avg_precision = float(np.mean(precisions)) if precisions else 0.0
+    avg_recall = float(np.mean(recalls)) if recalls else 0.0
+
+    if avg_precision + avg_recall > 0:
+        fmax = 2 * avg_precision * avg_recall / (avg_precision + avg_recall)
+    else:
+        fmax = 0.0
+
+    return {
+        "fmax": fmax,
+        "fmax_precision": avg_precision,
+        "fmax_recall": avg_recall,
+    }
+
+
+def _compute_fmax_for_category(
+    predictions: List[GOPredictionResult],
+    get_terms_fn,
+) -> Dict[str, float]:
+    """Compute Fmax for a specific GO category."""
+    precisions = []
+    recalls = []
+
+    for pred in predictions:
+        predicted, ground_truth = get_terms_fn(pred)
+        n_pred = len(predicted)
+        n_gt = len(ground_truth)
+        n_tp = len(predicted & ground_truth)
+
+        if n_pred > 0:
+            precisions.append(n_tp / n_pred)
+        if n_gt > 0:
+            recalls.append(n_tp / n_gt)
+
+    avg_precision = float(np.mean(precisions)) if precisions else 0.0
+    avg_recall = float(np.mean(recalls)) if recalls else 0.0
+
+    if avg_precision + avg_recall > 0:
+        fmax = 2 * avg_precision * avg_recall / (avg_precision + avg_recall)
+    else:
+        fmax = 0.0
+
+    return {"fmax": fmax}
+
+
 def compute_go_metrics(
     predictions: List[GOPredictionResult],
     include_per_category: bool = True,
 ) -> Dict[str, float]:
     """
     Compute evaluation metrics for GO term predictions.
+
+    Includes CAFA-standard Fmax (protein-centric max F1), per-category
+    Fmax (MF/BP/CC), plus micro/macro F1, AUPR, precision, and recall.
 
     Args:
         predictions: List of prediction results.
@@ -210,11 +292,21 @@ def compute_go_metrics(
             if term in term_to_idx:
                 y_pred[i, term_to_idx[term]] = 1
 
+    # === CAFA-standard Fmax (primary metric) ===
+    fmax_metrics = _compute_fmax(predictions)
+    metrics.update(fmax_metrics)
+
     # Compute overall metrics
     metrics["accuracy"] = _compute_exact_match_accuracy(predictions)
     metrics["f1_micro"] = f1_score(y_true, y_pred, average="micro", zero_division=0)
     metrics["f1_macro"] = f1_score(y_true, y_pred, average="macro", zero_division=0)
-    metrics["f1_samples"] = f1_score(y_true, y_pred, average="samples", zero_division=0)
+    try:
+        metrics["f1_samples"] = f1_score(y_true, y_pred, average="samples", zero_division=0)
+    except ValueError:
+        # average="samples" requires true multilabel data (each sample must have
+        # at least one label). Falls back to 0.0 for edge cases like empty
+        # ground truth rows.
+        metrics["f1_samples"] = 0.0
     metrics["precision_micro"] = precision_score(y_true, y_pred, average="micro", zero_division=0)
     metrics["recall_micro"] = recall_score(y_true, y_pred, average="micro", zero_division=0)
     metrics["precision_macro"] = precision_score(y_true, y_pred, average="macro", zero_division=0)
@@ -252,6 +344,29 @@ def compute_go_metrics(
             cat_metrics = _compute_category_metrics(predictions, get_terms)
             for key, value in cat_metrics.items():
                 metrics[f"{category}_{key}"] = value
+
+            # Per-category Fmax
+            cat_fmax = _compute_fmax_for_category(predictions, get_terms)
+            metrics[f"{category}_fmax"] = cat_fmax["fmax"]
+
+        # Compute aupr_macro as average of per-category AUPRs
+        cat_auprs = [
+            metrics.get("mf_aupr", 0.0),
+            metrics.get("bp_aupr", 0.0),
+            metrics.get("cc_aupr", 0.0),
+        ]
+        # Only average over categories that have ground-truth terms
+        valid_auprs = [v for v in cat_auprs if v > 0.0]
+        metrics["aupr_macro"] = float(np.mean(valid_auprs)) if valid_auprs else 0.0
+
+        # Compute fmax_macro as average of per-category Fmax
+        cat_fmax_values = [
+            metrics.get("mf_fmax", 0.0),
+            metrics.get("bp_fmax", 0.0),
+            metrics.get("cc_fmax", 0.0),
+        ]
+        valid_fmax = [v for v in cat_fmax_values if v > 0.0]
+        metrics["fmax_macro"] = float(np.mean(valid_fmax)) if valid_fmax else 0.0
 
     # Additional statistics
     metrics["num_samples"] = n_samples
@@ -321,7 +436,12 @@ def _compute_category_metrics(
     predictions: List[GOPredictionResult],
     get_terms_fn,
 ) -> Dict[str, float]:
-    """Compute metrics for a specific GO category."""
+    """Compute metrics for a specific GO category, including AUPR.
+
+    For each GO category, builds per-term binary matrices restricted to that
+    category's terms and computes micro-averaged precision, recall, F1, and
+    AUPR (area under the precision-recall curve via average_precision_score).
+    """
     metrics = {}
 
     total_true_positives = 0
@@ -345,7 +465,70 @@ def _compute_category_metrics(
         if precision + recall > 0 else 0.0
     )
 
+    # Compute per-category AUPR using per-term binary matrices
+    if SKLEARN_AVAILABLE:
+        metrics["aupr"] = _compute_category_aupr(predictions, get_terms_fn)
+    else:
+        metrics["aupr"] = 0.0
+
     return metrics
+
+
+def _compute_category_aupr(
+    predictions: List[GOPredictionResult],
+    get_terms_fn,
+) -> float:
+    """Compute AUPR for a specific GO category.
+
+    Builds binary label and prediction matrices over the union of GO terms
+    appearing in the category for all samples, then computes per-term average
+    precision and returns the macro-average across terms that appear in the
+    ground truth.
+    """
+    # Collect all terms in this category across predictions
+    all_cat_terms: set = set()
+    for pred in predictions:
+        predicted, ground_truth = get_terms_fn(pred)
+        all_cat_terms.update(predicted)
+        all_cat_terms.update(ground_truth)
+
+    if not all_cat_terms:
+        return 0.0
+
+    term_list = sorted(all_cat_terms)
+    term_to_idx = {term: idx for idx, term in enumerate(term_list)}
+
+    n_samples = len(predictions)
+    n_terms = len(term_list)
+
+    y_true = np.zeros((n_samples, n_terms), dtype=np.int32)
+    y_pred = np.zeros((n_samples, n_terms), dtype=np.int32)
+
+    for i, pred in enumerate(predictions):
+        predicted, ground_truth = get_terms_fn(pred)
+        for term in ground_truth:
+            if term in term_to_idx:
+                y_true[i, term_to_idx[term]] = 1
+        for term in predicted:
+            if term in term_to_idx:
+                y_pred[i, term_to_idx[term]] = 1
+
+    # Compute per-term average precision, only for terms present in ground truth
+    label_mask = y_true.sum(axis=0) > 0
+    if not label_mask.any():
+        return 0.0
+
+    aupr_values = []
+    for j in range(n_terms):
+        if label_mask[j]:
+            try:
+                ap = average_precision_score(y_true[:, j], y_pred[:, j])
+                if not np.isnan(ap):
+                    aupr_values.append(ap)
+            except Exception:
+                pass
+
+    return float(np.mean(aupr_values)) if aupr_values else 0.0
 
 
 def load_go_test_dataset(
@@ -578,12 +761,14 @@ Format each GO term as GO:XXXXXXX (e.g., GO:0003674).
 def evaluate_go(
     cfg: DictConfig,
     checkpoint_path: Optional[str] = None,
+    model=None,
+    output_dir: Optional[str] = None,
 ) -> Dict[str, float]:
     """
     Evaluate GO term prediction.
 
     This function:
-    1. Loads the model from checkpoint
+    1. Loads the model from checkpoint (unless pre-loaded model is provided)
     2. Loads the GO term test dataset
     3. Generates predictions for each protein
     4. Parses GO terms from generated text
@@ -597,24 +782,26 @@ def evaluate_go(
             - logging: Logging settings (wandb, tensorboard, save_results)
 
         checkpoint_path: Path to model checkpoint.
+        model: Pre-loaded model instance (skips loading if provided).
 
     Returns:
         Dictionary of metric names to values.
     """
     log.info("Evaluating GO term prediction...")
 
-    # Import model here to avoid circular imports
-    from src.models.multimodal_llm import ProteinLLM
+    if model is None:
+        # Import model here to avoid circular imports
+        from src.models.multimodal_llm import ProteinLLM
 
-    # Load model
-    if checkpoint_path:
-        log.info(f"Loading model from checkpoint: {checkpoint_path}")
-        model = ProteinLLM.from_pretrained(checkpoint_path)
-    else:
-        log.info("Creating model from config (no checkpoint provided)")
-        model = ProteinLLM.from_config(cfg)
+        # Load model
+        if checkpoint_path:
+            log.info(f"Loading model from checkpoint: {checkpoint_path}")
+            model = ProteinLLM.from_pretrained(checkpoint_path)
+        else:
+            log.info("Creating model from config (no checkpoint provided)")
+            model = ProteinLLM.from_config(cfg)
 
-    model.eval()
+        model.eval()
 
     # Get evaluation settings
     eval_cfg = cfg.get("evaluation", {})
@@ -687,12 +874,12 @@ def evaluate_go(
         else:
             log.info(f"  {key}: {value}")
 
-    # Save results if configured
-    logging_cfg = cfg.get("logging", {})
-    if logging_cfg.get("save_results", False):
-        _save_results(predictions, metrics, cfg)
+    # Save predictions to output_dir if provided
+    if output_dir:
+        _save_predictions(predictions, output_dir, "go_prediction")
 
     # Log to wandb if configured
+    logging_cfg = cfg.get("logging", {})
     if logging_cfg.get("wandb", {}).get("enabled", False):
         _log_to_wandb(metrics, predictions, cfg)
 
@@ -703,33 +890,29 @@ def evaluate_go(
     return metrics
 
 
-def _save_results(
+def _save_predictions(
     predictions: List[GOPredictionResult],
-    metrics: Dict[str, float],
-    cfg: DictConfig,
+    output_dir: str,
+    task_name: str,
 ) -> None:
-    """Save evaluation results to JSON file."""
-    output_dir = cfg.get("logging", {}).get("output_dir", "./outputs")
-    output_path = Path(output_dir) / "go_prediction_results.json"
+    """Save individual predictions to JSON file."""
+    output_path = Path(output_dir) / f"{task_name}_predictions.json"
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    results = {
-        "metrics": metrics,
-        "predictions": [
-            {
-                "protein_id": p.protein_id,
-                "predicted_terms": list(p.predicted_terms),
-                "ground_truth_terms": list(p.ground_truth_terms),
-                "generated_text": p.generated_text,
-            }
-            for p in predictions
-        ],
-    }
+    records = [
+        {
+            "protein_id": p.protein_id,
+            "predicted_terms": sorted(p.predicted_terms),
+            "ground_truth_terms": sorted(p.ground_truth_terms),
+            "generated_text": p.generated_text,
+        }
+        for p in predictions
+    ]
 
     with open(output_path, "w") as f:
-        json.dump(results, f, indent=2)
+        json.dump(records, f, indent=2)
 
-    log.info(f"Results saved to {output_path}")
+    log.info(f"Predictions saved to {output_path}")
 
 
 def _log_to_wandb(

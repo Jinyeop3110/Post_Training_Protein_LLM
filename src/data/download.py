@@ -4,11 +4,10 @@ Dataset Download Utilities
 Centralized download functions for various protein datasets used in training.
 """
 
-import os
 import subprocess
 import urllib.request
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 
 def download_ipd_pdb_sample(target_dir: str = "./data") -> str:
@@ -37,7 +36,7 @@ def download_ipd_pdb_sample(target_dir: str = "./data") -> str:
         print(f"Dataset already exists at {extract_dir}")
         return str(extract_dir)
 
-    print(f"Downloading IPD PDB sample (~47MB)...")
+    print("Downloading IPD PDB sample (~47MB)...")
     print(f"URL: {url}")
     subprocess.run(["wget", "-q", "--show-progress", url, "-O", str(tar_file)], check=True)
 
@@ -219,6 +218,160 @@ def download_alphafold_structures(
     return downloaded
 
 
+def download_proteinlm(target_dir: str = "./data") -> str:
+    """Download ProteinLMDataset from HuggingFace.
+
+    Contains ~893K instruction pairs across 7 protein tasks.
+    Source: https://huggingface.co/datasets/tsynbio/ProteinLMDataset
+
+    Args:
+        target_dir: Directory to download to
+
+    Returns:
+        Path to dataset directory
+    """
+    target_dir = Path(target_dir)
+    raw_dir = target_dir / "raw" / "proteinlm"
+
+    if raw_dir.exists() and any(raw_dir.iterdir()):
+        print(f"Dataset already exists at {raw_dir}")
+        return str(raw_dir)
+
+    raw_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        from huggingface_hub import hf_hub_download
+        hf_hub_download(
+            repo_id="tsynbio/ProteinLMDataset",
+            repo_type="dataset",
+            filename="swissProt2Text.json",
+            local_dir=str(raw_dir),
+        )
+        print(f"Dataset ready at {raw_dir}")
+        return str(raw_dir)
+    except ImportError:
+        print("Please install huggingface_hub: pip install huggingface_hub")
+        return ""
+    except Exception as e:
+        print(f"Download failed: {e}")
+        return ""
+
+
+def download_swissprotclap(target_dir: str = "./data") -> str:
+    """Download SwissProtCLAP from HuggingFace (chao1224/ProteinDT).
+
+    Contains ~441K protein-text pairs for contrastive learning,
+    repurposed here for instruction-following SFT.
+
+    Args:
+        target_dir: Directory to download to
+
+    Returns:
+        Path to dataset directory
+    """
+    target_dir = Path(target_dir)
+    raw_dir = target_dir / "raw" / "swissprotclap"
+
+    if raw_dir.exists() and (raw_dir / "SwissProtCLAP" / "protein_sequence.txt").exists():
+        print(f"Dataset already exists at {raw_dir}")
+        return str(raw_dir)
+
+    raw_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        from huggingface_hub import hf_hub_download
+        for filename in ["SwissProtCLAP/protein_sequence.txt", "SwissProtCLAP/text_sequence.txt"]:
+            hf_hub_download(
+                repo_id="chao1224/ProteinDT",
+                repo_type="dataset",
+                filename=filename,
+                local_dir=str(raw_dir),
+            )
+        print(f"Dataset ready at {raw_dir}")
+        return str(raw_dir)
+    except ImportError:
+        print("Please install huggingface_hub: pip install huggingface_hub")
+        return ""
+    except Exception as e:
+        print(f"Download failed: {e}")
+        return ""
+
+
+def download_protdescribe(target_dir: str = "./data") -> str:
+    """Download ProtDescribe dataset from HuggingFace.
+
+    Contains ~549K protein entries with function, location, and similarity annotations.
+    Source: https://huggingface.co/datasets/katarinayuan/ProtDescribe
+
+    Args:
+        target_dir: Directory to download to
+
+    Returns:
+        Path to dataset directory
+    """
+    target_dir = Path(target_dir)
+    raw_dir = target_dir / "raw" / "protdescribe"
+
+    if raw_dir.exists() and any(raw_dir.iterdir()):
+        print(f"Dataset already exists at {raw_dir}")
+        return str(raw_dir)
+
+    raw_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        from huggingface_hub import snapshot_download
+        snapshot_download(
+            repo_id="katarinayuan/ProtDescribe",
+            repo_type="dataset",
+            local_dir=str(raw_dir),
+        )
+        print(f"Dataset ready at {raw_dir}")
+        return str(raw_dir)
+    except ImportError:
+        print("Please install huggingface_hub: pip install huggingface_hub")
+        return ""
+    except Exception as e:
+        print(f"Download failed: {e}")
+        return ""
+
+
+def download_protein2text_qa(target_dir: str = "./data") -> str:
+    """Download Protein2Text-QA dataset from HuggingFace.
+
+    Contains ~56.6K protein QA pairs from tumorailab/Protein2Text-QA.
+
+    Args:
+        target_dir: Directory to download to
+
+    Returns:
+        Path to dataset directory
+    """
+    target_dir = Path(target_dir)
+    raw_dir = target_dir / "raw" / "protein2text_qa"
+
+    if raw_dir.exists() and any(raw_dir.iterdir()):
+        print(f"Dataset already exists at {raw_dir}")
+        return str(raw_dir)
+
+    raw_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        from huggingface_hub import snapshot_download
+        snapshot_download(
+            repo_id="tumorailab/Protein2Text-QA",
+            repo_type="dataset",
+            local_dir=str(raw_dir),
+        )
+        print(f"Dataset ready at {raw_dir}")
+        return str(raw_dir)
+    except ImportError:
+        print("Please install huggingface_hub: pip install huggingface_hub")
+        return ""
+    except Exception as e:
+        print(f"Download failed: {e}")
+        return ""
+
+
 def list_available_datasets() -> dict:
     """List all available datasets with descriptions."""
     return {
@@ -252,6 +405,30 @@ def list_available_datasets() -> dict:
             "format": "PDB files",
             "download_fn": "download_alphafold_structures",
         },
+        "proteinlm": {
+            "description": "ProteinLMDataset (7 protein annotation tasks)",
+            "size": "~893K instruction pairs",
+            "format": "HuggingFace dataset (swissProt2Text.json)",
+            "download_fn": "download_proteinlm",
+        },
+        "swissprotclap": {
+            "description": "SwissProtCLAP protein-text pairs (from ProteinDT)",
+            "size": "~441K pairs",
+            "format": "Parallel text files",
+            "download_fn": "download_swissprotclap",
+        },
+        "protdescribe": {
+            "description": "ProtDescribe multi-annotation protein dataset",
+            "size": "~549K entries",
+            "format": "TSV/Parquet",
+            "download_fn": "download_protdescribe",
+        },
+        "protein2text_qa": {
+            "description": "Protein2Text-QA protein question-answering",
+            "size": "~56.6K QA pairs",
+            "format": "JSON conversations",
+            "download_fn": "download_protein2text_qa",
+        },
     }
 
 
@@ -260,7 +437,9 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Download protein datasets")
     parser.add_argument("--dataset", type=str, choices=[
-        "ipd_pdb_sample", "swissprot", "mol_instructions", "list"
+        "ipd_pdb_sample", "swissprot", "mol_instructions",
+        "proteinlm", "swissprotclap", "protdescribe", "protein2text_qa",
+        "list",
     ], default="list", help="Dataset to download")
     parser.add_argument("--output_dir", type=str, default="./data",
                         help="Output directory")
@@ -282,3 +461,11 @@ if __name__ == "__main__":
         download_swissprot_sequences(args.output_dir)
     elif args.dataset == "mol_instructions":
         download_mol_instructions(args.output_dir)
+    elif args.dataset == "proteinlm":
+        download_proteinlm(args.output_dir)
+    elif args.dataset == "swissprotclap":
+        download_swissprotclap(args.output_dir)
+    elif args.dataset == "protdescribe":
+        download_protdescribe(args.output_dir)
+    elif args.dataset == "protein2text_qa":
+        download_protein2text_qa(args.output_dir)

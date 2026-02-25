@@ -12,7 +12,7 @@
 |----------|--------|-----------|
 | SFT Framework | **TRL** | HuggingFace standard, well-documented, native QLoRA support |
 | Eval Priority | **GO, PPI, Stability** | Core protein understanding tasks |
-| Protein-LLM Integration | **Prefix Tokens** | Project ESM-2 → LLM dim, prepend as soft tokens |
+| Protein-LLM Integration | **Prefix Tokens** | Project ESM-3 → LLM dim, prepend as soft tokens |
 | Dataset | **Mol-Instructions** | 505K ready-to-use instructions |
 | RL Phase | **Defer** | SFT first, GRPO later |
 
@@ -29,21 +29,21 @@
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    ESM-2 Encoder (Frozen)                        │
-│  esm2_t33_650M_UR50D → Per-residue [L, 1280]                    │
+│                    ESM-3 Encoder (Frozen)                        │
+│  esm3-sm-open-v1 → Per-residue [L, 1536]                        │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Attention Pooling (BoM)                       │
-│  Per-residue [L, 1280] → Pooled [N_tokens, 1280]                │
+│  Per-residue [L, 1536] → Pooled [N_tokens, 1536]                │
 │  Window size: 80, learnable                                      │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                    MLP Projector                                 │
-│  [N_tokens, 1280] → [N_tokens, 4096]                            │
+│  [N_tokens, 1536] → [N_tokens, 2560]                            │
 │  2-layer MLP with GELU, trainable                                │
 └─────────────────────────────────────────────────────────────────┘
                               │
@@ -68,16 +68,16 @@
 
 ### Task 1: MLP Projector (`src/models/projector.py`)
 
-**Purpose**: Map ESM-2 embeddings (1280-dim) to LLM hidden size (4096-dim)
+**Purpose**: Map ESM-3 embeddings (1536-dim) to LLM hidden size (2560-dim)
 
 ```python
 # Key components:
 class MLPProjector(nn.Module):
     def __init__(
         self,
-        input_dim: int = 1280,      # ESM-2 embedding dim
+        input_dim: int = 1536,      # ESM-3 embedding dim
         hidden_dim: int = 2048,     # Intermediate dim
-        output_dim: int = 4096,     # LLM hidden size
+        output_dim: int = 2560,     # LLM hidden size (Qwen3-4B)
         num_layers: int = 2,
         activation: str = "gelu",
         dropout: float = 0.1,
@@ -87,14 +87,14 @@ class MLPProjector(nn.Module):
 
 **Deliverables**:
 - [ ] `MLPProjector` class with configurable layers
-- [ ] Forward pass: `[B, N, 1280] → [B, N, 4096]`
+- [ ] Forward pass: `[B, N, 1536] → [B, N, 2560]`
 - [ ] Unit tests in `tests/models/test_projector.py`
 
 ---
 
 ### Task 2: Attention Pooling (`src/models/pooling.py`)
 
-**Purpose**: Pool per-residue ESM-2 embeddings into fixed number of tokens
+**Purpose**: Pool per-residue ESM-3 embeddings into fixed number of tokens
 
 ```python
 # Key components:
@@ -103,7 +103,7 @@ class AttentionPooling(nn.Module):
 
     def __init__(
         self,
-        embed_dim: int = 1280,
+        embed_dim: int = 1536,
         num_output_tokens: int = 32,  # Number of prefix tokens
         window_size: int = 80,        # Local attention window
     ):
@@ -113,14 +113,14 @@ class AttentionPooling(nn.Module):
 **Deliverables**:
 - [ ] `AttentionPooling` class (BoM-style)
 - [ ] `MeanPooling` class (simple fallback)
-- [ ] Forward pass: `[B, L, 1280] → [B, N, 1280]`
+- [ ] Forward pass: `[B, L, 1536] → [B, N, 1536]`
 - [ ] Unit tests in `tests/models/test_pooling.py`
 
 ---
 
 ### Task 3: Multimodal Model (`src/models/multimodal_llm.py`)
 
-**Purpose**: Combine ESM-2 encoder + Projector + LLM
+**Purpose**: Combine ESM-3 encoder + Projector + LLM
 
 ```python
 # Key components:
@@ -129,14 +129,14 @@ class ProteinLLM(nn.Module):
 
     def __init__(
         self,
-        llm_name: str = "Qwen/Qwen2.5-7B-Instruct",
-        encoder_name: str = "esm2_t33_650M_UR50D",
+        llm_name: str = "Qwen/Qwen3-4B-Instruct-2507",
+        encoder_name: str = "esm3-sm-open-v1",
         pooling: str = "attention",
         num_prefix_tokens: int = 32,
         freeze_encoder: bool = True,  # ALWAYS True
         use_qlora: bool = True,
     ):
-        self.encoder = ESMProteinEncoder(encoder_name)
+        self.encoder = ESM3Encoder(encoder_name)
         self.pooling = AttentionPooling(...)
         self.projector = MLPProjector(...)
         self.llm = load_llm_with_qlora(llm_name)
@@ -380,7 +380,7 @@ pip install flash-attn --no-build-isolation
 | Risk | Mitigation |
 |------|------------|
 | Memory OOM on H100 | Start with smaller batch size, gradient checkpointing |
-| ESM-2 + LLM too slow | Use vLLM for inference, cache ESM embeddings |
+| ESM-3 + LLM too slow | Use vLLM for inference, cache ESM embeddings |
 | Mol-Instructions format issues | Add robust parsing, fallback to subset |
 | GO evaluation metric complexity | Start with simple accuracy, add AUPR later |
 

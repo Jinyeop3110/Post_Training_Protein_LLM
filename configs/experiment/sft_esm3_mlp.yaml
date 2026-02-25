@@ -1,0 +1,59 @@
+# @package _global_
+
+# SFT experiment: ESM-3 + MLP Projector
+# Frozen ESM-3 small (1536-dim, float32) -> AttentionPooling (32 tokens) -> MLP Projector (hidden=5120) -> LLM
+# Trainable: ~32.5M params (LoRA ~2M + pooling ~9.5M + projector ~21.0M)
+#
+# Usage: python scripts/train.py experiment=sft_esm3_mlp
+
+defaults:
+  - override /model: qwen3_8b
+  - override /encoder: esm3_small
+  - override /data: mol_instructions
+  - override /training: sft_lora
+
+approach: esm3
+experiment_name: sft_esm3_mlp_${model.name}_${now:%m%d_%H%M%S}
+
+# Force MLP projector (default, but explicit for clarity)
+encoder:
+  projector:
+    type: mlp
+
+# Cap protein length to avoid ESM-3 geometric attention OOM on long seqs
+# ESM-3 geom_attn is O(L²): 1024 AA ≈ 4 GB, 2048 AA ≈ 16 GB
+# Drops 4.9% of samples (21,792 / 445,503)
+data:
+  processing:
+    max_protein_length: 1024
+
+training:
+  # Differential LR: projector trains from random init, needs higher LR
+  # Note: 2e-4/2e-3 caused NaN at step 530 with Qwen3-8B (uncapped multimodal
+  # gradients + high LR + noisy token-budget batches). Lowered for stability.
+  lr: 1e-4
+  projector_lr: 5e-4  # 5x base LR (safer than 10x for 8B model)
+
+  # Token-budget dynamic batching: short seqs → large batch, long seqs → small batch
+  # ESM-3 encoder sub-batches independently (encoder.encoder_batch_size=4)
+  max_tokens_per_batch: 6144
+  max_batch_size: 12
+  gradient_accumulation_steps: 4  # effective batch ~196K tokens (8 GPUs × 4 accum × 6144)
+
+  # Projector alignment: freeze LoRA for first 500 steps so the randomly-
+  # initialized projector learns a basic embedding mapping before the LLM
+  # adapts. After 500 steps, LoRA unfreezes and both train jointly.
+  freeze_lora_steps: 500
+
+  epochs: 3
+  max_seq_length: 2048
+
+  # Checkpoint every 250 steps (was 500) — less progress lost on crash
+  save_steps: 250
+  eval_steps: 250
+
+  wandb:
+    tags:
+      - sft_lora
+      - esm3_mlp
+      - ${model.name}

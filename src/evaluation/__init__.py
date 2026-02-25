@@ -38,58 +38,64 @@ Example usage:
     >>> metrics = evaluate_stability(cfg, checkpoint_path="path/to/checkpoint")
 """
 
+from .benchmarks import run_all_benchmarks
 from .go_prediction import (
-    # Main evaluation function
-    evaluate_go,
+    GOPredictionResult,
     # Data classes
     GOTestSample,
-    GOPredictionResult,
-    # Helper functions
-    parse_go_terms,
     categorize_go_terms,
     compute_go_metrics,
-    load_go_test_dataset,
     create_go_prompt,
+    # Main evaluation function
+    evaluate_go,
     # Utility functions
     evaluate_go_from_predictions,
+    load_go_test_dataset,
+    # Helper functions
+    parse_go_terms,
 )
-
+from .metrics import (
+    log_metrics_to_wandb,
+    multilabel_aupr,
+    pearson_correlation,
+    safe_float,
+    sanitise_metrics,
+    spearman_correlation,
+)
 from .ppi_prediction import (
-    # Main evaluation function
-    evaluate_ppi,
+    PPIPredictionResult,
     # Data classes
     PPITestSample,
-    PPIPredictionResult,
-    # Helper functions
-    parse_ppi_prediction,
     compute_ppi_metrics,
-    load_ppi_test_dataset,
     create_ppi_prompt,
+    # Main evaluation function
+    evaluate_ppi,
     # Utility functions
     evaluate_ppi_from_predictions,
-)
-
-from .stability import (
-    # Main evaluation function
-    evaluate_stability,
-    # Data classes
-    StabilityTestSample,
-    StabilityPredictionResult,
+    load_ppi_test_dataset,
     # Helper functions
-    parse_stability_prediction,
-    classify_ddg,
-    compute_stability_metrics,
-    load_stability_test_dataset,
-    create_stability_prompt,
-    # Utility functions
-    evaluate_stability_from_predictions,
+    parse_ppi_prediction,
+)
+from .sft_eval import evaluate_sft
+from .stability import (
+    DESTABILIZING_THRESHOLD,
     # Constants
     STABILITY_CLASSES,
     STABILIZING_THRESHOLD,
-    DESTABILIZING_THRESHOLD,
+    StabilityPredictionResult,
+    # Data classes
+    StabilityTestSample,
+    classify_ddg,
+    compute_stability_metrics,
+    create_stability_prompt,
+    # Main evaluation function
+    evaluate_stability,
+    # Utility functions
+    evaluate_stability_from_predictions,
+    load_stability_test_dataset,
+    # Helper functions
+    parse_stability_prediction,
 )
-
-# from .benchmarks import run_all_benchmarks
 
 __all__ = [
     # GO Prediction
@@ -124,4 +130,15 @@ __all__ = [
     "STABILITY_CLASSES",
     "STABILIZING_THRESHOLD",
     "DESTABILIZING_THRESHOLD",
+    # Benchmarks
+    "run_all_benchmarks",
+    # SFT Evaluation
+    "evaluate_sft",
+    # Shared metrics utilities
+    "safe_float",
+    "sanitise_metrics",
+    "multilabel_aupr",
+    "pearson_correlation",
+    "spearman_correlation",
+    "log_metrics_to_wandb",
 ]

@@ -103,20 +103,20 @@ python scripts/train.py logging.wandb.enabled=false
 export WANDB_MODE=offline
 ```
 
-### 8. ESM-2 Loading Issues
+### 8. ESM-3 Loading Issues
 
-**Symptoms**: ESM-2 model fails to load
+**Symptoms**: ESM-3 model fails to load
 
 **Solutions**:
 ```bash
 # Clear HuggingFace cache
-rm -rf ~/.cache/huggingface/hub/models--facebook--esm*
+rm -rf ~/.cache/huggingface/hub/models--esm*
 
 # Check available memory
 nvidia-smi
 
-# Use smaller model
-python scripts/train.py encoder=esm2_650m
+# Verify encoder config
+python scripts/train.py encoder=esm3_small --cfg job
 ```
 
 ## Debugging Checklist

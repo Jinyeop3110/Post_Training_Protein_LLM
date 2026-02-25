@@ -1,0 +1,18 @@
+# Qwen3-8B is a unified base+instruct model (no separate -Instruct variant
+# on HuggingFace, unlike Qwen3-4B-Instruct-2507).
+name: qwen3_8b_it
+path: Qwen/Qwen3-8B
+type: causal_lm
+
+architecture:
+  hidden_size: 4096
+  num_attention_heads: 32
+  num_key_value_heads: 8
+  num_layers: 36
+  vocab_size: 151936
+
+generation:
+  max_new_tokens: 512
+  temperature: 0.7
+  top_p: 0.9
+  do_sample: true

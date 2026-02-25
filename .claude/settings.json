@@ -37,7 +37,8 @@
   },
   "env": {
     "INSIDE_CLAUDE_CODE": "1",
-    "PYTHONPATH": "${workspaceFolder}/src"
+    "PYTHONPATH": "${workspaceFolder}/src",
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
   "hooks": {
     "PostToolUse": [

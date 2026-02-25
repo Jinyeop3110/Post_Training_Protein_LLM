@@ -1,8 +1,8 @@
 """Tests for Mol-Instructions dataset implementation."""
 
-import pytest
 from unittest.mock import MagicMock, patch
-from typing import Dict, Any
+
+import pytest
 
 
 class TestMolInstructionsImport:
@@ -31,9 +31,9 @@ class TestMolInstructionsImport:
     def test_import_from_init(self):
         """Test imports work from the package __init__."""
         from src.data import (
-            MolInstructionsDataset,
             MolInstructionsCollator,
             MolInstructionsConfig,
+            MolInstructionsDataset,
             get_mol_instructions_dataloader,
         )
         assert MolInstructionsDataset is not None
@@ -192,8 +192,9 @@ class TestMolInstructionsDataset:
 
     def test_from_config(self, mock_hf_dataset):
         """Test creating dataset from Hydra config."""
-        from src.data.mol_instructions import MolInstructionsDataset
         from omegaconf import OmegaConf
+
+        from src.data.mol_instructions import MolInstructionsDataset
 
         config = OmegaConf.create({
             "source": "zjunlp/Mol-Instructions",
@@ -425,8 +426,9 @@ class TestMolInstructionsDataLoader:
 
     def test_dataloader_with_tokenizer(self, mock_hf_dataset):
         """Test dataloader with tokenizer creates proper collator."""
-        from src.data.mol_instructions import get_mol_instructions_dataloader
         import torch
+
+        from src.data.mol_instructions import get_mol_instructions_dataloader
 
         # Create a more complete mock tokenizer
         mock_tokenizer = MagicMock()
@@ -515,11 +517,16 @@ class TestPromptFormatting:
     """Tests for prompt formatting."""
 
     def test_format_prompt_default_template(self):
-        """Test prompt formatting with default template."""
-        from src.data.mol_instructions import MolInstructionsDataset, MolInstructionsConfig
+        """Test prompt formatting with default (Alpaca fallback) template.
+
+        When no tokenizer is set, _format_prompt falls back to Alpaca-style
+        template with ### Instruction: / ### Input: / ### Response: sections.
+        """
+        from src.data.mol_instructions import MolInstructionsConfig, MolInstructionsDataset
 
         dataset = MolInstructionsDataset.__new__(MolInstructionsDataset)
         dataset.config = MolInstructionsConfig()
+        dataset.tokenizer = None  # No tokenizer -> falls back to Alpaca template
 
         prompt = dataset._format_prompt(
             instruction="Test instruction",
@@ -535,11 +542,16 @@ class TestPromptFormatting:
         assert "Test response" in prompt
 
     def test_format_prompt_for_inference(self):
-        """Test prompt formatting for inference (no output)."""
-        from src.data.mol_instructions import MolInstructionsDataset, MolInstructionsConfig
+        """Test prompt formatting for inference (no output).
+
+        When no tokenizer is set, _format_prompt falls back to Alpaca-style
+        template.
+        """
+        from src.data.mol_instructions import MolInstructionsConfig, MolInstructionsDataset
 
         dataset = MolInstructionsDataset.__new__(MolInstructionsDataset)
         dataset.config = MolInstructionsConfig()
+        dataset.tokenizer = None  # No tokenizer -> falls back to Alpaca template
 
         prompt = dataset._format_prompt(
             instruction="Test instruction",

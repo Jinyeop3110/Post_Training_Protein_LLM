@@ -1,0 +1,62 @@
+# @package _global_
+
+# SFT experiment: ESM-3 + Perceiver Resampler (Combined SFT Dataset)
+# Frozen ESM-3 small (1536-dim, float32) -> PerceiverResampler (2 layers, latent_dim=1024) -> LLM
+# Perceiver replaces BOTH attention pooling and MLP projector
+# Trainable: ~31.4M params (LoRA ~2M + perceiver ~29.4M)
+#
+# Uses combined_sft_260225: 4.7M records from 6 sources
+# (Mol-Instructions, Swiss-Prot, ProteinLMDataset, SwissProtCLAP, ProtDescribe, Protein2Text-QA)
+#
+# Usage: python scripts/train.py experiment=sft_esm3_perceiver_combined
+
+defaults:
+  - override /model: qwen3_8b
+  - override /encoder: esm3_small
+  - override /data: combined_sft_260225
+  - override /training: sft_lora
+
+approach: esm3
+experiment_name: sft_esm3_perceiver_combined_${model.name}_${now:%m%d_%H%M%S}
+
+# Perceiver Resampler: replaces pooling + projector
+# latent_dim=1024 decouples internal dim from LLM hidden size (2560)
+# 2 layers at latent_dim=1024 = ~29.4M params (comparable to MLP's ~30.5M)
+encoder:
+  projector:
+    type: perceiver
+    perceiver_layers: 2
+    perceiver_heads: 8
+    perceiver_ffn_dim: 2048
+    perceiver_latent_dim: 1024
+
+data:
+  processing:
+    max_protein_length: 1024
+
+training:
+  # Differential LR: perceiver trains from random init
+  lr: 1e-4
+  projector_lr: 5e-4  # 5x base LR (safer for 8B)
+
+  # Token-budget dynamic batching: short seqs → large batch, long seqs → small batch
+  # ESM-3 encoder sub-batches independently (encoder.encoder_batch_size=4)
+  max_tokens_per_batch: 10240
+  max_batch_size: 20
+  gradient_accumulation_steps: 4  # effective batch ~196K tokens (8 GPUs × 4 accum × 6144)
+
+  # Projector alignment: freeze LoRA for first 500 steps
+  freeze_lora_steps: 500
+
+  epochs: 3
+  max_seq_length: 2048
+
+  save_steps: 250
+  eval_steps: 250
+
+  wandb:
+    tags:
+      - sft_lora
+      - esm3_perceiver
+      - combined_sft
+      - ${model.name}

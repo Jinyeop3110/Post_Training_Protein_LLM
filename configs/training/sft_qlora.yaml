@@ -9,23 +9,32 @@ quantization:
   bnb_4bit_quant_type: nf4
   bnb_4bit_use_double_quant: true
 
-# LoRA configuration - k/v only for proteins
+# LoRA configuration - attention + MLP projections for expressiveness
 lora:
   r: 8
   alpha: 16
   dropout: 0.05
   target_modules:
+    - q_proj
     - k_proj
     - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
   bias: none
   task_type: CAUSAL_LM
 
 # Training parameters
 lr: 2e-4
+projector_lr: 2e-3  # 10x base LR for pooling+projector (randomly initialized)
 epochs: 3
 batch_size: 8
 gradient_accumulation_steps: 4
 max_seq_length: 2048
+packing_sequences: false  # Concatenation+packing: pack multiple examples into fixed-length blocks
+max_tokens_per_batch: null  # Token budget per micro-batch (e.g., 8192). null = use fixed batch_size
+max_batch_size: 16          # Cap samples per micro-batch when using token budget
 warmup_ratio: 0.03
 max_grad_norm: 1.0
 weight_decay: 0.01
@@ -47,4 +56,12 @@ save_total_limit: 3
 
 # Logging
 logging_steps: 10
-eval_steps: 100
+eval_steps: 500
+
+# wandb settings (override global logging.wandb)
+wandb:
+  project: protein-llm-sft
+  tags:
+    - sft_qlora
+    - ${model.name}
+    - mol_instructions

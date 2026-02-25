@@ -4,7 +4,7 @@ Train and post-train LLMs to understand proteins as multimodal embeddings using 
 
 ## Overview
 
-This project integrates protein language model embeddings (ESM-2) with large language models to enable protein understanding tasks such as:
+This project integrates protein language model embeddings (ESM-3) with large language models to enable protein understanding tasks such as:
 - GO term prediction
 - Protein-protein interaction prediction
 - Stability prediction

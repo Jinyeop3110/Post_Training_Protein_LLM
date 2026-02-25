@@ -1,0 +1,20 @@
+name: mol_instructions
+source: swissprot
+subset: Protein-oriented Instructions
+
+# Point to processed Swiss-Prot data (already in Mol-Instructions JSON format)
+paths:
+  raw: ${paths.processed_dir}/swissprot
+  processed: ${paths.processed_dir}/swissprot
+
+processing:
+  max_seq_length: 1024
+  include_structure: false
+
+splits:
+  train: 0.9
+  validation: 0.05
+  test: 0.05
+
+# Optional: limit number of samples (null = use all)
+limit: null

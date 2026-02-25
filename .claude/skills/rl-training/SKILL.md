@@ -47,7 +47,7 @@ python scripts/train.py training=grpo training.lr=1e-5
 1. **Phase 1: SFT with QLoRA**
    - 4-bit quantization
    - Train projector + LLM (LoRA)
-   - Freeze ESM-2
+   - Freeze ESM-3
 
 2. **Phase 2: GRPO Alignment**
    - Load SFT checkpoint

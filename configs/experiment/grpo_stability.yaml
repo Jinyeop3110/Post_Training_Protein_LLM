@@ -1,0 +1,36 @@
+# @package _global_
+
+# GRPO experiment: Protein Stability (ddG) Prediction
+# Uses Mega-Scale data with stability reward (MAE-based).
+# Chain from a trained SFT checkpoint via parent_experiment.
+#
+# Usage:
+#   python scripts/train.py experiment=grpo_stability \
+#     parent_experiment=sft_esm3_mlp_XXXX
+
+defaults:
+  - override /model: qwen3_8b
+  - override /encoder: esm3_small
+  - override /data: megascale_stability
+  - override /training: grpo
+
+approach: esm3
+experiment_name: grpo_stability_${model.name}_${now:%m%d_%H%M%S}
+
+# Data task for reward routing
+data:
+  task: stability
+
+training:
+  grpo:
+    group_size: 4
+
+  # ddG predictions are short (one line)
+  rollout:
+    max_tokens: 128
+
+  wandb:
+    tags:
+      - grpo
+      - stability
+      - ${model.name}

@@ -40,8 +40,8 @@ def mock_config():
             },
         },
         "encoder": {
-            "name": "esm2_test",
-            "embedding_dim": 1280,
+            "name": "esm3_test",
+            "embedding_dim": 1536,
             "freeze": True,
             "pooling": {
                 "method": "attention",

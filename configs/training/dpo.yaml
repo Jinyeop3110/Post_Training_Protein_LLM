@@ -21,9 +21,25 @@ lora:
   alpha: 16
   dropout: 0.05
   target_modules:
+    - q_proj
     - k_proj
     - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
 
 # Checkpointing
 save_steps: 100
 eval_steps: 50
+
+# Logging
+logging_steps: 10
+
+# wandb settings (override global logging.wandb)
+wandb:
+  project: protein-llm-rl
+  tags:
+    - dpo
+    - ${model.name}
+    - mol_instructions

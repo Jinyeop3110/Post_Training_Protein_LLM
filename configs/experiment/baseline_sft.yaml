@@ -2,7 +2,7 @@
 
 defaults:
   - override /model: qwen3_4b
-  - override /encoder: esm2_650m
+  - override /encoder: esm3_small
   - override /data: mol_instructions
   - override /training: sft_qlora
 

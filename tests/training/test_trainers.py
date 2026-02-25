@@ -1,7 +1,8 @@
 """Tests for trainer implementations."""
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, PropertyMock
 import torch
 from omegaconf import OmegaConf
 
@@ -191,10 +192,12 @@ class TestProteinLLMDataCollator:
         batch = [
             {
                 "formatted_prompt": "Test prompt 1",
+                "inference_prompt": "Test prompt 1",
                 "protein_sequence": "MKTAYIAK",
             },
             {
                 "formatted_prompt": "Test prompt 2",
+                "inference_prompt": "Test prompt 2",
                 "protein_sequence": "MNIFEMLR",
             },
         ]
@@ -358,8 +361,8 @@ class TestTrainingConfigLoading:
                 "path": "Qwen/Qwen2.5-7B-Instruct",
             },
             "encoder": {
-                "model_name": "esm2_t33_650M_UR50D",
-                "embedding_dim": 1280,
+                "model_name": "esm3-sm-open-v1",
+                "embedding_dim": 1536,
             },
             "training": {
                 "method": "sft_qlora",
@@ -640,7 +643,7 @@ class TestGetRewardFunction:
 
     def test_get_reward_function_go(self):
         """Test getting GO reward function."""
-        from src.training.grpo_trainer import get_reward_function, compute_go_reward
+        from src.training.grpo_trainer import compute_go_reward, get_reward_function
 
         reward_fn = get_reward_function("go_prediction")
         assert reward_fn == compute_go_reward
@@ -653,7 +656,7 @@ class TestGetRewardFunction:
 
     def test_get_reward_function_ppi(self):
         """Test getting PPI reward function."""
-        from src.training.grpo_trainer import get_reward_function, compute_ppi_reward
+        from src.training.grpo_trainer import compute_ppi_reward, get_reward_function
 
         reward_fn = get_reward_function("ppi")
         assert reward_fn == compute_ppi_reward
@@ -663,7 +666,7 @@ class TestGetRewardFunction:
 
     def test_get_reward_function_stability(self):
         """Test getting stability reward function."""
-        from src.training.grpo_trainer import get_reward_function, compute_stability_reward
+        from src.training.grpo_trainer import compute_stability_reward, get_reward_function
 
         reward_fn = get_reward_function("stability")
         assert reward_fn == compute_stability_reward
@@ -746,11 +749,11 @@ class TestGRPOTrainerIntegration:
         """Test GRPO components are exported from training module."""
         from src.training import (
             GRPOTrainer,
-            get_grpo_config,
-            get_reward_function,
             compute_go_reward,
             compute_ppi_reward,
             compute_stability_reward,
+            get_grpo_config,
+            get_reward_function,
             run_grpo,
         )
 
@@ -781,7 +784,7 @@ class TestTrainingUtils:
     def test_checkpoint_save_load(self, tmp_path):
         """Test checkpoint saving and loading."""
         try:
-            from src.training.utils import save_checkpoint, load_checkpoint
+            from src.training.utils import load_checkpoint, save_checkpoint
 
             # Create dummy state
             state = {"model": torch.nn.Linear(10, 10).state_dict()}

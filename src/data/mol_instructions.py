@@ -19,15 +19,16 @@ Data format:
 """
 
 import logging
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader, Dataset
 
 try:
-    from datasets import load_dataset, Dataset as HFDataset
+    from datasets import Dataset as HFDataset
+    from datasets import load_dataset
     HAS_HF_DATASETS = True
 except ImportError:
     HAS_HF_DATASETS = False
@@ -42,7 +43,14 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-# Default prompt template for formatting instructions
+# Default system prompt for protein expert identity
+DEFAULT_SYSTEM_PROMPT = (
+    "You are a protein science expert. Given a protein amino acid sequence, "
+    "you analyze its properties, predict its function, structure, and "
+    "biological associations based on your knowledge of protein biology."
+)
+
+# Default prompt template for formatting instructions (Alpaca-style fallback)
 DEFAULT_PROMPT_TEMPLATE = """### Instruction:
 {instruction}
 
@@ -61,6 +69,31 @@ INFERENCE_PROMPT_TEMPLATE = """### Instruction:
 
 ### Response:
 """
+
+
+def format_chat_messages(
+    instruction: str,
+    input_text: str,
+    output: str = "",
+    system_prompt: str = DEFAULT_SYSTEM_PROMPT,
+    for_inference: bool = False,
+) -> list:
+    """Build chat messages list for tokenizer.apply_chat_template().
+
+    Returns a list of message dicts suitable for apply_chat_template().
+    This ensures training and inference use the same prompt format.
+    """
+    messages = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+
+    user_content = f"{instruction.strip()}\n\n{input_text.strip()}"
+    messages.append({"role": "user", "content": user_content})
+
+    if not for_inference and output:
+        messages.append({"role": "assistant", "content": output.strip()})
+
+    return messages
 
 
 @dataclass
@@ -85,10 +118,31 @@ class MolInstructionsConfig:
     # Prompt formatting
     prompt_template: str = DEFAULT_PROMPT_TEMPLATE
     inference_template: str = INFERENCE_PROMPT_TEMPLATE
+    system_prompt: str = DEFAULT_SYSTEM_PROMPT
+    use_chat_template: bool = True  # Use tokenizer.apply_chat_template() instead of Alpaca format
+    # Qwen3-specific: False disables thinking mode (empty <think></think>),
+    # True lets the model decide whether to reason.  Ignored for non-Qwen models.
+    enable_thinking: bool = False
 
     # Filtering
     min_instruction_length: int = 10
     min_response_length: int = 1
+    # Files to skip when loading from local JSON. Design tasks have text
+    # descriptions as input (not protein sequences), which breaks ESM-3 encoding.
+    exclude_files: Optional[List[str]] = None
+
+    # Multi-source balancing (temperature-based upsampling)
+    # Files are grouped by prefix (e.g., "mol_", "sp_", "wp_").
+    # sampling_temperature < 1.0 upsamples smaller sources:
+    #   weight_i ∝ n_i^α  (α = sampling_temperature)
+    # 1.0 = no rebalancing, 0.5 = moderate, 0.0 = fully equalized
+    sampling_temperature: float = 1.0
+
+    # Protein placeholder for ESM-3 approach.  When set (non-empty), the
+    # protein sequence in ``input_text`` is replaced with this token so the
+    # model receives protein information only as learned embeddings, not raw
+    # amino-acid text.  Leave empty for text-only approach.
+    protein_placeholder: str = ""
 
 
 class MolInstructionsDataset(Dataset):
@@ -114,6 +168,10 @@ class MolInstructionsDataset(Dataset):
         prompt_template: Optional[str] = None,
         transform: Optional[callable] = None,
         limit: Optional[int] = None,
+        sampling_temperature: float = 1.0,
+        exclude_files: Optional[List[str]] = None,
+        tokenizer: Optional[Any] = None,
+        protein_placeholder: str = "",
     ):
         """
         Initialize the Mol-Instructions dataset.
@@ -129,6 +187,9 @@ class MolInstructionsDataset(Dataset):
             prompt_template: Template for formatting prompts
             transform: Optional transform to apply to samples
             limit: Limit number of samples (for debugging/testing)
+            sampling_temperature: Temperature for multi-source balancing (< 1.0 upsamples smaller sources)
+            exclude_files: List of filenames to skip when loading local JSON files.
+            tokenizer: HuggingFace tokenizer for apply_chat_template() formatting.
         """
         if not HAS_HF_DATASETS:
             raise ImportError(
@@ -146,22 +207,36 @@ class MolInstructionsDataset(Dataset):
                 max_seq_length=max_seq_length,
                 max_protein_length=max_protein_length,
                 prompt_template=prompt_template or DEFAULT_PROMPT_TEMPLATE,
+                sampling_temperature=sampling_temperature,
+                exclude_files=exclude_files,
+                protein_placeholder=protein_placeholder,
             )
 
         self.split = split
         self.transform = transform
         self.limit = limit
+        self.tokenizer = tokenizer
 
         # Load and prepare dataset
         self._load_dataset()
 
     def _load_dataset(self) -> None:
-        """Load dataset from HuggingFace and prepare splits."""
+        """Load dataset from local JSON files or HuggingFace.
+
+        First attempts to load from local JSON files (which avoids compatibility
+        issues with HuggingFace dataset loading scripts). Falls back to HuggingFace
+        ``load_dataset`` if local files are not found.
+        """
         logger.info(f"Loading Mol-Instructions dataset: {self.config.subset}")
 
+        # Try loading from local JSON files first
+        loaded = self._try_load_local_json()
+        if loaded:
+            self._filter_long_proteins()
+            return
+
+        # Fall back to HuggingFace load_dataset
         try:
-            # Load the protein-oriented subset
-            # The dataset uses a custom loading script, so we specify the name parameter
             full_dataset = load_dataset(
                 self.config.dataset_name,
                 name=self.config.subset,
@@ -169,30 +244,211 @@ class MolInstructionsDataset(Dataset):
                 trust_remote_code=True,
             )
 
-            # The dataset might come with predefined splits or as a single dataset
             if isinstance(full_dataset, dict):
                 if self.split in full_dataset:
                     self.data = full_dataset[self.split]
                 elif "train" in full_dataset:
-                    # Create splits from training data
                     self.data = self._create_splits(full_dataset["train"])
                 else:
-                    # Use the first available split
                     first_key = list(full_dataset.keys())[0]
                     self.data = self._create_splits(full_dataset[first_key])
             else:
-                # Single dataset, create splits
                 self.data = self._create_splits(full_dataset)
 
-            # Apply limit if specified
             if self.limit is not None and self.limit < len(self.data):
                 self.data = self.data.select(range(self.limit))
+
+            self._filter_long_proteins()
 
             logger.info(f"Loaded {len(self.data)} samples for split '{self.split}'")
 
         except Exception as e:
             logger.error(f"Failed to load dataset: {e}")
             raise
+
+    def _filter_long_proteins(self) -> None:
+        """Drop samples whose protein sequence exceeds max_protein_length.
+
+        Filtering at load time (instead of truncating in __getitem__) ensures
+        __len__ is accurate and avoids training on incomplete sequences whose
+        labels were written for the full protein.
+        """
+        max_len = self.config.max_protein_length
+        if not max_len:
+            return
+
+        aa_chars = set("ACDEFGHIKLMNPQRSTVWYBXZUO")
+        before = len(self.data)
+
+        def _seq_len(item):
+            text = item.get("input", item.get("Input", ""))
+            if not text:
+                return 0
+            cleaned = text.strip().upper()
+            if cleaned.startswith("```") and cleaned.endswith("```"):
+                cleaned = cleaned[3:-3].strip()
+            if cleaned and all(c in aa_chars for c in cleaned):
+                return len(cleaned)
+            # Fall back to longest AA-like line
+            for line in text.split("\n"):
+                line = line.strip().upper()
+                if len(line) >= 4:
+                    aa_count = sum(1 for c in line if c in aa_chars)
+                    if aa_count / len(line) > 0.9:
+                        return len(line)
+            return len(text)
+
+        keep_idx = [i for i in range(before) if _seq_len(self.data[i]) <= max_len]
+
+        if len(keep_idx) < before:
+            self.data = self.data.select(keep_idx)
+            dropped = before - len(keep_idx)
+            logger.info(
+                f"Filtered {dropped} samples with protein > {max_len} AA "
+                f"({dropped/before*100:.1f}% dropped, {len(self.data)} remaining)"
+            )
+
+    def _try_load_local_json(self) -> bool:
+        """Attempt to load dataset from local JSON files.
+
+        Searches for JSON files under the cache directory following the
+        Mol-Instructions layout (``data/Protein-oriented_Instructions/*.json``).
+
+        Returns:
+            True if data was successfully loaded, False otherwise.
+        """
+        import json as _json
+
+        if self.config.cache_dir is None:
+            return False
+
+        # Search for the Protein-oriented Instructions JSON directory
+        cache_path = Path(self.config.cache_dir)
+        subset_dir_name = self.config.subset.replace(" ", "_").replace("-", "_")
+        candidates = [
+            cache_path / "data" / subset_dir_name,
+            cache_path / subset_dir_name,
+            cache_path / "data" / "Protein-oriented_Instructions",
+            cache_path,
+        ]
+
+        json_dir = None
+        for candidate in candidates:
+            if candidate.is_dir():
+                json_files = list(candidate.glob("*.json"))
+                if json_files:
+                    json_dir = candidate
+                    break
+
+        if json_dir is None:
+            return False
+
+        logger.info(f"Loading from local JSON files: {json_dir}")
+
+        # Load all JSON files, grouped by source prefix for balancing
+        import re
+
+        exclude = set(self.config.exclude_files or [])
+
+        source_groups: Dict[str, List] = {}
+        for json_file in sorted(json_dir.glob("*.json")):
+            if json_file.name in exclude:
+                logger.info(f"  {json_file.name}: EXCLUDED by config")
+                continue
+            with open(json_file) as f:
+                records = _json.load(f)
+            if not isinstance(records, list):
+                logger.info(f"  {json_file.name}: skipped (not a record list)")
+                continue
+            # Derive source group from filename prefix (e.g., "mol_", "sp_", "wp_")
+            prefix_match = re.match(r"^([a-z]+)_", json_file.name)
+            source = prefix_match.group(1) if prefix_match else "other"
+            source_groups.setdefault(source, [])
+            source_groups[source].extend(records)
+            logger.info(f"  {json_file.name}: {len(records)} samples (source: {source})")
+
+        if not source_groups:
+            return False
+
+        # Apply temperature-based upsampling if temperature < 1.0
+        alpha = self.config.sampling_temperature
+        all_records = []
+        if alpha < 1.0 and len(source_groups) > 1:
+            all_records = self._apply_temperature_sampling(source_groups, alpha)
+        else:
+            for records in source_groups.values():
+                all_records.extend(records)
+
+        logger.info(f"Total samples loaded: {len(all_records)}")
+
+        # Convert to HuggingFace Dataset for consistent split handling
+        from datasets import Dataset as HFDatasetCls
+
+        full_dataset = HFDatasetCls.from_list(all_records)
+
+        # Create splits
+        self.data = self._create_splits(full_dataset)
+
+        # Apply limit
+        if self.limit is not None and self.limit < len(self.data):
+            self.data = self.data.select(range(self.limit))
+
+        logger.info(f"Loaded {len(self.data)} samples for split '{self.split}'")
+        return True
+
+    def _apply_temperature_sampling(
+        self, source_groups: Dict[str, List], alpha: float
+    ) -> List:
+        """Upsample smaller source groups using temperature-based sampling.
+
+        Computes target proportion for source *i* as  p_i ∝ n_i^α.
+        Smaller sources get repeated more times to match the target proportion.
+        The largest source is kept at 1x (no duplication).
+
+        Args:
+            source_groups: Mapping of source prefix → list of records.
+            alpha: Sampling temperature (0 < α < 1). Lower = more balanced.
+
+        Returns:
+            Combined list of records after upsampling.
+        """
+        import math
+        import random
+
+        sizes = {src: len(recs) for src, recs in source_groups.items()}
+        max_size = max(sizes.values())
+
+        # Compute target proportions: p_i ∝ n_i^α
+        raw_weights = {src: n ** alpha for src, n in sizes.items()}
+        total_weight = sum(raw_weights.values())
+        target_props = {src: w / total_weight for src, w in raw_weights.items()}
+
+        # Compute upsample factor relative to the largest source (which stays at 1x)
+        # For each source: target_n / actual_n, normalized so largest source = 1x
+        max_source = max(sizes, key=lambda s: sizes[s])
+        baseline_ratio = target_props[max_source] / sizes[max_source]
+
+        all_records = []
+        rng = random.Random(self.config.seed)
+        for src, records in source_groups.items():
+            factor = (target_props[src] / sizes[src]) / baseline_ratio
+            full_repeats = int(factor)
+            fractional = factor - full_repeats
+
+            repeated = records * full_repeats
+            # Fractional part: randomly sample that fraction of records
+            if fractional > 0:
+                extra_count = int(math.ceil(fractional * len(records)))
+                extra = rng.sample(records, min(extra_count, len(records)))
+                repeated.extend(extra)
+
+            logger.info(
+                f"  Source '{src}': {sizes[src]:,} → {len(repeated):,} "
+                f"(×{factor:.1f}, target {target_props[src]:.1%})"
+            )
+            all_records.extend(repeated)
+
+        return all_records
 
     def _create_splits(self, dataset: HFDataset) -> HFDataset:
         """Create train/val/test splits from a single dataset."""
@@ -219,25 +475,37 @@ class MolInstructionsDataset(Dataset):
 
         The input may contain the sequence directly or embedded in a longer context.
         We look for patterns that suggest amino acid sequences.
+
+        Handles:
+        - Pure AA sequences (standard 20 + ambiguous XBZUO codes)
+        - Sequences wrapped in triple backticks (```...```)
+        - Short sequences (< 10 AA)
         """
         if not input_text:
             return ""
 
-        # Common amino acid characters
-        aa_chars = set("ACDEFGHIKLMNPQRSTVWY")
+        # Standard 20 + IUPAC ambiguous codes (X=unknown, B=D/N, Z=E/Q, U=Sec, O=Pyl)
+        aa_chars = set("ACDEFGHIKLMNPQRSTVWYBXZUO")
+
+        # Strip markdown code fences that wrap sequences in many datasets
+        text = input_text.strip()
+        if text.startswith("```") and text.endswith("```"):
+            text = text[3:-3].strip()
 
         # Check if the entire input is a protein sequence
-        cleaned = input_text.strip().upper()
+        cleaned = text.strip().upper()
         if cleaned and all(c in aa_chars for c in cleaned):
             return cleaned
 
         # Try to extract sequence from structured input
         # Sometimes sequences are on their own line or after a colon
-        lines = input_text.strip().split('\n')
+        lines = text.split('\n')
         for line in lines:
             line = line.strip().upper()
-            # Skip short lines and lines with too many non-AA characters
-            if len(line) >= 10:
+            if not line or line.startswith("```"):
+                continue
+            # Accept any line that's mostly AA characters (>= 4 chars to catch short seqs)
+            if len(line) >= 4:
                 aa_count = sum(1 for c in line if c in aa_chars)
                 if aa_count / len(line) > 0.9:
                     return line
@@ -252,7 +520,45 @@ class MolInstructionsDataset(Dataset):
         output: str,
         for_inference: bool = False,
     ) -> str:
-        """Format instruction-input-output into a prompt string."""
+        """Format instruction-input-output into a prompt string.
+
+        When use_chat_template is True and a tokenizer is available, uses
+        tokenizer.apply_chat_template() to match the model's native format.
+        Falls back to Alpaca-style template otherwise.
+        """
+        if self.config.use_chat_template and self.tokenizer is not None:
+            messages = format_chat_messages(
+                instruction=instruction,
+                input_text=input_text,
+                output=output,
+                system_prompt=self.config.system_prompt,
+                for_inference=for_inference,
+            )
+            # apply_chat_template() is model-agnostic: each tokenizer carries
+            # its own Jinja2 template, so Qwen3 produces <|im_start|>/<|im_end|>
+            # blocks while Llama produces <|begin_of_text|> style tokens, etc.
+            #
+            # enable_thinking=False is Qwen3-specific — it forces empty
+            # <think></think> blocks so the model skips reasoning and outputs
+            # the response directly.  Non-Qwen tokenizers don't accept this
+            # kwarg, so we catch TypeError and fall back to the plain call.
+            try:
+                formatted = self.tokenizer.apply_chat_template(
+                    messages,
+                    tokenize=False,
+                    add_generation_prompt=for_inference,
+                    enable_thinking=self.config.enable_thinking,
+                )
+            except TypeError:
+                # Non-Qwen models (Llama, Mistral, etc.) — no enable_thinking
+                formatted = self.tokenizer.apply_chat_template(
+                    messages,
+                    tokenize=False,
+                    add_generation_prompt=for_inference,
+                )
+            return formatted
+
+        # Fallback: Alpaca-style template
         template = (
             self.config.inference_template if for_inference
             else self.config.prompt_template
@@ -265,6 +571,26 @@ class MolInstructionsDataset(Dataset):
         )
 
         return formatted
+
+    @property
+    def lengths(self) -> List[int]:
+        """Approximate token lengths for HF Trainer's LengthGroupedSampler.
+
+        Uses character count / 4 as a rough proxy for token count (avoids
+        expensive tokenization at dataset init). Good enough for grouping
+        similar-length sequences to reduce padding waste.
+        """
+        if not hasattr(self, "_lengths"):
+            self._lengths = []
+            for i in range(len(self.data)):
+                item = self.data[i]
+                instruction = item.get("instruction", "")
+                input_text = item.get("input", "")
+                output = item.get("output", "")
+                # ~4 chars per token is a reasonable approximation
+                approx_tokens = (len(instruction) + len(input_text) + len(output)) // 4
+                self._lengths.append(approx_tokens)
+        return self._lengths
 
     def __len__(self) -> int:
         return len(self.data)
@@ -291,19 +617,27 @@ class MolInstructionsDataset(Dataset):
         # Extract protein sequence from input
         protein_sequence = self._extract_protein_sequence(input_text)
 
-        # Apply protein length limit if specified
-        if self.config.max_protein_length and len(protein_sequence) > self.config.max_protein_length:
-            protein_sequence = protein_sequence[:self.config.max_protein_length]
+        # For ESM-3 approach: replace protein text with placeholder token
+        # so the model receives protein info only as learned embeddings.
+        prompt_input = input_text
+        if self.config.protein_placeholder and protein_sequence:
+            prompt_input = self.config.protein_placeholder
 
-        # Format the full prompt
-        formatted_prompt = self._format_prompt(instruction, input_text, output)
+        # Format the full prompt (training: includes response)
+        formatted_prompt = self._format_prompt(instruction, prompt_input, output)
+        # Format inference prompt (no response, for RL generation)
+        inference_prompt = self._format_prompt(
+            instruction, prompt_input, "", for_inference=True
+        )
 
         sample = {
             "protein_sequence": protein_sequence,
             "instruction": instruction,
             "response": output,
             "formatted_prompt": formatted_prompt,
+            "inference_prompt": inference_prompt,
             "input_text": input_text,
+            "metadata": item.get("metadata", {}),
         }
 
         if self.transform:
@@ -433,6 +767,7 @@ class MolInstructionsCollator:
         result["protein_sequences"] = [item["protein_sequence"] for item in batch]
         result["instructions"] = [item["instruction"] for item in batch]
         result["responses"] = [item["response"] for item in batch]
+        result["metadata"] = [item.get("metadata", {}) for item in batch]
 
         return result
 

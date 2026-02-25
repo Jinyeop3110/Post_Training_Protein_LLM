@@ -23,17 +23,17 @@ Generate tests for the protein-LLM project.
 ### Unit Test
 ```python
 import pytest
-from src.models.protein_encoder import ESM2Encoder
+from src.models.protein_encoder import ESM3Encoder
 
-class TestESM2Encoder:
+class TestESM3Encoder:
     @pytest.fixture
     def encoder(self):
-        return ESM2Encoder(model_name="esm2_t33_650M_UR50D")
+        return ESM3Encoder(model_name="esm3-sm-open-v1")
 
     def test_encode_single_sequence(self, encoder):
         seq = "MKTVRQERLKSIVRILERSKEPVSGAQLAEELSVSRQVIVQDIAYLRSLGYNIVATPRGYVLAGG"
         embedding = encoder.encode(seq)
-        assert embedding.shape[-1] == 1280  # ESM-2 650M dim
+        assert embedding.shape[-1] == 1536  # ESM-3 small dim
 
     def test_encode_empty_raises(self, encoder):
         with pytest.raises(ValueError):

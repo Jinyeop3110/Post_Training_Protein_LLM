@@ -22,25 +22,25 @@ Supported data formats:
 import json
 import logging
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 
 try:
     from sklearn.metrics import (
         accuracy_score,
+        average_precision_score,
+        confusion_matrix,
         f1_score,
+        matthews_corrcoef,
+        precision_recall_curve,
         precision_score,
         recall_score,
         roc_auc_score,
-        average_precision_score,
-        matthews_corrcoef,
-        precision_recall_curve,
         roc_curve,
-        confusion_matrix,
     )
     SKLEARN_AVAILABLE = True
 except ImportError:
@@ -729,12 +729,14 @@ def _compute_basic_metrics(predictions: List[PPIPredictionResult]) -> Dict[str, 
 def evaluate_ppi(
     cfg: DictConfig,
     checkpoint_path: Optional[str] = None,
+    model=None,
+    output_dir: Optional[str] = None,
 ) -> Dict[str, float]:
     """
     Evaluate protein-protein interaction prediction.
 
     This function:
-    1. Loads the model from checkpoint
+    1. Loads the model from checkpoint (unless pre-loaded model is provided)
     2. Loads the PPI test dataset
     3. Generates predictions for each protein pair
     4. Parses yes/no predictions from generated text
@@ -748,24 +750,26 @@ def evaluate_ppi(
             - logging: Logging settings (wandb, tensorboard, save_results)
 
         checkpoint_path: Path to model checkpoint.
+        model: Pre-loaded model instance (skips loading if provided).
 
     Returns:
         Dictionary of metric names to values.
     """
     log.info("Evaluating PPI prediction...")
 
-    # Import model here to avoid circular imports
-    from src.models.multimodal_llm import ProteinLLM
+    if model is None:
+        # Import model here to avoid circular imports
+        from src.models.multimodal_llm import ProteinLLM
 
-    # Load model
-    if checkpoint_path:
-        log.info(f"Loading model from checkpoint: {checkpoint_path}")
-        model = ProteinLLM.from_pretrained(checkpoint_path)
-    else:
-        log.info("Creating model from config (no checkpoint provided)")
-        model = ProteinLLM.from_config(cfg)
+        # Load model
+        if checkpoint_path:
+            log.info(f"Loading model from checkpoint: {checkpoint_path}")
+            model = ProteinLLM.from_pretrained(checkpoint_path)
+        else:
+            log.info("Creating model from config (no checkpoint provided)")
+            model = ProteinLLM.from_config(cfg)
 
-    model.eval()
+        model.eval()
 
     # Get evaluation settings
     eval_cfg = cfg.get("evaluation", {})
@@ -802,28 +806,16 @@ def evaluate_ppi(
         sequences_2 = [sample.sequence_2 for sample in batch]
 
         # Generate responses
+        # PPI: both sequences are in the prompt via create_ppi_prompt().
+        # Pass first protein for encoding; the prompt contains both sequences as text.
         try:
             generated_texts = model.generate(
                 protein_sequences=sequences_1,
-                protein_sequences_2=sequences_2,  # Second protein
                 prompt=prompts,
                 max_new_tokens=max_new_tokens,
-                do_sample=False,  # Deterministic for evaluation
+                do_sample=False,
                 temperature=1.0,
             )
-        except TypeError:
-            # Model might not support protein_sequences_2, try with concatenated prompt
-            try:
-                generated_texts = model.generate(
-                    protein_sequences=sequences_1,
-                    prompt=prompts,
-                    max_new_tokens=max_new_tokens,
-                    do_sample=False,
-                    temperature=1.0,
-                )
-            except Exception as e:
-                log.error(f"Generation failed for batch {i}: {e}")
-                continue
         except Exception as e:
             log.error(f"Generation failed for batch {i}: {e}")
             continue
@@ -855,12 +847,12 @@ def evaluate_ppi(
         else:
             log.info(f"  {key}: {value}")
 
-    # Save results if configured
-    logging_cfg = cfg.get("logging", {})
-    if logging_cfg.get("save_results", False):
-        _save_results(predictions, metrics, cfg)
+    # Save predictions to output_dir if provided
+    if output_dir:
+        _save_predictions(predictions, output_dir, "ppi")
 
     # Log to wandb if configured
+    logging_cfg = cfg.get("logging", {})
     if logging_cfg.get("wandb", {}).get("enabled", False):
         _log_to_wandb(metrics, predictions, cfg)
 
@@ -871,35 +863,31 @@ def evaluate_ppi(
     return metrics
 
 
-def _save_results(
+def _save_predictions(
     predictions: List[PPIPredictionResult],
-    metrics: Dict[str, float],
-    cfg: DictConfig,
+    output_dir: str,
+    task_name: str,
 ) -> None:
-    """Save evaluation results to JSON file."""
-    output_dir = cfg.get("logging", {}).get("output_dir", "./outputs")
-    output_path = Path(output_dir) / "ppi_prediction_results.json"
+    """Save individual predictions to JSON file."""
+    output_path = Path(output_dir) / f"{task_name}_predictions.json"
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    results = {
-        "metrics": metrics,
-        "predictions": [
-            {
-                "protein_id_1": p.protein_id_1,
-                "protein_id_2": p.protein_id_2,
-                "predicted_label": p.predicted_label,
-                "predicted_confidence": p.predicted_confidence,
-                "ground_truth_label": p.ground_truth_label,
-                "generated_text": p.generated_text,
-            }
-            for p in predictions
-        ],
-    }
+    records = [
+        {
+            "protein_id_1": p.protein_id_1,
+            "protein_id_2": p.protein_id_2,
+            "predicted_label": p.predicted_label,
+            "predicted_confidence": p.predicted_confidence,
+            "ground_truth_label": p.ground_truth_label,
+            "generated_text": p.generated_text,
+        }
+        for p in predictions
+    ]
 
     with open(output_path, "w") as f:
-        json.dump(results, f, indent=2)
+        json.dump(records, f, indent=2)
 
-    log.info(f"Results saved to {output_path}")
+    log.info(f"Predictions saved to {output_path}")
 
 
 def _log_to_wandb(

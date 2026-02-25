@@ -24,9 +24,17 @@ import pytest
 from omegaconf import OmegaConf
 
 from src.evaluation.stability import (
+    STABILITY_CLASSES,
     StabilityPredictionResult,
     StabilityTestSample,
-    STABILITY_CLASSES,
+    _apply_mutation,
+    _compute_classification_basic,
+    _compute_pearson_basic,
+    _compute_r2_basic,
+    _compute_spearman_basic,
+    _create_demo_dataset,
+    _infer_class_from_text,
+    _load_csv_dataset,
     classify_ddg,
     compute_stability_metrics,
     create_stability_prompt,
@@ -34,15 +42,6 @@ from src.evaluation.stability import (
     evaluate_stability_from_predictions,
     load_stability_test_dataset,
     parse_stability_prediction,
-    _apply_mutation,
-    _create_demo_dataset,
-    _compute_classification_basic,
-    _compute_pearson_basic,
-    _compute_spearman_basic,
-    _compute_r2_basic,
-    _infer_class_from_text,
-    _load_json_dataset,
-    _load_csv_dataset,
 )
 
 
@@ -966,19 +965,15 @@ class TestEvaluateStability:
         })
 
     def test_evaluate_stability_with_mock_model(self, mock_model, basic_config):
-        """Test full evaluation with mocked model."""
-        with patch("src.evaluation.stability.ProteinLLM") as MockProteinLLM:
-            MockProteinLLM.from_config.return_value = mock_model
+        """Test full evaluation with mocked model (passed directly)."""
+        metrics = evaluate_stability(basic_config, model=mock_model)
 
-            metrics = evaluate_stability(basic_config)
-
-            assert "accuracy" in metrics or "error" not in metrics
-            assert mock_model.eval.called
-            assert mock_model.generate.called
+        assert "accuracy" in metrics or "error" not in metrics
+        assert mock_model.generate.called
 
     def test_evaluate_stability_with_checkpoint(self, mock_model, basic_config):
         """Test evaluation with checkpoint path."""
-        with patch("src.evaluation.stability.ProteinLLM") as MockProteinLLM:
+        with patch("src.models.multimodal_llm.ProteinLLM") as MockProteinLLM:
             MockProteinLLM.from_pretrained.return_value = mock_model
 
             with tempfile.TemporaryDirectory() as tmpdir:
@@ -994,20 +989,17 @@ class TestEvaluateStability:
         """Test that evaluation handles generation errors gracefully."""
         mock_model.generate.side_effect = RuntimeError("Generation failed")
 
-        with patch("src.evaluation.stability.ProteinLLM") as MockProteinLLM:
-            MockProteinLLM.from_config.return_value = mock_model
-
-            # Should not raise, but return empty or minimal metrics
-            metrics = evaluate_stability(basic_config)
-            assert isinstance(metrics, dict)
+        # Pass model directly - should not raise, but return empty or minimal metrics
+        metrics = evaluate_stability(basic_config, model=mock_model)
+        assert isinstance(metrics, dict)
 
 
 class TestSaveAndLogging:
     """Tests for result saving and logging functions."""
 
-    def test_save_results(self):
-        """Test saving results to JSON file."""
-        from src.evaluation.stability import _save_results
+    def test_save_predictions(self):
+        """Test saving predictions to JSON file."""
+        from src.evaluation.stability import _save_predictions
 
         predictions = [
             StabilityPredictionResult(
@@ -1020,26 +1012,19 @@ class TestSaveAndLogging:
                 mutation="A1G",
             )
         ]
-        metrics = {"accuracy": 1.0, "pearson": 0.95, "rmse": 0.5}
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            cfg = OmegaConf.create({
-                "logging": {"output_dir": tmpdir}
-            })
+            _save_predictions(predictions, tmpdir, "stability")
 
-            _save_results(predictions, metrics, cfg)
-
-            output_file = Path(tmpdir) / "stability_prediction_results.json"
+            output_file = Path(tmpdir) / "stability_predictions.json"
             assert output_file.exists()
 
             with open(output_file) as f:
                 data = json.load(f)
 
-            assert "metrics" in data
-            assert "predictions" in data
-            assert data["metrics"]["accuracy"] == 1.0
-            assert len(data["predictions"]) == 1
-            assert data["predictions"][0]["protein_id"] == "test1"
+            assert isinstance(data, list)
+            assert len(data) == 1
+            assert data[0]["protein_id"] == "test1"
 
 
 class TestEdgeCases:

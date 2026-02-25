@@ -96,7 +96,7 @@ Post_Training_Protein_LLM/
 │   │   ├── data-prep.md               # /data-prep command
 │   │   └── debug.md                   # /debug command
 │   └── skills/
-│       ├── protein-encoding/SKILL.md  # ESM-2 knowledge
+│       ├── protein-encoding/SKILL.md  # ESM-3 knowledge
 │       ├── rl-training/SKILL.md       # veRL/GRPO knowledge
 │       └── hydra-configs/SKILL.md     # Config patterns
 │
@@ -118,8 +118,7 @@ Post_Training_Protein_LLM/
 │   │   ├── llama3_8b.yaml
 │   │   └── default.yaml
 │   ├── encoder/
-│   │   ├── esm2_650m.yaml
-│   │   ├── esm2_3b.yaml
+│   │   ├── esm3_small.yaml
 │   │   └── default.yaml
 │   ├── data/
 │   │   ├── mol_instructions.yaml
@@ -357,22 +356,21 @@ warn_unused_ignores = true
 ```markdown
 ---
 name: protein-encoding
-description: ESM-2 protein embeddings, encoder integration, pooling strategies
+description: ESM-3 protein embeddings, encoder integration, pooling strategies
 allowed-tools: [Read, Edit, Grep, Glob, Bash]
 ---
 
 # Protein Encoding Skill
 
 ## Critical Rules
-1. **NEVER modify ESM-2 weights** - always keep frozen during training
-2. **Use attention pooling** (BoM-Pooling, window=80), NOT mean pooling
+1. **NEVER modify ESM-3 encoder weights** - always keep frozen during training
+2. **Use attention pooling** (32 output tokens), NOT mean pooling
 3. **LoRA on k/v matrices only** for protein tasks (differs from NLP)
 
-## ESM-2 Models
+## ESM-3 Model
 | Model | Parameters | Embedding Dim | Recommended |
 |-------|------------|---------------|-------------|
-| esm2_t33_650M_UR50D | 650M | 1,280 | ✓ Best efficiency |
-| esm2_t36_3B_UR50D | 3B | 2,560 | More capacity |
+| esm3-sm-open-v1 | 1.4B | 1,536 | Default |
 
 ## Key Files
 - src/models/protein_encoder.py - Encoder implementations
@@ -381,11 +379,11 @@ allowed-tools: [Read, Edit, Grep, Glob, Bash]
 
 ## Integration Pattern
 ```
-ESM-2 (frozen) → Per-residue [L, 1280]
+ESM-3 (frozen) → Per-residue [L, 1536]
     ↓
-Attention Pooling → [1, 1280]
+Attention Pooling → [32, 1536]
     ↓
-MLP Projector → [1, LLM_dim]
+MLP Projector → [32, LLM_dim]
     ↓
 LLM (with LoRA)
 ```
@@ -525,7 +523,7 @@ python -c "import torch; print(f'GPUs: {torch.cuda.device_count()}')"
 ```yaml
 defaults:
   - model: qwen2_7b
-  - encoder: esm2_650m
+  - encoder: esm3_small
   - data: mol_instructions
   - training: sft_qlora
   - _self_
@@ -609,20 +607,21 @@ generation:
 
 #### 3.3 Encoder Configs
 
-**configs/encoder/esm2_650m.yaml**:
+**configs/encoder/esm3_small.yaml**:
 ```yaml
-name: esm2_650m
-model_name: esm2_t33_650M_UR50D
-embedding_dim: 1280
-num_layers: 33
+name: esm3_small
+model_name: esm3-sm-open-v1
+encoder_type: esm3
+embedding_dim: 1536
+num_layers: 48
 
-# Always frozen
+# Always frozen - CRITICAL: never modify ESM-3 weights
 freeze: true
 
 # Pooling strategy
 pooling:
-  method: attention  # attention, mean, cls, last
-  window_size: 80    # For BoM-Pooling
+  method: attention
+  num_output_tokens: 32
 
 # Projector settings
 projector:
@@ -739,7 +738,7 @@ eval_steps: 50
 
 defaults:
   - override /model: qwen2_7b
-  - override /encoder: esm2_650m
+  - override /encoder: esm3_small
   - override /data: mol_instructions
   - override /training: sft_qlora
 
@@ -798,10 +797,10 @@ pytest tests/ -v
 ```
 
 ## Architecture
-ESM-2 650M (frozen) → Attention Pooling → MLP Projector → LLM (LoRA)
+ESM-3 small (frozen) → Attention Pooling → MLP Projector → LLM (LoRA)
 
 ## Critical Rules
-- NEVER modify ESM-2 weights
+- NEVER modify ESM-3 encoder weights
 - LoRA on k/v matrices ONLY
 - Use attention pooling, NOT mean
 - TRITON_CACHE_DIR must be local

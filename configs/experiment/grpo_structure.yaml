@@ -1,0 +1,36 @@
+# @package _global_
+
+# GRPO experiment: Structural Quality (pLDDT/pTM) Prediction
+# Uses AlphaFold/ESMFold pLDDT data with structural quality reward.
+# Chain from a trained SFT checkpoint via parent_experiment.
+#
+# Usage:
+#   python scripts/train.py experiment=grpo_structure \
+#     parent_experiment=sft_esm3_mlp_XXXX
+
+defaults:
+  - override /model: qwen3_8b
+  - override /encoder: esm3_small
+  - override /data: structure_quality
+  - override /training: grpo
+
+approach: esm3
+experiment_name: grpo_structure_${model.name}_${now:%m%d_%H%M%S}
+
+# Data task for reward routing
+data:
+  task: esmfold
+
+training:
+  grpo:
+    group_size: 4
+
+  # Structural quality descriptions are short
+  rollout:
+    max_tokens: 256
+
+  wandb:
+    tags:
+      - grpo
+      - structure_quality
+      - ${model.name}

@@ -3,7 +3,7 @@
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
@@ -12,7 +12,6 @@ from omegaconf import OmegaConf
 
 from src.models.multimodal_llm import ProteinLLM
 from src.models.pooling import AttentionPooling, MeanPooling
-from src.models.projector import MLPProjector
 
 
 class MockESMModel(nn.Module):
@@ -90,6 +89,20 @@ class MockLLM(nn.Module):
         # Return mock token IDs
         return torch.randint(0, 32000, (batch_size, max_new_tokens))
 
+    def save_pretrained(self, path):
+        """Mock save_pretrained - no-op."""
+        pass
+
+
+class MockTokenizerOutput(dict):
+    """Dict-like object that supports .to(device) like BatchEncoding."""
+
+    def to(self, device):
+        return MockTokenizerOutput({
+            k: v.to(device) if isinstance(v, torch.Tensor) else v
+            for k, v in self.items()
+        })
+
 
 class MockTokenizer:
     """Mock tokenizer for testing."""
@@ -100,8 +113,13 @@ class MockTokenizer:
         self.pad_token_id = 0
         self.eos_token = "</s>"
         self.eos_token_id = 1
+        # Map special tokens for convert_tokens_to_ids
+        self._token_to_id = {}
 
-    def __call__(self, texts, return_tensors=None, padding=True, truncation=True):
+    def __len__(self):
+        return self.vocab_size
+
+    def __call__(self, texts, return_tensors=None, padding=True, truncation=True, **kwargs):
         if isinstance(texts, str):
             texts = [texts]
 
@@ -109,42 +127,31 @@ class MockTokenizer:
         input_ids = torch.randint(2, self.vocab_size, (len(texts), max_len))
         attention_mask = torch.ones_like(input_ids)
 
-        return {"input_ids": input_ids, "attention_mask": attention_mask}
+        return MockTokenizerOutput({"input_ids": input_ids, "attention_mask": attention_mask})
 
     def batch_decode(self, token_ids, skip_special_tokens=True):
         return [f"Generated text {i}" for i in range(len(token_ids))]
 
+    def convert_tokens_to_ids(self, token):
+        """Mock convert_tokens_to_ids - return a fixed ID for any token."""
+        return self._token_to_id.get(token, -1)
 
-@pytest.fixture
-def mock_esm_module():
-    """Fixture to mock ESM loading."""
-    with patch("src.models.protein_encoder.esm") as mock_esm:
-        mock_model = MockESMModel()
-        mock_alphabet = MockAlphabet()
-        mock_esm.pretrained.load_model_and_alphabet.return_value = (
-            mock_model,
-            mock_alphabet,
-        )
-        yield mock_esm
+    def save_pretrained(self, path):
+        """Mock save_pretrained - no-op."""
+        pass
 
-
-@pytest.fixture
-def mock_transformers():
-    """Fixture to mock transformers loading."""
-    with patch("src.models.multimodal_llm.AutoModelForCausalLM") as mock_auto_model, \
-         patch("src.models.multimodal_llm.AutoTokenizer") as mock_auto_tokenizer:
-        mock_auto_model.from_pretrained.return_value = MockLLM()
-        mock_auto_tokenizer.from_pretrained.return_value = MockTokenizer()
-        yield mock_auto_model, mock_auto_tokenizer
+    def encode(self, text, add_special_tokens=True, truncation=True, max_length=None):
+        """Mock encode - return a list of token IDs."""
+        return list(range(min(len(text.split()) + 2, max_length or 100)))
 
 
 @pytest.fixture
-def mock_protein_llm(mock_esm_module, mock_transformers, device):
+def mock_protein_llm(device):
     """Create a ProteinLLM with mocked dependencies for testing."""
     # Create model without loading real components
     model = ProteinLLM(
         llm_name="mock/model",
-        encoder_name="esm2_t33_650M_UR50D",
+        encoder_name="esm3-sm-open-v1",
         num_prefix_tokens=8,
         pooling_type="attention",
         use_qlora=False,  # Disable QLoRA for simpler testing
@@ -162,7 +169,10 @@ def mock_protein_llm(mock_esm_module, mock_transformers, device):
     model._build_projector()
 
     # Set mock LLM and tokenizer
-    model.llm = MockLLM().to(device)
+    mock_llm = MockLLM()
+    # Ensure embed_tokens is on the correct device
+    mock_llm.model.embed_tokens = mock_llm.model.embed_tokens.to(device)
+    model.llm = mock_llm.to(device)
     model.tokenizer = MockTokenizer()
 
     # Create mock encoder
@@ -196,7 +206,7 @@ class TestProteinLLMInitialization:
         """Test custom initialization values."""
         model = ProteinLLM(
             llm_name="custom/model",
-            encoder_name="esm2_t36_3B_UR50D",
+            encoder_name="esm3-sm-open-v1",
             num_prefix_tokens=64,
             pooling_type="mean",
             use_qlora=False,
@@ -207,7 +217,7 @@ class TestProteinLLMInitialization:
         )
 
         assert model.llm_name == "custom/model"
-        assert model.encoder_name == "esm2_t36_3B_UR50D"
+        assert model.encoder_name == "esm3-sm-open-v1"
         assert model.num_prefix_tokens == 64
         assert model.pooling_type == "mean"
         assert model.use_qlora is False
@@ -215,14 +225,10 @@ class TestProteinLLMInitialization:
         assert model.lora_alpha == 32
 
     def test_esm_embed_dim_mapping(self):
-        """Test ESM model embedding dimension mapping."""
+        """Test ESM-3 model embedding dimension mapping."""
         test_cases = [
-            ("esm2_t6_8M_UR50D", 320),
-            ("esm2_t12_35M_UR50D", 480),
-            ("esm2_t30_150M_UR50D", 640),
-            ("esm2_t33_650M_UR50D", 1280),
-            ("esm2_t36_3B_UR50D", 2560),
-            ("esm2_t48_15B_UR50D", 5120),
+            ("esm3-sm-open-v1", 1536),
+            ("esm3_sm_open_v1", 1536),
         ]
 
         for encoder_name, expected_dim in test_cases:
@@ -424,8 +430,8 @@ class TestFromConfig:
                 },
             },
             "encoder": {
-                "model_name": "esm2_t33_650M_UR50D",
-                "embedding_dim": 1280,
+                "model_name": "esm3-sm-open-v1",
+                "embedding_dim": 1536,
                 "freeze": True,
                 "pooling": {
                     "method": "attention",
@@ -459,7 +465,7 @@ class TestFromConfig:
             model = ProteinLLM.from_config(config)
 
         assert model.llm_name == "test/model"
-        assert model.encoder_name == "esm2_t33_650M_UR50D"
+        assert model.encoder_name == "esm3-sm-open-v1"
         assert model.num_prefix_tokens == 16
         assert model.pooling_type == "attention"
         assert model.projector_hidden_dim == 1024
@@ -490,7 +496,7 @@ class TestFromConfig:
         config = {
             "model": {"path": "dict/model"},
             "encoder": {
-                "model_name": "esm2_t30_150M_UR50D",
+                "model_name": "esm3-sm-open-v1",
                 "pooling": {"method": "mean"},
             },
         }
@@ -503,7 +509,7 @@ class TestFromConfig:
             model = ProteinLLM.from_config(config)
 
         assert model.llm_name == "dict/model"
-        assert model.encoder_name == "esm2_t30_150M_UR50D"
+        assert model.encoder_name == "esm3-sm-open-v1"
         assert model.pooling_type == "mean"
 
 

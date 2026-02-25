@@ -13,7 +13,7 @@ Run supervised fine-tuning for protein-LLM:
 2. Check configuration:
    - Read `configs/sft_config.yaml` (if exists)
    - Verify LoRA settings: r=8, applied to k/v matrices
-   - Confirm ESM-2 is frozen
+   - Confirm ESM-3 is frozen
 
 3. Pre-flight checks:
    - GPU memory: `nvidia-smi`

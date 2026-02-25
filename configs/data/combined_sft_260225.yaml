@@ -1,0 +1,29 @@
+name: combined_sft_260225
+source: combined
+subset: Protein-oriented Instructions (All Sources)
+
+# Combined data directory with symlinks to all 7 sources
+paths:
+  raw: ${paths.processed_dir}/combined_sft_260225
+  processed: ${paths.processed_dir}/combined_sft_260225
+
+# Exclude design tasks: input is text requirements, not protein sequences.
+# ESM-3 encoder receives garbage for these. Fine for text-only approach.
+exclude_files:
+  - mol_protein_design.json
+
+processing:
+  max_seq_length: 2048
+  include_structure: false
+
+splits:
+  train: 0.9
+  validation: 0.05
+  test: 0.05
+
+# Multi-source balancing (temperature-based upsampling)
+# Files grouped by prefix: mol_, sp_, wp_, plm_, clap_, pd_, p2t_
+# alpha < 1.0 upsamples smaller sources relative to larger ones
+sampling_temperature: 0.7
+
+limit: null

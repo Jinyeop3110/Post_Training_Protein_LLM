@@ -1,0 +1,31 @@
+name: combined
+source: combined
+subset: Protein-oriented Instructions
+
+# Point to combined data (Mol-Instructions + Swiss-Prot + Wikipedia Protein symlinks)
+paths:
+  raw: ${paths.processed_dir}/combined
+  processed: ${paths.processed_dir}/combined
+
+# Exclude design tasks: input is text requirements, not protein sequences.
+# ESM-3 encoder receives garbage for these. Fine for text-only approach.
+exclude_files:
+  - mol_protein_design.json
+
+processing:
+  max_seq_length: 2048
+  include_structure: false
+
+splits:
+  train: 0.9
+  validation: 0.05
+  test: 0.05
+
+# Multi-source balancing (temperature-based upsampling)
+# Files are grouped by prefix: mol_ (Mol-Instructions), sp_ (Swiss-Prot), wp_ (Wikipedia)
+# α < 1.0 upsamples smaller sources: weight_i ∝ n_i^α
+# 1.0 = no rebalancing, 0.5 = moderate, 0.0 = fully equalized
+sampling_temperature: 0.75
+
+# Optional: limit number of samples (null = use all)
+limit: null
