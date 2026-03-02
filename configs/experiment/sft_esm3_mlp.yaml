@@ -31,19 +31,19 @@ training:
   # Differential LR: projector trains from random init, needs higher LR
   # Note: 2e-4/2e-3 caused NaN at step 530 with Qwen3-8B (uncapped multimodal
   # gradients + high LR + noisy token-budget batches). Lowered for stability.
-  lr: 1e-4
-  projector_lr: 5e-4  # 5x base LR (safer than 10x for 8B model)
+  lr: 2e-4
+  projector_lr: 1e-3  # 5x base LR
 
   # Token-budget dynamic batching: short seqs → large batch, long seqs → small batch
   # ESM-3 encoder sub-batches independently (encoder.encoder_batch_size=4)
   max_tokens_per_batch: 6144
-  max_batch_size: 12
+  max_batch_size: 20
   gradient_accumulation_steps: 4  # effective batch ~196K tokens (8 GPUs × 4 accum × 6144)
 
   # Projector alignment: freeze LoRA for first 500 steps so the randomly-
   # initialized projector learns a basic embedding mapping before the LLM
   # adapts. After 500 steps, LoRA unfreezes and both train jointly.
-  freeze_lora_steps: 500
+  freeze_lora_steps: 0
 
   epochs: 3
   max_seq_length: 2048
@@ -56,4 +56,5 @@ training:
     tags:
       - sft_lora
       - esm3_mlp
+      - mol_instructions
       - ${model.name}

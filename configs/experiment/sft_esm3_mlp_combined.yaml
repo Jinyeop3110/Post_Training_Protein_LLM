@@ -31,8 +31,8 @@ data:
 
 training:
   # Differential LR: projector trains from random init, needs higher LR
-  lr: 1e-4
-  projector_lr: 5e-4  # 5x base LR (safer than 10x for 8B model)
+  lr: 2e-4
+  projector_lr: 1e-3  # 5x base LR
 
   # Token-budget dynamic batching: short seqs → large batch, long seqs → small batch
   # ESM-3 encoder sub-batches independently (encoder.encoder_batch_size=4)
@@ -43,7 +43,7 @@ training:
   # Projector alignment: freeze LoRA for first 500 steps so the randomly-
   # initialized projector learns a basic embedding mapping before the LLM
   # adapts. After 500 steps, LoRA unfreezes and both train jointly.
-  freeze_lora_steps: 500
+  freeze_lora_steps: 0
 
   epochs: 3
   max_seq_length: 2048

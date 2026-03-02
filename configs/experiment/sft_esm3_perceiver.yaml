@@ -34,17 +34,17 @@ data:
 training:
   # Differential LR: perceiver trains from random init
   # Note: 2e-4/2e-3 (10x) caused NaN with 8B model. Using safer 5x ratio.
-  lr: 1e-4
-  projector_lr: 5e-4  # 5x base LR (safer for 8B)
+  lr: 2e-4
+  projector_lr: 1e-3  # 5x base LR
 
   # Token-budget dynamic batching: short seqs → large batch, long seqs → small batch
   # ESM-3 encoder sub-batches independently (encoder.encoder_batch_size=4)
   max_tokens_per_batch: 6144
-  max_batch_size: 12
+  max_batch_size: 20
   gradient_accumulation_steps: 4  # effective batch ~196K tokens (8 GPUs × 4 accum × 6144)
 
   # Projector alignment: freeze LoRA for first 500 steps
-  freeze_lora_steps: 500
+  freeze_lora_steps: 0
 
   epochs: 3
   max_seq_length: 2048
@@ -56,4 +56,5 @@ training:
     tags:
       - sft_lora
       - esm3_perceiver
+      - mol_instructions
       - ${model.name}

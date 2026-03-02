@@ -1,19 +1,25 @@
 # @package _global_
 
-# SFT experiment: Text-only approach (no encoder)
+# SFT experiment: Text-only approach (Combined SFT Dataset)
 # Raw protein sequence as <protein>MKTL...</protein> tokens to LLM
 # Trainable: ~2M params (LoRA only, no pooling/projector)
 #
-# Usage: python scripts/train.py experiment=sft_text
+# Uses combined_sft_260225: 4.7M records from 6 sources
+# (Mol-Instructions, Swiss-Prot, ProteinLMDataset, SwissProtCLAP, ProtDescribe, Protein2Text-QA)
+#
+# Usage: python scripts/train.py experiment=sft_text_combined
 
 defaults:
   - override /model: qwen3_8b
   - override /encoder: esm3_small  # Ignored when approach=text, but Hydra needs it
-  - override /data: mol_instructions
+  - override /data: combined_sft_260225
   - override /training: sft_lora
 
 approach: text
-experiment_name: sft_text_${model.name}_${now:%m%d_%H%M%S}
+experiment_name: sft_text_combined_${model.name}_${now:%m%d_%H%M%S}
+
+# Text-only: exclude protein_design is still appropriate (garbled text input)
+# The exclude_files in the data config handles this
 
 training:
   # Text-only: no projector, so no differential LR needed
@@ -39,5 +45,5 @@ training:
     tags:
       - sft_lora
       - text_only
-      - mol_instructions
+      - combined_sft
       - ${model.name}
