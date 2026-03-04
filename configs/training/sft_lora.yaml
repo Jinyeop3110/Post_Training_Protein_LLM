@@ -27,6 +27,7 @@ lora:
 freeze_lora: false
 
 # Training parameters
+max_steps: -1  # Override epochs: -1 = use epochs, >0 = stop after N optimizer steps
 lr: 2e-4
 projector_lr: 2e-3  # 10x base LR for randomly-initialized pooling + projector
 epochs: 3
@@ -36,9 +37,17 @@ max_seq_length: 2048
 packing_sequences: false  # Concatenation+packing: pack multiple examples into fixed-length blocks
 max_tokens_per_batch: null  # Token budget per micro-batch (e.g., 8192). null = use fixed batch_size
 max_batch_size: 16          # Cap samples per micro-batch when using token budget
+eval_batch_size: 4          # Eval uses fixed batch size (no token-budget); keep small to avoid OOM
+max_eval_samples: 5000      # Cap eval dataset (5K gives stable eval_loss; null = no cap)
 warmup_ratio: 0.03
 max_grad_norm: 1.0
 weight_decay: 0.01
+
+# torch.compile: fuse LLM into optimized CUDA kernels (~10-20% speedup).
+# Enabled by default — verified stable on 8×H100 with FSDP + Qwen3-8B + LoRA.
+# First run incurs ~30 min compilation overhead (cached by torchinductor afterward).
+# Disable with training.torch_compile=false if hitting inductor issues.
+torch_compile: true
 
 # Optimizer
 optimizer:
@@ -64,6 +73,46 @@ save_total_limit: 3
 # Logging
 logging_steps: 10
 eval_steps: 500
+
+# FSDP (Fully Sharded Data Parallel) — distributes training across GPUs.
+# Default: shard_grad_op (ZeRO-2) keeps full params, shards grads+optimizer.
+# 1.6x faster than full_shard (ZeRO-3) with gradient_checkpointing on 8B models
+# because ZeRO-3 needs AllGather for every forward/backward (doubled by grad ckpt).
+# Peak ~42 GB/GPU on 8B models — fits 80 GB H100.
+# Requires: torchrun launch (already default), no device_map on model.
+# Verified on 8×H100 with Qwen3-8B + LoRA + ESM-3 encoder.
+fsdp:
+  enabled: true
+  # Sharding strategy: shard_grad_op (ZeRO-2) | full_shard (ZeRO-3)
+  # shard_grad_op keeps full params on GPU, shards grads+optimizer only.
+  # full_shard also shards params (less memory, but AllGather overhead).
+  # ZeRO-2 avoids AllGather in forward/backward — 1.6x faster with gradient
+  # checkpointing on 8B models. Peak ~42 GB/GPU fits 80 GB H100.
+  strategy: shard_grad_op
+  # Auto-wrap: wrap submodules exceeding min_num_params as separate FSDP units.
+  # Each unit gathers params independently — controls granularity vs communication.
+  auto_wrap: true
+  min_num_params: 100000000  # 100M — wraps decoder layers (~260M), embed (~623M), lm_head (~623M)
+  # Prefetch: overlap communication with compute for pipelining.
+  # backward_pre prefetches NEXT layer's params during CURRENT layer's backward (best throughput).
+  # forward_prefetch overlaps next forward all-gather with current forward compute.
+  backward_prefetch: backward_pre
+  forward_prefetch: true
+  # use_orig_params: required for PEFT/LoRA — keeps original param references for adapter hooks.
+  use_orig_params: true
+  # sync_module_states: broadcast rank-0 weights to all ranks at init.
+  # Ensures identical starting weights (important when loading from a single checkpoint).
+  sync_module_states: true
+  # limit_all_gathers: queue at most one pending all-gather at a time.
+  # Reduces memory spikes from concurrent all-gathers at cost of slight throughput.
+  limit_all_gathers: true
+  # activation_checkpointing: recompute activations in backward instead of storing them.
+  # Replaces TrainingArguments.gradient_checkpointing when FSDP is enabled
+  # to avoid redundant AllGather ops. Same memory savings, no extra communication.
+  activation_checkpointing: true
+  # CPU offload: move params/grads to CPU when not in use.
+  # Massive memory savings but 2-4x slower. Only for very large models that don't fit.
+  cpu_offload: false
 
 # wandb settings (override global logging.wandb)
 wandb:

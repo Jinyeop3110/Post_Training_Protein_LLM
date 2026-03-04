@@ -1615,4 +1615,813 @@ MSNTHNIHWSTPSKRIYDASDIPNFKRSIAYYKIRHTLSVVIEKVKGCDLPPGILDKSIVTRKINNIPPSNTTHSRPLDL
  16%|█▌        | 530/3312 [2:20:30<11:21:00, 14.69s/it] 16%|█▌        | 531/3312 [2:20:42<10:46:17, 13.94s/it] 16%|█▌        | 532/3312 [2:20:53<10:02:13, 13.00s/it] 16%|█▌        | 533/3312 [2:21:02<9:04:15, 11.75s/it]  16%|█▌        | 534/3312 [2:21:19<10:15:16, 13.29s/it] 16%|█▌        | 535/3312 [2:21:38<11:45:50, 15.25s/it] 16%|█▌        | 536/3312 [2:21:55<12:08:10, 15.74s/it] 16%|█▌        | 537/3312 [2:22:11<12:11:40, 15.82s/it] 16%|█▌        | 538/3312 [2:22:26<11:56:49, 15.50s/it] 16%|█▋        | 539/3312 [2:22:39<11:24:51, 14.82s/it] 16%|█▋        | 540/3312 [2:22:49<10:19:10, 13.40s/it]                                                       {'loss': 13.0785, 'grad_norm': 3.117438554763794, 'learning_rate': 9.546126256238672e-05, 'token_avg_loss': 3.4721, 'total_tokens': 88838, 'epoch': 0.49, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
  16%|█▋        | 540/3312 [2:22:49<10:19:10, 13.40s/it] 16%|█▋        | 541/3312 [2:22:59<9:32:06, 12.39s/it]  16%|█▋        | 542/3312 [2:23:14<10:01:56, 13.04s/it] 16%|█▋        | 543/3312 [2:23:34<11:44:09, 15.26s/it] 16%|█▋        | 544/3312 [2:23:52<12:15:30, 15.94s/it] 16%|█▋        | 545/3312 [2:24:09<12:30:09, 16.27s/it] 16%|█▋        | 546/3312 [2:24:23<11:59:12, 15.60s/it] 17%|█▋        | 547/3312 [2:24:36<11:25:03, 14.87s/it] 17%|█▋        | 548/3312 [2:24:48<10:39:23, 13.88s/it] 17%|█▋        | 549/3312 [2:24:57<9:36:20, 12.52s/it]  17%|█▋        | 550/3312 [2:25:05<8:30:29, 11.09s/it]                                                      {'loss': 12.8637, 'grad_norm': 3.62703275680542, 'learning_rate': 9.525550178573237e-05, 'token_avg_loss': 3.3128, 'total_tokens': 83560, 'epoch': 0.5, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
  17%|█▋        | 550/3312 [2:25:05<8:30:29, 11.09s/it] 17%|█▋        | 551/3312 [2:25:26<10:54:35, 14.23s/it] 17%|█▋        | 552/3312 [2:25:46<12:04:02, 15.74s/it] 17%|█▋        | 553/3312 [2:26:04<12:34:41, 16.41s/it] 17%|█▋        | 554/3312 [2:26:20<12:31:23, 16.35s/it] 17%|█▋        | 555/3312 [2:26:30<11:09:39, 14.57s/it] 17%|█▋        | 556/3312 [2:26:43<10:43:07, 14.00s/it] 17%|█▋        | 557/3312 [2:26:53<9:54:07, 12.94s/it]  17%|█▋        | 558/3312 [2:27:03<9:04:36, 11.87s/it] 17%|█▋        | 559/3312 [2:27:20<10:23:02, 13.58s/it] 17%|█▋        | 560/3312 [2:27:41<11:54:36, 15.58s/it]                                                       {'loss': 13.6719, 'grad_norm': 1.9939703941345215, 'learning_rate': 9.504541171991173e-05, 'token_avg_loss': 3.5581, 'total_tokens': 99519, 'epoch': 0.51, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
- 17%|█▋        | 560/3312 [2:27:41<11:54:36, 15.58s/it] 17%|█▋        | 561/3312 [2:27:59<12:27:05, 16.29s/it] 17%|█▋        | 562/3312 [2:28:15<12:27:12, 16.30s/it] 17%|█▋        | 563/3312 [2:28:29<11:50:42, 15.51s/it] 17%|█▋        | 564/3312 [2:28:41<11:08:10, 14.59s/it] 17%|█▋        | 565/3312 [2:28:53<10:34:45, 13.86s/it]
+ 17%|█▋        | 560/3312 [2:27:41<11:54:36, 15.58s/it] 17%|█▋        | 561/3312 [2:27:59<12:27:05, 16.29s/it] 17%|█▋        | 562/3312 [2:28:15<12:27:12, 16.30s/it] 17%|█▋        | 563/3312 [2:28:29<11:50:42, 15.51s/it] 17%|█▋        | 564/3312 [2:28:41<11:08:10, 14.59s/it] 17%|█▋        | 565/3312 [2:28:53<10:34:45, 13.86s/it] 17%|█▋        | 566/3312 [2:29:03<9:38:27, 12.64s/it]  17%|█▋        | 567/3312 [2:29:17<9:54:07, 12.99s/it] 17%|█▋        | 568/3312 [2:29:37<11:38:01, 15.26s/it] 17%|█▋        | 569/3312 [2:29:54<12:02:56, 15.81s/it] 17%|█▋        | 570/3312 [2:30:11<12:11:13, 16.00s/it]                                                       {'loss': 13.2832, 'grad_norm': 3.059828281402588, 'learning_rate': 9.483101246282693e-05, 'token_avg_loss': 3.5145, 'total_tokens': 95362, 'epoch': 0.52, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 17%|█▋        | 570/3312 [2:30:11<12:11:13, 16.00s/it] 17%|█▋        | 571/3312 [2:30:24<11:36:38, 15.25s/it] 17%|█▋        | 572/3312 [2:30:36<10:49:31, 14.22s/it] 17%|█▋        | 573/3312 [2:30:48<10:12:28, 13.42s/it] 17%|█▋        | 574/3312 [2:30:57<9:13:57, 12.14s/it]  17%|█▋        | 575/3312 [2:31:05<8:12:07, 10.79s/it] 17%|█▋        | 576/3312 [2:31:26<10:42:11, 14.08s/it] 17%|█▋        | 577/3312 [2:31:46<11:55:05, 15.69s/it] 17%|█▋        | 578/3312 [2:32:03<12:21:32, 16.27s/it] 17%|█▋        | 579/3312 [2:32:17<11:51:53, 15.63s/it] 18%|█▊        | 580/3312 [2:32:31<11:24:48, 15.04s/it]                                                       {'loss': 12.7865, 'grad_norm': 3.2213375568389893, 'learning_rate': 9.461232452461144e-05, 'token_avg_loss': 3.3637, 'total_tokens': 91266, 'epoch': 0.53, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 18%|█▊        | 580/3312 [2:32:31<11:24:48, 15.04s/it] 18%|█▊        | 581/3312 [2:32:44<11:00:58, 14.52s/it] 18%|█▊        | 582/3312 [2:32:54<9:51:45, 13.01s/it]  18%|█▊        | 583/3312 [2:33:03<8:58:44, 11.84s/it] 18%|█▊        | 584/3312 [2:33:20<10:11:38, 13.45s/it] 18%|█▊        | 585/3312 [2:33:40<11:39:43, 15.40s/it] 18%|█▊        | 586/3312 [2:33:55<11:33:24, 15.26s/it] 18%|█▊        | 587/3312 [2:34:09<11:09:56, 14.75s/it] 18%|█▊        | 588/3312 [2:34:23<11:07:17, 14.70s/it] 18%|█▊        | 589/3312 [2:34:36<10:42:15, 14.15s/it] 18%|█▊        | 590/3312 [2:34:46<9:49:56, 13.00s/it]                                                       {'loss': 12.9229, 'grad_norm': 2.82950496673584, 'learning_rate': 9.438936882566796e-05, 'token_avg_loss': 3.4214, 'total_tokens': 86426, 'epoch': 0.53, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 18%|█▊        | 590/3312 [2:34:47<9:49:56, 13.00s/it] 18%|█▊        | 591/3312 [2:34:55<8:51:06, 11.71s/it] 18%|█▊        | 592/3312 [2:35:10<9:33:55, 12.66s/it] 18%|█▊        | 593/3312 [2:35:30<11:07:56, 14.74s/it] 18%|█▊        | 594/3312 [2:35:49<12:16:46, 16.26s/it] 18%|█▊        | 595/3312 [2:36:07<12:34:44, 16.67s/it] 18%|█▊        | 596/3312 [2:36:24<12:33:08, 16.64s/it] 18%|█▊        | 597/3312 [2:36:37<11:44:03, 15.56s/it] 18%|█▊        | 598/3312 [2:36:49<10:55:29, 14.49s/it] 18%|█▊        | 599/3312 [2:36:59<9:53:10, 13.12s/it]  18%|█▊        | 600/3312 [2:37:06<8:38:21, 11.47s/it]                                                      {'loss': 12.9398, 'grad_norm': 4.4062886238098145, 'learning_rate': 9.41621666946671e-05, 'token_avg_loss': 3.4265, 'total_tokens': 88051, 'epoch': 0.54, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 18%|█▊        | 600/3312 [2:37:06<8:38:21, 11.47s/it] 18%|█▊        | 601/3312 [2:37:27<10:45:36, 14.29s/it] 18%|█▊        | 602/3312 [2:37:47<11:56:00, 15.85s/it] 18%|█▊        | 603/3312 [2:38:03<12:05:36, 16.07s/it] 18%|█▊        | 604/3312 [2:38:16<11:27:16, 15.23s/it] 18%|█▊        | 605/3312 [2:38:29<10:53:56, 14.49s/it] 18%|█▊        | 606/3312 [2:38:41<10:15:31, 13.65s/it] 18%|█▊        | 607/3312 [2:38:51<9:25:45, 12.55s/it]  18%|█▊        | 608/3312 [2:38:59<8:24:06, 11.19s/it] 18%|█▊        | 609/3312 [2:39:17<9:50:54, 13.12s/it] 18%|█▊        | 610/3312 [2:39:38<11:49:47, 15.76s/it]                                                       {'loss': 13.7318, 'grad_norm': 1.8814630508422852, 'learning_rate': 9.393073986650708e-05, 'token_avg_loss': 3.5348, 'total_tokens': 96725, 'epoch': 0.55, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 18%|█▊        | 610/3312 [2:39:38<11:49:47, 15.76s/it] 18%|█▊        | 611/3312 [2:39:55<12:03:27, 16.07s/it] 18%|█▊        | 612/3312 [2:40:13<12:24:10, 16.54s/it] 19%|█▊        | 613/3312 [2:40:27<11:54:06, 15.87s/it] 19%|█▊        | 614/3312 [2:40:40<11:16:35, 15.05s/it] 19%|█▊        | 615/3312 [2:40:51<10:17:21, 13.73s/it] 19%|█▊        | 616/3312 [2:40:59<9:06:14, 12.16s/it]  19%|█▊        | 617/3312 [2:41:14<9:31:51, 12.73s/it] 19%|█▊        | 618/3312 [2:41:33<10:59:33, 14.69s/it] 19%|█▊        | 619/3312 [2:41:51<11:45:12, 15.71s/it] 19%|█▊        | 620/3312 [2:42:07<11:56:28, 15.97s/it]                                                       {'loss': 13.2538, 'grad_norm': 3.2274367809295654, 'learning_rate': 9.369511048023442e-05, 'token_avg_loss': 3.4439, 'total_tokens': 93384, 'epoch': 0.56, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 19%|█▊        | 620/3312 [2:42:08<11:56:28, 15.97s/it] 19%|█▉        | 621/3312 [2:42:21<11:28:41, 15.36s/it] 19%|█▉        | 622/3312 [2:42:33<10:42:07, 14.32s/it] 19%|█▉        | 623/3312 [2:42:45<10:05:47, 13.52s/it] 19%|█▉        | 624/3312 [2:42:55<9:18:19, 12.46s/it]  19%|█▉        | 625/3312 [2:43:03<8:15:53, 11.07s/it] 19%|█▉        | 626/3312 [2:43:24<10:28:14, 14.03s/it] 19%|█▉        | 627/3312 [2:43:43<11:35:37, 15.54s/it] 19%|█▉        | 628/3312 [2:43:59<11:45:06, 15.76s/it] 19%|█▉        | 629/3312 [2:44:14<11:35:28, 15.55s/it] 19%|█▉        | 630/3312 [2:44:29<11:21:27, 15.25s/it]                                                       {'loss': 13.0232, 'grad_norm': 3.7742159366607666, 'learning_rate': 9.345530107692613e-05, 'token_avg_loss': 3.3183, 'total_tokens': 88336, 'epoch': 0.57, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 19%|█▉        | 630/3312 [2:44:29<11:21:27, 15.25s/it] 19%|█▉        | 631/3312 [2:44:40<10:33:24, 14.18s/it] 19%|█▉        | 632/3312 [2:44:51<9:49:11, 13.19s/it]  19%|█▉        | 633/3312 [2:45:01<8:57:38, 12.04s/it] 19%|█▉        | 634/3312 [2:45:19<10:20:45, 13.91s/it] 19%|█▉        | 635/3312 [2:45:38<11:26:02, 15.38s/it] 19%|█▉        | 636/3312 [2:45:56<12:03:02, 16.21s/it] 19%|█▉        | 637/3312 [2:46:10<11:35:21, 15.60s/it] 19%|█▉        | 638/3312 [2:46:23<11:04:32, 14.91s/it] 19%|█▉        | 639/3312 [2:46:37<10:43:01, 14.43s/it] 19%|█▉        | 640/3312 [2:46:45<9:27:42, 12.75s/it]                                                       {'loss': 13.008, 'grad_norm': 4.086019039154053, 'learning_rate': 9.321133459753322e-05, 'token_avg_loss': 3.4475, 'total_tokens': 87329, 'epoch': 0.58, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 19%|█▉        | 640/3312 [2:46:46<9:27:42, 12.75s/it] 19%|█▉        | 641/3312 [2:46:55<8:42:03, 11.73s/it] 19%|█▉        | 642/3312 [2:47:10<9:23:41, 12.67s/it] 19%|█▉        | 643/3312 [2:47:30<11:12:09, 15.11s/it] 19%|█▉        | 644/3312 [2:47:47<11:31:42, 15.56s/it] 19%|█▉        | 645/3312 [2:48:04<11:50:09, 15.98s/it] 20%|█▉        | 646/3312 [2:48:18<11:29:28, 15.52s/it] 20%|█▉        | 647/3312 [2:48:33<11:12:35, 15.14s/it] 20%|█▉        | 648/3312 [2:48:44<10:20:17, 13.97s/it] 20%|█▉        | 649/3312 [2:48:54<9:22:17, 12.67s/it]  20%|█▉        | 650/3312 [2:49:01<8:13:45, 11.13s/it]                                                      {'loss': 12.8419, 'grad_norm': 2.666280508041382, 'learning_rate': 9.296323438068628e-05, 'token_avg_loss': 3.4256, 'total_tokens': 82968, 'epoch': 0.59, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 20%|█▉        | 650/3312 [2:49:01<8:13:45, 11.13s/it] 20%|█▉        | 651/3312 [2:49:23<10:35:24, 14.33s/it] 20%|█▉        | 652/3312 [2:49:41<11:31:54, 15.61s/it] 20%|█▉        | 653/3312 [2:49:59<12:02:54, 16.31s/it] 20%|█▉        | 654/3312 [2:50:11<11:04:54, 15.01s/it] 20%|█▉        | 655/3312 [2:50:25<10:48:01, 14.63s/it] 20%|█▉        | 656/3312 [2:50:36<9:58:20, 13.52s/it]  20%|█▉        | 657/3312 [2:50:47<9:21:46, 12.70s/it] 20%|█▉        | 658/3312 [2:50:55<8:23:11, 11.38s/it] 20%|█▉        | 659/3312 [2:51:13<9:43:28, 13.20s/it] 20%|█▉        | 660/3312 [2:51:33<11:16:54, 15.31s/it]                                                       {'loss': 13.4667, 'grad_norm': 2.3444466590881348, 'learning_rate': 9.271102416046264e-05, 'token_avg_loss': 3.4863, 'total_tokens': 96500, 'epoch': 0.6, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 20%|█▉        | 660/3312 [2:51:33<11:16:54, 15.31s/it] 20%|█▉        | 661/3312 [2:51:49<11:30:11, 15.62s/it] 20%|█▉        | 662/3312 [2:52:06<11:40:29, 15.86s/it] 20%|██        | 663/3312 [2:52:19<11:14:08, 15.27s/it] 20%|██        | 664/3312 [2:52:32<10:41:54, 14.54s/it] 20%|██        | 665/3312 [2:52:44<10:01:33, 13.64s/it] 20%|██        | 666/3312 [2:52:53<9:05:45, 12.38s/it]  20%|██        | 667/3312 [2:53:07<9:17:45, 12.65s/it] 20%|██        | 668/3312 [2:53:27<10:59:43, 14.97s/it] 20%|██        | 669/3312 [2:53:46<11:59:40, 16.34s/it] 20%|██        | 670/3312 [2:54:02<11:53:29, 16.20s/it]                                                       {'loss': 13.2417, 'grad_norm': 2.8846628665924072, 'learning_rate': 9.245472806411605e-05, 'token_avg_loss': 3.6249, 'total_tokens': 96221, 'epoch': 0.61, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 20%|██        | 670/3312 [2:54:02<11:53:29, 16.20s/it] 20%|██        | 671/3312 [2:54:17<11:36:29, 15.82s/it] 20%|██        | 672/3312 [2:54:29<10:45:31, 14.67s/it] 20%|██        | 673/3312 [2:54:40<9:57:40, 13.59s/it]  20%|██        | 674/3312 [2:54:49<8:51:54, 12.10s/it] 20%|██        | 675/3312 [2:54:56<7:48:20, 10.66s/it] 20%|██        | 676/3312 [2:55:17<10:06:57, 13.82s/it] 20%|██        | 677/3312 [2:55:36<11:08:44, 15.23s/it] 20%|██        | 678/3312 [2:55:55<11:58:34, 16.37s/it] 21%|██        | 679/3312 [2:56:10<11:42:19, 16.00s/it] 21%|██        | 680/3312 [2:56:24<11:08:45, 15.25s/it]                                                       {'loss': 12.8389, 'grad_norm': 3.9666221141815186, 'learning_rate': 9.219437060976849e-05, 'token_avg_loss': 3.363, 'total_tokens': 90603, 'epoch': 0.62, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 21%|██        | 680/3312 [2:56:24<11:08:45, 15.25s/it] 21%|██        | 681/3312 [2:56:35<10:21:49, 14.18s/it] 21%|██        | 682/3312 [2:56:46<9:31:20, 13.03s/it]  21%|██        | 683/3312 [2:56:54<8:34:50, 11.75s/it] 21%|██        | 684/3312 [2:57:12<9:56:00, 13.61s/it] 21%|██        | 685/3312 [2:57:31<11:07:04, 15.24s/it] 21%|██        | 686/3312 [2:57:49<11:36:10, 15.91s/it] 21%|██        | 687/3312 [2:58:04<11:23:52, 15.63s/it] 21%|██        | 688/3312 [2:58:19<11:18:31, 15.52s/it] 21%|██        | 689/3312 [2:58:33<10:50:48, 14.89s/it] 21%|██        | 690/3312 [2:58:44<10:03:36, 13.81s/it]                                                       {'loss': 13.0941, 'grad_norm': 3.9156291484832764, 'learning_rate': 9.192997670406472e-05, 'token_avg_loss': 3.4801, 'total_tokens': 88485, 'epoch': 0.63, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 21%|██        | 690/3312 [2:58:44<10:03:36, 13.81s/it] 21%|██        | 691/3312 [2:58:53<8:57:17, 12.30s/it]  21%|██        | 692/3312 [2:59:07<9:30:03, 13.05s/it] 21%|██        | 693/3312 [2:59:28<11:13:36, 15.43s/it] 21%|██        | 694/3312 [2:59:48<12:06:23, 16.65s/it] 21%|██        | 695/3312 [3:00:05<12:10:40, 16.75s/it] 21%|██        | 696/3312 [3:00:17<11:08:51, 15.34s/it] 21%|██        | 697/3312 [3:00:30<10:42:24, 14.74s/it] 21%|██        | 698/3312 [3:00:41<9:54:20, 13.64s/it]  21%|██        | 699/3312 [3:00:51<9:04:18, 12.50s/it] 21%|██        | 700/3312 [3:00:58<7:50:55, 10.82s/it]                                                      {'loss': 12.9246, 'grad_norm': 3.927957057952881, 'learning_rate': 9.166157163978964e-05, 'token_avg_loss': 3.4189, 'total_tokens': 86558, 'epoch': 0.63, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 21%|██        | 700/3312 [3:00:58<7:50:55, 10.82s/it] 21%|██        | 701/3312 [3:01:18<9:53:26, 13.64s/it] 21%|██        | 702/3312 [3:01:37<11:00:53, 15.19s/it] 21%|██        | 703/3312 [3:01:56<11:50:30, 16.34s/it] 21%|██▏       | 704/3312 [3:02:08<10:57:56, 15.14s/it] 21%|██▏       | 705/3312 [3:02:23<10:45:04, 14.85s/it] 21%|██▏       | 706/3312 [3:02:35<10:16:47, 14.20s/it] 21%|██▏       | 707/3312 [3:02:45<9:13:46, 12.75s/it]  21%|██▏       | 708/3312 [3:02:54<8:26:39, 11.67s/it] 21%|██▏       | 709/3312 [3:03:12<9:54:13, 13.70s/it] 21%|██▏       | 710/3312 [3:03:32<11:18:21, 15.64s/it]                                                       {'loss': 13.602, 'grad_norm': 2.134469985961914, 'learning_rate': 9.138918109344864e-05, 'token_avg_loss': 3.5667, 'total_tokens': 98682, 'epoch': 0.64, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 21%|██▏       | 710/3312 [3:03:33<11:18:21, 15.64s/it] 21%|██▏       | 711/3312 [3:03:51<12:00:19, 16.62s/it] 21%|██▏       | 712/3312 [3:04:08<11:58:51, 16.59s/it] 22%|██▏       | 713/3312 [3:04:20<10:54:28, 15.11s/it] 22%|██▏       | 714/3312 [3:04:31<10:02:22, 13.91s/it] 22%|██▏       | 715/3312 [3:04:43<9:41:45, 13.44s/it]  22%|██▏       | 716/3312 [3:04:53<8:52:57, 12.32s/it] 22%|██▏       | 717/3312 [3:05:07<9:23:01, 13.02s/it] 22%|██▏       | 718/3312 [3:05:29<11:20:32, 15.74s/it] 22%|██▏       | 719/3312 [3:05:46<11:35:53, 16.10s/it] 22%|██▏       | 720/3312 [3:06:05<12:03:27, 16.75s/it]                                                       {'loss': 13.2277, 'grad_norm': 3.2324275970458984, 'learning_rate': 9.111283112281142e-05, 'token_avg_loss': 3.5091, 'total_tokens': 93333, 'epoch': 0.65, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 22%|██▏       | 720/3312 [3:06:05<12:03:27, 16.75s/it] 22%|██▏       | 721/3312 [3:06:20<11:44:52, 16.32s/it] 22%|██▏       | 722/3312 [3:06:34<11:18:24, 15.72s/it] 22%|██▏       | 723/3312 [3:06:47<10:39:27, 14.82s/it] 22%|██▏       | 724/3312 [3:06:57<9:31:07, 13.24s/it]  22%|██▏       | 725/3312 [3:07:04<8:15:44, 11.50s/it] 22%|██▏       | 726/3312 [3:07:23<9:58:31, 13.89s/it] 22%|██▏       | 727/3312 [3:07:43<11:12:41, 15.61s/it] 22%|██▏       | 728/3312 [3:08:01<11:37:11, 16.19s/it] 22%|██▏       | 729/3312 [3:08:14<11:05:40, 15.46s/it] 22%|██▏       | 730/3312 [3:08:27<10:34:31, 14.74s/it]                                                       {'loss': 12.9316, 'grad_norm': 3.897747755050659, 'learning_rate': 9.083254816441905e-05, 'token_avg_loss': 3.3626, 'total_tokens': 88943, 'epoch': 0.66, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 22%|██▏       | 730/3312 [3:08:28<10:34:31, 14.74s/it] 22%|██▏       | 731/3312 [3:08:39<9:49:41, 13.71s/it]  22%|██▏       | 732/3312 [3:08:49<9:04:21, 12.66s/it] 22%|██▏       | 733/3312 [3:08:58<8:15:06, 11.52s/it] 22%|██▏       | 734/3312 [3:09:15<9:33:15, 13.34s/it] 22%|██▏       | 735/3312 [3:09:35<10:54:42, 15.24s/it] 22%|██▏       | 736/3312 [3:09:53<11:25:02, 15.96s/it] 22%|██▏       | 737/3312 [3:10:07<11:04:24, 15.48s/it] 22%|██▏       | 738/3312 [3:10:22<10:54:07, 15.25s/it] 22%|██▏       | 739/3312 [3:10:35<10:27:01, 14.62s/it] 22%|██▏       | 740/3312 [3:10:46<9:46:55, 13.69s/it]                                                       {'loss': 13.0113, 'grad_norm': 3.5963058471679688, 'learning_rate': 9.054835903105516e-05, 'token_avg_loss': 3.4662, 'total_tokens': 88569, 'epoch': 0.67, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 22%|██▏       | 740/3312 [3:10:47<9:46:55, 13.69s/it] 22%|██▏       | 741/3312 [3:10:56<8:55:04, 12.49s/it] 22%|██▏       | 742/3312 [3:11:10<9:12:37, 12.90s/it] 22%|██▏       | 743/3312 [3:11:31<10:51:55, 15.23s/it] 22%|██▏       | 744/3312 [3:11:48<11:17:35, 15.83s/it] 22%|██▏       | 745/3312 [3:12:04<11:25:37, 16.03s/it] 23%|██▎       | 746/3312 [3:12:19<11:08:30, 15.63s/it] 23%|██▎       | 747/3312 [3:12:33<10:49:44, 15.20s/it] 23%|██▎       | 748/3312 [3:12:44<9:52:04, 13.86s/it]  23%|██▎       | 749/3312 [3:12:53<8:51:52, 12.45s/it] 23%|██▎       | 750/3312 [3:13:01<7:50:36, 11.02s/it]                                                      {'loss': 12.9314, 'grad_norm': 2.825596570968628, 'learning_rate': 9.026029090918076e-05, 'token_avg_loss': 3.3717, 'total_tokens': 83331, 'epoch': 0.68, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 23%|██▎       | 750/3312 [3:13:01<7:50:36, 11.02s/it]
+  0%|          | 0/183 [00:00<?, ?it/s][A
+  1%|          | 2/183 [00:02<04:23,  1.45s/it][A
+  2%|▏         | 3/183 [00:05<05:50,  1.95s/it][A
+  2%|▏         | 4/183 [00:07<05:26,  1.82s/it][A
+  3%|▎         | 5/183 [00:08<04:47,  1.62s/it][A
+  3%|▎         | 6/183 [00:09<04:15,  1.44s/it][A
+  4%|▍         | 7/183 [00:10<03:43,  1.27s/it][A
+  4%|▍         | 8/183 [00:14<06:01,  2.07s/it][A
+  5%|▍         | 9/183 [00:16<06:33,  2.26s/it][A
+  5%|▌         | 10/183 [00:18<06:11,  2.15s/it][A
+  6%|▌         | 11/183 [00:20<05:54,  2.06s/it][A
+  7%|▋         | 12/183 [00:22<05:28,  1.92s/it][A
+  7%|▋         | 13/183 [00:23<04:35,  1.62s/it][A
+  8%|▊         | 14/183 [00:26<06:23,  2.27s/it][A
+  8%|▊         | 15/183 [00:29<06:44,  2.41s/it][A
+  9%|▊         | 16/183 [00:31<06:26,  2.31s/it][A
+  9%|▉         | 17/183 [00:33<05:39,  2.04s/it][A
+ 10%|▉         | 18/183 [00:34<05:18,  1.93s/it][A
+ 10%|█         | 19/183 [00:36<04:46,  1.75s/it][A
+ 11%|█         | 20/183 [00:40<06:36,  2.43s/it][A
+ 11%|█▏        | 21/183 [00:42<06:20,  2.35s/it][A
+ 12%|█▏        | 22/183 [00:44<06:17,  2.35s/it][A
+ 13%|█▎        | 23/183 [00:47<06:16,  2.35s/it][A
+ 13%|█▎        | 24/183 [00:47<05:06,  1.93s/it][A
+ 14%|█▎        | 25/183 [00:49<04:41,  1.78s/it][A
+ 14%|█▍        | 26/183 [00:50<04:21,  1.66s/it][A
+ 15%|█▍        | 27/183 [00:53<05:22,  2.07s/it][A
+ 15%|█▌        | 28/183 [00:56<05:25,  2.10s/it][A
+ 16%|█▌        | 29/183 [00:57<05:13,  2.04s/it][A
+ 16%|█▋        | 30/183 [00:59<04:38,  1.82s/it][A
+ 17%|█▋        | 31/183 [01:00<04:07,  1.63s/it][A
+ 17%|█▋        | 32/183 [01:01<03:39,  1.45s/it][A
+ 18%|█▊        | 33/183 [01:05<05:26,  2.17s/it][A
+ 19%|█▊        | 34/183 [01:07<05:38,  2.27s/it][A
+ 19%|█▉        | 35/183 [01:09<05:09,  2.09s/it][A
+ 20%|█▉        | 36/183 [01:11<04:46,  1.95s/it][A
+ 20%|██        | 37/183 [01:12<04:30,  1.85s/it][A
+ 21%|██        | 38/183 [01:13<03:53,  1.61s/it][A
+ 21%|██▏       | 39/183 [01:17<05:09,  2.15s/it][A
+ 22%|██▏       | 40/183 [01:19<05:17,  2.22s/it][A
+ 22%|██▏       | 41/183 [01:22<05:33,  2.35s/it][A
+ 23%|██▎       | 42/183 [01:23<04:55,  2.10s/it][A
+ 23%|██▎       | 43/183 [01:25<04:37,  1.98s/it][A
+ 24%|██▍       | 44/183 [01:26<03:58,  1.71s/it][A
+ 25%|██▍       | 45/183 [01:30<05:36,  2.44s/it][A
+ 25%|██▌       | 46/183 [01:33<05:31,  2.42s/it][A
+ 26%|██▌       | 47/183 [01:35<05:19,  2.35s/it][A
+ 26%|██▌       | 48/183 [01:37<05:05,  2.26s/it][A
+ 27%|██▋       | 49/183 [01:38<04:34,  2.05s/it][A
+ 27%|██▋       | 50/183 [01:39<03:58,  1.79s/it][A
+ 28%|██▊       | 51/183 [01:41<03:44,  1.70s/it][A
+ 28%|██▊       | 52/183 [01:44<04:34,  2.09s/it][A
+ 29%|██▉       | 53/183 [01:47<05:01,  2.32s/it][A
+ 30%|██▉       | 54/183 [01:49<04:56,  2.30s/it][A
+ 30%|███       | 55/183 [01:51<04:25,  2.08s/it][A
+ 31%|███       | 56/183 [01:52<04:06,  1.94s/it][A
+ 31%|███       | 57/183 [01:53<03:12,  1.52s/it][A
+ 32%|███▏      | 58/183 [01:56<04:26,  2.13s/it][A
+ 32%|███▏      | 59/183 [01:59<04:37,  2.24s/it][A
+ 33%|███▎      | 60/183 [02:01<04:38,  2.27s/it][A
+ 33%|███▎      | 61/183 [02:03<04:21,  2.15s/it][A
+ 34%|███▍      | 62/183 [02:04<03:48,  1.89s/it][A
+ 34%|███▍      | 63/183 [02:05<03:16,  1.64s/it][A
+ 35%|███▍      | 64/183 [02:10<04:46,  2.40s/it][A
+ 36%|███▌      | 65/183 [02:12<04:34,  2.33s/it][A
+ 36%|███▌      | 66/183 [02:13<04:07,  2.12s/it][A
+ 37%|███▋      | 67/183 [02:15<04:02,  2.09s/it][A
+ 37%|███▋      | 68/183 [02:17<03:50,  2.00s/it][A
+ 38%|███▊      | 69/183 [02:18<03:21,  1.77s/it][A
+ 38%|███▊      | 70/183 [02:22<04:25,  2.35s/it][A
+ 39%|███▉      | 71/183 [02:25<04:29,  2.40s/it][A
+ 39%|███▉      | 72/183 [02:26<04:03,  2.19s/it][A
+ 40%|███▉      | 73/183 [02:28<03:38,  1.99s/it][A
+ 40%|████      | 74/183 [02:30<03:29,  1.92s/it][A
+ 41%|████      | 75/183 [02:31<03:03,  1.70s/it][A
+ 42%|████▏     | 76/183 [02:32<02:51,  1.60s/it][A
+ 42%|████▏     | 77/183 [02:35<03:36,  2.04s/it][A
+ 43%|████▎     | 78/183 [02:38<03:47,  2.17s/it][A
+ 43%|████▎     | 79/183 [02:39<03:31,  2.03s/it][A
+ 44%|████▎     | 80/183 [02:41<03:13,  1.88s/it][A
+ 44%|████▍     | 81/183 [02:42<02:54,  1.71s/it][A
+ 45%|████▍     | 82/183 [02:43<02:31,  1.50s/it][A
+ 45%|████▌     | 83/183 [02:47<03:36,  2.16s/it][A
+ 46%|████▌     | 84/183 [02:49<03:43,  2.25s/it][A
+ 46%|████▋     | 85/183 [02:51<03:26,  2.11s/it][A
+ 47%|████▋     | 86/183 [02:53<03:03,  1.90s/it][A
+ 48%|████▊     | 87/183 [02:54<02:50,  1.77s/it][A
+ 48%|████▊     | 88/183 [02:55<02:17,  1.44s/it][A
+ 49%|████▊     | 89/183 [02:59<03:31,  2.25s/it][A
+ 49%|████▉     | 90/183 [03:02<03:42,  2.39s/it][A
+ 50%|████▉     | 91/183 [03:04<03:30,  2.29s/it][A
+ 50%|█████     | 92/183 [03:06<03:17,  2.18s/it][A
+ 51%|█████     | 93/183 [03:07<03:07,  2.09s/it][A
+ 51%|█████▏    | 94/183 [03:09<02:41,  1.82s/it][A
+ 52%|█████▏    | 95/183 [03:13<03:33,  2.43s/it][A
+ 52%|█████▏    | 96/183 [03:15<03:28,  2.40s/it][A
+ 53%|█████▎    | 97/183 [03:17<03:12,  2.24s/it][A
+ 54%|█████▎    | 98/183 [03:18<02:57,  2.09s/it][A
+ 54%|█████▍    | 99/183 [03:20<02:32,  1.81s/it][A
+ 55%|█████▍    | 100/183 [03:21<02:20,  1.69s/it][A
+ 55%|█████▌    | 101/183 [03:23<02:14,  1.64s/it][A
+ 56%|█████▌    | 102/183 [03:25<02:38,  1.96s/it][A
+ 56%|█████▋    | 103/183 [03:28<02:47,  2.09s/it][A
+ 57%|█████▋    | 104/183 [03:30<02:44,  2.08s/it][A
+ 57%|█████▋    | 105/183 [03:31<02:34,  1.98s/it][A
+ 58%|█████▊    | 106/183 [03:33<02:10,  1.70s/it][A
+ 58%|█████▊    | 107/183 [03:33<01:44,  1.37s/it][A
+ 59%|█████▉    | 108/183 [03:37<02:42,  2.17s/it][A
+ 60%|█████▉    | 109/183 [03:39<02:38,  2.14s/it][A
+ 60%|██████    | 110/183 [03:41<02:25,  1.99s/it][A
+ 61%|██████    | 111/183 [03:43<02:16,  1.89s/it][A
+ 61%|██████    | 112/183 [03:44<02:01,  1.71s/it][A
+ 62%|██████▏   | 113/183 [03:45<01:46,  1.52s/it][A
+ 62%|██████▏   | 114/183 [03:49<02:33,  2.23s/it][A
+ 63%|██████▎   | 115/183 [03:51<02:34,  2.27s/it][A
+ 63%|██████▎   | 116/183 [03:53<02:22,  2.13s/it][A
+ 64%|██████▍   | 117/183 [03:55<02:19,  2.11s/it][A
+ 64%|██████▍   | 118/183 [03:57<02:07,  1.97s/it][A
+ 65%|██████▌   | 119/183 [03:58<01:50,  1.72s/it][A
+ 66%|██████▌   | 120/183 [04:02<02:32,  2.41s/it][A
+ 66%|██████▌   | 121/183 [04:04<02:28,  2.40s/it][A
+ 67%|██████▋   | 122/183 [04:06<02:21,  2.32s/it][A
+ 67%|██████▋   | 123/183 [04:08<02:08,  2.14s/it][A
+ 68%|██████▊   | 124/183 [04:10<01:57,  1.99s/it][A
+ 68%|██████▊   | 125/183 [04:11<01:39,  1.72s/it][A
+ 69%|██████▉   | 126/183 [04:12<01:33,  1.65s/it][A
+ 69%|██████▉   | 127/183 [04:15<01:52,  2.02s/it][A
+ 70%|██████▉   | 128/183 [04:17<01:54,  2.09s/it][A
+ 70%|███████   | 129/183 [04:19<01:43,  1.91s/it][A
+ 71%|███████   | 130/183 [04:21<01:36,  1.83s/it][A
+ 72%|███████▏  | 131/183 [04:22<01:27,  1.69s/it][A
+ 72%|███████▏  | 132/183 [04:23<01:14,  1.46s/it][A
+ 73%|███████▎  | 133/183 [04:27<01:46,  2.14s/it][A
+ 73%|███████▎  | 134/183 [04:29<01:55,  2.36s/it][A
+ 74%|███████▍  | 135/183 [04:31<01:42,  2.13s/it][A
+ 74%|███████▍  | 136/183 [04:33<01:39,  2.12s/it][A
+ 75%|███████▍  | 137/183 [04:34<01:27,  1.90s/it][A
+ 75%|███████▌  | 138/183 [04:35<01:13,  1.62s/it][A
+ 76%|███████▌  | 139/183 [04:39<01:40,  2.28s/it][A
+ 77%|███████▋  | 140/183 [04:42<01:40,  2.34s/it][A
+ 77%|███████▋  | 141/183 [04:44<01:34,  2.25s/it][A
+ 78%|███████▊  | 142/183 [04:45<01:23,  2.05s/it][A
+ 78%|███████▊  | 143/183 [04:47<01:15,  1.88s/it][A
+ 79%|███████▊  | 144/183 [04:48<01:03,  1.63s/it][A
+ 79%|███████▉  | 145/183 [04:52<01:26,  2.27s/it][A
+ 80%|███████▉  | 146/183 [04:54<01:27,  2.35s/it][A
+ 80%|████████  | 147/183 [04:56<01:15,  2.10s/it][A
+ 81%|████████  | 148/183 [04:58<01:11,  2.04s/it][A
+ 81%|████████▏ | 149/183 [04:59<01:00,  1.77s/it][A
+ 82%|████████▏ | 150/183 [05:00<00:53,  1.63s/it][A
+ 83%|████████▎ | 151/183 [05:02<00:51,  1.62s/it][A
+ 83%|████████▎ | 152/183 [05:04<01:01,  1.99s/it][A
+ 84%|████████▎ | 153/183 [05:07<01:02,  2.09s/it][A
+ 84%|████████▍ | 154/183 [05:09<00:57,  1.98s/it][A
+ 85%|████████▍ | 155/183 [05:10<00:52,  1.89s/it][A
+ 85%|████████▌ | 156/183 [05:11<00:44,  1.63s/it][A
+ 86%|████████▌ | 157/183 [05:12<00:36,  1.42s/it][A
+ 86%|████████▋ | 158/183 [05:16<00:53,  2.14s/it][A
+ 87%|████████▋ | 159/183 [05:19<00:55,  2.32s/it][A
+ 87%|████████▋ | 160/183 [05:21<00:54,  2.35s/it][A
+ 88%|████████▊ | 161/183 [05:23<00:47,  2.16s/it][A
+ 89%|████████▊ | 162/183 [05:24<00:39,  1.90s/it][A
+ 89%|████████▉ | 163/183 [05:25<00:32,  1.61s/it][A
+ 90%|████████▉ | 164/183 [05:29<00:44,  2.33s/it][A
+ 90%|█████████ | 165/183 [05:31<00:41,  2.33s/it][A
+ 91%|█████████ | 166/183 [05:33<00:36,  2.13s/it][A
+ 91%|█████████▏| 167/183 [05:35<00:33,  2.09s/it][A
+ 92%|█████████▏| 168/183 [05:37<00:29,  1.94s/it][A
+ 92%|█████████▏| 169/183 [05:37<00:22,  1.59s/it][A
+ 93%|█████████▎| 170/183 [05:42<00:30,  2.33s/it][A
+ 93%|█████████▎| 171/183 [05:44<00:29,  2.43s/it][A
+ 94%|█████████▍| 172/183 [05:46<00:25,  2.30s/it][A
+ 95%|█████████▍| 173/183 [05:48<00:21,  2.12s/it][A
+ 95%|█████████▌| 174/183 [05:49<00:17,  1.94s/it][A
+ 96%|█████████▌| 175/183 [05:51<00:13,  1.75s/it][A
+ 96%|█████████▌| 176/183 [05:52<00:11,  1.69s/it][A
+ 97%|█████████▋| 177/183 [05:55<00:12,  2.01s/it][A
+ 97%|█████████▋| 178/183 [05:58<00:11,  2.22s/it][A
+ 98%|█████████▊| 179/183 [06:00<00:08,  2.11s/it][A
+ 98%|█████████▊| 180/183 [06:01<00:05,  1.97s/it][A
+ 99%|█████████▉| 181/183 [06:02<00:03,  1.75s/it][A
+ 99%|█████████▉| 182/183 [06:03<00:01,  1.49s/it][A[2026-02-25 19:11:24,614][accelerate.accelerator][INFO] - The used dataset had no length, returning gathered tensors. You should drop the remainder yourself.
+
+100%|██████████| 183/183 [06:07<00:00,  2.03s/it][A                                                      
+                                                 [A{'eval_loss': 3.32304310798645, 'eval_runtime': 368.9547, 'eval_samples_per_second': 63.815, 'eval_steps_per_second': 0.499, 'token_avg_loss': 3.5553, 'total_tokens': 585750, 'epoch': 0.68, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 23%|██▎       | 750/3312 [3:19:10<7:50:36, 11.02s/it]
+100%|██████████| 183/183 [06:07<00:00,  2.03s/it][A[2026-02-25 19:11:25,419][src.training.sft_trainer][INFO] - ============================================================
+[2026-02-25 19:11:25,419][src.training.sft_trainer][INFO] - Generation Samples (eval step 750)
+[2026-02-25 19:11:25,419][src.training.sft_trainer][INFO] - ============================================================
+[2026-02-25 19:11:27,318][src.training.sft_trainer][INFO] - [catalytic] seq=MRTIQVTTPGVQYPVYLGSGLLPQVASRLR...
+[2026-02-25 19:11:27,318][src.training.sft_trainer][INFO] -   Instruction: Examine the provided protein sequence and determine the catalytic activity of the enzyme it represen...
+[2026-02-25 19:11:27,318][src.training.sft_trainer][INFO] -   Expected:    Upon reviewing the provided protein sequence, the corresponding enzyme's catalytic activity is identified as the following chemical reaction: 7-phospho-2-dehydro-3-deoxy-D-arabino-heptonate = 3-   dehydroquinate + phosphate.
+[2026-02-25 19:11:27,323][src.training.sft_trainer][INFO] -   Generated:   The protein sequence you have submitted appears to catalyze the chemical reaction: a 4-aminobutanoate + NADP(+) = an acetyl group transferred from coenzyme A.
+[2026-02-25 19:11:27,323][src.training.sft_trainer][INFO] - 
+[2026-02-25 19:11:30,418][src.training.sft_trainer][INFO] - [catalytic] seq=MTHFENASIQKTANVYFDGKCISHNLTLPD...
+[2026-02-25 19:11:30,418][src.training.sft_trainer][INFO] -   Instruction: Using the protein sequence supplied, identify and describe the enzymatic catalytic activity, with em...
+[2026-02-25 19:11:30,419][src.training.sft_trainer][INFO] -   Expected:    Upon reviewing the provided protein sequence, the corresponding enzyme's catalytic activity is identified as the following chemical reaction: phosphate + xanthosine = alpha-D-ribose 1-phosphate +   xanthine.
+[2026-02-25 19:11:30,419][src.training.sft_trainer][INFO] -   Generated:   Based on the provided protein sequence, it appears that your enzyme exhibits catalytic activity in the form of: (S)-2-hydroxy-3-methylbutanoate + NADPH = 4-(hydroxymethyldihydrolipoyl)glutamate + H(+) + NADP(+).
+[2026-02-25 19:11:30,419][src.training.sft_trainer][INFO] - 
+[2026-02-25 19:11:33,510][src.training.sft_trainer][INFO] - [catalytic] seq=MAKKKRNPSAEEAGDGEQTAAELGDFETTL...
+[2026-02-25 19:11:33,513][src.training.sft_trainer][INFO] -   Instruction: Please evaluate the following protein sequence and provide an explanation of the enzyme's catalytic ...
+[2026-02-25 19:11:33,513][src.training.sft_trainer][INFO] -   Expected:    Based on the provided protein sequence, the enzyme appears to facilitate the chemical reaction: Exonucleolytic cleavage in either 5'- to 3'- or 3'- to 5'-   direction to yield nucleoside 5'-phosphates..
+[2026-02-25 19:11:33,514][src.training.sft_trainer][INFO] -   Generated:   The protein sequence you provided appears to catalyze the chemical reaction: 3-(4-hydroxybenzoyl)amino-2,5-cyclohexadienone + NADPH = (S)-   hydroxymethylquinoline-1-carboxamide + H(+) + NADP(+).
+[2026-02-25 19:11:33,514][src.training.sft_trainer][INFO] - 
+[2026-02-25 19:11:35,940][src.training.sft_trainer][INFO] - [catalytic] seq=MSSSAPIGVFDSGLGGISVARQIAKDMPAE...
+[2026-02-25 19:11:35,940][src.training.sft_trainer][INFO] -   Instruction: Please evaluate the following protein sequence and provide an explanation of the enzyme's catalytic ...
+[2026-02-25 19:11:35,941][src.training.sft_trainer][INFO] -   Expected:    Upon reviewing the provided protein sequence, the corresponding enzyme's catalytic activity is identified as the following chemical reaction: L-glutamate = D-glutamate.
+[2026-02-25 19:11:35,941][src.training.sft_trainer][INFO] -   Generated:   Based on the provided protein sequence, it is likely that this enzyme catalyzes the chemical reaction: (R)-1-phenylpropanol + NADP(+) = 3-(hydroxymethyl)benzaldehyde + H(+).
+[2026-02-25 19:11:35,941][src.training.sft_trainer][INFO] - 
+[2026-02-25 19:11:38,050][src.training.sft_trainer][INFO] - [catalytic] seq=MTHKISVLHQDKKFDFSLRPKKLTEFCGQK...
+[2026-02-25 19:11:38,051][src.training.sft_trainer][INFO] -   Instruction: Analyze the following protein sequence and elucidate the catalytic activity of the corresponding enz...
+[2026-02-25 19:11:38,051][src.training.sft_trainer][INFO] -   Expected:    Evaluation of the protein sequence indicates that the associated enzyme exhibits catalytic activity in the form of this chemical reaction: ATP + H2O = ADP + H(+) + phosphate.
+[2026-02-25 19:11:38,051][src.training.sft_trainer][INFO] -   Generated:   The enzyme with the amino acid sequence (assuming it's a protein) should catalyze the chemical reaction: H(+) + CH2NCH(CH3)-C-Ph = NADPH + COOH-C-H.
+[2026-02-25 19:11:38,051][src.training.sft_trainer][INFO] - 
+[2026-02-25 19:11:43,631][src.training.sft_trainer][INFO] - [design] seq=1. The designed protein should...
+[2026-02-25 19:11:43,633][src.training.sft_trainer][INFO] -   Instruction: Design a protein sequence that is tailored to the desired application....
+[2026-02-25 19:11:43,633][src.training.sft_trainer][INFO] -   Expected:    Based on your design requirements, the amino acid sequence for the protein is:
+```
+MERERHVPVLLQDAIRYLNVRRGGTYADATLGLAGHSSAIARLLGPGGTLIAFDRDPEAMELAKSRLDALRAELGSEMPKVILHSTEFSEAEDLIEPGSLDGLLADFGVSSLQFDEAHRGFSFQADGPLDMRMNPRVGLTAAQVVNQFGEKELADLIYEFGEERRSRRIARAIVRARPVSTTAQLARVVSAAAPAMKSERIHPATRTFQALRIYVNQELGQIEALLKVAPKLLRKGGRLVVISFHSLEDRIAKDALREGGQQGIYEVLTRKPLTAGEEETDRNPRARSAKLRAAEKK
+```
+[2026-02-25 19:11:43,634][src.training.sft_trainer][INFO] -   Generated:   DVSDIIKVREMGEGRTTVFDMAEMEKVTELFDEIKPVELVAQKEKG
+```
+[2026-02-25 19:11:43,634][src.training.sft_trainer][INFO] - 
+[2026-02-25 19:11:50,020][src.training.sft_trainer][INFO] - [design] seq=1. A key design requirement fo...
+[2026-02-25 19:11:50,020][src.training.sft_trainer][INFO] -   Instruction: Design a protein sequence that is tailored to the desired application....
+[2026-02-25 19:11:50,021][src.training.sft_trainer][INFO] -   Expected:    Based on your design requirements, the amino acid sequence for the protein is:
+```
+MGVPTHSPLSNEPKPAPLVSPPNTVALSAIISGCKVFAKRLDEPEAIKAEVLGIRPASVQRRSRFAKPLIKEEETTANGVEKEAESLEFYLHWIGYNKRLDEWVVGSRVHLDQSIEWPVVNPTPSTSASSTAPSPKQSGKQARKSSVIHKRDSSKLRKVALKNAQKLTHDDEEDQDQEEHDHEEDEEDEADDDEDDDDDLDSDRPLNQFSKQDEIEKLRTSGSMTQSHHEISRVKNLDRIQIGKHEVEAWYFSPYPIEFAHIPILYICEFCLLFYGSEAQIHRHRIKCTLLHPPGNEIYRSEEIHFFEIDGRRQKTWCRNLSLLSKCFLDHKTLYYDVDPFLYYVMCQRDSNGLHLIGYFSKEKESAENYNVACILTLPQYQRLGFGKLLIEFSYELSKKEGKLGSPEKPLSDLGLL...
+[2026-02-25 19:11:50,021][src.training.sft_trainer][INFO] -   Generated:   GAQIALMVTGTTPGRIITGRTIPAFVDRVIHRDGTTLPFGESVTEAIKGIEVPGGGSPIKVPAEVGHPEVVKGIKT
+```
+[2026-02-25 19:11:50,021][src.training.sft_trainer][INFO] - 
+[2026-02-25 19:11:55,992][src.training.sft_trainer][INFO] - [design] seq=1. A protein with magnesium io...
+[2026-02-25 19:11:55,992][src.training.sft_trainer][INFO] -   Instruction: Generate a protein sequence optimized for the following function requirements....
+[2026-02-25 19:11:55,992][src.training.sft_trainer][INFO] -   Expected:    Here's the amino acid sequence for your custom-designed protein:
+```
+MRLTELMAGASMTSPGLSADPEINGICSDSREVQPGFLFVAFKESYPDGSMFIDDALAKGAVAILTSDNVSLPVSISVPILASLNPRRSYSLLLAYFHKQRPPSIMAVTGTNGKSSVVSFLRQLWNYNGVKGASIGTLGVECEYFSTPLPLTTPDARVTHMELAKLAGCGVESVAIEASSHGLDQYRIDGLEISAGGFTNLGRDHLDYHGSLPNYFTSKARLFDEVMGPGRVAVINKDSPYCGELSDICVNRGHKLIRYGSSXHEGXSNAVDLQLVQVVTKKNGLQIKVRYRGEVKXFDTPLIGRFQADNLLCAMGLALASGIPFDSLIKNAPRITAVRGRMQLVARSSAGGAIYVDYAHTPDALHSALLALRSHTSGKLYLVFGCGGERDPGKRPLMGRVAAELADHVFVTDDNPRGEDPSSIRSAILTI...
+[2026-02-25 19:11:55,992][src.training.sft_trainer][INFO] -   Generated:   EKSLPIVLAERFGDKSSEIIKVRSRDVSVTTDRSSSIKNRIEMKEEVKKKGDSRKVTKTSRKR
+```
+[2026-02-25 19:11:55,992][src.training.sft_trainer][INFO] - 
+[2026-02-25 19:12:02,156][src.training.sft_trainer][INFO] - [design] seq=1. The designed protein must p...
+[2026-02-25 19:12:02,156][src.training.sft_trainer][INFO] -   Instruction: Design a protein sequence that is tailored to the desired application....
+[2026-02-25 19:12:02,156][src.training.sft_trainer][INFO] -   Expected:    Here's the amino acid sequence for your custom-designed protein:
+```
+MSQNHDPAMLAKAETLTEALPYLQRYAGKTFVVKYGGHAMGDPELAQDFAEDIVLLKAVGINPVVVHGGGPQIGRMLKALGIESRFVDGLRVTDKQTAEVAEMVLAGAINKELVSWIARAGGKAIGISGKDGGMVIARKVEAKKAPKAVADAESGDPIVVDLGFVGEPDRIDTTVIDTICKAGMIPVIAPIGVGEDGETYNINADTMAGSIAAALGAARLFLLTDVPGVLDKDKNLLTDLRPADIARLAEDGTISGGMIPKLETCVHAVEAGCEATVVLDGRVPHAMLLEIFTARGAGTLIRA
+```
+[2026-02-25 19:12:02,156][src.training.sft_trainer][INFO] -   Generated:   PRPTPPTPPEAPEAAPSEEPGEEDGESDEEEADGDGDDDAAGGRGRRRAAADAAAARAARAAAAAEEMAMMAAQQLQEEL
+```
+[2026-02-25 19:12:02,157][src.training.sft_trainer][INFO] - 
+[2026-02-25 19:12:08,627][src.training.sft_trainer][INFO] - [design] seq=1. The protein design should t...
+[2026-02-25 19:12:08,628][src.training.sft_trainer][INFO] -   Instruction: Design a protein sequence that is tailored to the desired application....
+[2026-02-25 19:12:08,628][src.training.sft_trainer][INFO] -   Expected:    Your protein design is complete, and the amino acid sequence is
+```
+MFISIEEAIARIKNGEMVILVDDENRENEGDLVIAAEFVRPETINFMAKHARGLICTPIDVERAHKLALPPMAPENTALHGTRFTVSVDARSGISTGISAHDRAHTVHVIIDDQSVPDDLARPGHVFPLIAQEGGVLKRAGHTEAAVDLARLAGLKPAAVICEVMDDDGTMARLPQLEGFAEQHKLAIANIADLIAYRKRHENLVERVATAELPTRYGNFKIVSYTSPIENEEHVALVKGDVAGKENVLVRVHSECLTGDVFGSYRCDCGDQLHHAMEMIEQEGLGVLVYMRQEGRGIGLKNKVCAYQLQDEGLDTVEANERLGFPADLRDYGIGAQILCDLGLTTIRLLTNNPKKVIGLGGYGLKITEQVPIEIPPNEHNRYYLKTKKEKLGHKLHEV
+```
+[2026-02-25 19:12:08,628][src.training.sft_trainer][INFO] -   Generated:   ARAEELKKAKVKLDKGFKDAKVKAENVRDLLDKDDKESKEEEIKTKIEEKDEIDKIKEEIKNKDIKSNEEQNIKRKEMKNNPKLK
+```
+[2026-02-25 19:12:08,628][src.training.sft_trainer][INFO] - 
+[2026-02-25 19:12:09,959][src.training.sft_trainer][INFO] - [domain] seq=MPDPRPPEMNPSPAGATIAIVVAAGRGLRF...
+[2026-02-25 19:12:09,961][src.training.sft_trainer][INFO] -   Instruction: Please predict any recognizable motifs or domains that this protein sequence might contain. The sequ...
+[2026-02-25 19:12:09,961][src.training.sft_trainer][INFO] -   Expected:    The computational analysis of the sequence suggests the presence of the following protein domains or motifs: 2-C-methyl-D-erythritol 2,4-cyclodiphosphate synthase domains
+[2026-02-25 19:12:09,961][src.training.sft_trainer][INFO] -   Generated:   Our analysis of the sequence you provided suggests that it may contain these protein domains or motifs: Pore-forming domain, Transmembrane region
+[2026-02-25 19:12:09,961][src.training.sft_trainer][INFO] - 
+[2026-02-25 19:12:11,270][src.training.sft_trainer][INFO] - [domain] seq=MSTKYVFVTGGVVSSLGKGITAASLGRLLK...
+[2026-02-25 19:12:11,271][src.training.sft_trainer][INFO] -   Instruction: Examine the following protein sequence and determine which, if any, known protein domains or motifs ...
+[2026-02-25 19:12:11,272][src.training.sft_trainer][INFO] -   Expected:    Our bioinformatics tools have processed the sequence you provided sequence. The prediction suggests the presence of these protein domains or motifs: Glutamine amidotransferase, CTP synthase N-terminal domains
+[2026-02-25 19:12:11,272][src.training.sft_trainer][INFO] -   Generated:   Using bioinformatics tools, we have identified potential protein domains or motifs in the sequence you provided: Glutaredoxin-like C-terminal domain
+[2026-02-25 19:12:11,272][src.training.sft_trainer][INFO] - 
+[2026-02-25 19:12:13,996][src.training.sft_trainer][INFO] - [domain] seq=MSIFYVLGKKGTIEILYKIKEGVNSFTSIK...
+[2026-02-25 19:12:13,996][src.training.sft_trainer][INFO] -   Instruction: Analyze this protein sequence and, based on conserved domains or motifs, deduce its possible cellula...
+[2026-02-25 19:12:13,997][src.training.sft_trainer][INFO] -   Expected:    Based on the analysis of the protein sequence, it seems that the protein's primary function is related to DNA binding.
+[2026-02-25 19:12:13,997][src.training.sft_trainer][INFO] -   Generated:   After analyzing the given sequence, it is predicted that this protein may be involved in cell wall organization or biogenesis. Its primary structure includes conserved domains like WspA_C domain, and its potential function within a biological system could relate to peptidoglycan deacetylase activity.
+[2026-02-25 19:12:13,997][src.training.sft_trainer][INFO] - 
+[2026-02-25 19:12:15,056][src.training.sft_trainer][INFO] - [domain] seq=MEEGVQAPDWDSDETVIEGSVTESDLEEKE...
+[2026-02-25 19:12:15,057][src.training.sft_trainer][INFO] -   Instruction: Examine the following protein sequence and determine which, if any, known protein domains or motifs ...
+[2026-02-25 19:12:15,057][src.training.sft_trainer][INFO] -   Expected:    Based on computational analysis, the provided sequence potentially contains the following protein domains or motifs: RAMA domains
+[2026-02-25 19:12:15,057][src.training.sft_trainer][INFO] -   Generated:   The sequence you provided contains the following protein domains or motifs: DUF2635, P-loop motif
+[2026-02-25 19:12:15,057][src.training.sft_trainer][INFO] - 
+[2026-02-25 19:12:16,020][src.training.sft_trainer][INFO] - [domain] seq=MLCIPIRAPDNESALKDIARANETADVIEL...
+[2026-02-25 19:12:16,021][src.training.sft_trainer][INFO] -   Instruction: Can you analyze the protein sequence provided below and predict any recognizable domains or motifs i...
+[2026-02-25 19:12:16,021][src.training.sft_trainer][INFO] -   Expected:    Using bioinformatic tools, we have identified potential protein domains or motifs within your provided sequence: Shikimate dehydrogenase substrate binding N-terminal, Quinate/shikimate 5-dehydrogenase/glutamyl-tRNA reductase domains
+[2026-02-25 19:12:16,021][src.training.sft_trainer][INFO] -   Generated:   Based on the given protein sequence, it seems that this sequence contains: NAD(P) binding domains
+[2026-02-25 19:12:16,021][src.training.sft_trainer][INFO] - 
+[2026-02-25 19:12:20,479][src.training.sft_trainer][INFO] - [function] seq=1. The protein should be optim...
+[2026-02-25 19:12:20,480][src.training.sft_trainer][INFO] -   Instruction: Synthesize a protein sequence with the appropriate folding and stability properties for the desired ...
+[2026-02-25 19:12:20,480][src.training.sft_trainer][INFO] -   Expected:    Here's the amino acid sequence for your custom-designed protein:
+```
+MKQKYTDIIKNKFNSKGQWGLVIGDVMLDKYIFGEVTRISPEAPVPILEKQSESYRMGGAANVAANLAGLGIKTFLCGIVGGDHNAQLLKDLLKNKSVNHQGLIKGKTLTTTKTRIISGQQQIVRIDEEDASPLISPMDIKKIMGLISKKPSIIILSDYAKGFLSFVLTQKIIKLANKLHIQVLVDPKGNDIERYAGATILTPNKKEALELTSTDINDDTLLDKRLKLLCSKHKLQYIAMTQGSQGIKLIGSKNSCVIPATELKQVFDVSGAGDTVIAALAAGLIGKMTIHDALELANIAAGIAITKVGTVPVEGHEIIKEIEIEHSQQINKIIKPVQMESYLSDLRTAGSKIGFTNGCFDILHAGHVSYLERAKSKVDHLILGLNSDASVRGLKGPSRPVVNQEDRARVLCSLESVDAVIIFEENTPIKL...
+[2026-02-25 19:12:20,480][src.training.sft_trainer][INFO] -   Generated:   Here's a protein sequence with the above functions:
+```
+MSVQGRRRSGTAVLALATDGVAGVGPGKPAIARAAAKAIAASLEELGGGLSVDLGVLGRVVHGTIGRGAPDAVVAIDWGDGSVLAIVADGEGPVEAIAMFDPEDAEYIEEDEIIERLDILDDAQDVVITTAISPLPEETTLTVRAVRN
+```
+[2026-02-25 19:12:20,480][src.training.sft_trainer][INFO] - 
+[2026-02-25 19:12:25,816][src.training.sft_trainer][INFO] -   [DEBUG] Empty output. Raw token IDs: [8420, 594, 279, 41400, 13621, 8500, 369, 697, 2526, 12833, 2884, 510, 13874, 3989, 44140, 48, 38, 52983, 54, 8093]
+[2026-02-25 19:12:25,817][src.training.sft_trainer][INFO] -   [DEBUG] Raw decode: Here's the amino acid sequence for your custom protein design:
+```
+MKQGKLWAV
+[2026-02-25 19:12:25,817][src.training.sft_trainer][INFO] - [function] seq=1. For general function, the p...
+[2026-02-25 19:12:25,817][src.training.sft_trainer][INFO] -   Instruction: Synthesize a protein sequence that satisfies the given functional constraints....
+[2026-02-25 19:12:25,817][src.training.sft_trainer][INFO] -   Expected:    The protein you've requested has been designed with this amino acid sequence:
+```
+MQQQQAWAAGLGGLAVAGVGEEGGGGGPAPTTVDEASMERSKSFVKALQELKNLRPQLYSASEYCEKSYLHSEQKQMVLDNLKDYAVRALVNAVDHLGTVAYKLTDLYEQQASEVSTLELKVACLNQQVLTCQTYTDKEGIRQQQMTGTATRHHKHYIVPTLANKRMQAFSEMQTDADIDSRPRPYPSAKTLFWHLASEKNSKTNGARQSEFVLEETKATKPASRGKEPSTSPLPKHLQTNLASSDFAMHNVGMKDQPGVRHLSSFSSFDNPRGRQIQKAPLRTKSMLAAFFVKHKSGKMKNVSVR
+```
+[2026-02-25 19:12:25,818][src.training.sft_trainer][INFO] -   Generated:   
+[2026-02-25 19:12:25,818][src.training.sft_trainer][INFO] - 
+[2026-02-25 19:12:28,140][src.training.sft_trainer][INFO] - [function] seq=MPRNVLIIGSGASGLPACRHALLNNFNPTV...
+[2026-02-25 19:12:28,140][src.training.sft_trainer][INFO] -   Instruction: Please examine the protein encoded by the amino acid sequence and describe its functional role, pote...
+[2026-02-25 19:12:28,141][src.training.sft_trainer][INFO] -   Expected:    The protein with the amino acid sequence is expected to exhibit flavin adenine dinucleotide binding, hypotaurine dehydrogenase activity, N,N-dimethylaniline monooxygenase activity, NADP binding, NADPH oxidase H202-forming activity, contributing to the lipid metabolic process. It can be typically found in the endoplasmic reticulum membrane of the cell.
+[2026-02-25 19:12:28,141][src.training.sft_trainer][INFO] -   Generated:   Based on the given amino acid sequence, it is likely that this protein contributes to catalytic activity and acts as a ribonucleoside triphosphate hydrolase. Its subcellular localization is predicted to be in the extracellular region.
+[2026-02-25 19:12:28,141][src.training.sft_trainer][INFO] - 
+[2026-02-25 19:12:29,328][src.training.sft_trainer][INFO] - [function] seq=MSLSRLYSKKTQSSYNATAPLDRDPPEYPG...
+[2026-02-25 19:12:29,330][src.training.sft_trainer][INFO] -   Instruction: Examine the provided protein sequence and use your knowledge of protein structure and function to de...
+[2026-02-25 19:12:29,330][src.training.sft_trainer][INFO] -   Expected:    The protein with the amino acid sequence has been analyzed, and its structure suggests a potential involvement in RNA binding.
+[2026-02-25 19:12:29,330][src.training.sft_trainer][INFO] -   Generated:   Based on the provided amino acid sequence, it is predicted that this protein contributes to a nucleobase-containing compound metabolic process.
+[2026-02-25 19:12:29,330][src.training.sft_trainer][INFO] - 
+[2026-02-25 19:12:34,397][src.training.sft_trainer][INFO] - [function] seq=1. The designed protein should...
+[2026-02-25 19:12:34,398][src.training.sft_trainer][INFO] -   Instruction: Synthesize a protein sequence that satisfies the given functional constraints....
+[2026-02-25 19:12:34,399][src.training.sft_trainer][INFO] -   Expected:    The amino acid sequnece for the designed protein would be:
+```
+MTTIDTISDVITRIRNANILKLDRVELINTKVAIGICHILKDRGFINSFGEFLNSSDRMSNRRFIQKYIIVNLKYKGERRSPCIKELRRISKPGRRVYVGYKNLHKTKGGIELFVLSTSKGLITDYTAREKGIGGELLFSIC
+```
+[2026-02-25 19:12:34,399][src.training.sft_trainer][INFO] -   Generated:   KYFSKEDLTVSVISFDKDFSTLF
+```
+[2026-02-25 19:12:34,399][src.training.sft_trainer][INFO] - 
+[2026-02-25 19:12:40,988][src.training.sft_trainer][INFO] - [general] seq=1. The protein should have a f...
+[2026-02-25 19:12:40,988][src.training.sft_trainer][INFO] -   Instruction: Develop a protein sequence with increased stability under specific condition....
+[2026-02-25 19:12:40,989][src.training.sft_trainer][INFO] -   Expected:    The designed protein's amino acid sequence is as follows:
+```
+MRQDHRQNNEIRKVTIETDYLIHPEGSVLISFGQTKVIVNATIEESVPPFLRGTETGWVTAEYSMLPRATNTRNRRESSKGKLTGRTMEIQRLIGRSLRAVVDLEKLGERSIVVDCDVIQADGGTRTASITGAFVALKLAIDKLMATGELTENPIKEHLAAISIGVLPNGEVVTDLNYVEDSSAHVDMNIIMTESGRLVEIQGTGEEATFTRSELNEMLDFGEASIKELISIQKKSLCRQSIHPEVKIVNDKEILIATQNVGKAKEFESIFNEKGYTIKTLLDYPEVPDVEETGMTFEANARLKAETIADIFQCVVLADDSGLKVDALHGQPGVFSARYAGENKSDAANNAKLLHELYGVEQEKRGGKFHCTLVLAAPNQKSLVVTGEVEGVIGTIPRGDNGFGYDPLFFVPEFNKTMAELTSEEKNKVSHRAKAIEN...
+[2026-02-25 19:12:40,989][src.training.sft_trainer][INFO] -   Generated:   TVTKRVGYEFARLTSSMEEIIKNFKKVLFANSESVVRIFDGDSKPVIRTLVTNEEDDAERITDLKRFEVLAENNGVWGDFAESFSNKVIAMSA
+```
+[2026-02-25 19:12:40,989][src.training.sft_trainer][INFO] - 
+[2026-02-25 19:12:45,524][src.training.sft_trainer][INFO] - [general] seq=1. The protein must exhibit th...
+[2026-02-25 19:12:45,525][src.training.sft_trainer][INFO] -   Instruction: Develop a protein sequence with increased stability under specific condition....
+[2026-02-25 19:12:45,526][src.training.sft_trainer][INFO] -   Expected:    The designed protein's amino acid sequence is as follows:
+```
+MSNTHNIHWSTPSKRIYDASDIPNFKRSIAYYKIRHTLSVVIEKVKGCDLPPGILDKSIVTRKINNIPPSNTTHSRPLDLPPPQGEEEGDKCNISHSSNQTIRGEANESNYEGLLRILEVLNRYIDETPPLKGPRRFGNLACRDWHEKMNTKMNDLLKDNIKIHNSSFNSEFDGFIKELKYYIENSFGSAIRLDYGTGHELSFLAFIGGLIDFKLLSLEELTGSDILTIFAKYYDLTRRLILVYSLEPAGSHGVWGLDDHYHLIYIFGAAQFNGDQDKIIPPVQQILTRPVLDRYKETNLYVNAISFIHKIKSGPFNEHSPIIFDIHSSVSLWSKVLSGLLKMFEVEVLGKFPVVQHFWFGSSLYPWRDFETNKELPIYKRDEDEMDEDSSGDFLNGNTGIKTTKHNISMTGAPWNLNATQRQDDLNSTTYRGRQPRL...
+[2026-02-25 19:12:45,526][src.training.sft_trainer][INFO] -   Generated:   IK
+```
+[2026-02-25 19:12:45,526][src.training.sft_trainer][INFO] - 
+[2026-02-25 19:12:49,373][src.training.sft_trainer][INFO] - [general] seq=MTDEPKTRVSVRIYGQDYTIVGTESPAHIR...
+[2026-02-25 19:12:49,373][src.training.sft_trainer][INFO] -   Instruction: Please provide a summary of the key features and characteristics of the protein with the following a...
+[2026-02-25 19:12:49,374][src.training.sft_trainer][INFO] -   Expected:    A summary of the protein's main attributes with the input amino acid sequence reveals: Activator of cell division through the inhibition of FtsZ GTPase activity, therefore promoting FtsZ assembly into bundles of protofilaments necessary for the formation of the division Z ring. It is recruited early at mid-cell but it is not essential for cell division.
+[2026-02-25 19:12:49,374][src.training.sft_trainer][INFO] -   Generated:   Here is a summary of the protein with your provided amino acid sequence: Catalyzes the conversion of 1,2- and/or 3-phosphatidylglycerol into phosphatidic acid. Inhibits cytochrome bc(1) complex activity in vitro by binding to it; its physiological role may be that of an inhibitor rather than as a catalyst for PGP (phosphate group transfer).
+[2026-02-25 19:12:49,374][src.training.sft_trainer][INFO] - 
+[2026-02-25 19:12:50,816][src.training.sft_trainer][INFO] - [general] seq=RQAARVCSTRFQPENWNIDPIQRRNNCYNY...
+[2026-02-25 19:12:50,818][src.training.sft_trainer][INFO] -   Instruction: For the protein with the following sequence, identify the subcellular compartment where it is most l...
+[2026-02-25 19:12:50,818][src.training.sft_trainer][INFO] -   Expected:    Upon analyzing the given protein sequence, it appears that the protein is likely to be localized in the extracellular region compartment of the cell.
+[2026-02-25 19:12:50,819][src.training.sft_trainer][INFO] -   Generated:   Using bioinformatic tools, we predict that the protein with sequence KIDN_HUMAN is primarily localized to the cytoplasm within its host cell.
+[2026-02-25 19:12:50,819][src.training.sft_trainer][INFO] - 
+[2026-02-25 19:12:51,668][src.training.sft_trainer][INFO] - [general] seq=MSAIQKSEVLFVLGGPGAGKGTLCYYITQK...
+[2026-02-25 19:12:51,669][src.training.sft_trainer][INFO] -   Instruction: Analyze the protein with the following sequence and describe its properties: ...
+[2026-02-25 19:12:51,669][src.training.sft_trainer][INFO] -   Expected:    A short report on the protein with the given amino acid sequence highlights: Catalyzes the phosphorylation of pyrimidine nucleoside monophosphates at the expense of ATP. Plays an important role in de novo pyrimidine nucleotide biosynthesis. Has preference for UMP and CMP as phosphate acceptors.
+[2026-02-25 19:12:51,669][src.training.sft_trainer][INFO] -   Generated:   A summary of the protein's main attributes with input sequence: GAD1_HUMAN
+[2026-02-25 19:12:51,669][src.training.sft_trainer][INFO] - 
+[2026-02-25 19:12:52,863][src.training.sft_trainer][INFO] - ============================================================
+
+                                                 [A/home/yeopjin/orcd/pool/conda_install/envs/protein_llm_flash/lib/python3.11/site-packages/peft/utils/save_and_load.py:309: UserWarning: Setting `save_embedding_layers` to `True` as the embedding layer has been resized during finetuning.
+  warnings.warn(
+ 23%|██▎       | 751/3312 [3:21:02<108:10:50, 152.07s/it] 23%|██▎       | 752/3312 [3:21:20<79:30:29, 111.81s/it]  23%|██▎       | 753/3312 [3:21:37<59:15:04, 83.35s/it]  23%|██▎       | 754/3312 [3:21:49<44:06:19, 62.07s/it] 23%|██▎       | 755/3312 [3:22:01<33:16:17, 46.84s/it] 23%|██▎       | 756/3312 [3:22:12<25:43:03, 36.22s/it] 23%|██▎       | 757/3312 [3:22:23<20:24:33, 28.76s/it] 23%|██▎       | 758/3312 [3:22:31<15:56:49, 22.48s/it] 23%|██▎       | 759/3312 [3:22:49<14:57:21, 21.09s/it] 23%|██▎       | 760/3312 [3:23:08<14:35:19, 20.58s/it]                                                       {'loss': 13.7293, 'grad_norm': 2.2257118225097656, 'learning_rate': 8.996837135633363e-05, 'token_avg_loss': 3.6316, 'total_tokens': 99152, 'epoch': 0.69, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 23%|██▎       | 760/3312 [3:23:08<14:35:19, 20.58s/it] 23%|██▎       | 761/3312 [3:23:27<14:15:08, 20.11s/it] 23%|██▎       | 762/3312 [3:23:43<13:12:20, 18.64s/it] 23%|██▎       | 763/3312 [3:23:56<11:57:39, 16.89s/it] 23%|██▎       | 764/3312 [3:24:08<10:59:59, 15.54s/it] 23%|██▎       | 765/3312 [3:24:17<9:40:09, 13.67s/it]  23%|██▎       | 766/3312 [3:24:27<8:45:47, 12.39s/it] 23%|██▎       | 767/3312 [3:24:41<9:08:02, 12.92s/it] 23%|██▎       | 768/3312 [3:25:01<10:37:58, 15.05s/it] 23%|██▎       | 769/3312 [3:25:19<11:14:43, 15.92s/it] 23%|██▎       | 770/3312 [3:25:37<11:42:40, 16.59s/it]                                                       {'loss': 13.4331, 'grad_norm': 3.3616549968719482, 'learning_rate': 8.967262829849199e-05, 'token_avg_loss': 3.5158, 'total_tokens': 96188, 'epoch': 0.7, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 23%|██▎       | 770/3312 [3:25:37<11:42:40, 16.59s/it] 23%|██▎       | 771/3312 [3:25:50<10:56:13, 15.50s/it] 23%|██▎       | 772/3312 [3:26:03<10:31:00, 14.91s/it] 23%|██▎       | 773/3312 [3:26:15<9:46:12, 13.85s/it]  23%|██▎       | 774/3312 [3:26:25<9:01:03, 12.79s/it] 23%|██▎       | 775/3312 [3:26:33<7:55:47, 11.25s/it] 23%|██▎       | 776/3312 [3:26:54<10:08:18, 14.39s/it] 23%|██▎       | 777/3312 [3:27:14<11:09:56, 15.86s/it] 23%|██▎       | 778/3312 [3:27:29<11:00:08, 15.63s/it] 24%|██▎       | 779/3312 [3:27:44<10:52:23, 15.45s/it] 24%|██▎       | 780/3312 [3:27:56<10:14:10, 14.55s/it]                                                       {'loss': 13.2163, 'grad_norm': 2.979037046432495, 'learning_rate': 8.937309002740304e-05, 'token_avg_loss': 3.5768, 'total_tokens': 94367, 'epoch': 0.71, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 24%|██▎       | 780/3312 [3:27:56<10:14:10, 14.55s/it] 24%|██▎       | 781/3312 [3:28:08<9:38:17, 13.71s/it]  24%|██▎       | 782/3312 [3:28:18<8:48:18, 12.53s/it] 24%|██▎       | 783/3312 [3:28:26<7:48:06, 11.11s/it] 24%|██▎       | 784/3312 [3:28:43<9:11:07, 13.08s/it] 24%|██▎       | 785/3312 [3:29:03<10:28:21, 14.92s/it] 24%|██▎       | 786/3312 [3:29:22<11:25:56, 16.29s/it] 24%|██▍       | 787/3312 [3:29:39<11:35:46, 16.53s/it] 24%|██▍       | 788/3312 [3:29:53<11:07:59, 15.88s/it] 24%|██▍       | 789/3312 [3:30:06<10:19:52, 14.74s/it] 24%|██▍       | 790/3312 [3:30:16<9:30:34, 13.57s/it]                                                       {'loss': 13.1218, 'grad_norm': 4.26851224899292, 'learning_rate': 8.90697851978765e-05, 'token_avg_loss': 3.5228, 'total_tokens': 89547, 'epoch': 0.72, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 24%|██▍       | 790/3312 [3:30:16<9:30:34, 13.57s/it] 24%|██▍       | 791/3312 [3:30:26<8:37:43, 12.32s/it] 24%|██▍       | 792/3312 [3:30:41<9:11:47, 13.14s/it] 24%|██▍       | 793/3312 [3:31:00<10:30:32, 15.02s/it] 24%|██▍       | 794/3312 [3:31:19<11:13:46, 16.05s/it] 24%|██▍       | 795/3312 [3:31:34<11:08:39, 15.94s/it] 24%|██▍       | 796/3312 [3:31:48<10:35:07, 15.15s/it] 24%|██▍       | 797/3312 [3:32:00<9:55:44, 14.21s/it]  24%|██▍       | 798/3312 [3:32:10<9:09:30, 13.11s/it] 24%|██▍       | 799/3312 [3:32:21<8:33:37, 12.26s/it] 24%|██▍       | 800/3312 [3:32:28<7:29:47, 10.74s/it]                                                      {'loss': 12.9924, 'grad_norm': 3.680206060409546, 'learning_rate': 8.876274282504335e-05, 'token_avg_loss': 3.4645, 'total_tokens': 86217, 'epoch': 0.72, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 24%|██▍       | 800/3312 [3:32:28<7:29:47, 10.74s/it] 24%|██▍       | 801/3312 [3:32:48<9:29:36, 13.61s/it] 24%|██▍       | 802/3312 [3:33:08<10:43:43, 15.39s/it] 24%|██▍       | 803/3312 [3:33:24<10:55:46, 15.68s/it] 24%|██▍       | 804/3312 [3:33:40<10:54:54, 15.67s/it] 24%|██▍       | 805/3312 [3:33:54<10:42:32, 15.38s/it] 24%|██▍       | 806/3312 [3:34:07<10:06:32, 14.52s/it] 24%|██▍       | 807/3312 [3:34:17<9:06:09, 13.08s/it]  24%|██▍       | 808/3312 [3:34:25<8:05:03, 11.62s/it] 24%|██▍       | 809/3312 [3:34:42<9:10:07, 13.19s/it] 24%|██▍       | 810/3312 [3:35:01<10:23:33, 14.95s/it]                                                       {'loss': 13.8426, 'grad_norm': 2.3483681678771973, 'learning_rate': 8.845199228158021e-05, 'token_avg_loss': 3.5427, 'total_tokens': 99400, 'epoch': 0.73, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 24%|██▍       | 810/3312 [3:35:01<10:23:33, 14.95s/it] 24%|██▍       | 811/3312 [3:35:20<11:19:07, 16.29s/it] 25%|██▍       | 812/3312 [3:35:35<11:02:46, 15.91s/it] 25%|██▍       | 813/3312 [3:35:49<10:38:00, 15.32s/it] 25%|██▍       | 814/3312 [3:36:02<10:08:34, 14.62s/it] 25%|██▍       | 815/3312 [3:36:12<9:10:35, 13.23s/it]  25%|██▍       | 816/3312 [3:36:21<8:19:29, 12.01s/it] 25%|██▍       | 817/3312 [3:36:35<8:37:55, 12.45s/it] 25%|██▍       | 818/3312 [3:36:55<10:21:37, 14.96s/it] 25%|██▍       | 819/3312 [3:37:15<11:23:10, 16.44s/it] 25%|██▍       | 820/3312 [3:37:31<11:17:12, 16.31s/it]                                                       {'loss': 13.336, 'grad_norm': 3.6957640647888184, 'learning_rate': 8.813756329489937e-05, 'token_avg_loss': 3.4689, 'total_tokens': 91384, 'epoch': 0.74, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 25%|██▍       | 820/3312 [3:37:31<11:17:12, 16.31s/it] 25%|██▍       | 821/3312 [3:37:45<10:38:19, 15.38s/it] 25%|██▍       | 822/3312 [3:37:59<10:23:46, 15.03s/it] 25%|██▍       | 823/3312 [3:38:10<9:39:44, 13.98s/it]  25%|██▍       | 824/3312 [3:38:20<8:45:13, 12.67s/it] 25%|██▍       | 825/3312 [3:38:27<7:32:30, 10.92s/it] 25%|██▍       | 826/3312 [3:38:47<9:27:02, 13.69s/it] 25%|██▍       | 827/3312 [3:39:07<10:41:45, 15.50s/it] 25%|██▌       | 828/3312 [3:39:25<11:14:42, 16.30s/it] 25%|██▌       | 829/3312 [3:39:40<10:58:31, 15.91s/it] 25%|██▌       | 830/3312 [3:39:52<10:13:58, 14.84s/it]                                                       {'loss': 12.8271, 'grad_norm': 3.615039348602295, 'learning_rate': 8.78194859443051e-05, 'token_avg_loss': 3.4076, 'total_tokens': 89365, 'epoch': 0.75, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 25%|██▌       | 830/3312 [3:39:52<10:13:58, 14.84s/it] 25%|██▌       | 831/3312 [3:40:04<9:37:18, 13.96s/it]  25%|██▌       | 832/3312 [3:40:15<9:00:17, 13.07s/it] 25%|██▌       | 833/3312 [3:40:24<8:08:56, 11.83s/it] 25%|██▌       | 834/3312 [3:40:41<9:12:53, 13.39s/it] 25%|██▌       | 835/3312 [3:41:02<10:48:15, 15.70s/it] 25%|██▌       | 836/3312 [3:41:22<11:34:18, 16.82s/it] 25%|██▌       | 837/3312 [3:41:37<11:19:23, 16.47s/it] 25%|██▌       | 838/3312 [3:41:51<10:41:40, 15.56s/it] 25%|██▌       | 839/3312 [3:42:04<10:09:08, 14.78s/it] 25%|██▌       | 840/3312 [3:42:13<9:08:08, 13.30s/it]                                                       {'loss': 12.8498, 'grad_norm': 3.433866262435913, 'learning_rate': 8.749779065811594e-05, 'token_avg_loss': 3.4487, 'total_tokens': 89042, 'epoch': 0.76, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 25%|██▌       | 840/3312 [3:42:13<9:08:08, 13.30s/it] 25%|██▌       | 841/3312 [3:42:23<8:19:37, 12.13s/it] 25%|██▌       | 842/3312 [3:42:37<8:48:48, 12.85s/it] 25%|██▌       | 843/3312 [3:42:58<10:28:33, 15.28s/it] 25%|██▌       | 844/3312 [3:43:17<11:16:47, 16.45s/it] 26%|██▌       | 845/3312 [3:43:34<11:12:59, 16.37s/it] 26%|██▌       | 846/3312 [3:43:49<10:55:05, 15.94s/it] 26%|██▌       | 847/3312 [3:44:01<10:05:37, 14.74s/it] 26%|██▌       | 848/3312 [3:44:12<9:30:57, 13.90s/it]  26%|██▌       | 849/3312 [3:44:23<8:50:53, 12.93s/it] 26%|██▌       | 850/3312 [3:44:30<7:33:33, 11.05s/it]                                                      {'loss': 12.8915, 'grad_norm': 2.874988317489624, 'learning_rate': 8.717250821075413e-05, 'token_avg_loss': 3.3556, 'total_tokens': 82907, 'epoch': 0.77, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 26%|██▌       | 850/3312 [3:44:30<7:33:33, 11.05s/it] 26%|██▌       | 851/3312 [3:44:51<9:42:06, 14.19s/it] 26%|██▌       | 852/3312 [3:45:11<10:48:48, 15.82s/it] 26%|██▌       | 853/3312 [3:45:28<11:07:12, 16.28s/it] 26%|██▌       | 854/3312 [3:45:47<11:30:45, 16.86s/it] 26%|██▌       | 855/3312 [3:46:00<10:45:18, 15.76s/it] 26%|██▌       | 856/3312 [3:46:13<10:12:51, 14.97s/it] 26%|██▌       | 857/3312 [3:46:23<9:13:09, 13.52s/it]  26%|██▌       | 858/3312 [3:46:31<8:09:47, 11.98s/it] 26%|██▌       | 859/3312 [3:46:49<9:24:05, 13.80s/it] 26%|██▌       | 860/3312 [3:47:10<10:48:09, 15.86s/it]                                                       {'loss': 13.6794, 'grad_norm': 1.8710930347442627, 'learning_rate': 8.684366971980138e-05, 'token_avg_loss': 3.6137, 'total_tokens': 99771, 'epoch': 0.78, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 26%|██▌       | 860/3312 [3:47:10<10:48:09, 15.86s/it] 26%|██▌       | 861/3312 [3:47:26<10:53:02, 15.99s/it] 26%|██▌       | 862/3312 [3:47:41<10:40:33, 15.69s/it] 26%|██▌       | 863/3312 [3:47:54<10:06:33, 14.86s/it] 26%|██▌       | 864/3312 [3:48:07<9:39:44, 14.21s/it]  26%|██▌       | 865/3312 [3:48:18<9:02:13, 13.30s/it] 26%|██▌       | 866/3312 [3:48:28<8:15:11, 12.15s/it] 26%|██▌       | 867/3312 [3:48:42<8:37:08, 12.69s/it] 26%|██▌       | 868/3312 [3:49:02<10:16:26, 15.13s/it] 26%|██▌       | 869/3312 [3:49:21<10:54:21, 16.07s/it] 26%|██▋       | 870/3312 [3:49:37<10:58:25, 16.18s/it]                                                       {'loss': 13.0396, 'grad_norm': 2.874969720840454, 'learning_rate': 8.651130664302214e-05, 'token_avg_loss': 3.5481, 'total_tokens': 95090, 'epoch': 0.79, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 26%|██▋       | 870/3312 [3:49:37<10:58:25, 16.18s/it] 26%|██▋       | 871/3312 [3:49:51<10:27:10, 15.42s/it] 26%|██▋       | 872/3312 [3:50:04<10:05:25, 14.89s/it] 26%|██▋       | 873/3312 [3:50:15<9:11:01, 13.56s/it]  26%|██▋       | 874/3312 [3:50:26<8:36:21, 12.71s/it] 26%|██▋       | 875/3312 [3:50:33<7:26:57, 11.00s/it] 26%|██▋       | 876/3312 [3:50:53<9:25:46, 13.94s/it] 26%|██▋       | 877/3312 [3:51:11<10:05:31, 14.92s/it] 27%|██▋       | 878/3312 [3:51:27<10:29:25, 15.52s/it] 27%|██▋       | 879/3312 [3:51:42<10:11:05, 15.07s/it] 27%|██▋       | 880/3312 [3:51:54<9:45:20, 14.44s/it]                                                       {'loss': 12.931, 'grad_norm': 3.4841246604919434, 'learning_rate': 8.61754507753543e-05, 'token_avg_loss': 3.3899, 'total_tokens': 91131, 'epoch': 0.8, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 27%|██▋       | 880/3312 [3:51:54<9:45:20, 14.44s/it] 27%|██▋       | 881/3312 [3:52:05<8:58:29, 13.29s/it] 27%|██▋       | 882/3312 [3:52:15<8:18:18, 12.30s/it] 27%|██▋       | 883/3312 [3:52:24<7:34:22, 11.22s/it] 27%|██▋       | 884/3312 [3:52:41<8:52:45, 13.17s/it] 27%|██▋       | 885/3312 [3:53:01<10:11:48, 15.13s/it] 27%|██▋       | 886/3312 [3:53:20<10:56:14, 16.23s/it] 27%|██▋       | 887/3312 [3:53:36<10:47:47, 16.03s/it] 27%|██▋       | 888/3312 [3:53:48<10:06:33, 15.01s/it] 27%|██▋       | 889/3312 [3:54:00<9:23:22, 13.95s/it]  27%|██▋       | 890/3312 [3:54:11<8:46:39, 13.05s/it]                                                      {'loss': 12.8763, 'grad_norm': 3.85657000541687, 'learning_rate': 8.583613424586751e-05, 'token_avg_loss': 3.3511, 'total_tokens': 84254, 'epoch': 0.81, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 27%|██▋       | 890/3312 [3:54:11<8:46:39, 13.05s/it] 27%|██▋       | 891/3312 [3:54:19<7:55:48, 11.79s/it] 27%|██▋       | 892/3312 [3:54:33<8:18:10, 12.35s/it] 27%|██▋       | 893/3312 [3:54:53<9:48:30, 14.60s/it] 27%|██▋       | 894/3312 [3:55:14<11:03:24, 16.46s/it] 27%|██▋       | 895/3312 [3:55:30<10:54:17, 16.24s/it] 27%|██▋       | 896/3312 [3:55:43<10:26:46, 15.57s/it] 27%|██▋       | 897/3312 [3:55:57<9:55:48, 14.80s/it]  27%|██▋       | 898/3312 [3:56:08<9:21:26, 13.95s/it] 27%|██▋       | 899/3312 [3:56:19<8:37:57, 12.88s/it] 27%|██▋       | 900/3312 [3:56:26<7:33:20, 11.28s/it]                                                      {'loss': 12.9532, 'grad_norm': 3.9956486225128174, 'learning_rate': 8.549338951468966e-05, 'token_avg_loss': 3.4534, 'total_tokens': 86327, 'epoch': 0.82, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 27%|██▋       | 900/3312 [3:56:26<7:33:20, 11.28s/it] 27%|██▋       | 901/3312 [3:56:47<9:27:20, 14.12s/it] 27%|██▋       | 902/3312 [3:57:05<10:11:26, 15.22s/it] 27%|██▋       | 903/3312 [3:57:21<10:26:32, 15.61s/it] 27%|██▋       | 904/3312 [3:57:35<10:04:05, 15.05s/it] 27%|██▋       | 905/3312 [3:57:46<9:12:16, 13.77s/it]  27%|██▋       | 906/3312 [3:57:58<8:47:52, 13.16s/it] 27%|██▋       | 907/3312 [3:58:08<8:09:26, 12.21s/it] 27%|██▋       | 908/3312 [3:58:16<7:26:52, 11.15s/it] 27%|██▋       | 909/3312 [3:58:33<8:30:00, 12.73s/it] 27%|██▋       | 910/3312 [3:58:52<9:44:10, 14.59s/it]                                                      {'loss': 13.734, 'grad_norm': 2.012024164199829, 'learning_rate': 8.514724936990158e-05, 'token_avg_loss': 3.6075, 'total_tokens': 99950, 'epoch': 0.82, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 27%|██▋       | 910/3312 [3:58:52<9:44:10, 14.59s/it] 28%|██▊       | 911/3312 [3:59:10<10:31:50, 15.79s/it] 28%|██▊       | 912/3312 [3:59:23<9:55:43, 14.89s/it]  28%|██▊       | 913/3312 [3:59:37<9:47:04, 14.68s/it] 28%|██▊       | 914/3312 [3:59:50<9:23:18, 14.09s/it] 28%|██▊       | 915/3312 [3:59:59<8:18:44, 12.48s/it] 28%|██▊       | 916/3312 [4:00:09<7:46:38, 11.69s/it] 28%|██▊       | 917/3312 [4:00:23<8:19:08, 12.50s/it] 28%|██▊       | 918/3312 [4:00:44<9:59:14, 15.02s/it] 28%|██▊       | 919/3312 [4:01:00<10:17:30, 15.48s/it] 28%|██▊       | 920/3312 [4:01:18<10:39:52, 16.05s/it]                                                       {'loss': 13.1096, 'grad_norm': 3.4297895431518555, 'learning_rate': 8.47977469244005e-05, 'token_avg_loss': 3.5001, 'total_tokens': 92569, 'epoch': 0.83, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 28%|██▊       | 920/3312 [4:01:18<10:39:52, 16.05s/it] 28%|██▊       | 921/3312 [4:01:30<9:47:48, 14.75s/it]  28%|██▊       | 922/3312 [4:01:43<9:30:18, 14.32s/it] 28%|██▊       | 923/3312 [4:01:53<8:41:05, 13.09s/it] 28%|██▊       | 924/3312 [4:02:03<7:57:24, 12.00s/it] 28%|██▊       | 925/3312 [4:02:10<7:00:55, 10.58s/it] 28%|██▊       | 926/3312 [4:02:31<9:02:59, 13.65s/it] 28%|██▊       | 927/3312 [4:02:49<10:03:25, 15.18s/it] 28%|██▊       | 928/3312 [4:03:05<10:08:10, 15.31s/it] 28%|██▊       | 929/3312 [4:03:19<9:49:50, 14.85s/it]  28%|██▊       | 930/3312 [4:03:32<9:28:19, 14.32s/it]                                                      {'loss': 12.9576, 'grad_norm': 3.182117223739624, 'learning_rate': 8.44449156127323e-05, 'token_avg_loss': 3.3113, 'total_tokens': 87924, 'epoch': 0.84, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 28%|██▊       | 930/3312 [4:03:32<9:28:19, 14.32s/it] 28%|██▊       | 931/3312 [4:03:43<8:46:21, 13.26s/it] 28%|██▊       | 932/3312 [4:03:54<8:24:09, 12.71s/it] 28%|██▊       | 933/3312 [4:04:03<7:37:02, 11.53s/it] 28%|██▊       | 934/3312 [4:04:20<8:45:52, 13.27s/it] 28%|██▊       | 935/3312 [4:04:40<10:03:41, 15.24s/it] 28%|██▊       | 936/3312 [4:04:57<10:27:22, 15.84s/it] 28%|██▊       | 937/3312 [4:05:13<10:21:58, 15.71s/it] 28%|██▊       | 938/3312 [4:05:27<10:05:12, 15.30s/it] 28%|██▊       | 939/3312 [4:05:41<9:46:43, 14.84s/it]  28%|██▊       | 940/3312 [4:05:53<9:14:49, 14.03s/it]                                                      {'loss': 12.9559, 'grad_norm': 3.4585540294647217, 'learning_rate': 8.408878918789307e-05, 'token_avg_loss': 3.4022, 'total_tokens': 84972, 'epoch': 0.85, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 28%|██▊       | 940/3312 [4:05:53<9:14:49, 14.03s/it] 28%|██▊       | 941/3312 [4:06:01<8:10:00, 12.40s/it] 28%|██▊       | 942/3312 [4:06:16<8:35:58, 13.06s/it] 28%|██▊       | 943/3312 [4:06:36<10:01:02, 15.22s/it] 29%|██▊       | 944/3312 [4:06:56<10:49:26, 16.46s/it] 29%|██▊       | 945/3312 [4:07:13<11:03:43, 16.82s/it] 29%|██▊       | 946/3312 [4:07:26<10:18:38, 15.69s/it] 29%|██▊       | 947/3312 [4:07:40<9:54:32, 15.08s/it]  29%|██▊       | 948/3312 [4:07:50<8:49:28, 13.44s/it] 29%|██▊       | 949/3312 [4:08:00<8:08:36, 12.41s/it] 29%|██▊       | 950/3312 [4:08:07<7:07:39, 10.86s/it]                                                      {'loss': 12.8315, 'grad_norm': 3.8313074111938477, 'learning_rate': 8.372940171810019e-05, 'token_avg_loss': 3.3505, 'total_tokens': 84866, 'epoch': 0.86, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 29%|██▊       | 950/3312 [4:08:07<7:07:39, 10.86s/it] 29%|██▊       | 951/3312 [4:08:28<9:10:08, 13.98s/it] 29%|██▊       | 952/3312 [4:08:47<10:08:05, 15.46s/it] 29%|██▉       | 953/3312 [4:09:05<10:36:58, 16.20s/it] 29%|██▉       | 954/3312 [4:09:19<10:14:05, 15.63s/it] 29%|██▉       | 955/3312 [4:09:32<9:43:51, 14.86s/it]  29%|██▉       | 956/3312 [4:09:43<8:49:37, 13.49s/it] 29%|██▉       | 957/3312 [4:09:52<8:05:49, 12.38s/it] 29%|██▉       | 958/3312 [4:10:01<7:16:55, 11.14s/it] 29%|██▉       | 959/3312 [4:10:18<8:23:37, 12.84s/it] 29%|██▉       | 960/3312 [4:10:38<9:58:13, 15.26s/it]                                                      {'loss': 13.5911, 'grad_norm': 2.2047436237335205, 'learning_rate': 8.336678758353326e-05, 'token_avg_loss': 3.5061, 'total_tokens': 98077, 'epoch': 0.87, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 29%|██▉       | 960/3312 [4:10:38<9:58:13, 15.26s/it] 29%|██▉       | 961/3312 [4:10:57<10:39:48, 16.33s/it] 29%|██▉       | 962/3312 [4:11:13<10:27:24, 16.02s/it] 29%|██▉       | 963/3312 [4:11:24<9:36:12, 14.72s/it]  29%|██▉       | 964/3312 [4:11:36<8:59:57, 13.80s/it] 29%|██▉       | 965/3312 [4:11:46<8:17:42, 12.72s/it] 29%|██▉       | 966/3312 [4:11:55<7:38:10, 11.72s/it] 29%|██▉       | 967/3312 [4:12:09<8:01:53, 12.33s/it] 29%|██▉       | 968/3312 [4:12:30<9:41:48, 14.89s/it] 29%|██▉       | 969/3312 [4:12:48<10:19:48, 15.87s/it] 29%|██▉       | 970/3312 [4:13:04<10:19:25, 15.87s/it]                                                       {'loss': 13.1042, 'grad_norm': 3.2581470012664795, 'learning_rate': 8.300098147304522e-05, 'token_avg_loss': 3.4441, 'total_tokens': 93153, 'epoch': 0.88, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 29%|██▉       | 970/3312 [4:13:04<10:19:25, 15.87s/it] 29%|██▉       | 971/3312 [4:13:20<10:19:09, 15.87s/it] 29%|██▉       | 972/3312 [4:13:33<9:40:24, 14.88s/it]  29%|██▉       | 973/3312 [4:13:45<9:07:48, 14.05s/it] 29%|██▉       | 974/3312 [4:13:54<8:17:05, 12.76s/it] 29%|██▉       | 975/3312 [4:14:02<7:14:29, 11.16s/it] 29%|██▉       | 976/3312 [4:14:23<9:07:41, 14.07s/it] 29%|██▉       | 977/3312 [4:14:43<10:17:43, 15.87s/it] 30%|██▉       | 978/3312 [4:15:00<10:33:44, 16.29s/it] 30%|██▉       | 979/3312 [4:15:14<10:05:50, 15.58s/it] 30%|██▉       | 980/3312 [4:15:26<9:19:26, 14.39s/it]                                                       {'loss': 12.9581, 'grad_norm': 4.080450534820557, 'learning_rate': 8.26320183808438e-05, 'token_avg_loss': 3.3249, 'total_tokens': 87307, 'epoch': 0.89, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 30%|██▉       | 980/3312 [4:15:26<9:19:26, 14.39s/it] 30%|██▉       | 981/3312 [4:15:35<8:18:26, 12.83s/it] 30%|██▉       | 982/3312 [4:15:44<7:40:34, 11.86s/it] 30%|██▉       | 983/3312 [4:15:52<6:54:02, 10.67s/it] 30%|██▉       | 984/3312 [4:16:10<8:15:02, 12.76s/it] 30%|██▉       | 985/3312 [4:16:29<9:27:28, 14.63s/it] 30%|██▉       | 986/3312 [4:16:47<10:10:01, 15.74s/it] 30%|██▉       | 987/3312 [4:17:01<9:49:21, 15.21s/it]  30%|██▉       | 988/3312 [4:17:16<9:46:17, 15.14s/it] 30%|██▉       | 989/3312 [4:17:27<8:55:39, 13.84s/it] 30%|██▉       | 990/3312 [4:17:37<8:12:31, 12.73s/it]                                                      {'loss': 12.8962, 'grad_norm': 3.6606500148773193, 'learning_rate': 8.225993360314389e-05, 'token_avg_loss': 3.3938, 'total_tokens': 86363, 'epoch': 0.9, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 30%|██▉       | 990/3312 [4:17:37<8:12:31, 12.73s/it] 30%|██▉       | 991/3312 [4:17:45<7:16:58, 11.30s/it] 30%|██▉       | 992/3312 [4:17:59<7:52:40, 12.22s/it] 30%|██▉       | 993/3312 [4:18:20<9:32:53, 14.82s/it] 30%|███       | 994/3312 [4:18:36<9:46:38, 15.18s/it] 30%|███       | 995/3312 [4:18:51<9:41:14, 15.05s/it] 30%|███       | 996/3312 [4:19:06<9:42:03, 15.08s/it] 30%|███       | 997/3312 [4:19:20<9:23:17, 14.60s/it] 30%|███       | 998/3312 [4:19:32<8:55:54, 13.90s/it] 30%|███       | 999/3312 [4:19:41<8:04:31, 12.57s/it] 30%|███       | 1000/3312 [4:19:49<7:01:02, 10.93s/it]                                                       {'loss': 13.0172, 'grad_norm': 3.9629223346710205, 'learning_rate': 8.188476273479109e-05, 'token_avg_loss': 3.4988, 'total_tokens': 87325, 'epoch': 0.91, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 30%|███       | 1000/3312 [4:19:49<7:01:02, 10.93s/it]
+  0%|          | 0/183 [00:00<?, ?it/s][A
+  1%|          | 2/183 [00:02<03:58,  1.32s/it][A
+  2%|▏         | 3/183 [00:04<05:05,  1.70s/it][A
+  2%|▏         | 4/183 [00:06<04:55,  1.65s/it][A
+  3%|▎         | 5/183 [00:08<05:08,  1.73s/it][A
+  3%|▎         | 6/183 [00:09<04:55,  1.67s/it][A
+  4%|▍         | 7/183 [00:10<04:09,  1.42s/it][A
+  4%|▍         | 8/183 [00:14<06:14,  2.14s/it][A
+  5%|▍         | 9/183 [00:16<06:05,  2.10s/it][A
+  5%|▌         | 10/183 [00:18<05:49,  2.02s/it][A
+  6%|▌         | 11/183 [00:20<05:42,  1.99s/it][A
+  7%|▋         | 12/183 [00:21<05:07,  1.80s/it][A
+  7%|▋         | 13/183 [00:22<04:23,  1.55s/it][A
+  8%|▊         | 14/183 [00:26<06:14,  2.22s/it][A
+  8%|▊         | 15/183 [00:28<06:04,  2.17s/it][A
+  9%|▊         | 16/183 [00:30<05:57,  2.14s/it][A
+  9%|▉         | 17/183 [00:32<05:55,  2.14s/it][A
+ 10%|▉         | 18/183 [00:33<05:03,  1.84s/it][A
+ 10%|█         | 19/183 [00:35<04:33,  1.67s/it][A
+ 11%|█         | 20/183 [00:38<06:09,  2.26s/it][A
+ 11%|█▏        | 21/183 [00:40<06:07,  2.27s/it][A
+ 12%|█▏        | 22/183 [00:43<06:02,  2.25s/it][A
+ 13%|█▎        | 23/183 [00:44<05:21,  2.01s/it][A
+ 13%|█▎        | 24/183 [00:46<05:09,  1.95s/it][A
+ 14%|█▎        | 25/183 [00:47<04:31,  1.72s/it][A
+ 14%|█▍        | 26/183 [00:49<04:19,  1.65s/it][A
+ 15%|█▍        | 27/183 [00:52<05:19,  2.05s/it][A
+ 15%|█▌        | 28/183 [00:54<05:23,  2.09s/it][A
+ 16%|█▌        | 29/183 [00:56<05:08,  2.01s/it][A
+ 16%|█▋        | 30/183 [00:57<04:20,  1.71s/it][A
+ 17%|█▋        | 31/183 [00:58<03:45,  1.48s/it][A
+ 17%|█▋        | 32/183 [00:58<03:03,  1.22s/it][A
+ 18%|█▊        | 33/183 [01:02<04:53,  1.95s/it][A
+ 19%|█▊        | 34/183 [01:05<05:39,  2.28s/it][A
+ 19%|█▉        | 35/183 [01:07<05:13,  2.12s/it][A
+ 20%|█▉        | 36/183 [01:08<04:55,  2.01s/it][A
+ 20%|██        | 37/183 [01:10<04:26,  1.82s/it][A
+ 21%|██        | 38/183 [01:11<03:48,  1.58s/it][A
+ 21%|██▏       | 39/183 [01:15<05:39,  2.36s/it][A
+ 22%|██▏       | 40/183 [01:18<05:49,  2.44s/it][A
+ 22%|██▏       | 41/183 [01:19<05:10,  2.18s/it][A
+ 23%|██▎       | 42/183 [01:22<05:16,  2.25s/it][A
+ 23%|██▎       | 43/183 [01:23<04:36,  1.97s/it][A
+ 24%|██▍       | 44/183 [01:23<03:36,  1.56s/it][A
+ 25%|██▍       | 45/183 [01:27<05:03,  2.20s/it][A
+ 25%|██▌       | 46/183 [01:30<05:31,  2.42s/it][A
+ 26%|██▌       | 47/183 [01:32<05:17,  2.34s/it][A
+ 26%|██▌       | 48/183 [01:34<04:52,  2.17s/it][A
+ 27%|██▋       | 49/183 [01:36<04:28,  2.00s/it][A
+ 27%|██▋       | 50/183 [01:37<03:48,  1.72s/it][A
+ 28%|██▊       | 51/183 [01:38<03:43,  1.69s/it][A
+ 28%|██▊       | 52/183 [01:41<04:39,  2.13s/it][A
+ 29%|██▉       | 53/183 [01:44<04:57,  2.29s/it][A
+ 30%|██▉       | 54/183 [01:46<04:32,  2.11s/it][A
+ 30%|███       | 55/183 [01:47<04:03,  1.91s/it][A
+ 31%|███       | 56/183 [01:49<03:40,  1.73s/it][A
+ 31%|███       | 57/183 [01:49<03:02,  1.45s/it][A
+ 32%|███▏      | 58/183 [01:53<04:11,  2.01s/it][A
+ 32%|███▏      | 59/183 [01:56<04:43,  2.29s/it][A
+ 33%|███▎      | 60/183 [01:57<04:17,  2.09s/it][A
+ 33%|███▎      | 61/183 [01:59<04:10,  2.05s/it][A
+ 34%|███▍      | 62/183 [02:00<03:38,  1.81s/it][A
+ 34%|███▍      | 63/183 [02:02<03:12,  1.60s/it][A
+ 35%|███▍      | 64/183 [02:06<04:46,  2.41s/it][A
+ 36%|███▌      | 65/183 [02:08<04:30,  2.30s/it][A
+ 36%|███▌      | 66/183 [02:10<04:18,  2.21s/it][A
+ 37%|███▋      | 67/183 [02:12<04:03,  2.10s/it][A
+ 37%|███▋      | 68/183 [02:13<03:45,  1.96s/it][A
+ 38%|███▊      | 69/183 [02:15<03:15,  1.72s/it][A
+ 38%|███▊      | 70/183 [02:18<04:23,  2.33s/it][A
+ 39%|███▉      | 71/183 [02:21<04:22,  2.34s/it][A
+ 39%|███▉      | 72/183 [02:22<04:01,  2.18s/it][A
+ 40%|███▉      | 73/183 [02:24<03:38,  1.98s/it][A
+ 40%|████      | 74/183 [02:25<03:20,  1.84s/it][A
+ 41%|████      | 75/183 [02:27<03:00,  1.67s/it][A
+ 42%|████▏     | 76/183 [02:28<02:54,  1.63s/it][A
+ 42%|████▏     | 77/183 [02:31<03:31,  1.99s/it][A
+ 43%|████▎     | 78/183 [02:33<03:32,  2.02s/it][A
+ 43%|████▎     | 79/183 [02:35<03:20,  1.93s/it][A
+ 44%|████▎     | 80/183 [02:36<03:04,  1.79s/it][A
+ 44%|████▍     | 81/183 [02:38<02:45,  1.62s/it][A
+ 45%|████▍     | 82/183 [02:39<02:23,  1.42s/it][A
+ 45%|████▌     | 83/183 [02:42<03:31,  2.12s/it][A
+ 46%|████▌     | 84/183 [02:45<03:44,  2.27s/it][A
+ 46%|████▋     | 85/183 [02:47<03:34,  2.19s/it][A
+ 47%|████▋     | 86/183 [02:49<03:26,  2.13s/it][A
+ 48%|████▊     | 87/183 [02:50<03:05,  1.93s/it][A
+ 48%|████▊     | 88/183 [02:51<02:35,  1.64s/it][A
+ 49%|████▊     | 89/183 [02:55<03:31,  2.25s/it][A
+ 49%|████▉     | 90/183 [02:57<03:24,  2.20s/it][A
+ 50%|████▉     | 91/183 [02:59<03:10,  2.07s/it][A
+ 50%|█████     | 92/183 [03:00<02:53,  1.91s/it][A
+ 51%|█████     | 93/183 [03:02<02:41,  1.79s/it][A
+ 51%|█████▏    | 94/183 [03:03<02:16,  1.53s/it][A
+ 52%|█████▏    | 95/183 [03:06<03:10,  2.17s/it][A
+ 52%|█████▏    | 96/183 [03:09<03:24,  2.35s/it][A
+ 53%|█████▎    | 97/183 [03:12<03:25,  2.39s/it][A
+ 54%|█████▎    | 98/183 [03:13<02:55,  2.07s/it][A
+ 54%|█████▍    | 99/183 [03:15<02:42,  1.93s/it][A
+ 55%|█████▍    | 100/183 [03:16<02:22,  1.72s/it][A
+ 55%|█████▌    | 101/183 [03:17<02:15,  1.65s/it][A
+ 56%|█████▌    | 102/183 [03:20<02:45,  2.05s/it][A
+ 56%|█████▋    | 103/183 [03:23<02:55,  2.20s/it][A
+ 57%|█████▋    | 104/183 [03:25<02:42,  2.05s/it][A
+ 57%|█████▋    | 105/183 [03:26<02:28,  1.90s/it][A
+ 58%|█████▊    | 106/183 [03:27<02:11,  1.71s/it][A
+ 58%|█████▊    | 107/183 [03:28<01:51,  1.47s/it][A
+ 59%|█████▉    | 108/183 [03:32<02:44,  2.19s/it][A
+ 60%|█████▉    | 109/183 [03:35<02:46,  2.24s/it][A
+ 60%|██████    | 110/183 [03:37<02:39,  2.19s/it][A
+ 61%|██████    | 111/183 [03:39<02:32,  2.12s/it][A
+ 61%|██████    | 112/183 [03:40<02:12,  1.87s/it][A
+ 62%|██████▏   | 113/183 [03:41<01:53,  1.62s/it][A
+ 62%|██████▏   | 114/183 [03:45<02:34,  2.24s/it][A
+ 63%|██████▎   | 115/183 [03:47<02:38,  2.34s/it][A
+ 63%|██████▎   | 116/183 [03:49<02:31,  2.25s/it][A
+ 64%|██████▍   | 117/183 [03:51<02:10,  1.98s/it][A
+ 64%|██████▍   | 118/183 [03:52<01:58,  1.82s/it][A
+ 65%|██████▌   | 119/183 [03:53<01:47,  1.68s/it][A
+ 66%|██████▌   | 120/183 [03:57<02:30,  2.39s/it][A
+ 66%|██████▌   | 121/183 [04:00<02:26,  2.36s/it][A
+ 67%|██████▋   | 122/183 [04:02<02:21,  2.32s/it][A
+ 67%|██████▋   | 123/183 [04:04<02:06,  2.10s/it][A
+ 68%|██████▊   | 124/183 [04:05<01:54,  1.94s/it][A
+ 68%|██████▊   | 125/183 [04:06<01:40,  1.73s/it][A
+ 69%|██████▉   | 126/183 [04:08<01:33,  1.64s/it][A
+ 69%|██████▉   | 127/183 [04:10<01:43,  1.85s/it][A
+ 70%|██████▉   | 128/183 [04:12<01:49,  1.99s/it][A
+ 70%|███████   | 129/183 [04:14<01:43,  1.92s/it][A
+ 71%|███████   | 130/183 [04:16<01:38,  1.87s/it][A
+ 72%|███████▏  | 131/183 [04:17<01:25,  1.65s/it][A
+ 72%|███████▏  | 132/183 [04:18<01:12,  1.42s/it][A
+ 73%|███████▎  | 133/183 [04:22<01:43,  2.07s/it][A
+ 73%|███████▎  | 134/183 [04:24<01:41,  2.08s/it][A
+ 74%|███████▍  | 135/183 [04:26<01:37,  2.04s/it][A
+ 74%|███████▍  | 136/183 [04:27<01:32,  1.97s/it][A
+ 75%|███████▍  | 137/183 [04:29<01:25,  1.86s/it][A
+ 75%|███████▌  | 138/183 [04:30<01:12,  1.61s/it][A
+ 76%|███████▌  | 139/183 [04:34<01:37,  2.23s/it][A
+ 77%|███████▋  | 140/183 [04:36<01:40,  2.34s/it][A
+ 77%|███████▋  | 141/183 [04:38<01:26,  2.07s/it][A
+ 78%|███████▊  | 142/183 [04:39<01:19,  1.95s/it][A
+ 78%|███████▊  | 143/183 [04:41<01:11,  1.78s/it][A
+ 79%|███████▊  | 144/183 [04:42<01:01,  1.59s/it][A
+ 79%|███████▉  | 145/183 [04:46<01:26,  2.27s/it][A
+ 80%|███████▉  | 146/183 [04:48<01:23,  2.26s/it][A
+ 80%|████████  | 147/183 [04:50<01:18,  2.17s/it][A
+ 81%|████████  | 148/183 [04:52<01:13,  2.10s/it][A
+ 81%|████████▏ | 149/183 [04:53<01:04,  1.90s/it][A
+ 82%|████████▏ | 150/183 [04:55<00:56,  1.72s/it][A
+ 83%|████████▎ | 151/183 [04:56<00:51,  1.60s/it][A
+ 83%|████████▎ | 152/183 [04:58<00:55,  1.80s/it][A
+ 84%|████████▎ | 153/183 [05:00<00:55,  1.86s/it][A
+ 84%|████████▍ | 154/183 [05:02<00:55,  1.92s/it][A
+ 85%|████████▍ | 155/183 [05:04<00:51,  1.84s/it][A
+ 85%|████████▌ | 156/183 [05:05<00:44,  1.66s/it][A
+ 86%|████████▌ | 157/183 [05:06<00:34,  1.34s/it][A
+ 86%|████████▋ | 158/183 [05:10<00:52,  2.09s/it][A
+ 87%|████████▋ | 159/183 [05:12<00:52,  2.20s/it][A
+ 87%|████████▋ | 160/183 [05:14<00:48,  2.12s/it][A
+ 88%|████████▊ | 161/183 [05:15<00:40,  1.85s/it][A
+ 89%|████████▊ | 162/183 [05:16<00:34,  1.64s/it][A
+ 89%|████████▉ | 163/183 [05:18<00:30,  1.52s/it][A
+ 90%|████████▉ | 164/183 [05:21<00:41,  2.21s/it][A
+ 90%|█████████ | 165/183 [05:24<00:42,  2.34s/it][A
+ 91%|█████████ | 166/183 [05:26<00:39,  2.32s/it][A
+ 91%|█████████▏| 167/183 [05:28<00:32,  2.04s/it][A
+ 92%|█████████▏| 168/183 [05:29<00:26,  1.75s/it][A
+ 92%|█████████▏| 169/183 [05:30<00:21,  1.54s/it][A
+ 93%|█████████▎| 170/183 [05:34<00:30,  2.31s/it][A
+ 93%|█████████▎| 171/183 [05:36<00:27,  2.30s/it][A
+ 94%|█████████▍| 172/183 [05:39<00:25,  2.31s/it][A
+ 95%|█████████▍| 173/183 [05:41<00:22,  2.27s/it][A
+ 95%|█████████▌| 174/183 [05:43<00:19,  2.13s/it][A
+ 96%|█████████▌| 175/183 [05:44<00:15,  1.88s/it][A
+ 96%|█████████▌| 176/183 [05:45<00:12,  1.74s/it][A
+ 97%|█████████▋| 177/183 [05:48<00:11,  1.97s/it][A
+ 97%|█████████▋| 178/183 [05:50<00:10,  2.11s/it][A
+ 98%|█████████▊| 179/183 [05:52<00:07,  1.96s/it][A
+ 98%|█████████▊| 180/183 [05:53<00:05,  1.79s/it][A
+ 99%|█████████▉| 181/183 [05:55<00:03,  1.67s/it][A
+ 99%|█████████▉| 182/183 [05:56<00:01,  1.43s/it][A[2026-02-25 20:18:04,094][accelerate.accelerator][INFO] - The used dataset had no length, returning gathered tensors. You should drop the remainder yourself.
+
+100%|██████████| 183/183 [05:58<00:00,  1.87s/it][A                                                       
+                                                 [A{'eval_loss': 3.3177623748779297, 'eval_runtime': 360.7695, 'eval_samples_per_second': 65.263, 'eval_steps_per_second': 0.51, 'token_avg_loss': 3.488, 'total_tokens': 575713, 'epoch': 0.91, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 30%|███       | 1000/3312 [4:25:49<7:01:02, 10.93s/it]
+100%|██████████| 183/183 [05:59<00:00,  1.87s/it][A[2026-02-25 20:18:04,925][src.training.sft_trainer][INFO] - ============================================================
+[2026-02-25 20:18:04,926][src.training.sft_trainer][INFO] - Generation Samples (eval step 1000)
+[2026-02-25 20:18:04,926][src.training.sft_trainer][INFO] - ============================================================
+[2026-02-25 20:18:06,721][src.training.sft_trainer][INFO] - [catalytic] seq=MRTIQVTTPGVQYPVYLGSGLLPQVASRLR...
+[2026-02-25 20:18:06,721][src.training.sft_trainer][INFO] -   Instruction: Examine the provided protein sequence and determine the catalytic activity of the enzyme it represen...
+[2026-02-25 20:18:06,722][src.training.sft_trainer][INFO] -   Expected:    Upon reviewing the provided protein sequence, the corresponding enzyme's catalytic activity is identified as the following chemical reaction: 7-phospho-2-dehydro-3-deoxy-D-arabino-heptonate = 3-   dehydroquinate + phosphate.
+[2026-02-25 20:18:06,722][src.training.sft_trainer][INFO] -   Generated:   Based on the given protein sequence, the enzyme appears to facilitate the chemical reaction: 4-isoprenyl-2-methylbutane + H(+) = geranyl pyrophosphate.
+[2026-02-25 20:18:06,722][src.training.sft_trainer][INFO] - 
+[2026-02-25 20:18:10,595][src.training.sft_trainer][INFO] - [catalytic] seq=MTHFENASIQKTANVYFDGKCISHNLTLPD...
+[2026-02-25 20:18:10,596][src.training.sft_trainer][INFO] -   Instruction: Using the protein sequence supplied, identify and describe the enzymatic catalytic activity, with em...
+[2026-02-25 20:18:10,596][src.training.sft_trainer][INFO] -   Expected:    Upon reviewing the provided protein sequence, the corresponding enzyme's catalytic activity is identified as the following chemical reaction: phosphate + xanthosine = alpha-D-ribose 1-phosphate +   xanthine.
+[2026-02-25 20:18:10,596][src.training.sft_trainer][INFO] -   Generated:   The protein sequence has been assessed to have the following enzymatic activity: 3'-deoxyribonucleotidyl (5' of dGMP) hydrolase for DNA, which involves the chemical reaction D-2-deoxyguanosine triphosphate = 5',6-dihydroxyuridine triphosphate + H(+) or dihydropterin nucleotide + pyrophosphate.
+[2026-02-25 20:18:10,596][src.training.sft_trainer][INFO] - 
+[2026-02-25 20:18:13,934][src.training.sft_trainer][INFO] - [catalytic] seq=MAKKKRNPSAEEAGDGEQTAAELGDFETTL...
+[2026-02-25 20:18:13,935][src.training.sft_trainer][INFO] -   Instruction: Please evaluate the following protein sequence and provide an explanation of the enzyme's catalytic ...
+[2026-02-25 20:18:13,935][src.training.sft_trainer][INFO] -   Expected:    Based on the provided protein sequence, the enzyme appears to facilitate the chemical reaction: Exonucleolytic cleavage in either 5'- to 3'- or 3'- to 5'-   direction to yield nucleoside 5'-phosphates..
+[2026-02-25 20:18:13,936][src.training.sft_trainer][INFO] -   Generated:   An analysis of the protein sequence indicates that its enzyme activity corresponds to the chemical reaction: 3-oxo-(dihydroxyhexaenoyl)CoA + NADPH = (2S,4R)-hydroxylated dihydropolyunsaturated CoA   + H(+) + oxidized NADP(+).
+[2026-02-25 20:18:13,936][src.training.sft_trainer][INFO] - 
+[2026-02-25 20:18:16,009][src.training.sft_trainer][INFO] - [catalytic] seq=MSSSAPIGVFDSGLGGISVARQIAKDMPAE...
+[2026-02-25 20:18:16,009][src.training.sft_trainer][INFO] -   Instruction: Please evaluate the following protein sequence and provide an explanation of the enzyme's catalytic ...
+[2026-02-25 20:18:16,010][src.training.sft_trainer][INFO] -   Expected:    Upon reviewing the provided protein sequence, the corresponding enzyme's catalytic activity is identified as the following chemical reaction: L-glutamate = D-glutamate.
+[2026-02-25 20:18:16,010][src.training.sft_trainer][INFO] -   Generated:   Upon evaluating the specified protein sequence, it is likely that this enzyme facilitates a chemical reaction of: 2-oxoglutarate + NAD(P)(+) = succinate + CO(2) + reduced coenzyme.
+[2026-02-25 20:18:16,010][src.training.sft_trainer][INFO] - 
+[2026-02-25 20:18:17,863][src.training.sft_trainer][INFO] - [catalytic] seq=MTHKISVLHQDKKFDFSLRPKKLTEFCGQK...
+[2026-02-25 20:18:17,863][src.training.sft_trainer][INFO] -   Instruction: Analyze the following protein sequence and elucidate the catalytic activity of the corresponding enz...
+[2026-02-25 20:18:17,864][src.training.sft_trainer][INFO] -   Expected:    Evaluation of the protein sequence indicates that the associated enzyme exhibits catalytic activity in the form of this chemical reaction: ATP + H2O = ADP + H(+) + phosphate.
+[2026-02-25 20:18:17,864][src.training.sft_trainer][INFO] -   Generated:   Evaluation of the protein sequence indicates that the enzyme exhibits catalytic activity in the form of this chemical reaction: dATP + 2-oxo-NADPH = ATP + NADH.
+[2026-02-25 20:18:17,864][src.training.sft_trainer][INFO] - 
+[2026-02-25 20:18:20,278][src.training.sft_trainer][INFO] - [design] seq=1. The designed protein should...
+[2026-02-25 20:18:20,279][src.training.sft_trainer][INFO] -   Instruction: Design a protein sequence that is tailored to the desired application....
+[2026-02-25 20:18:20,279][src.training.sft_trainer][INFO] -   Expected:    Based on your design requirements, the amino acid sequence for the protein is:
+```
+MERERHVPVLLQDAIRYLNVRRGGTYADATLGLAGHSSAIARLLGPGGTLIAFDRDPEAMELAKSRLDALRAELGSEMPKVILHSTEFSEAEDLIEPGSLDGLLADFGVSSLQFDEAHRGFSFQADGPLDMRMNPRVGLTAAQVVNQFGEKELADLIYEFGEERRSRRIARAIVRARPVSTTAQLARVVSAAAPAMKSERIHPATRTFQALRIYVNQELGQIEALLKVAPKLLRKGGRLVVISFHSLEDRIAKDALREGGQQGIYEVLTRKPLTAGEEETDRNPRARSAKLRAAEKK
+```
+[2026-02-25 20:18:20,279][src.training.sft_trainer][INFO] -   Generated:   The amino acid sequence for your custom protein design is:
+```
+MTRKAVTAKSLEAASQVTLNLTWLSGRLRVLVEFLLALFLIAGLVVGGLLMLPLDLDIVIG
+```
+[2026-02-25 20:18:20,279][src.training.sft_trainer][INFO] - 
+[2026-02-25 20:18:23,454][src.training.sft_trainer][INFO] - [design] seq=1. A key design requirement fo...
+[2026-02-25 20:18:23,457][src.training.sft_trainer][INFO] -   Instruction: Design a protein sequence that is tailored to the desired application....
+[2026-02-25 20:18:23,458][src.training.sft_trainer][INFO] -   Expected:    Based on your design requirements, the amino acid sequence for the protein is:
+```
+MGVPTHSPLSNEPKPAPLVSPPNTVALSAIISGCKVFAKRLDEPEAIKAEVLGIRPASVQRRSRFAKPLIKEEETTANGVEKEAESLEFYLHWIGYNKRLDEWVVGSRVHLDQSIEWPVVNPTPSTSASSTAPSPKQSGKQARKSSVIHKRDSSKLRKVALKNAQKLTHDDEEDQDQEEHDHEEDEEDEADDDEDDDDDLDSDRPLNQFSKQDEIEKLRTSGSMTQSHHEISRVKNLDRIQIGKHEVEAWYFSPYPIEFAHIPILYICEFCLLFYGSEAQIHRHRIKCTLLHPPGNEIYRSEEIHFFEIDGRRQKTWCRNLSLLSKCFLDHKTLYYDVDPFLYYVMCQRDSNGLHLIGYFSKEKESAENYNVACILTLPQYQRLGFGKLLIEFSYELSKKEGKLGSPEKPLSDLGLL...
+[2026-02-25 20:18:23,458][src.training.sft_trainer][INFO] -   Generated:   The amino acid sequence for your custom protein design is:
+```
+MKKQVTKLLRPLAALGRRATDVLRAARLSLAKHLEAAWYFEDNNGTAYSLAHAEAVLDIVSGLPRLMVEAGDLTLSEELADLVDAIEERLYREI
+```
+[2026-02-25 20:18:23,458][src.training.sft_trainer][INFO] - 
+[2026-02-25 20:18:28,427][src.training.sft_trainer][INFO] - [design] seq=1. A protein with magnesium io...
+[2026-02-25 20:18:28,429][src.training.sft_trainer][INFO] -   Instruction: Generate a protein sequence optimized for the following function requirements....
+[2026-02-25 20:18:28,429][src.training.sft_trainer][INFO] -   Expected:    Here's the amino acid sequence for your custom-designed protein:
+```
+MRLTELMAGASMTSPGLSADPEINGICSDSREVQPGFLFVAFKESYPDGSMFIDDALAKGAVAILTSDNVSLPVSISVPILASLNPRRSYSLLLAYFHKQRPPSIMAVTGTNGKSSVVSFLRQLWNYNGVKGASIGTLGVECEYFSTPLPLTTPDARVTHMELAKLAGCGVESVAIEASSHGLDQYRIDGLEISAGGFTNLGRDHLDYHGSLPNYFTSKARLFDEVMGPGRVAVINKDSPYCGELSDICVNRGHKLIRYGSSXHEGXSNAVDLQLVQVVTKKNGLQIKVRYRGEVKXFDTPLIGRFQADNLLCAMGLALASGIPFDSLIKNAPRITAVRGRMQLVARSSAGGAIYVDYAHTPDALHSALLALRSHTSGKLYLVFGCGGERDPGKRPLMGRVAAELADHVFVTDDNPRGEDPSSIRSAILTI...
+[2026-02-25 20:18:28,429][src.training.sft_trainer][INFO] -   Generated:   KGKEIDVVDAVRREDEEFTEVVK
+```
+[2026-02-25 20:18:28,429][src.training.sft_trainer][INFO] - 
+[2026-02-25 20:18:31,463][src.training.sft_trainer][INFO] - [design] seq=1. The designed protein must p...
+[2026-02-25 20:18:31,466][src.training.sft_trainer][INFO] -   Instruction: Design a protein sequence that is tailored to the desired application....
+[2026-02-25 20:18:31,466][src.training.sft_trainer][INFO] -   Expected:    Here's the amino acid sequence for your custom-designed protein:
+```
+MSQNHDPAMLAKAETLTEALPYLQRYAGKTFVVKYGGHAMGDPELAQDFAEDIVLLKAVGINPVVVHGGGPQIGRMLKALGIESRFVDGLRVTDKQTAEVAEMVLAGAINKELVSWIARAGGKAIGISGKDGGMVIARKVEAKKAPKAVADAESGDPIVVDLGFVGEPDRIDTTVIDTICKAGMIPVIAPIGVGEDGETYNINADTMAGSIAAALGAARLFLLTDVPGVLDKDKNLLTDLRPADIARLAEDGTISGGMIPKLETCVHAVEAGCEATVVLDGRVPHAMLLEIFTARGAGTLIRA
+```
+[2026-02-25 20:18:31,466][src.training.sft_trainer][INFO] -   Generated:   The amino acid sequence for your custom protein design is:
+```
+MKIILKLLGFFVGLNKLIGTALMIVLVLFLSAGFIFDGFQYLRITTLRFGAVLFCLSLCIISSLSSTLCMLSVLKLVHVVFTWLTNTA
+```
+[2026-02-25 20:18:31,467][src.training.sft_trainer][INFO] - 
+[2026-02-25 20:18:35,537][src.training.sft_trainer][INFO] - [design] seq=1. The protein design should t...
+[2026-02-25 20:18:35,537][src.training.sft_trainer][INFO] -   Instruction: Design a protein sequence that is tailored to the desired application....
+[2026-02-25 20:18:35,538][src.training.sft_trainer][INFO] -   Expected:    Your protein design is complete, and the amino acid sequence is
+```
+MFISIEEAIARIKNGEMVILVDDENRENEGDLVIAAEFVRPETINFMAKHARGLICTPIDVERAHKLALPPMAPENTALHGTRFTVSVDARSGISTGISAHDRAHTVHVIIDDQSVPDDLARPGHVFPLIAQEGGVLKRAGHTEAAVDLARLAGLKPAAVICEVMDDDGTMARLPQLEGFAEQHKLAIANIADLIAYRKRHENLVERVATAELPTRYGNFKIVSYTSPIENEEHVALVKGDVAGKENVLVRVHSECLTGDVFGSYRCDCGDQLHHAMEMIEQEGLGVLVYMRQEGRGIGLKNKVCAYQLQDEGLDTVEANERLGFPADLRDYGIGAQILCDLGLTTIRLLTNNPKKVIGLGGYGLKITEQVPIEIPPNEHNRYYLKTKKEKLGHKLHEV
+```
+[2026-02-25 20:18:35,538][src.training.sft_trainer][INFO] -   Generated:   The amino acid sequence for your custom protein design is:
+```
+MSKALVQGKLAVFGLLSSLLDLSAAGNIGYPLSRLMILRSTTASWLTATLVTVSGSLIIVGTAFGRPGVTQLFLFSHAYEVEPFGGGTLIAVLTSIIAAVGIPAPVPIPAELVVLFANAMAHFPVPVAEVSV
+```
+[2026-02-25 20:18:35,538][src.training.sft_trainer][INFO] - 
+[2026-02-25 20:18:37,426][src.training.sft_trainer][INFO] - [domain] seq=MPDPRPPEMNPSPAGATIAIVVAAGRGLRF...
+[2026-02-25 20:18:37,429][src.training.sft_trainer][INFO] -   Instruction: Please predict any recognizable motifs or domains that this protein sequence might contain. The sequ...
+[2026-02-25 20:18:37,429][src.training.sft_trainer][INFO] -   Expected:    The computational analysis of the sequence suggests the presence of the following protein domains or motifs: 2-C-methyl-D-erythritol 2,4-cyclodiphosphate synthase domains
+[2026-02-25 20:18:37,429][src.training.sft_trainer][INFO] -   Generated:   The sequence you provided could potentially include the following protein domains or motifs: DnaB box (DnaA-like), RecQ family helicase C-terminal domain, AAA+ ATP-binding cassette core element
+[2026-02-25 20:18:37,429][src.training.sft_trainer][INFO] - 
+[2026-02-25 20:18:40,824][src.training.sft_trainer][INFO] - [domain] seq=MSTKYVFVTGGVVSSLGKGITAASLGRLLK...
+[2026-02-25 20:18:40,825][src.training.sft_trainer][INFO] -   Instruction: Examine the following protein sequence and determine which, if any, known protein domains or motifs ...
+[2026-02-25 20:18:40,825][src.training.sft_trainer][INFO] -   Expected:    Our bioinformatics tools have processed the sequence you provided sequence. The prediction suggests the presence of these protein domains or motifs: Glutamine amidotransferase, CTP synthase N-terminal domains
+[2026-02-25 20:18:40,825][src.training.sft_trainer][INFO] -   Generated:   An outline of the protein sequence's key aspects is as follows: The domain comprises three conserved regions. Consensus sequences are present in each region which form an alpha-helical structure that binds to two strands (the B- and C-strands) at one end, but not necessarily both ends, of a 13-residue segment from either strand or another residue..
+[2026-02-25 20:18:40,825][src.training.sft_trainer][INFO] - 
+[2026-02-25 20:18:42,780][src.training.sft_trainer][INFO] - [domain] seq=MSIFYVLGKKGTIEILYKIKEGVNSFTSIK...
+[2026-02-25 20:18:42,781][src.training.sft_trainer][INFO] -   Instruction: Analyze this protein sequence and, based on conserved domains or motifs, deduce its possible cellula...
+[2026-02-25 20:18:42,781][src.training.sft_trainer][INFO] -   Expected:    Based on the analysis of the protein sequence, it seems that the protein's primary function is related to DNA binding.
+[2026-02-25 20:18:42,781][src.training.sft_trainer][INFO] -   Generated:   Upon analyzing the given protein sequence, it is likely that this protein performs ATP binding and participates in cellular processes such as actin filament capping. Its structural domains or motifs suggest a possible involvement in these biological functions.
+[2026-02-25 20:18:42,781][src.training.sft_trainer][INFO] - 
+[2026-02-25 20:18:43,836][src.training.sft_trainer][INFO] - [domain] seq=MEEGVQAPDWDSDETVIEGSVTESDLEEKE...
+[2026-02-25 20:18:43,838][src.training.sft_trainer][INFO] -   Instruction: Examine the following protein sequence and determine which, if any, known protein domains or motifs ...
+[2026-02-25 20:18:43,838][src.training.sft_trainer][INFO] -   Expected:    Based on computational analysis, the provided sequence potentially contains the following protein domains or motifs: RAMA domains
+[2026-02-25 20:18:43,838][src.training.sft_trainer][INFO] -   Generated:   Evaluation of the protein sequence indicates potential domains or motifs: ATP-binding, DEAD-box helicase C-terminal domain
+[2026-02-25 20:18:43,838][src.training.sft_trainer][INFO] - 
+[2026-02-25 20:18:44,969][src.training.sft_trainer][INFO] - [domain] seq=MLCIPIRAPDNESALKDIARANETADVIEL...
+[2026-02-25 20:18:44,970][src.training.sft_trainer][INFO] -   Instruction: Can you analyze the protein sequence provided below and predict any recognizable domains or motifs i...
+[2026-02-25 20:18:44,970][src.training.sft_trainer][INFO] -   Expected:    Using bioinformatic tools, we have identified potential protein domains or motifs within your provided sequence: Shikimate dehydrogenase substrate binding N-terminal, Quinate/shikimate 5-dehydrogenase/glutamyl-tRNA reductase domains
+[2026-02-25 20:18:44,971][src.training.sft_trainer][INFO] -   Generated:   The protein sequence you have provided contains the following domains or motifs: NAD-binding domain, oxidoreductase activity.
+[2026-02-25 20:18:44,971][src.training.sft_trainer][INFO] - 
+[2026-02-25 20:18:50,908][src.training.sft_trainer][INFO] - [function] seq=1. The protein should be optim...
+[2026-02-25 20:18:50,911][src.training.sft_trainer][INFO] -   Instruction: Synthesize a protein sequence with the appropriate folding and stability properties for the desired ...
+[2026-02-25 20:18:50,912][src.training.sft_trainer][INFO] -   Expected:    Here's the amino acid sequence for your custom-designed protein:
+```
+MKQKYTDIIKNKFNSKGQWGLVIGDVMLDKYIFGEVTRISPEAPVPILEKQSESYRMGGAANVAANLAGLGIKTFLCGIVGGDHNAQLLKDLLKNKSVNHQGLIKGKTLTTTKTRIISGQQQIVRIDEEDASPLISPMDIKKIMGLISKKPSIIILSDYAKGFLSFVLTQKIIKLANKLHIQVLVDPKGNDIERYAGATILTPNKKEALELTSTDINDDTLLDKRLKLLCSKHKLQYIAMTQGSQGIKLIGSKNSCVIPATELKQVFDVSGAGDTVIAALAAGLIGKMTIHDALELANIAAGIAITKVGTVPVEGHEIIKEIEIEHSQQINKIIKPVQMESYLSDLRTAGSKIGFTNGCFDILHAGHVSYLERAKSKVDHLILGLNSDASVRGLKGPSRPVVNQEDRARVLCSLESVDAVIIFEENTPIKL...
+[2026-02-25 20:18:50,912][src.training.sft_trainer][INFO] -   Generated:   IPDVIVDEADPIEVIETLKDKDLVDKKEEKIEEEVVKEDDAELEEKLDDIKRD
+```
+[2026-02-25 20:18:50,912][src.training.sft_trainer][INFO] - 
+[2026-02-25 20:18:55,628][src.training.sft_trainer][INFO] - [function] seq=1. For general function, the p...
+[2026-02-25 20:18:55,629][src.training.sft_trainer][INFO] -   Instruction: Synthesize a protein sequence that satisfies the given functional constraints....
+[2026-02-25 20:18:55,630][src.training.sft_trainer][INFO] -   Expected:    The protein you've requested has been designed with this amino acid sequence:
+```
+MQQQQAWAAGLGGLAVAGVGEEGGGGGPAPTTVDEASMERSKSFVKALQELKNLRPQLYSASEYCEKSYLHSEQKQMVLDNLKDYAVRALVNAVDHLGTVAYKLTDLYEQQASEVSTLELKVACLNQQVLTCQTYTDKEGIRQQQMTGTATRHHKHYIVPTLANKRMQAFSEMQTDADIDSRPRPYPSAKTLFWHLASEKNSKTNGARQSEFVLEETKATKPASRGKEPSTSPLPKHLQTNLASSDFAMHNVGMKDQPGVRHLSSFSSFDNPRGRQIQKAPLRTKSMLAAFFVKHKSGKMKNVSVR
+```
+[2026-02-25 20:18:55,630][src.training.sft_trainer][INFO] -   Generated:   RRGRRTSRFL
+```
+[2026-02-25 20:18:55,630][src.training.sft_trainer][INFO] - 
+[2026-02-25 20:19:03,767][src.training.sft_trainer][INFO] - [function] seq=MPRNVLIIGSGASGLPACRHALLNNFNPTV...
+[2026-02-25 20:19:03,767][src.training.sft_trainer][INFO] -   Instruction: Please examine the protein encoded by the amino acid sequence and describe its functional role, pote...
+[2026-02-25 20:19:03,768][src.training.sft_trainer][INFO] -   Expected:    The protein with the amino acid sequence is expected to exhibit flavin adenine dinucleotide binding, hypotaurine dehydrogenase activity, N,N-dimethylaniline monooxygenase activity, NADP binding, NADPH oxidase H202-forming activity, contributing to the lipid metabolic process. It can be typically found in the endoplasmic reticulum membrane of the cell.
+[2026-02-25 20:19:03,768][src.training.sft_trainer][INFO] -   Generated:    cytoplasmic side of membrane, endoplasmic reticulum lumen, extracellular exosome, intracellular vesicle, lysosomal part, mitochondrion inner membrane compartment, nuclear envelope intermembrane space, peroxisomal matrix, plasma membrane, ribonucleoprotein complex, spliceosomal snRNP.
+[2026-02-25 20:19:03,768][src.training.sft_trainer][INFO] - 
+[2026-02-25 20:19:08,261][src.training.sft_trainer][INFO] - [function] seq=MSLSRLYSKKTQSSYNATAPLDRDPPEYPG...
+[2026-02-25 20:19:08,261][src.training.sft_trainer][INFO] -   Instruction: Examine the provided protein sequence and use your knowledge of protein structure and function to de...
+[2026-02-25 20:19:08,262][src.training.sft_trainer][INFO] -   Expected:    The protein with the amino acid sequence has been analyzed, and its structure suggests a potential involvement in RNA binding.
+[2026-02-25 20:19:08,262][src.training.sft_trainer][INFO] -   Generated:   Using bioinformatics tools, the protein with amino acid sequence: MTLKPSYFDEWDDIDTQGSGPDAVLLGGTSNGLRGRPRPGAPLARLSMGTGDGVDPAGTVSPDGFALAAASVRPLA  is predicted to have these biological functions: ATP binding; GTPase activity. Its possible role in the cell includes regulation of telomere maintenance through interaction with other proteins involved in DNA repair and replication processes.
+[2026-02-25 20:19:08,262][src.training.sft_trainer][INFO] - 
+[2026-02-25 20:19:14,048][src.training.sft_trainer][INFO] - [function] seq=1. The designed protein should...
+[2026-02-25 20:19:14,050][src.training.sft_trainer][INFO] -   Instruction: Synthesize a protein sequence that satisfies the given functional constraints....
+[2026-02-25 20:19:14,050][src.training.sft_trainer][INFO] -   Expected:    The amino acid sequnece for the designed protein would be:
+```
+MTTIDTISDVITRIRNANILKLDRVELINTKVAIGICHILKDRGFINSFGEFLNSSDRMSNRRFIQKYIIVNLKYKGERRSPCIKELRRISKPGRRVYVGYKNLHKTKGGIELFVLSTSKGLITDYTAREKGIGGELLFSIC
+```
+[2026-02-25 20:19:14,050][src.training.sft_trainer][INFO] -   Generated:   RRVTRDRRIRIVLRRTDTVDVTDLRSRVSRDSHRDHEDTLPIISRIEMEEIEEDEEP
+```
+[2026-02-25 20:19:14,050][src.training.sft_trainer][INFO] - 
+[2026-02-25 20:19:17,656][src.training.sft_trainer][INFO] - [general] seq=1. The protein should have a f...
+[2026-02-25 20:19:17,657][src.training.sft_trainer][INFO] -   Instruction: Develop a protein sequence with increased stability under specific condition....
+[2026-02-25 20:19:17,657][src.training.sft_trainer][INFO] -   Expected:    The designed protein's amino acid sequence is as follows:
+```
+MRQDHRQNNEIRKVTIETDYLIHPEGSVLISFGQTKVIVNATIEESVPPFLRGTETGWVTAEYSMLPRATNTRNRRESSKGKLTGRTMEIQRLIGRSLRAVVDLEKLGERSIVVDCDVIQADGGTRTASITGAFVALKLAIDKLMATGELTENPIKEHLAAISIGVLPNGEVVTDLNYVEDSSAHVDMNIIMTESGRLVEIQGTGEEATFTRSELNEMLDFGEASIKELISIQKKSLCRQSIHPEVKIVNDKEILIATQNVGKAKEFESIFNEKGYTIKTLLDYPEVPDVEETGMTFEANARLKAETIADIFQCVVLADDSGLKVDALHGQPGVFSARYAGENKSDAANNAKLLHELYGVEQEKRGGKFHCTLVLAAPNQKSLVVTGEVEGVIGTIPRGDNGFGYDPLFFVPEFNKTMAELTSEEKNKVSHRAKAIEN...
+[2026-02-25 20:19:17,657][src.training.sft_trainer][INFO] -   Generated:   Here's the amino acid sequence for your custom-designed protein:
+```
+MDVQLLGGPDSLLTQHSLNVLGAGFADYALRHLGLDLDWLELRKDDAELAQIRLSILPLSSASAAATTLGTPEEGRRLVGAVSGSPPPRAPSPRRPGPSGPSTSRPTARPPPAPP
+```
+[2026-02-25 20:19:17,657][src.training.sft_trainer][INFO] - 
+[2026-02-25 20:19:23,297][src.training.sft_trainer][INFO] - [general] seq=1. The protein must exhibit th...
+[2026-02-25 20:19:23,300][src.training.sft_trainer][INFO] -   Instruction: Develop a protein sequence with increased stability under specific condition....
+[2026-02-25 20:19:23,301][src.training.sft_trainer][INFO] -   Expected:    The designed protein's amino acid sequence is as follows:
+```
+MSNTHNIHWSTPSKRIYDASDIPNFKRSIAYYKIRHTLSVVIEKVKGCDLPPGILDKSIVTRKINNIPPSNTTHSRPLDLPPPQGEEEGDKCNISHSSNQTIRGEANESNYEGLLRILEVLNRYIDETPPLKGPRRFGNLACRDWHEKMNTKMNDLLKDNIKIHNSSFNSEFDGFIKELKYYIENSFGSAIRLDYGTGHELSFLAFIGGLIDFKLLSLEELTGSDILTIFAKYYDLTRRLILVYSLEPAGSHGVWGLDDHYHLIYIFGAAQFNGDQDKIIPPVQQILTRPVLDRYKETNLYVNAISFIHKIKSGPFNEHSPIIFDIHSSVSLWSKVLSGLLKMFEVEVLGKFPVVQHFWFGSSLYPWRDFETNKELPIYKRDEDEMDEDSSGDFLNGNTGIKTTKHNISMTGAPWNLNATQRQDDLNSTTYRGRQPRL...
+[2026-02-25 20:19:23,301][src.training.sft_trainer][INFO] -   Generated:   ELLGRITGGTLVVSSNSNVSLERLTINFDGDVFISDLNGDVSVTTDDIQSGNTATVT
+```
+[2026-02-25 20:19:23,301][src.training.sft_trainer][INFO] - 
+[2026-02-25 20:19:25,642][src.training.sft_trainer][INFO] - [general] seq=MTDEPKTRVSVRIYGQDYTIVGTESPAHIR...
+[2026-02-25 20:19:25,643][src.training.sft_trainer][INFO] -   Instruction: Please provide a summary of the key features and characteristics of the protein with the following a...
+[2026-02-25 20:19:25,643][src.training.sft_trainer][INFO] -   Expected:    A summary of the protein's main attributes with the input amino acid sequence reveals: Activator of cell division through the inhibition of FtsZ GTPase activity, therefore promoting FtsZ assembly into bundles of protofilaments necessary for the formation of the division Z ring. It is recruited early at mid-cell but it is not essential for cell division.
+[2026-02-25 20:19:25,679][src.training.sft_trainer][INFO] -   Generated:   A short report on the protein with the amino acid sequence provided: Catalyzes a series of sequential reactions, catalysing first (R)-3-hydroxy-2-methylbutyrate to 1-(methylamino)propene.
+[2026-02-25 20:19:25,679][src.training.sft_trainer][INFO] - 
+[2026-02-25 20:19:26,938][src.training.sft_trainer][INFO] - [general] seq=RQAARVCSTRFQPENWNIDPIQRRNNCYNY...
+[2026-02-25 20:19:26,939][src.training.sft_trainer][INFO] -   Instruction: For the protein with the following sequence, identify the subcellular compartment where it is most l...
+[2026-02-25 20:19:26,939][src.training.sft_trainer][INFO] -   Expected:    Upon analyzing the given protein sequence, it appears that the protein is likely to be localized in the extracellular region compartment of the cell.
+[2026-02-25 20:19:26,939][src.training.sft_trainer][INFO] -   Generated:   The protein with the amino acid sequence provided is expected to reside in the cytoplasm, extracellular exosome compartment of a cell.
+[2026-02-25 20:19:26,940][src.training.sft_trainer][INFO] - 
+[2026-02-25 20:19:32,290][src.training.sft_trainer][INFO] -   [DEBUG] Empty output. Raw token IDs: [8420, 374, 264, 12126, 315, 279, 12833, 448, 279, 2661, 41400, 13621, 8500, 25, 31444, 18348, 288, 1378, 51000, 24473]
+[2026-02-25 20:19:32,291][src.training.sft_trainer][INFO] -   [DEBUG] Raw decode: Here is a summary of the protein with the given amino acid sequence: Catalyzes two sequential reactions
+[2026-02-25 20:19:32,291][src.training.sft_trainer][INFO] - [general] seq=MSAIQKSEVLFVLGGPGAGKGTLCYYITQK...
+[2026-02-25 20:19:32,291][src.training.sft_trainer][INFO] -   Instruction: Analyze the protein with the following sequence and describe its properties: ...
+[2026-02-25 20:19:32,291][src.training.sft_trainer][INFO] -   Expected:    A short report on the protein with the given amino acid sequence highlights: Catalyzes the phosphorylation of pyrimidine nucleoside monophosphates at the expense of ATP. Plays an important role in de novo pyrimidine nucleotide biosynthesis. Has preference for UMP and CMP as phosphate acceptors.
+[2026-02-25 20:19:32,292][src.training.sft_trainer][INFO] -   Generated:   
+[2026-02-25 20:19:32,292][src.training.sft_trainer][INFO] - 
+[2026-02-25 20:19:33,545][src.training.sft_trainer][INFO] - ============================================================
+
+                                                 [A/home/yeopjin/orcd/pool/conda_install/envs/protein_llm_flash/lib/python3.11/site-packages/peft/utils/save_and_load.py:309: UserWarning: Setting `save_embedding_layers` to `True` as the embedding layer has been resized during finetuning.
+  warnings.warn(
+ 30%|███       | 1001/3312 [4:27:42<96:05:48, 149.70s/it] 30%|███       | 1002/3312 [4:27:58<70:23:33, 109.70s/it] 30%|███       | 1003/3312 [4:28:14<52:20:21, 81.60s/it]  30%|███       | 1004/3312 [4:28:30<39:31:47, 61.66s/it] 30%|███       | 1005/3312 [4:28:41<29:56:14, 46.72s/it] 30%|███       | 1006/3312 [4:28:52<22:55:42, 35.79s/it] 30%|███       | 1007/3312 [4:29:02<17:59:24, 28.10s/it] 30%|███       | 1008/3312 [4:29:10<14:11:30, 22.17s/it] 30%|███       | 1009/3312 [4:29:27<13:11:12, 20.61s/it] 30%|███       | 1010/3312 [4:29:46<12:51:44, 20.11s/it]                                                        {'loss': 13.6897, 'grad_norm': 1.804028034210205, 'learning_rate': 8.150654166585648e-05, 'token_avg_loss': 3.5595, 'total_tokens': 96665, 'epoch': 0.92, 'gpu_memory_allocated_gb': 21.23, 'gpu_memory_reserved_gb': 67.87, 'gpu_memory_max_allocated_gb': 39.68}
+ 30%|███       | 1010/3312 [4:29:46<12:51:44, 20.11s/it] 31%|███       | 1011/3312 [4:30:05<12:35:02, 19.69s/it] 31%|███       | 1012/3312 [4:30:20<11:36:44, 18.18s/it] 31%|███       | 1013/3312 [4:30:33<10:38:53, 16.67s/it] 31%|███       | 1014/3312 [4:30:44<9:41:20, 15.18s/it]  31%|███       | 1015/3312 [4:30:55<8:50:27, 13.86s/it] 31%|███       | 1016/3312 [4:31:03<7:44:01, 12.13s/it] 31%|███       | 1017/3312 [4:31:18<8:11:23, 12.85s/it] 31%|███       | 1018/3312 [4:31:39<9:44:05, 15.28s/it] 31%|███       | 1019/3312 [4:31:58<10:28:45, 16.45s/it]W0225 20:24:22.409000 1153094 /orcd/pool/006/yeopjin/conda_install/envs/protein_llm_flash/lib/python3.11/site-packages/torch/distributed/elastic/agent/server/api.py:719] Received 15 death signal, shutting down workers
+W0225 20:24:22.411000 1153094 /orcd/pool/006/yeopjin/conda_install/envs/protein_llm_flash/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 1153281 closing signal SIGTERM
+W0225 20:24:22.449000 1153094 /orcd/pool/006/yeopjin/conda_install/envs/protein_llm_flash/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 1153282 closing signal SIGTERM
+W0225 20:24:22.451000 1153094 /orcd/pool/006/yeopjin/conda_install/envs/protein_llm_flash/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 1153283 closing signal SIGTERM
+W0225 20:24:22.453000 1153094 /orcd/pool/006/yeopjin/conda_install/envs/protein_llm_flash/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 1153284 closing signal SIGTERM
+W0225 20:24:22.456000 1153094 /orcd/pool/006/yeopjin/conda_install/envs/protein_llm_flash/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 1153285 closing signal SIGTERM
+W0225 20:24:22.495000 1153094 /orcd/pool/006/yeopjin/conda_install/envs/protein_llm_flash/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 1153286 closing signal SIGTERM
+W0225 20:24:22.499000 1153094 /orcd/pool/006/yeopjin/conda_install/envs/protein_llm_flash/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 1153287 closing signal SIGTERM
+W0225 20:24:22.516000 1153094 /orcd/pool/006/yeopjin/conda_install/envs/protein_llm_flash/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 1153288 closing signal SIGTERM
+Traceback (most recent call last):
+  File "/home/yeopjin/orcd/pool/conda_install/envs/protein_llm_flash/bin/torchrun", line 6, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/yeopjin/orcd/pool/conda_install/envs/protein_llm_flash/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 355, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/yeopjin/orcd/pool/conda_install/envs/protein_llm_flash/lib/python3.11/site-packages/torch/distributed/run.py", line 918, in main
+    run(args)
+  File "/home/yeopjin/orcd/pool/conda_install/envs/protein_llm_flash/lib/python3.11/site-packages/torch/distributed/run.py", line 909, in run
+    elastic_launch(
+  File "/home/yeopjin/orcd/pool/conda_install/envs/protein_llm_flash/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/yeopjin/orcd/pool/conda_install/envs/protein_llm_flash/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 260, in launch_agent
+    result = agent.run()
+             ^^^^^^^^^^^
+  File "/home/yeopjin/orcd/pool/conda_install/envs/protein_llm_flash/lib/python3.11/site-packages/torch/distributed/elastic/metrics/api.py", line 137, in wrapper
+    result = f(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^
+  File "/home/yeopjin/orcd/pool/conda_install/envs/protein_llm_flash/lib/python3.11/site-packages/torch/distributed/elastic/agent/server/api.py", line 711, in run
+    result = self._invoke_run(role)
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/yeopjin/orcd/pool/conda_install/envs/protein_llm_flash/lib/python3.11/site-packages/torch/distributed/elastic/agent/server/api.py", line 870, in _invoke_run
+    time.sleep(monitor_interval)
+  File "/home/yeopjin/orcd/pool/conda_install/envs/protein_llm_flash/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/api.py", line 74, in _terminate_process_handler
+    def _terminate_process_handler(signum: int, frame: Optional[FrameType]) -> None:
+    
+  File "/home/yeopjin/orcd/pool/conda_install/envs/protein_llm_flash/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/api.py", line 84, in _terminate_process_handler
+    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
+torch.distributed.elastic.multiprocessing.api.SignalException: Process 1153094 got signal: 15

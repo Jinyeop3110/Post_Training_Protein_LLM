@@ -1,0 +1,86 @@
+{
+  "experiments": {
+    "sft_lora_esm3_qwen3_8b_it_0225_203237": {
+      "approach": "perceiver",
+      "projector_type": "perceiver",
+      "total_steps": 1677,
+      "final_token_avg_loss": 2.2957,
+      "min_token_avg_loss": 1.6269,
+      "best_eval_loss": 1.9515460729599,
+      "best_eval_step": 1677,
+      "convergence_step": 180,
+      "max_grad_norm": 11.983203887939451,
+      "mean_grad_norm": 1.2627812909508893,
+      "train_runtime_hours": 11.25,
+      "gpu_memory_max_allocated_gb": 44.41,
+      "anomalies": [
+        "loss_spike_step_10",
+        "loss_spike_step_20",
+        "loss_spike_step_30",
+        "loss_spike_step_40",
+        "grad_spike_step_10",
+        "grad_spike_step_20",
+        "grad_spike_step_40"
+      ]
+    },
+    "sft_lora_esm3_qwen3_8b_it_0226_151416": {
+      "approach": "mlp",
+      "projector_type": "mlp",
+      "total_steps": 1677,
+      "final_token_avg_loss": 2.288,
+      "min_token_avg_loss": 1.6198,
+      "best_eval_loss": 1.9421406984329224,
+      "best_eval_step": 1677,
+      "convergence_step": 180,
+      "max_grad_norm": 6.92035722732544,
+      "mean_grad_norm": 1.228942511681311,
+      "train_runtime_hours": 11.05,
+      "gpu_memory_max_allocated_gb": 44.19,
+      "anomalies": [
+        "loss_spike_step_10",
+        "loss_spike_step_20",
+        "loss_spike_step_30",
+        "loss_spike_step_40",
+        "grad_spike_step_10",
+        "grad_spike_step_20",
+        "grad_spike_step_40"
+      ]
+    },
+    "sft_text_qwen3_8b_it_0227_145821": {
+      "approach": "text",
+      "projector_type": null,
+      "total_steps": 2595,
+      "final_token_avg_loss": 2.5513,
+      "min_token_avg_loss": 2.359,
+      "best_eval_loss": 2.4151294231414795,
+      "best_eval_step": 2595,
+      "convergence_step": 180,
+      "max_grad_norm": 4.122328281402588,
+      "mean_grad_norm": 1.9295742663637552,
+      "train_runtime_hours": 15.41,
+      "gpu_memory_max_allocated_gb": 42.82,
+      "anomalies": [
+        "loss_spike_step_10",
+        "loss_spike_step_20",
+        "loss_spike_step_30",
+        "loss_spike_step_40",
+        "loss_spike_step_60",
+        "grad_spike_step_10",
+        "grad_spike_step_810",
+        "grad_spike_step_960",
+        "grad_spike_step_1060",
+        "grad_spike_step_1110",
+        "grad_spike_step_1160"
+      ]
+    }
+  },
+  "comparison": {
+    "best_experiment": "sft_lora_esm3_qwen3_8b_it_0226_151416",
+    "best_approach": "mlp",
+    "metric": "best_eval_loss",
+    "value": 1.9421406984329224,
+    "mlp_vs_text_improvement_pct": 19.58,
+    "perceiver_vs_text_improvement_pct": 19.19,
+    "mlp_vs_perceiver_improvement_pct": 0.48
+  }
+}

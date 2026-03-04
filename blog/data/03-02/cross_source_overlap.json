@@ -1,0 +1,595 @@
+{
+  "summary": {
+    "total_records": 4519950,
+    "total_unique_sequences": 603334,
+    "unique_seq_task_pairs": 3803995,
+    "record_to_unique_ratio": 7.49,
+    "record_to_seq_task_ratio": 1.19,
+    "num_sources": 6,
+    "num_files": 20
+  },
+  "per_source": {
+    "Mol-Instructions": {
+      "unique_sequences": 298925,
+      "total_records": 299029,
+      "inflation_ratio": 1.0,
+      "files": [
+        "mol_catalytic_activity.json",
+        "mol_domain_motif.json",
+        "mol_general_function.json",
+        "mol_protein_design.json",
+        "mol_protein_function.json"
+      ]
+    },
+    "ProtDescribe": {
+      "unique_sequences": 435633,
+      "total_records": 1755254,
+      "inflation_ratio": 4.03,
+      "files": [
+        "pd_function_description.json",
+        "pd_protein_naming.json",
+        "pd_similarity_analysis.json",
+        "pd_subcellular_location.json"
+      ]
+    },
+    "Protein2Text": {
+      "unique_sequences": 1265,
+      "total_records": 51521,
+      "inflation_ratio": 40.73,
+      "files": [
+        "p2t_protein_qa.json"
+      ]
+    },
+    "ProteinLM": {
+      "unique_sequences": 391156,
+      "total_records": 825978,
+      "inflation_ratio": 2.11,
+      "files": [
+        "plm_disease.json",
+        "plm_functionality.json",
+        "plm_induction.json",
+        "plm_ptm.json",
+        "plm_subunit.json",
+        "plm_tissue_specificity.json"
+      ]
+    },
+    "SwissProt": {
+      "unique_sequences": 457658,
+      "total_records": 1076846,
+      "inflation_ratio": 2.35,
+      "files": [
+        "sp_gene_prediction.json",
+        "sp_general_function.json",
+        "sp_organism_prediction.json"
+      ]
+    },
+    "SwissProtCLAP": {
+      "unique_sequences": 436862,
+      "total_records": 511322,
+      "inflation_ratio": 1.17,
+      "files": [
+        "clap_protein_description.json"
+      ]
+    }
+  },
+  "per_file": {
+    "clap_protein_description.json": {
+      "source": "SwissProtCLAP",
+      "task": "protein_description",
+      "unique_sequences": 436862,
+      "total_records": 511322
+    },
+    "mol_catalytic_activity.json": {
+      "source": "Mol-Instructions",
+      "task": "catalytic_activity",
+      "unique_sequences": 53168,
+      "total_records": 53174
+    },
+    "mol_domain_motif.json": {
+      "source": "Mol-Instructions",
+      "task": "domain_motif",
+      "unique_sequences": 45086,
+      "total_records": 45100
+    },
+    "mol_general_function.json": {
+      "source": "Mol-Instructions",
+      "task": "general_function",
+      "unique_sequences": 86561,
+      "total_records": 86572
+    },
+    "mol_protein_design.json": {
+      "source": "Mol-Instructions",
+      "task": "protein_design",
+      "unique_sequences": 0,
+      "total_records": 0
+    },
+    "mol_protein_function.json": {
+      "source": "Mol-Instructions",
+      "task": "protein_function",
+      "unique_sequences": 114168,
+      "total_records": 114183
+    },
+    "p2t_protein_qa.json": {
+      "source": "Protein2Text",
+      "task": "protein_qa",
+      "unique_sequences": 1265,
+      "total_records": 51521
+    },
+    "pd_function_description.json": {
+      "source": "ProtDescribe",
+      "task": "function_description",
+      "unique_sequences": 363883,
+      "total_records": 431943
+    },
+    "pd_protein_naming.json": {
+      "source": "ProtDescribe",
+      "task": "protein_naming",
+      "unique_sequences": 431715,
+      "total_records": 514427
+    },
+    "pd_similarity_analysis.json": {
+      "source": "ProtDescribe",
+      "task": "similarity_analysis",
+      "unique_sequences": 403544,
+      "total_records": 484303
+    },
+    "pd_subcellular_location.json": {
+      "source": "ProtDescribe",
+      "task": "subcellular_location",
+      "unique_sequences": 280614,
+      "total_records": 324581
+    },
+    "plm_disease.json": {
+      "source": "ProteinLM",
+      "task": "disease",
+      "unique_sequences": 4404,
+      "total_records": 4431
+    },
+    "plm_functionality.json": {
+      "source": "ProteinLM",
+      "task": "functionality",
+      "unique_sequences": 370261,
+      "total_records": 438993
+    },
+    "plm_induction.json": {
+      "source": "ProteinLM",
+      "task": "induction",
+      "unique_sequences": 22171,
+      "total_records": 23474
+    },
+    "plm_ptm.json": {
+      "source": "ProteinLM",
+      "task": "ptm",
+      "unique_sequences": 36592,
+      "total_records": 40625
+    },
+    "plm_subunit.json": {
+      "source": "ProteinLM",
+      "task": "subunit",
+      "unique_sequences": 229745,
+      "total_records": 275968
+    },
+    "plm_tissue_specificity.json": {
+      "source": "ProteinLM",
+      "task": "tissue_specificity",
+      "unique_sequences": 41959,
+      "total_records": 42487
+    },
+    "sp_gene_prediction.json": {
+      "source": "SwissProt",
+      "task": "gene_prediction",
+      "unique_sequences": 232776,
+      "total_records": 263061
+    },
+    "sp_general_function.json": {
+      "source": "SwissProt",
+      "task": "general_function",
+      "unique_sequences": 457658,
+      "total_records": 542287
+    },
+    "sp_organism_prediction.json": {
+      "source": "SwissProt",
+      "task": "organism_prediction",
+      "unique_sequences": 241191,
+      "total_records": 271498
+    }
+  },
+  "overlap_matrix": {
+    "Mol-Instructions": {
+      "Mol-Instructions": 298925,
+      "ProtDescribe": 151172,
+      "Protein2Text": 313,
+      "ProteinLM": 136429,
+      "SwissProt": 154759,
+      "SwissProtCLAP": 150987
+    },
+    "ProtDescribe": {
+      "Mol-Instructions": 151172,
+      "ProtDescribe": 435633,
+      "Protein2Text": 737,
+      "ProteinLM": 384475,
+      "SwissProt": 434695,
+      "SwissProtCLAP": 430272
+    },
+    "Protein2Text": {
+      "Mol-Instructions": 313,
+      "ProtDescribe": 737,
+      "Protein2Text": 1265,
+      "ProteinLM": 811,
+      "SwissProt": 825,
+      "SwissProtCLAP": 814
+    },
+    "ProteinLM": {
+      "Mol-Instructions": 136429,
+      "ProtDescribe": 384475,
+      "Protein2Text": 811,
+      "ProteinLM": 391156,
+      "SwissProt": 390603,
+      "SwissProtCLAP": 387282
+    },
+    "SwissProt": {
+      "Mol-Instructions": 154759,
+      "ProtDescribe": 434695,
+      "Protein2Text": 825,
+      "ProteinLM": 390603,
+      "SwissProt": 457658,
+      "SwissProtCLAP": 435515
+    },
+    "SwissProtCLAP": {
+      "Mol-Instructions": 150987,
+      "ProtDescribe": 430272,
+      "Protein2Text": 814,
+      "ProteinLM": 387282,
+      "SwissProt": 435515,
+      "SwissProtCLAP": 436862
+    }
+  },
+  "overlap_pct_matrix": {
+    "Mol-Instructions": {
+      "Mol-Instructions": 100.0,
+      "ProtDescribe": 50.6,
+      "Protein2Text": 0.1,
+      "ProteinLM": 45.6,
+      "SwissProt": 51.8,
+      "SwissProtCLAP": 50.5
+    },
+    "ProtDescribe": {
+      "Mol-Instructions": 34.7,
+      "ProtDescribe": 100.0,
+      "Protein2Text": 0.2,
+      "ProteinLM": 88.3,
+      "SwissProt": 99.8,
+      "SwissProtCLAP": 98.8
+    },
+    "Protein2Text": {
+      "Mol-Instructions": 24.7,
+      "ProtDescribe": 58.3,
+      "Protein2Text": 100.0,
+      "ProteinLM": 64.1,
+      "SwissProt": 65.2,
+      "SwissProtCLAP": 64.3
+    },
+    "ProteinLM": {
+      "Mol-Instructions": 34.9,
+      "ProtDescribe": 98.3,
+      "Protein2Text": 0.2,
+      "ProteinLM": 100.0,
+      "SwissProt": 99.9,
+      "SwissProtCLAP": 99.0
+    },
+    "SwissProt": {
+      "Mol-Instructions": 33.8,
+      "ProtDescribe": 95.0,
+      "Protein2Text": 0.2,
+      "ProteinLM": 85.3,
+      "SwissProt": 100.0,
+      "SwissProtCLAP": 95.2
+    },
+    "SwissProtCLAP": {
+      "Mol-Instructions": 34.6,
+      "ProtDescribe": 98.5,
+      "Protein2Text": 0.2,
+      "ProteinLM": 88.7,
+      "SwissProt": 99.7,
+      "SwissProtCLAP": 100.0
+    }
+  },
+  "proteins_by_num_sources": {
+    "1": 157709,
+    "2": 7232,
+    "3": 38797,
+    "4": 265331,
+    "5": 133979,
+    "6": 286
+  },
+  "top_overrepresented_proteins": [
+    {
+      "sequence_prefix": "MADQLTEEQIAEFKEAFSLFDKDGDGTITTKELGTVMRSLGQNPTEAELQ",
+      "length": 149,
+      "num_sources": 6,
+      "total_records": 222,
+      "source_breakdown": {
+        "SwissProtCLAP": 9,
+        "Mol-Instructions": 1,
+        "Protein2Text": 37,
+        "ProtDescribe": 82,
+        "ProteinLM": 52,
+        "SwissProt": 41
+      }
+    },
+    {
+      "sequence_prefix": "MADEKPKEGVKTENNDHINLKVAGQDGSVVQFKIKRHTPLSKLMKAYCER",
+      "length": 95,
+      "num_sources": 6,
+      "total_records": 150,
+      "source_breakdown": {
+        "SwissProtCLAP": 7,
+        "Mol-Instructions": 1,
+        "Protein2Text": 67,
+        "ProtDescribe": 32,
+        "ProteinLM": 25,
+        "SwissProt": 18
+      }
+    },
+    {
+      "sequence_prefix": "MGNIFANLFKGLFGKKEMRILMVGLDAAGKTTILYKLKLGEIVTTIPTIG",
+      "length": 181,
+      "num_sources": 6,
+      "total_records": 129,
+      "source_breakdown": {
+        "SwissProtCLAP": 4,
+        "Mol-Instructions": 1,
+        "Protein2Text": 81,
+        "ProtDescribe": 20,
+        "ProteinLM": 12,
+        "SwissProt": 11
+      }
+    },
+    {
+      "sequence_prefix": "MPNTAMKKKVLLMGKSGSGKTSMRSIIFANYIARDTRRLGATIDVEHSHV",
+      "length": 313,
+      "num_sources": 6,
+      "total_records": 114,
+      "source_breakdown": {
+        "SwissProtCLAP": 4,
+        "Mol-Instructions": 1,
+        "Protein2Text": 71,
+        "ProtDescribe": 16,
+        "ProteinLM": 14,
+        "SwissProt": 8
+      }
+    },
+    {
+      "sequence_prefix": "MSKVSFKITLTSDPRLPYKVLSVPESTPFTAVLKFAAEEFKVPAATSAII",
+      "length": 85,
+      "num_sources": 6,
+      "total_records": 105,
+      "source_breakdown": {
+        "SwissProtCLAP": 3,
+        "Mol-Instructions": 1,
+        "Protein2Text": 70,
+        "ProtDescribe": 16,
+        "ProteinLM": 11,
+        "SwissProt": 4
+      }
+    },
+    {
+      "sequence_prefix": "MQQDGLGVGTRNGSGKGRSVHPSWPWCAPRPLRYFGRDARARRAQTAAMA",
+      "length": 649,
+      "num_sources": 6,
+      "total_records": 102,
+      "source_breakdown": {
+        "SwissProtCLAP": 1,
+        "Mol-Instructions": 1,
+        "Protein2Text": 91,
+        "ProtDescribe": 4,
+        "ProteinLM": 4,
+        "SwissProt": 1
+      }
+    },
+    {
+      "sequence_prefix": "MEKLLCFLVLTSLSHAFGQTDMSRKAFVFPKESDTSYVSLKAPLTKPLKA",
+      "length": 224,
+      "num_sources": 6,
+      "total_records": 95,
+      "source_breakdown": {
+        "SwissProtCLAP": 1,
+        "Mol-Instructions": 1,
+        "Protein2Text": 83,
+        "ProtDescribe": 4,
+        "ProteinLM": 4,
+        "SwissProt": 2
+      }
+    },
+    {
+      "sequence_prefix": "MATERSRSAMDSPVPASMFAPEPSSPGAARAAAAAARLHGGFDSDCSEDG",
+      "length": 669,
+      "num_sources": 6,
+      "total_records": 94,
+      "source_breakdown": {
+        "SwissProtCLAP": 1,
+        "Mol-Instructions": 1,
+        "Protein2Text": 84,
+        "ProtDescribe": 4,
+        "ProteinLM": 2,
+        "SwissProt": 2
+      }
+    },
+    {
+      "sequence_prefix": "MCDKEFMWALKNGDLDEVKDYVAKGEDVNRTLEGGRKPLHYAADCGQLEI",
+      "length": 118,
+      "num_sources": 6,
+      "total_records": 94,
+      "source_breakdown": {
+        "SwissProtCLAP": 3,
+        "Mol-Instructions": 1,
+        "Protein2Text": 65,
+        "ProtDescribe": 12,
+        "ProteinLM": 8,
+        "SwissProt": 5
+      }
+    },
+    {
+      "sequence_prefix": "MGDVEKGKKIFIMKCSQCHTVEKGGKHKTGPNLHGLFGRKTGQAPGYSYT",
+      "length": 105,
+      "num_sources": 6,
+      "total_records": 92,
+      "source_breakdown": {
+        "SwissProtCLAP": 3,
+        "Mol-Instructions": 1,
+        "Protein2Text": 55,
+        "ProtDescribe": 16,
+        "ProteinLM": 9,
+        "SwissProt": 8
+      }
+    },
+    {
+      "sequence_prefix": "MSAPSATPIFAPGENCSPAWGAAPAAYDAADTHLRILGKPVMERWETPYM",
+      "length": 236,
+      "num_sources": 6,
+      "total_records": 92,
+      "source_breakdown": {
+        "SwissProtCLAP": 1,
+        "Mol-Instructions": 1,
+        "Protein2Text": 81,
+        "ProtDescribe": 3,
+        "ProteinLM": 4,
+        "SwissProt": 2
+      }
+    },
+    {
+      "sequence_prefix": "MPACCSCSDVFQYETNKVTRIQSMNYGTIKWFFHVIIFSYVCFALVSDKL",
+      "length": 595,
+      "num_sources": 6,
+      "total_records": 91,
+      "source_breakdown": {
+        "SwissProtCLAP": 1,
+        "Mol-Instructions": 1,
+        "Protein2Text": 79,
+        "ProtDescribe": 4,
+        "ProteinLM": 4,
+        "SwissProt": 2
+      }
+    },
+    {
+      "sequence_prefix": "MPGGLLLGDVAPNFEANTTVGRIRFHDFLGDSWGILFSHPRDFTPVCTTE",
+      "length": 224,
+      "num_sources": 6,
+      "total_records": 89,
+      "source_breakdown": {
+        "SwissProtCLAP": 1,
+        "Mol-Instructions": 1,
+        "Protein2Text": 79,
+        "ProtDescribe": 4,
+        "ProteinLM": 3,
+        "SwissProt": 1
+      }
+    },
+    {
+      "sequence_prefix": "MQSNKTFNLEKQNHTPRKHHQHHHQQQHHQQQQQQPPPPPIPANGQQASS",
+      "length": 471,
+      "num_sources": 6,
+      "total_records": 89,
+      "source_breakdown": {
+        "SwissProtCLAP": 2,
+        "Mol-Instructions": 1,
+        "Protein2Text": 69,
+        "ProtDescribe": 6,
+        "ProteinLM": 7,
+        "SwissProt": 4
+      }
+    },
+    {
+      "sequence_prefix": "MGPRARPALLLLMLLQTAVLQGRLLRSHSLHYLFMGASEQDLGLSLFEAL",
+      "length": 348,
+      "num_sources": 6,
+      "total_records": 89,
+      "source_breakdown": {
+        "SwissProtCLAP": 2,
+        "Mol-Instructions": 1,
+        "Protein2Text": 67,
+        "ProtDescribe": 8,
+        "ProteinLM": 6,
+        "SwissProt": 5
+      }
+    },
+    {
+      "sequence_prefix": "MDETVAEFIKRTILKIPMNELTTILKAWDFLSENQLQTVNFRQRKESVVQ",
+      "length": 339,
+      "num_sources": 6,
+      "total_records": 89,
+      "source_breakdown": {
+        "SwissProtCLAP": 1,
+        "Mol-Instructions": 1,
+        "Protein2Text": 78,
+        "ProtDescribe": 4,
+        "ProteinLM": 2,
+        "SwissProt": 3
+      }
+    },
+    {
+      "sequence_prefix": "MNSVGEACTDMKREYDQCFNRWFAEKFLKGDSSGDPCTDLFKRYQQCVQK",
+      "length": 76,
+      "num_sources": 6,
+      "total_records": 88,
+      "source_breakdown": {
+        "SwissProtCLAP": 1,
+        "Mol-Instructions": 1,
+        "Protein2Text": 76,
+        "ProtDescribe": 4,
+        "ProteinLM": 3,
+        "SwissProt": 3
+      }
+    },
+    {
+      "sequence_prefix": "MAAAAATKILLCLPLLLLLSGWSRAGRADPHSLCYDITVIPKFRPGPRWC",
+      "length": 246,
+      "num_sources": 6,
+      "total_records": 88,
+      "source_breakdown": {
+        "SwissProtCLAP": 1,
+        "Mol-Instructions": 1,
+        "Protein2Text": 76,
+        "ProtDescribe": 4,
+        "ProteinLM": 3,
+        "SwissProt": 3
+      }
+    },
+    {
+      "sequence_prefix": "MSDDFLWFEGIAFPTMGFRSETLRKVRDEFVIRDEDVIILTYPKSGTNWL",
+      "length": 285,
+      "num_sources": 6,
+      "total_records": 87,
+      "source_breakdown": {
+        "SwissProtCLAP": 1,
+        "Mol-Instructions": 1,
+        "Protein2Text": 76,
+        "ProtDescribe": 4,
+        "ProteinLM": 4,
+        "SwissProt": 1
+      }
+    },
+    {
+      "sequence_prefix": "MDGTRTSLDIEEYSDTEVQKNQVLTLEEWQDKWVNGKTAFHQEQGHQLLK",
+      "length": 245,
+      "num_sources": 6,
+      "total_records": 85,
+      "source_breakdown": {
+        "SwissProtCLAP": 1,
+        "Mol-Instructions": 1,
+        "Protein2Text": 74,
+        "ProtDescribe": 4,
+        "ProteinLM": 2,
+        "SwissProt": 3
+      }
+    }
+  ],
+  "source_names": [
+    "Mol-Instructions",
+    "ProtDescribe",
+    "Protein2Text",
+    "ProteinLM",
+    "SwissProt",
+    "SwissProtCLAP"
+  ]
+}

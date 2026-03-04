@@ -22,6 +22,366 @@
 
 ---
 
+## Literature Review: Multimodal Protein-LLM Systems (2024-2026)
+
+### 2026-03-02: Comprehensive Survey of Frozen-Encoder Protein-LLM Architectures
+
+**Objective**: Catalog published implementations of multimodal protein-LLM systems that use frozen protein encoders with LLM backbones, directly comparable to our ESM-3 + Qwen3 approach.
+
+---
+
+#### 1. EvoLlama (Dec 2024)
+
+| Component | Details |
+|-----------|---------|
+| **Paper** | "Enhancing LLMs' Understanding of Proteins via Multimodal Structure and Sequence Representations" |
+| **Venue** | arXiv 2412.11618 / OpenReview |
+| **Protein Encoder** | ESM-2 650M (sequence) + ProteinMPNN (structure) |
+| **LLM Backbone** | LLaMA-3-8B |
+| **Projection** | MLP (separate MLPs for sequence and structure features; combined via element-wise addition) |
+| **Encoder Frozen?** | Stage 1: both encoders + LLM frozen (only MLP trained). Stage 2: LLM frozen, encoders + MLP updated |
+| **LoRA** | None -- full parameter updates for projection and encoders in stage 2 |
+| **Training Data** | 369K proteins (Swiss-Prot) for projection; ~460K for SFT (Mol-Instructions + PEER) |
+| **Trainable Params** | 690-720M (7.9-8.2% of 8.8B total) |
+| **Key Results** | Zero-shot: +1-8% over fine-tuned baselines; SFT: +6% avg over SOTA on Mol-Instructions; 62-64% avg on PEER tasks |
+| **GitHub** | Not publicly released (as of search date) |
+| **Notes** | Structure+sequence fusion via element-wise addition reduces tokens by ~50%, improves latency ~20% |
+
+---
+
+#### 2. ProteinGPT (Aug 2024)
+
+| Component | Details |
+|-----------|---------|
+| **Paper** | "Multimodal LLM for Protein Property Prediction and Structure Understanding" |
+| **Venue** | ICLR 2025 / arXiv 2408.11363 |
+| **Protein Encoder** | ESM-2 3B (sequence) + ESM-IF1 GVP 142M (structure/inverse folding) |
+| **LLM Backbone** | Vicuna, LLaMA-2, LLaMA-3, Mistral (Mistral best performer) |
+| **Projection** | Linear projection layers (soft prompts for LLM) |
+| **Encoder Frozen?** | Both encoders frozen throughout both training stages |
+| **LoRA** | Not mentioned |
+| **Training Data** | ProteinQA: 132K proteins from RCSB-PDB, ~40 QA pairs each |
+| **Key Results** | Mistral: BERTScore 0.821, PubMedBERT 0.758; 70-80% closed-ended accuracy |
+| **GitHub** | https://github.com/OviaLabs/ProteinGPT |
+| **Notes** | Two-stage: modality alignment (MA) then instruction tuning (IT). GPT-4o used for dataset construction |
+
+---
+
+#### 3. ProtChatGPT (Feb 2024)
+
+| Component | Details |
+|-----------|---------|
+| **Paper** | "Towards Understanding Proteins with Large Language Models" |
+| **Venue** | SIGIR 2025 / arXiv 2402.09649 |
+| **Protein Encoder** | ESM-1b (sequence, 768-dim) + ESM-IF1 (structure, 512-dim) |
+| **LLM Backbone** | Vicuna-13B |
+| **Projection** | PLP-Former (32 learnable query tokens, 768-dim, initialized from PubMedBERT; self-attn + cross-attn) + FC projection layers |
+| **Encoder Frozen?** | Both encoders + LLM frozen throughout training |
+| **LoRA** | Not mentioned |
+| **Training Data** | Stage 1: ProtDescribe 553K protein-text pairs; Stage 2: RCSB-PDB 143K structure-description pairs |
+| **Key Results** | SPICE 0.316, PubMed BERTScore 0.457 |
+| **GitHub** | Not publicly available |
+| **Notes** | Three pre-training objectives in PLP-Former: contrastive learning, text generation, matching. BLIP-2-inspired design |
+
+---
+
+#### 4. Prot2Chat (Feb 2025)
+
+| Component | Details |
+|-----------|---------|
+| **Paper** | "Protein LLM with Early-Fusion of Text, Sequence and Structure" |
+| **Venue** | Bioinformatics (Oxford) 2025 / arXiv 2502.06846 |
+| **Protein Encoder** | Modified ProteinMPNN (9 released models concatenated, output dim 1152 = 128x9) |
+| **LLM Backbone** | LLaMA-3-8B-Instruct |
+| **Projection** | Text-aware protein-text adapter: 256 learnable queries + cross-attention with question vector from LLM |
+| **Encoder Frozen?** | Encoder frozen; LLM fine-tuned with LoRA |
+| **LoRA** | r=8, alpha=16, target: q_proj + v_proj, dropout=0.1 |
+| **Training Data** | Mol-Instructions 404K train + UniProtQA 25K train |
+| **Trainable Params** | 109M total (adapter 106.5M + LoRA 3.4M) |
+| **Key Results** | BLEU-2: 35.85, ROUGE-1: 57.21, ROUGE-L: 50.51 (vs Evolla-10B: 8.69/29.09/20.04) |
+| **GitHub** | Not found |
+| **Notes** | Key innovation: early fusion -- question text informs adapter before LLM generation. Only 109M trainable params vs 1.7B (Evolla) or 3B (BioMedGPT) |
+
+---
+
+#### 5. Evolla / ProteinChat (Jan 2025)
+
+| Component | Details |
+|-----------|---------|
+| **Paper** | "Decoding the Molecular Language of Proteins with Evolla" |
+| **Venue** | bioRxiv 2025.01.05.630192 |
+| **Protein Encoder** | SaProt-650M (Evolla-10B) or SaProt-1.3B (Evolla-80B) |
+| **LLM Backbone** | LLaMA-3-8B (10B version), LLaMA-3-70B (80B version) |
+| **Projection** | Cross-attention Transformer: Sequence Compressor (variable->fixed length) + Sequence Aligner (injected between LLM layers with learnable gates) |
+| **Encoder Frozen?** | Both SaProt + LLaMA frozen; only compressor + aligner trained |
+| **LoRA** | None -- selective freezing instead |
+| **Training Data** | 546M protein-QA triples, 150B word tokens (Swiss-Prot + ProTrek-annotated) |
+| **Trainable Params** | 1.7B (Evolla-10B), 8.2B (Evolla-80B) |
+| **Key Results** | GPT score 74.10 (vs GPT-4o 37.07, DeepSeek-v3 40.49); EC prediction 41.2% 4-digit match |
+| **GitHub** | https://github.com/westlake-repl/Evolla |
+| **Notes** | Largest protein-LLM training set. RAG at inference (DQS/QGS strategies). Chose SaProt over ESM-2 based on ablation (72.41 vs lower) |
+
+---
+
+#### 6. ProtT3 (May 2024)
+
+| Component | Details |
+|-----------|---------|
+| **Paper** | "Protein-to-Text Generation for Text-based Protein Understanding" |
+| **Venue** | ACL 2024 |
+| **Protein Encoder** | ESM-2 150M (frozen) |
+| **LLM Backbone** | Galactica 1.3B |
+| **Projection** | Q-Former: 8 learnable query tokens, initialized from PubMedBERT, cross-attn every 2 layers (326M params in stage 1) |
+| **Encoder Frozen?** | Stage 1: ESM-2 frozen, Q-Former trained. Stage 2: ESM-2 + Q-Former frozen, LoRA on Galactica |
+| **LoRA** | r=8, applied to attention + FFN projections (7M params, 0.54% of LM) |
+| **Training Data** | Swiss-Prot ~430K + ProteinKG25 ~422K + PDB-QA ~3.36M QA pairs |
+| **Key Results** | Captioning BLEU-2: 55.03% (+10.55); Retrieval accuracy: 68.3% (+24.2); QA exact match: 65.0% |
+| **GitHub** | https://github.com/acharkq/ProtT3 |
+| **Notes** | Three pre-training objectives: Protein-Text Contrasting, Protein-Text Matching, Protein Captioning. Smallest encoder (150M) yet strong results |
+
+---
+
+#### 7. ProtLLM (Mar 2024)
+
+| Component | Details |
+|-----------|---------|
+| **Paper** | "An Interleaved Protein-Language LLM with Protein-as-Word Pre-Training" |
+| **Venue** | ACL 2024 |
+| **Protein Encoder** | ProtST (ESM-2-based) + 2-layer MLP projection head |
+| **LLM Backbone** | LLaMA-7B |
+| **Projection** | Trainable projection matrix (input connector) + output connector for protein prediction |
+| **Encoder Frozen?** | Frozen during pre-training; unfrozen for task-specific fine-tuning (except PPI) |
+| **LoRA** | Applied to all LLaMA linear modules during pre-training |
+| **Training Data** | InterPT: 429K samples (165K PubMed articles + 90K UniProt/STRING pairs + 174K instruction data) |
+| **Key Results** | SOTA on protein-centric benchmarks; novel in-context learning + zero-shot enzyme retrieval |
+| **GitHub** | https://github.com/ProtLLM/ProtLLM |
+| **Notes** | Dynamic protein mounting: handles arbitrary number of interleaved proteins in text. Protein-as-word vocabulary for candidate protein prediction |
+
+---
+
+#### 8. InstructProtein (Oct 2023 / ACL 2024)
+
+| Component | Details |
+|-----------|---------|
+| **Paper** | "Aligning Human and Protein Language via Knowledge Instruction" |
+| **Venue** | ACL 2024 |
+| **Protein Encoder** | None (single unified LLM processes both protein sequences and text) |
+| **LLM Backbone** | LLaMA-based (exact size unspecified in public materials) |
+| **Projection** | None -- protein sequences tokenized directly into LLM vocabulary |
+| **Encoder Frozen?** | N/A -- pre-trained on both protein + text corpora, then instruction-tuned |
+| **Training Data** | UniRef100 (proteins) + PubMed (text) for pre-training; 2.8M knowledge-graph instruction pairs for SFT |
+| **Key Results** | Outperforms SOTA LLMs on bidirectional protein-text generation |
+| **GitHub** | https://github.com/HICAI-ZJU/InstructProtein |
+| **Notes** | No separate encoder -- treats protein sequences as a language. KG-based instruction generation addresses annotation imbalance. Bidirectional: protein->text and text->protein |
+
+---
+
+#### 9. Mol-Instructions / LLaMA-Molinst (ICLR 2024)
+
+| Component | Details |
+|-----------|---------|
+| **Paper** | "Mol-Instructions: A Large-Scale Biomolecular Instruction Dataset for Large Language Models" |
+| **Venue** | ICLR 2024 |
+| **Protein Encoder** | None (text-only approach) |
+| **LLM Backbone** | LLaMA-7B-chat (original), updated to LLaMA-3 (May 2024) |
+| **Projection** | None -- raw protein sequences as text tokens |
+| **Training Data** | 148K molecule instructions + 505K protein instructions + 53K biotext instructions = ~706K total |
+| **Key Results** | Establishes protein instruction-tuning baseline; dataset used by many subsequent works |
+| **GitHub** | https://github.com/zjunlp/Mol-Instructions |
+| **Notes** | **This is the dataset our project uses.** Text-only baseline. Protein-oriented tasks: function prediction, localization, fold classification, GO annotation, catalytic activity |
+
+---
+
+#### 10. SEPIT (Oct 2024)
+
+| Component | Details |
+|-----------|---------|
+| **Paper** | "Structure-Enhanced Protein Instruction Tuning: Towards General-Purpose Protein Understanding" |
+| **Venue** | KDD 2025 / arXiv 2410.03553 |
+| **Protein Encoder** | ESM-2 650M + structure-aware module (Gaussian Basis Kernels for 3D info) |
+| **LLM Backbone** | TinyLLaMA 1.1B, OpenLLaMA-v2 3B, LLaMA-2 7B |
+| **Projection** | Linear projector (deliberately chosen over Q-Former to retain all residue information) |
+| **Encoder Frozen?** | Stage 0: ESM-2 frozen, structure module trained. Stages 1-2: structure module + projector + LLM trained |
+| **LoRA** | Not specified |
+| **Training Data** | 10.5M instructions (5.47M Swiss-Prot/RCSB + 5.25M TrEMBL supplementary) -- largest instruction set |
+| **Key Results** | BLEU-4: 52.37, closed-set accuracy: 79.97%; outperforms GPT-4o and Claude-3 |
+| **GitHub** | Not yet released |
+| **Notes** | Three-stage pipeline: warm-up (contrastive + denoising) -> caption pre-training -> MoE instruction tuning. Argues linear projector better than Q-Former for proteins |
+
+---
+
+#### 11. STELLA (Jun 2025)
+
+| Component | Details |
+|-----------|---------|
+| **Paper** | "Towards Protein Function Prediction with Multimodal LLMs Integrating Sequence-Structure Representations" |
+| **Venue** | arXiv 2506.03800 |
+| **Protein Encoder** | ESM-3 small (esm3_sm_open_v1, 1.4B) -- **same encoder as our project** |
+| **LLM Backbone** | LLaMA-3.1-8B-Instruct |
+| **Projection** | Linear layer (simple adapter) |
+| **Encoder Frozen?** | Stage 1: encoder + LLM frozen, only adapter trained. Stage 2: encoder frozen, adapter + LLM trained |
+| **LoRA** | Optional during stage 2 |
+| **Training Data** | OPI-Struc: ~301K samples (248K function + 24K multiple-choice + 29K enzyme) from AlphaFold DB + Swiss-Prot |
+| **Key Results** | ROUGE-L: 0.5257, BERT Score: 0.8564; FP accuracy: 80.56%; Enzyme accuracy: 88.85% |
+| **GitHub** | Not found |
+| **Notes** | **Most directly comparable to our system**: same ESM-3 encoder, similar LLM backbone. Uses ESM-3's unified sequence+structure encoding. Simple linear adapter outperforms more complex designs |
+
+---
+
+#### 12. BioMedGPT-10B (Aug 2023 / updated 2024)
+
+| Component | Details |
+|-----------|---------|
+| **Paper** | "Open Multimodal Generative Pre-trained Transformer for BioMedicine" |
+| **Venue** | IEEE / arXiv 2308.09442 |
+| **Protein Encoder** | ESM-2 3B (36-layer, 2560 hidden dim) |
+| **LLM Backbone** | BioMedGPT-LM-7B (LLaMA-2-7B-Chat continually trained on biomedical literature) |
+| **Projection** | Single fully-connected layer per modality |
+| **Encoder Frozen?** | Encoder frozen; FC adaptor + LLM fine-tuned |
+| **Training Data** | Multimodal fine-tuning on molecule + protein QA |
+| **GitHub** | https://huggingface.co/PharMolix/BioMedGPT-LM-7B |
+| **Notes** | Also handles molecules (via molecule encoder). Simple FC projection layer |
+
+---
+
+#### 13. Prot2Text (Jul 2023 / AAAI 2024)
+
+| Component | Details |
+|-----------|---------|
+| **Paper** | "Multimodal Protein's Function Generation with GNNs and Transformers" |
+| **Venue** | AAAI 2024 |
+| **Protein Encoder** | ESM-2 35M (sequence) + 6-layer RGCN (structure graph) |
+| **LLM Backbone** | GPT-2 (768 hidden dim) |
+| **Projection** | Linear projection layer (ESM dim -> graph embedding dim) |
+| **Training Data** | Swiss-Prot protein-function pairs |
+| **Key Results** | Generates free-text function descriptions from protein structure+sequence |
+| **GitHub** | Available (see paper) |
+| **Notes** | Earlier work; smaller scale. GNN + PLM fusion into GPT-2 decoder |
+
+---
+
+#### 14. ProLLaMA (Feb 2024)
+
+| Component | Details |
+|-----------|---------|
+| **Paper** | "A Protein Large Language Model for Multi-Task Protein Language Processing" |
+| **Venue** | IEEE TPAMI 2024 / arXiv 2402.16445 |
+| **Protein Encoder** | None (protein sequences tokenized directly into LLM) |
+| **LLM Backbone** | LLaMA-2 |
+| **Projection** | None |
+| **LoRA** | Used in both pre-training and instruction tuning stages |
+| **Training Data** | ~13M samples with 11K+ superfamily annotations |
+| **Key Results** | 67.1% exact match on superfamily prediction; strong protein generation |
+| **GitHub** | https://github.com/PKU-YuanGroup/ProLLaMA |
+| **Notes** | Text-only approach. Evolutionary Protein Generation Framework (EPGF). Continual learning on UniRef50 |
+
+---
+
+#### 15. ProteinCLIP (May 2024)
+
+| Component | Details |
+|-----------|---------|
+| **Paper** | "Enhancing Protein Language Models with Natural Language" |
+| **Venue** | bioRxiv 2024.05.14 |
+| **Protein Encoder** | ESM-2 family + ProtT5 (provides adapter models for both) |
+| **Projection** | Contrastive learning adapter (refines PLM embeddings to function-centric space) |
+| **Training Data** | UniProt protein-text pairs |
+| **Key Results** | SOTA on PPI prediction and homolog detection despite low sequence similarity |
+| **GitHub** | https://github.com/wukevin/proteinclip |
+| **Notes** | Not a generative system -- contrastive alignment of protein and text embeddings. Useful for representation learning |
+
+---
+
+#### 16. ProLLM (May 2024)
+
+| Component | Details |
+|-----------|---------|
+| **Paper** | "Protein Chain-of-Thoughts Enhanced LLM for Protein-Protein Interaction Prediction" |
+| **Venue** | COLM 2024 |
+| **Protein Encoder** | None (protein data converted to natural language via ProCoT format) |
+| **LLM Backbone** | LLM (unspecified base) |
+| **Projection** | Embedding replacement of protein sites in natural language prompts |
+| **Training Data** | Signaling pathway data in ProCoT format |
+| **Key Results** | Improved PPI prediction accuracy via chain-of-thought reasoning |
+| **GitHub** | https://github.com/MingyuJ666/ProLLM |
+| **Notes** | Novel approach: treats signaling pathways as reasoning chains. Not a traditional multimodal encoder system |
+
+---
+
+### Key Patterns and Implications for Our Project
+
+#### Projection Method Comparison
+
+| Method | Used By | Params | Pros | Cons |
+|--------|---------|--------|------|------|
+| **Linear/FC** | ProteinGPT, BioMedGPT, STELLA, SEPIT, Prot2Text | Minimal | Simple, retains all residue info | May not align well without more capacity |
+| **MLP (2+ layers)** | EvoLlama, **Our project** | ~20M | Good capacity, standard | More params than linear |
+| **Q-Former** | ProtChatGPT, ProtT3 | 300M+ | BLIP-2-inspired, proven in vision | Heavy, may lose residue info |
+| **Cross-attention adapter** | Prot2Chat, Evolla | 100M-1.7B | Question-aware compression | Complex architecture |
+| **Attention Pooling + MLP** | **Our project (MLP path)** | ~30M | Reduces token count + projects | Our specific innovation |
+| **Perceiver Resampler** | **Our project (Perceiver path)** | ~29M | Learned compression + projection | Less tested in protein domain |
+
+**Key insight**: SEPIT explicitly argues linear projectors are better than Q-Former for proteins because "any change in the amino acid sequence can lead to significant structural differences" -- retaining all residue tokens matters. However, this increases compute. Our AttentionPooling (32 tokens) + MLP provides a middle ground.
+
+#### Encoder Choices
+
+| Encoder | Size | Used By | Notes |
+|---------|------|---------|-------|
+| ESM-2 150M | 150M | ProtT3 | Smallest, still effective |
+| ESM-2 650M | 650M | EvoLlama, SEPIT, ProteinCLIP | Most popular choice |
+| ESM-2 3B | 3B | ProteinGPT, BioMedGPT | Highest capacity |
+| ESM-1b | 650M | ProtChatGPT | Older model |
+| ESM-3 small | 1.4B | **STELLA, Our project** | Unified seq+struct encoding |
+| SaProt-650M | 650M | Evolla | Structure-aware (SA tokens) |
+| ProteinMPNN | varies | EvoLlama, Prot2Chat | Structure encoder (not sequence) |
+
+**Key insight**: We are one of only two systems (alongside STELLA) using ESM-3 as the protein encoder. ESM-3's unified sequence+structure encoding is a differentiator. Most systems still use ESM-2.
+
+#### LLM Backbone Choices
+
+| LLM | Used By |
+|-----|---------|
+| LLaMA-3-8B | EvoLlama, Prot2Chat, Evolla, STELLA |
+| LLaMA-2-7B | ProtLLM, BioMedGPT, SEPIT |
+| Vicuna-13B | ProtChatGPT |
+| Galactica 1.3B | ProtT3 |
+| Multiple (LLaMA/Mistral) | ProteinGPT |
+| **Qwen3-4B/8B** | **Our project** |
+
+**Key insight**: We are the only system using Qwen3 as the backbone. Most systems use LLaMA variants. Using a different backbone family provides novelty.
+
+#### Training Data Scale
+
+| System | Data Size | Source |
+|--------|-----------|--------|
+| Evolla | 546M QA triples, 150B tokens | Swiss-Prot + ProTrek |
+| SEPIT | 10.5M instructions | Swiss-Prot + TrEMBL |
+| ProLLaMA | 13M samples | UniRef50 |
+| Mol-Instructions | 706K total (505K protein) | Various databases |
+| ProteinGPT | 132K proteins x 40 QA | RCSB-PDB |
+| Prot2Chat | 430K | Mol-Instructions + UniProtQA |
+| ProtT3 | ~4.2M pairs | Swiss-Prot + ProteinKG25 + PDB-QA |
+| **Our project** | 50K-505K | Mol-Instructions protein subset |
+
+#### Frozen Encoder Strategy (All Systems)
+
+Every surveyed system keeps the protein encoder frozen during at least the initial alignment stage. This validates our approach of keeping ESM-3 frozen throughout training. The pattern is:
+1. Stage 1: Freeze everything except projector/adapter (alignment)
+2. Stage 2: Optionally unfreeze LLM (with LoRA) for instruction tuning
+3. Some systems unfreeze the encoder in later stages (EvoLlama, ProtLLM) but this is less common
+
+#### Closest Comparable: STELLA
+
+STELLA is the most directly comparable system to ours:
+- Same ESM-3 encoder (esm3_sm_open_v1, 1.4B)
+- Similar LLM class (LLaMA-3.1-8B-Instruct vs our Qwen3-4B/8B)
+- Simple linear adapter (vs our AttentionPooling+MLP or Perceiver)
+- Two-stage training with frozen encoder
+- However: STELLA uses only a linear layer, while we offer MLP and Perceiver Resampler options
+- STELLA uses ~301K training samples vs our 50K-505K from Mol-Instructions
+
+---
+
 ## Development Log
 
 ### 2026-02-20: Unified Experiment Pipeline
@@ -295,7 +655,7 @@ jupyter notebook scripts/explore_datasets.ipynb
 ```
 Post_Training_Protein_LLM/
 ├── .claude/           # Claude Code integration
-│   ├── agents/        # experiment-runner, research, code-reviewer
+│   ├── agents/        # engineer, qa, researcher
 │   ├── commands/      # /train, /eval, /data-prep, /debug
 │   └── skills/        # protein-encoding, rl-training, hydra-configs
 ├── configs/           # Hydra hierarchical configs
@@ -314,6 +674,32 @@ Post_Training_Protein_LLM/
 - [ ] Implement GRPO trainer in `src/training/grpo_trainer.py`
 - [ ] Add attention pooling in `src/models/pooling.py`
 - [ ] Create MLP projector in `src/models/projector.py`
+
+---
+
+### 2026-03-02: Arrow Preprocessing for Combined Dataset (Fast Load)
+
+**Milestone**: Converted combined SFT dataset (4.89M samples, 21 JSON files) from JSON to Arrow format. Dataset loading dropped from ~10 minutes to <0.1s via memory-mapped Arrow files.
+
+**Changes Made**:
+- **NEW** `scripts/prepare_arrow.py`: One-time preprocessing script that reads JSON files, injects metadata, applies temperature sampling (α=0.7), computes `__length__` column, filters by protein length, shuffles, splits, and saves as Arrow via `save_to_disk()`
+- **Modified** `src/data/mol_instructions.py`:
+  - Added `_try_load_arrow()` method: detects `{cache_dir}_arrow/{split}/` and loads via `load_from_disk()`
+  - Updated `_load_dataset()` to try Arrow first, then JSON, then HuggingFace (backward compatible)
+  - Updated `lengths` property to use pre-computed `__length__` column when available (instant vs iterating 4.89M rows)
+
+**Results**:
+| Metric | Before (JSON) | After (Arrow) |
+|--------|--------------|---------------|
+| Train load time | ~10 min | 0.08s |
+| Validation load time | ~30s | 0.01s |
+| `lengths` computation | ~60s | 0.4ms |
+| Arrow output | — | `data/processed/combined_sft_260225_arrow/{train,validation,test}/` |
+| Train split | 4,891,437 | 4,891,437 (identical) |
+| Val split | 271,746 | 271,746 (identical) |
+
+**Files modified**: `src/data/mol_instructions.py`
+**Files created**: `scripts/prepare_arrow.py`
 
 ---
 
@@ -1268,6 +1654,174 @@ Generated sequence -> ESMFold/ESM-3 -> 3D structure
 
 ---
 
+### Session: Protein Language Model Encoders Survey (Alternative to ESM-3)
+**Date**: 2026-03-02
+**Objective**: Survey protein language model encoders that could serve as frozen encoders in a multimodal LLM setup (frozen encoder -> pooling/projector -> LLM), as alternatives or comparisons to ESM-3 small.
+
+---
+
+#### 1. Encoder Comparison Table
+
+| Model | Params | Embed Dim | Layers | VRAM (fp16) | Per-Residue | Structure-Aware | HuggingFace |
+|-------|--------|-----------|--------|-------------|-------------|-----------------|-------------|
+| **ESM-3 small** (current) | 1.4B | 1536 | 48 | ~3-5 GB | Yes | Yes (multi-track) | `EvolutionaryScale/esm3-sm-open-v1` |
+| **ESM-2 650M** | 650M | 1280 | 33 | ~1.3 GB | Yes | No (seq only) | `facebook/esm2_t33_650M_UR50D` |
+| **ESM-2 3B** | 3B | 2560 | 36 | ~6 GB | Yes | No (seq only) | `facebook/esm2_t36_3B_UR50D` |
+| **ESM C 300M** | 300M | 960 | 30 | ~0.6 GB | Yes | No (seq only) | `EvolutionaryScale/esmc-300m-2024-12` |
+| **ESM C 600M** | 600M | 1152 | 36 | ~1.2 GB | Yes | No (seq only) | `EvolutionaryScale/esmc-600m-2024-12` |
+| **ProtT5-XL-UniRef50** (enc) | ~1.2B (enc) | 1024 | 24 | ~2.4 GB | Yes | No (seq only) | `Rostlab/prot_t5_xl_half_uniref50-enc` |
+| **ProstT5** | ~3B (full) | 1024 | 24 (enc) | ~2.4 GB (enc) | Yes | Yes (3Di) | `Rostlab/ProstT5` |
+| **SaProt 650M** | 650M | 1280 | 33 | ~1.3 GB | Yes | Yes (3Di+AA) | `westlake-repl/SaProt_650M_AF2` |
+| **SaProt 1.3B** | 1.3B | TBD | TBD | ~2.6 GB | Yes | Yes (3Di+AA) | `westlake-repl/SaProt_1.3B_AF2` |
+| **ProSST** | ~100M | 768 | 12 | ~0.2 GB | Yes | Yes (quantized) | `AI4Protein/ProSST-2048` |
+| **Ankh2-Large** | ~2B (full) | 1536 | TBD | ~2-3 GB (enc) | Yes | No (seq only) | `ElnaggarLab/ankh2-large` |
+
+#### 2. Detailed Encoder Profiles
+
+##### ESM-2 (Meta/FAIR)
+- **Paper**: Lin et al. 2023, "Evolutionary-scale prediction of atomic-level protein structure with a language model"
+- **Architecture**: BERT-style masked language model trained on UniRef50
+- **Model sizes**: 8M, 35M, 150M, 650M, 3B, 15B
+- **Key specs (650M)**: 33 layers, 1280 hidden dim, 20 attention heads
+- **Key specs (3B)**: 36 layers, 2560 hidden dim, 40 attention heads
+- **Per-residue**: Yes, last_hidden_state gives [seq_len, embed_dim]
+- **Advantages over ESM-3**:
+  - Much smaller (650M vs 1.4B) = less VRAM for frozen encoder
+  - Native HuggingFace Transformers integration (no custom SDK)
+  - Extensively benchmarked; well-understood embedding space
+  - 3B variant has 2560-dim embeddings (matches Qwen3-4B hidden size directly)
+  - Can use standard `EsmModel.from_pretrained()`, no license agreement needed
+- **Disadvantages**: Sequence-only (no structure awareness), older model (2023)
+- **HuggingFace**: `facebook/esm2_t33_650M_UR50D`, `facebook/esm2_t36_3B_UR50D`
+
+##### ESM C (EvolutionaryScale, Dec 2024)
+- **Paper**: Hayes et al. 2024, "Simulating 500 million years of evolution with a language model"
+- **Architecture**: Transformer masked language model, successor to ESM-2 with improved scaling
+- **Model sizes**: 300M (960-dim), 600M (1152-dim), 6B (API-only)
+- **Key performance**: 300M matches ESM-2 650M; 600M rivals ESM-2 3B
+- **Per-residue**: Yes
+- **Advantages over ESM-3**:
+  - Much more parameter-efficient (600M matches ESM-2 3B quality)
+  - 300M variant extremely lightweight (~0.6 GB) for rapid iteration
+  - Open weights for 300M and 600M
+- **Disadvantages**: Newer model with less community adoption; requires `esm` SDK
+- **HuggingFace**: `EvolutionaryScale/esmc-300m-2024-12`, `EvolutionaryScale/esmc-600m-2024-12`
+
+##### ProtT5-XL-UniRef50 (Rostlab/TUM)
+- **Paper**: Elnaggar et al. 2022, "ProtTrans: Toward Understanding the Language of Life Through Self-Supervised Learning"
+- **Architecture**: T5-based (encoder-decoder), encoder-only variant available
+- **Key specs**: ~1.2B encoder params, 1024-dim embeddings, 24 encoder layers
+- **Per-residue**: Yes, encoder last_hidden_state gives [seq_len, 1024]
+- **Advantages over ESM-3**:
+  - Encoder-only half-precision variant fits in 8GB VRAM
+  - T5 architecture is well-understood in NLP community
+  - Extensive benchmarking on ProteinGym and other tasks
+  - Native HuggingFace Transformers (T5EncoderModel)
+- **Disadvantages**: Sequence-only, older (2022), 1024-dim is smaller than ESM-3's 1536
+- **HuggingFace**: `Rostlab/prot_t5_xl_half_uniref50-enc`
+
+##### ProstT5 (Rostlab/TUM)
+- **Paper**: Heinzinger et al. 2024, "Bilingual Language Model for Protein Sequence and Structure"
+- **Architecture**: ProtT5-XL fine-tuned to translate between AA sequences and 3Di structure tokens
+- **Key specs**: ~3B total (encoder ~1.2B), 1024-dim, 24 encoder layers
+- **Per-residue**: Yes (same as ProtT5)
+- **Advantages over ESM-3**:
+  - Structure-aware through 3Di tokens (Foldseek)
+  - Can generate 3Di from sequence (no structure needed at inference)
+  - Builds on well-established ProtT5 architecture
+- **Disadvantages**: Still sequence-only input for encoder embeddings (3Di is a separate mode); full model is 3B
+- **HuggingFace**: `Rostlab/ProstT5`
+
+##### SaProt (Westlake University)
+- **Paper**: Su et al. 2024, "SaProt: Protein Language Modeling with Structure-aware Vocabulary" (ICLR 2024)
+- **Architecture**: ESM-2 architecture with structure-aware vocabulary (AA+3Di tokens via Foldseek)
+- **Model sizes**: 650M (33 layers, 1280-dim), 1.3B
+- **Per-residue**: Yes, same as ESM-2 but with interleaved structure tokens
+- **Advantages over ESM-3**:
+  - Explicit structure awareness through 3Di vocabulary
+  - Same architecture as ESM-2 (drop-in replacement, HuggingFace compatible)
+  - #1 on ProteinGym benchmark at release
+  - 650M variant is very lightweight (~1.3 GB)
+  - Requires Foldseek preprocessing but AlphaFold2 structures suffice
+- **Disadvantages**: Requires 3Di tokens (need Foldseek or pre-computed structures); interleaved AA+3Di doubles effective sequence length; 1280-dim (vs ESM-3's 1536)
+- **HuggingFace**: `westlake-repl/SaProt_650M_AF2`, `westlake-repl/SaProt_1.3B_AF2`
+
+##### ProSST (NeurIPS 2024)
+- **Paper**: Li et al. 2024, "ProSST: Protein Language Modeling with Quantized Structure and Disentangled Attention"
+- **Architecture**: BERT-style with disentangled attention for sequence and structure tokens
+- **Key specs**: ~100M params, 768-dim, 12 layers, 12 attention heads
+- **Per-residue**: Yes
+- **Advantages over ESM-3**:
+  - Extremely lightweight (100M vs 1.4B)
+  - Disentangled attention explicitly models seq-structure relationships
+  - State-of-the-art zero-shot mutation effect prediction
+- **Disadvantages**: Much smaller model (768-dim vs 1536-dim); less proven for general protein understanding; requires structure quantization preprocessing
+- **HuggingFace**: `AI4Protein/ProSST-2048`
+
+##### Ankh2/Ankh3 (ElnaggarLab/Proteinea)
+- **Paper**: Elnaggar et al. 2023, "Ankh: Optimized Protein Language Model Unlocks General-Purpose Modelling"
+- **Architecture**: T5-based, encoder-decoder; Ankh3 adds multi-task pre-training (MLM + sequence completion)
+- **Model sizes**: Ankh2-Large (~2B, 1536-dim), Ankh3-XL (TBD), Ankh3-Large
+- **Per-residue**: Yes, encoder outputs [seq_len, 1536]
+- **Advantages over ESM-3**:
+  - Ankh2 has 1536-dim embeddings (same as ESM-3!)
+  - Optimized training (fewer parameters for comparable performance)
+  - Ankh3 (2025) adds sequence completion pre-training objective
+- **Disadvantages**: Less widely adopted; T5-based (encoder-decoder overhead if not using encoder-only); Ankh3-XL license is CC-BY-NC-SA
+- **HuggingFace**: `ElnaggarLab/ankh2-large`, `ElnaggarLab/ankh3-xl`
+
+#### 3. Recommendations for Our Pipeline
+
+**Tier 1 (Best candidates for comparison experiments)**:
+1. **ESM-2 650M** -- Drop-in replacement with ~half the VRAM. Native HuggingFace. Would need projector adjustment (1280 -> LLM dim instead of 1536). Best baseline to isolate "does a bigger encoder help?"
+2. **ESM C 600M** -- Newest generation, matches ESM-2 3B performance at 600M params. 1152-dim embeddings. Tests whether newer training data/methods matter more than model size.
+3. **SaProt 650M** -- Same size as ESM-2 650M but structure-aware. Tests whether structure information in the encoder improves downstream tasks.
+
+**Tier 2 (Worth exploring)**:
+4. **ProtT5-XL encoder** -- Different architecture family (T5 vs BERT). 1024-dim. Tests whether architecture diversity matters.
+5. **ESM-2 3B** -- Larger model with 2560-dim (matches Qwen3-4B hidden size directly, could skip projector entirely). Tests scaling.
+
+**Tier 3 (Niche use cases)**:
+6. **ProSST** -- Very lightweight (100M). Good for ablation on "how small can the encoder be?"
+7. **ProstT5** -- Structure-aware ProtT5. Interesting but complex setup.
+8. **Ankh2-Large** -- 1536-dim like ESM-3 but less tested.
+
+#### 4. VRAM Budget Analysis (80GB H100)
+
+Current setup: ESM-3 (1.4B, fp32) + Qwen3-4B (LoRA) = ~10-12 GB model weights
+
+| Configuration | Encoder VRAM | LLM VRAM | Projector | Total (est.) |
+|---------------|-------------|----------|-----------|--------------|
+| ESM-3 1.4B (fp32) + Qwen3-4B | ~5.6 GB | ~8 GB | ~0.1 GB | ~14 GB |
+| ESM-2 650M (fp32) + Qwen3-4B | ~2.6 GB | ~8 GB | ~0.1 GB | ~11 GB |
+| ESM C 600M (fp32) + Qwen3-4B | ~2.4 GB | ~8 GB | ~0.1 GB | ~11 GB |
+| SaProt 650M (fp32) + Qwen3-4B | ~2.6 GB | ~8 GB | ~0.1 GB | ~11 GB |
+| ESM-2 3B (fp32) + Qwen3-4B | ~12 GB | ~8 GB | ~0.1 GB | ~20 GB |
+| ProtT5-XL enc (fp16) + Qwen3-4B | ~2.4 GB | ~8 GB | ~0.1 GB | ~11 GB |
+
+All configurations fit comfortably on a single H100 80GB. Activation memory (batch-dependent) adds 20-40 GB.
+
+#### 5. Integration Complexity
+
+- **ESM-2**: Easiest. HuggingFace `EsmModel`, `.last_hidden_state` gives per-residue embeddings directly.
+- **ESM C**: Moderate. Requires EvolutionaryScale `esm` SDK (same as ESM-3).
+- **ProtT5-XL**: Easy. HuggingFace `T5EncoderModel`, input needs space-separated amino acids.
+- **SaProt**: Moderate. Needs Foldseek 3Di tokens. Can use pre-computed AF2 structures.
+- **ProSST**: Moderate. Needs structure quantization preprocessing.
+- **ProstT5**: Moderate. Same as ProtT5 but with 3Di token support.
+
+#### 6. Related Multimodal Protein-LLM Architectures
+
+Several recent papers have used the frozen-encoder + projector + LLM paradigm:
+- **EvoLlama** (Dec 2024): ESM-2 + ProteinMPNN (structure) + projector + Llama-3
+- **ProteinGPT** (ICLR 2025): Protein encoder + linear projection + LLM
+- **Prot2Chat** (2025): Early fusion of sequence + structure encoders + LLM
+- **ProtLLM**: Protein-as-Word pre-training with dynamic protein mounting
+
+These validate our LLaVA-style approach and suggest ESM-2 is the most commonly used frozen encoder in practice.
+
+---
+
 ## Action Items
 
 ### Completed
@@ -1328,7 +1882,7 @@ Post_Training_Protein_LLM/
 │
 ├── .claude/                      # Claude Code integration
 │   ├── settings.json             # Permissions, hooks
-│   ├── agents/                   # experiment-runner, research, code-reviewer
+│   ├── agents/                   # engineer, qa, researcher
 │   ├── commands/                 # /train, /eval, /data-prep, /debug
 │   └── skills/                   # protein-encoding, rl-training, hydra-configs
 │

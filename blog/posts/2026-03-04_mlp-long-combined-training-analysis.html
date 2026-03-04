@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Analysis: Text vs ESM-3 Approach Comparison with Extended MLP Run</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #1a1a2e;
+            --accent: #2563eb;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --code-bg: #f3f4f6;
+            --table-header: #f9fafb;
+            --blockquote-bg: #fffbeb;
+            --blockquote-border: #f59e0b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--fg);
+            background: var(--bg);
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        header {
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+        header .meta {
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        header .tags {
+            margin-top: 0.5rem;
+        }
+        header .tag {
+            display: inline-block;
+            background: var(--code-bg);
+            color: var(--accent);
+            padding: 0.15rem 0.6rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            margin-right: 0.4rem;
+            font-weight: 500;
+        }
+        h1 {
+            font-size: 1.9rem;
+            line-height: 1.3;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        h2 {
+            font-size: 1.4rem;
+            margin: 2.5rem 0 1rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+        }
+        h3 {
+            font-size: 1.15rem;
+            margin: 1.8rem 0 0.8rem;
+            font-weight: 600;
+        }
+        p {
+            margin: 0.8rem 0;
+        }
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            margin: 1rem 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.92rem;
+        }
+        th, td {
+            padding: 0.6rem 0.8rem;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        th {
+            background: var(--table-header);
+            font-weight: 600;
+        }
+        tr:hover {
+            background: #f9fafb;
+        }
+        code {
+            font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+            background: var(--code-bg);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.88em;
+        }
+        blockquote {
+            background: var(--blockquote-bg);
+            border-left: 4px solid var(--blockquote-border);
+            padding: 0.8rem 1.2rem;
+            margin: 1rem 0;
+            border-radius: 0 6px 6px 0;
+            font-style: italic;
+        }
+        blockquote p {
+            margin: 0.3rem 0;
+        }
+        ul, ol {
+            margin: 0.8rem 0;
+            padding-left: 1.5rem;
+        }
+        li {
+            margin: 0.3rem 0;
+        }
+        strong {
+            font-weight: 600;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 2rem 0;
+        }
+        footer {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid var(--border);
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+        nav.blog-nav {
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+        nav.blog-nav a {
+            margin-right: 1rem;
+        }
+        .caption {
+            color: var(--muted);
+            font-size: 0.85rem;
+            font-style: italic;
+            margin-top: -0.5rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="blog-nav">
+        <a href="../index.html">Blog Index</a>
+    </nav>
+
+    <header>
+        <h1>Training Analysis: Text vs ESM-3 Approach Comparison with Extended MLP Run</h1>
+        <div class="meta">
+            <strong>Date</strong>: 2026-03-04 &nbsp;|&nbsp;
+            <strong>Question</strong>: How do ESM-3 approaches (MLP, Perceiver) compare against text-only SFT, and how does the extended MLP-long run progress?
+        </div>
+        <div class="meta">
+            <strong>Experiments analyzed</strong>: sft_lora_esm3_qwen3_8b_it_0226_151416 (MLP), sft_lora_esm3_qwen3_8b_it_0225_203237 (Perceiver), sft_text_qwen3_8b_it_0227_145821 (Text), sft_esm3_mlp_long_qwen3_8b_it_0302_175459 (MLP-long)
+        </div>
+        <div class="tags">
+            <span class="tag">training</span>
+            <span class="tag">sft</span>
+            <span class="tag">evaluation</span>
+        </div>
+    </header>
+
+    <h2>Executive Summary</h2>
+
+    <p>ESM-3 encoder approaches (MLP and Perceiver) achieve approximately 20% lower <code>eval_loss</code> than the text-only baseline (1.94 vs 2.42), confirming that structural protein embeddings provide a substantial advantage for protein understanding tasks. MLP and Perceiver projectors perform nearly identically (best <code>eval_loss</code> 1.942 vs 1.952), suggesting the simpler MLP architecture is sufficient. An extended MLP-long run on Mol-Instructions-only data has reached <code>eval_loss</code> 2.04 at just 10% of training (step 500/4809) and continues to improve, though direct comparison with earlier runs is confounded by different datasets and hyperparameters.</p>
+
+    <h2>Architecture Overview</h2>
+
+    <p>We compare four approaches for integrating protein structural information into a language model. The diagram below illustrates the data flow and trainable components for each approach. All approaches support FSDP (Fully Sharded Data Parallel) for efficient multi-GPU training and scalability to larger LLM backbones.</p>
+
+    <figure style="margin: 1.5rem 0; text-align: center;">
+        <img src="../figures/architecture_comparison.png" alt="Architecture comparison: Text-Only vs MLP Projector vs Perceiver Resampler vs Flamingo" style="max-width: 100%; border: 1px solid var(--border); border-radius: 4px;">
+        <figcaption style="color: var(--muted); font-size: 0.85rem; margin-top: 0.5rem;">
+            <strong>Figure 1.</strong> Four protein-LLM architecture variants. Blue (dashed border) = frozen pretrained components; Orange = trainable from scratch; Purple = LLM with LoRA; Red = gated cross-attention (Flamingo). Parameter counts indicate trainable parameters only.
+        </figcaption>
+    </figure>
+
+    <h2>Methodology</h2>
+
+    <ul>
+        <li><strong>Data sources</strong>: Local <code>trainer_state.json</code> (step-level metrics) and wandb API (run summaries)</li>
+        <li><strong>Training loss metric</strong>: <code>token_avg_loss</code> (true per-token average; NOT HF Trainer running average <code>loss</code>)</li>
+        <li><strong>Evaluation metric</strong>: <code>eval_loss</code> (validation set, computed periodically)</li>
+        <li><strong>Experiments</strong>: 4 substantive runs (3 completed, 1 in-progress) spanning Feb 25 &ndash; Mar 4, 2026</li>
+        <li><strong>Comparison scope</strong>: Cross-approach (ESM-3 MLP vs Perceiver vs Text) plus MLP-long extended training diagnostics</li>
+    </ul>
+
+    <h2>Experiment Configuration</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Parameter</th>
+                <th>MLP (0226)</th>
+                <th>Perceiver (0225)</th>
+                <th>Text (0227)</th>
+                <th>MLP-long (0302)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Approach</td>
+                <td>esm3</td>
+                <td>esm3</td>
+                <td>text</td>
+                <td>esm3</td>
+            </tr>
+            <tr>
+                <td>Projector</td>
+                <td>MLP</td>
+                <td>Perceiver</td>
+                <td>&mdash;</td>
+                <td>MLP</td>
+            </tr>
+            <tr>
+                <td>Base model</td>
+                <td>Qwen3-8B</td>
+                <td>Qwen3-8B</td>
+                <td>Qwen3-8B</td>
+                <td>Qwen3-8B</td>
+            </tr>
+            <tr>
+                <td>Encoder</td>
+                <td>ESM-3 small</td>
+                <td>ESM-3 small</td>
+                <td>&mdash;</td>
+                <td>ESM-3 small</td>
+            </tr>
+            <tr>
+                <td>Dataset</td>
+                <td>combined_sft</td>
+                <td>combined_sft</td>
+                <td>combined_sft</td>
+                <td>mol_instructions only</td>
+            </tr>
+            <tr>
+                <td>Learning rate</td>
+                <td>2e-4</td>
+                <td>2e-4</td>
+                <td>2e-4</td>
+                <td>1.2e-4</td>
+            </tr>
+            <tr>
+                <td>Projector LR</td>
+                <td>1e-3</td>
+                <td>1e-3</td>
+                <td>&mdash;</td>
+                <td>6e-4</td>
+            </tr>
+            <tr>
+                <td>Epochs</td>
+                <td>3</td>
+                <td>3</td>
+                <td>3</td>
+                <td>7</td>
+            </tr>
+            <tr>
+                <td>Total steps</td>
+                <td>1,677</td>
+                <td>1,677</td>
+                <td>2,595</td>
+                <td>4,809 (500 completed)</td>
+            </tr>
+            <tr>
+                <td>Batch size</td>
+                <td>16</td>
+                <td>16</td>
+                <td>16</td>
+                <td>16</td>
+            </tr>
+            <tr>
+                <td>Grad accum steps</td>
+                <td>4</td>
+                <td>4</td>
+                <td>4</td>
+                <td>4</td>
+            </tr>
+            <tr>
+                <td>LoRA r</td>
+                <td>8</td>
+                <td>8</td>
+                <td>8</td>
+                <td>8</td>
+            </tr>
+            <tr>
+                <td>Status</td>
+                <td>Complete</td>
+                <td>Complete</td>
+                <td>Complete</td>
+                <td>Partial (10%)</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <blockquote>
+        <p><strong>Dataset caveat</strong>: MLP-long (0302) trains on <code>mol_instructions</code> only, while the three completed runs use <code>combined_sft_260225</code> (4.5M records from multiple sources). This difference, along with the lower learning rate (1.2e-4 vs 2e-4) and longer schedule (7 vs 3 epochs), makes direct <code>eval_loss</code> comparisons between MLP-long and the completed runs unreliable.</p>
+    </blockquote>
+
+    <h2>Key Findings</h2>
+
+    <h3>1. ESM-3 Encoder Provides ~20% Lower Eval Loss Than Text-Only</h3>
+
+    <p>Both ESM-3 approaches substantially outperform the text-only baseline. MLP achieves best <code>eval_loss</code> of 1.942 and Perceiver 1.952, versus 2.415 for text-only &mdash; a 19.6% and 19.2% reduction respectively. This gap is consistent across all evaluation steps, not just at convergence.</p>
+
+    <p>The text-only approach processes raw amino acid sequences as tokens (<code>&lt;protein&gt;MKTL...&lt;/protein&gt;</code>), requiring the LLM to learn protein structure from scratch. The ESM-3 encoder provides pre-trained structural embeddings (1536-dim) that capture evolutionary and structural information the LLM cannot easily learn from sequence alone.</p>
+
+    <img src="../figures/text_vs_esm_eval_loss.png" alt="Evaluation Loss: Text vs ESM-3 approaches across training steps">
+    <p class="caption">Figure 1: Evaluation loss over training. ESM-3 approaches (MLP, Perceiver) converge to substantially lower eval_loss than the text-only baseline.</p>
+
+    <h3>2. MLP and Perceiver Projectors Are Nearly Identical</h3>
+
+    <p>The MLP projector (AttentionPooling + 2-layer MLP, ~30.5M params) and the Perceiver Resampler (~29.4M params) achieve nearly indistinguishable performance: best <code>eval_loss</code> of 1.942 vs 1.952 (0.5% difference). Both converge at step 180 and follow nearly identical loss trajectories throughout training.</p>
+
+    <p>Given the architectural simplicity of MLP (fewer hyperparameters, faster forward pass) and the negligible performance difference, MLP remains the recommended default projector.</p>
+
+    <img src="../figures/text_vs_esm_final_comparison.png" alt="Final eval_loss comparison bar chart: MLP, Perceiver, Text">
+    <p class="caption">Figure 2: Final eval_loss by approach. MLP and Perceiver are within 0.01 of each other, both substantially below text-only.</p>
+
+    <h3>3. Training Loss Dynamics Differ Across Approaches</h3>
+
+    <p>All approaches show an initial <code>token_avg_loss</code> spike in the first 60&ndash;70 steps, corresponding to the warmup period. ESM-3 approaches reach a minimum <code>token_avg_loss</code> around 1.62 (MLP: 1.620, Perceiver: 1.627), while text-only bottoms at 2.359 &mdash; a 31% gap in training loss floor.</p>
+
+    <p>Text-only exhibits more gradient norm spikes throughout training (5 grad spikes vs 1&ndash;2 for ESM-3 runs), suggesting less stable optimization when the LLM must learn protein representations from raw sequence tokens.</p>
+
+    <img src="../figures/loss_curves.png" alt="Training loss curves (token_avg_loss) for all approaches">
+    <p class="caption">Figure 3: Training loss (token_avg_loss) across all four runs. ESM-3 approaches converge faster and reach lower loss floors.</p>
+
+    <h3>4. MLP-Long Run: Steady Progress at 10% Completion</h3>
+
+    <p>The extended MLP-long run (<code>sft_esm3_mlp_long_qwen3_8b_it_0302_175459</code>) has completed 500 of 4,809 steps (~10.4%). At step 500, it shows:</p>
+    <ul>
+        <li><code>token_avg_loss</code>: 2.023 (minimum reached: 1.813)</li>
+        <li><code>eval_loss</code>: 2.044 (still decreasing at the last checkpoint)</li>
+        <li>No NaN or divergence detected</li>
+        <li>Gradient norms stable with mean 1.36 and max 4.85</li>
+    </ul>
+
+    <p>The learning rate schedule shows smooth warmup and the beginning of cosine decay. With 90% of training remaining and eval_loss still on a downward trajectory, this run may ultimately match or surpass the completed MLP run's 1.942 &mdash; though the different dataset (mol_instructions-only vs combined_sft) makes this comparison speculative.</p>
+
+    <img src="../figures/long_mlp_loss_curve.png" alt="MLP-long training and eval loss over 500 steps">
+    <p class="caption">Figure 4: MLP-long training loss and eval loss through step 500. Both curves show sustained improvement with no plateau.</p>
+
+    <img src="../figures/long_mlp_gradient_norms.png" alt="MLP-long gradient norms over 500 steps">
+    <p class="caption">Figure 5: MLP-long gradient norms. Stable throughout training with a single spike at step 80 during warmup.</p>
+
+    <img src="../figures/long_mlp_lr_schedule.png" alt="MLP-long learning rate schedule">
+    <p class="caption">Figure 6: MLP-long LR schedule showing warmup and early cosine decay (1.2e-4 peak).</p>
+
+    <h3>5. Convergence Is Rapid and Consistent</h3>
+
+    <p>All four runs reach convergence (defined as &lt;5% loss improvement over subsequent steps) by step 180&ndash;200. The MLP-long run converges at step 200 despite its lower learning rate (1.2e-4 vs 2e-4), suggesting that the warmup+cosine schedule provides adequate early adaptation.</p>
+
+    <img src="../figures/approach_convergence_comparison.png" alt="Convergence comparison across approaches">
+    <p class="caption">Figure 7: Convergence comparison. All approaches stabilize within the first 200 steps.</p>
+
+    <h2>Summary Results</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Metric</th>
+                <th>MLP (0226)</th>
+                <th>Perceiver (0225)</th>
+                <th>Text (0227)</th>
+                <th>MLP-long (0302)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Final <code>token_avg_loss</code></td>
+                <td>2.288</td>
+                <td>2.296</td>
+                <td>2.492</td>
+                <td>2.023*</td>
+            </tr>
+            <tr>
+                <td>Min <code>token_avg_loss</code></td>
+                <td>1.620</td>
+                <td>1.627</td>
+                <td>2.359</td>
+                <td>1.813*</td>
+            </tr>
+            <tr>
+                <td>Best <code>eval_loss</code></td>
+                <td><strong>1.942</strong></td>
+                <td>1.952</td>
+                <td>2.415</td>
+                <td>2.044*</td>
+            </tr>
+            <tr>
+                <td>Best eval step</td>
+                <td>1,677</td>
+                <td>1,677</td>
+                <td>2,595</td>
+                <td>500*</td>
+            </tr>
+            <tr>
+                <td>Convergence step</td>
+                <td>180</td>
+                <td>180</td>
+                <td>180</td>
+                <td>200</td>
+            </tr>
+            <tr>
+                <td>Max grad norm</td>
+                <td>6.92</td>
+                <td>11.98</td>
+                <td>4.12</td>
+                <td>4.85</td>
+            </tr>
+            <tr>
+                <td>Mean grad norm</td>
+                <td>1.23</td>
+                <td>1.26</td>
+                <td>1.93</td>
+                <td>1.36</td>
+            </tr>
+            <tr>
+                <td>Total steps</td>
+                <td>1,677</td>
+                <td>1,677</td>
+                <td>2,595</td>
+                <td>500 / 4,809</td>
+            </tr>
+            <tr>
+                <td>Training time (hours)</td>
+                <td>11.05</td>
+                <td>11.25</td>
+                <td>15.41</td>
+                <td>In progress</td>
+            </tr>
+            <tr>
+                <td>GPU mem max alloc (GB)</td>
+                <td>44.19</td>
+                <td>44.41</td>
+                <td>42.82</td>
+                <td>&mdash;</td>
+            </tr>
+        </tbody>
+    </table>
+    <p class="caption">* MLP-long values are at step 500 (10% complete); final metrics will differ.</p>
+
+    <h2>Anomalies</h2>
+
+    <p>No NaN or divergence events were detected in any of the four runs. Minor anomalies observed:</p>
+
+    <ul>
+        <li><strong>All runs</strong>: Loss spikes at steps 60&ndash;70 during warmup &mdash; expected behavior as random projector weights cause high initial loss.</li>
+        <li><strong>MLP (0226)</strong>: Additional loss spikes at steps 250 and 750; gradient spike at step 1140. None caused instability.</li>
+        <li><strong>Perceiver (0225)</strong>: Max gradient norm of 11.98 at step 70 (highest of all runs) &mdash; occurred during warmup, resolved naturally.</li>
+        <li><strong>Text (0227)</strong>: 5 gradient spikes in the 810&ndash;1160 step range, more than ESM-3 runs. Higher mean gradient norm (1.93 vs 1.23&ndash;1.36) indicates less stable optimization throughout.</li>
+    </ul>
+
+    <h2>Recommendations</h2>
+
+    <ol>
+        <li><strong>Continue MLP-long run to completion</strong>: With <code>eval_loss</code> still improving at step 500 and 90% of training remaining, this run may reveal the performance ceiling of the MLP approach on Mol-Instructions data. Monitor for overfitting as epochs progress (7 epochs total).</li>
+        <li><strong>Use MLP as the default projector</strong>: MLP and Perceiver are functionally equivalent in loss metrics, but MLP is architecturally simpler and marginally faster. Unless downstream task evaluation reveals a Perceiver advantage, MLP should remain the default.</li>
+        <li><strong>Run a fair MLP-long vs Text-long comparison</strong>: The current cross-approach comparison uses different datasets and hyperparameters for the MLP-long run. To establish a definitive comparison, run a text-only variant with identical settings (mol_instructions, lr=1.2e-4, 7 epochs).</li>
+        <li><strong>Investigate text-only gradient instability</strong>: The text approach shows 2&ndash;3x more gradient spikes and higher mean gradient norm. Consider lowering the text-only learning rate or increasing gradient clipping to reduce this instability, which may limit text-only ceiling performance.</li>
+        <li><strong>Evaluate downstream task performance</strong>: Loss metrics alone do not capture generation quality (as noted in the <a href="2026-03-02_three-way-sft-comparison.html">eval_loss paradox report</a>). Priority: run GO prediction and stability benchmarks on the completed MLP and text-only checkpoints.</li>
+    </ol>
+
+    <footer>
+        <p>
+            <a href="../index.html">Back to index</a> &nbsp;|&nbsp;
+            Data: <a href="../data/03-04/">blog/data/03-04/</a> &nbsp;|&nbsp;
+            Figures: <a href="../figures/">blog/figures/</a>
+        </p>
+        <p>Generated by the Protein LLM scientist team &mdash; 2026-03-04</p>
+    </footer>
+</body>
+</html>

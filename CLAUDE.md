@@ -5,10 +5,15 @@
 # Environment
 source /home/yeopjin/orcd/pool/init_protein_llm.sh
 
-# Data pipeline: download → prepare → train
+# Data pipeline: download → prepare → (arrow) → train
 python src/data/download.py --dataset list              # List datasets
 python src/data/download.py --dataset ipd_pdb_sample    # Download raw
 python scripts/prepare_data.py data=mol_instructions    # Preprocess
+python scripts/prepare_arrow.py \                       # Arrow (one-time, fast load)
+  --input data/processed/combined_sft_260225 \
+  --output data/processed/combined_sft_260225_arrow \
+  --sampling-temperature 0.7 --max-protein-length 1024 \
+  --exclude mol_protein_design.json
 
 # Train (approach: text | esm3)
 python scripts/train.py experiment_name=my_sft_run      # Custom experiment name
@@ -75,6 +80,7 @@ Pipeline lineage: `parent_experiment` in config chains SFT → GRPO experiments.
 - ESM-3 weights stay float32 but runs under `torch.amp.autocast("cuda", dtype=bfloat16)` for inference (halves activation memory). Sub-batched independently via `encoder_batch_size` (default 4).
 - LoRA on all linear layers (q/k/v/o + gate/up/down projections), r=8
 - Use attention pooling, NOT mean (for MLP path)
+- FSDP enabled by default (`training.fsdp.enabled: true`). Shards LLM across 8×H100 GPUs. Disable with `training.fsdp.enabled=false`.
 - TRITON_CACHE_DIR must be local (`/tmp/triton_cache_$USER`)
 - Always use Instruct model variants (e.g., Qwen3-4B-Instruct-2507)
 - Use chat template format with system prompt for training (not Alpaca ### format)
@@ -94,6 +100,7 @@ python scripts/train.py --cfg job  # Print config
 |------|---------|
 | results/ | **Experiment outputs** (one dir per experiment) |
 | configs/ | Hydra configurations |
+| scripts/prepare_arrow.py | One-time Arrow preprocessing (JSON→Arrow) |
 | scripts/ | Entry points (train, eval, inference) |
 | src/ | Core implementation |
 | src/utils/experiment.py | Lineage tracking utilities |

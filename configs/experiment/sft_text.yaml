@@ -26,6 +26,7 @@ training:
   max_tokens_per_batch: 8192
   max_batch_size: 16
   gradient_accumulation_steps: 4
+  eval_batch_size: 4
 
   freeze_lora_steps: 0
 

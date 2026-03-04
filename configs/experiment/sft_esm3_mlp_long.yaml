@@ -1,0 +1,71 @@
+# @package _global_
+
+# SFT experiment: ESM-3 + MLP Projector (Long run — 7 epochs)
+# Same as sft_esm3_mlp but trains longer with lower LR to reduce overfitting.
+# Based on sft_esm3_mlp run that showed eval_loss still decreasing at epoch 3.
+#
+# Key differences from sft_esm3_mlp:
+#   - epochs: 7 (was 3)
+#   - lr: 1.2e-4 (was 2e-4), projector_lr: 6e-4 (was 1e-3) — 5x ratio preserved
+#   - save_steps: 500 (was 250), save_total_limit: 5 (more checkpoints across longer run)
+#
+# Estimated: ~4,809 steps (~687 steps/epoch × 7), ~25h on 8xH100
+#
+# Usage: python scripts/train.py experiment=sft_esm3_mlp_long
+
+defaults:
+  - override /model: qwen3_8b
+  - override /encoder: esm3_small
+  - override /data: mol_instructions
+  - override /training: sft_lora
+
+approach: esm3
+experiment_name: sft_esm3_mlp_long_${model.name}_${now:%m%d_%H%M%S}
+
+# Force MLP projector (default, but explicit for clarity)
+encoder:
+  encoder_batch_size: 4  # ESM-3 sub-batch of 4; higher causes attention mask shape errors
+  projector:
+    type: mlp
+
+# Cap protein length to avoid ESM-3 geometric attention OOM on long seqs
+# ESM-3 geom_attn is O(L²): 1024 AA ≈ 4 GB, 2048 AA ≈ 16 GB
+# Drops 4.9% of samples (21,792 / 445,503)
+data:
+  processing:
+    max_protein_length: 1024
+
+training:
+  # Differential LR: lower than sft_esm3_mlp (2e-4/1e-3) to reduce
+  # overfitting risk over 7 epochs. 5x projector ratio preserved.
+  lr: 1.2e-4
+  projector_lr: 6e-4  # 5x base LR
+
+  # Token-budget dynamic batching: short seqs → large batch, long seqs → small batch
+  # ESM-3 encoder sub-batches independently (encoder.encoder_batch_size).
+  max_tokens_per_batch: 8192
+  max_batch_size: 20
+  gradient_accumulation_steps: 4  # effective batch ~262K tokens (8 GPUs × 4 accum × 8192)
+  eval_batch_size: 4
+
+  freeze_lora_steps: 0
+
+  epochs: 7
+  max_seq_length: 2048
+
+  # Longer run: save less frequently, but keep more checkpoints
+  save_steps: 500
+  eval_steps: 250
+  save_total_limit: 5
+
+  wandb:
+    tags:
+      - sft_lora
+      - esm3_mlp
+      - long_run
+      - fsdp
+      - mol_instructions
+      - ${model.name}
+
+evaluation:
+  name: sft

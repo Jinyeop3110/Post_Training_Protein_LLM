@@ -46,14 +46,14 @@ The system supports two encoding approaches, selected via `approach: text|esm3` 
 
 The ESM-3 path supports two projector types (`encoder.projector.type`):
 
-**MLP (default)**: AttentionPooling (32 tokens) → 2-layer MLP
-- ~20M trainable params (pooling ~9.5M + projector ~8.4M + LoRA ~2M)
+**MLP (default)**: AttentionPooling (32 tokens) → 2-layer MLP (hidden=5120)
+- ~32.5M trainable params (pooling ~9.5M + projector ~21.0M + LoRA ~2M)
 - 18.3 GB peak GPU, 34 MB checkpoint
 
 **Perceiver Resampler**: Replaces both pooling and projector in a single module
-- Self-Attention → Cross-Attention → FFN per layer (2 layers default)
-- ~132M trainable params (Perceiver ~130M + LoRA ~2M)
-- 19.4 GB peak GPU, 520 MB checkpoint, 12% slower than MLP
+- Self-Attention → Cross-Attention → FFN per layer (2 layers, latent_dim=1024)
+- ~31.4M trainable params (Perceiver ~29.4M + LoRA ~2M)
+- 19.4 GB peak GPU, 12% slower than MLP
 - Config: `encoder.projector.type=perceiver encoder.projector.perceiver_layers=2`
 
 ### Approach Config Switching
@@ -145,18 +145,19 @@ Projector dimensions are derived from config interpolation:
 LoRA Configuration:
 - Rank: r=8 (minimum r=4)
 - Alpha: 16
-- Target: k_proj, v_proj ONLY
+- Target: All linear layers (q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj)
 - Dropout: 0.05
 
 ## Training Stages
 
-### Stage 1: SFT with QLoRA
-- 4-bit quantization
+### Stage 1: SFT with LoRA
+- FSDP enabled by default (shards LLM across 8×H100 GPUs, saves ~14 GB/GPU for 8B models)
 - Train: Projector + LLM (LoRA)
 - Freeze: Protein encoder (ESM-3)
-- LR: 2e-4 (projector_lr: 2e-3 — 10x higher for projector)
+- LR: 2e-4 (projector_lr: 1e-3 — 5x higher for projector)
 - Epochs: 1-3
 - wandb project: `protein-llm-sft`
+- Disable FSDP: `training.fsdp.enabled=false`
 
 ### Stage 2: GRPO Alignment
 - Load SFT checkpoint via `parent_experiment=<sft_experiment_name>`
@@ -179,8 +180,7 @@ results/{experiment_name}/
 ├── checkpoints/
 │   └── protein_llm/       # ProteinLLM save (config, pooling, projector, adapter)
 ├── logs/
-│   ├── .hydra/            # Hydra config snapshots
-│   └── tensorboard/       # TensorBoard events
+│   └── .hydra/            # Hydra config snapshots
 └── eval/
     └── {task}_metrics.json
 ```
@@ -261,14 +261,18 @@ and pre-computed metrics (JSON with pLDDT/pTM from AlphaFold DB).
 
 ## Memory Budget (8x H100 80GB)
 
-### ESM-3 + Qwen3-4B (Default Configuration)
+### ESM-3 + Qwen3-4B (Default Configuration, FSDP)
+
+FSDP (full_shard) is enabled by default. LLM weights are sharded across all 8 GPUs.
 
 | Component | VRAM per GPU |
 |-----------|-------------|
-| ESM-3 small (1.4B, frozen) | ~6GB |
-| Qwen3-4B (4-bit) | ~3GB |
+| ESM-3 small (1.4B, frozen, replicated) | ~6GB |
+| Qwen3-4B (FSDP-sharded) | ~1GB |
 | LoRA adapters (r=8) | ~0.3GB |
 | Activations | ~20GB |
 | Gradients | ~15GB |
-| **Total** | ~45GB |
+| **Total** | ~42GB |
+
+For 8B models, FSDP saves ~14 GB/GPU (from ~16 GB → ~2 GB for sharded weights).
 

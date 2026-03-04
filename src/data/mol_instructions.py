@@ -28,7 +28,7 @@ from torch.utils.data import DataLoader, Dataset
 
 try:
     from datasets import Dataset as HFDataset
-    from datasets import load_dataset
+    from datasets import load_dataset, load_from_disk
     HAS_HF_DATASETS = True
 except ImportError:
     HAS_HF_DATASETS = False
@@ -221,15 +221,21 @@ class MolInstructionsDataset(Dataset):
         self._load_dataset()
 
     def _load_dataset(self) -> None:
-        """Load dataset from local JSON files or HuggingFace.
+        """Load dataset from Arrow, local JSON files, or HuggingFace.
 
-        First attempts to load from local JSON files (which avoids compatibility
-        issues with HuggingFace dataset loading scripts). Falls back to HuggingFace
-        ``load_dataset`` if local files are not found.
+        Attempts loading in order:
+        1. Pre-built Arrow dataset (``{cache_dir}_arrow/{split}/``) — near-instant
+        2. Local JSON files — slower, requires parsing + split creation
+        3. HuggingFace ``load_dataset`` — network download fallback
         """
         logger.info(f"Loading Mol-Instructions dataset: {self.config.subset}")
 
-        # Try loading from local JSON files first
+        # Try Arrow format first (pre-built splits, memory-mapped)
+        # Skip _filter_long_proteins(): Arrow was pre-filtered by prepare_arrow.py
+        if self._try_load_arrow():
+            return
+
+        # Try loading from local JSON files
         loaded = self._try_load_local_json()
         if loaded:
             self._filter_long_proteins()
@@ -273,30 +279,17 @@ class MolInstructionsDataset(Dataset):
         __len__ is accurate and avoids training on incomplete sequences whose
         labels were written for the full protein.
         """
+        from src.data.protein_utils import protein_sequence_length
+
         max_len = self.config.max_protein_length
         if not max_len:
             return
 
-        aa_chars = set("ACDEFGHIKLMNPQRSTVWYBXZUO")
         before = len(self.data)
 
         def _seq_len(item):
             text = item.get("input", item.get("Input", ""))
-            if not text:
-                return 0
-            cleaned = text.strip().upper()
-            if cleaned.startswith("```") and cleaned.endswith("```"):
-                cleaned = cleaned[3:-3].strip()
-            if cleaned and all(c in aa_chars for c in cleaned):
-                return len(cleaned)
-            # Fall back to longest AA-like line
-            for line in text.split("\n"):
-                line = line.strip().upper()
-                if len(line) >= 4:
-                    aa_count = sum(1 for c in line if c in aa_chars)
-                    if aa_count / len(line) > 0.9:
-                        return len(line)
-            return len(text)
+            return protein_sequence_length(text)
 
         keep_idx = [i for i in range(before) if _seq_len(self.data[i]) <= max_len]
 
@@ -307,6 +300,34 @@ class MolInstructionsDataset(Dataset):
                 f"Filtered {dropped} samples with protein > {max_len} AA "
                 f"({dropped/before*100:.1f}% dropped, {len(self.data)} remaining)"
             )
+
+    def _try_load_arrow(self) -> bool:
+        """Attempt to load a pre-built Arrow dataset from disk.
+
+        Looks for ``{cache_dir}_arrow/{split}/`` created by
+        ``scripts/prepare_arrow.py``.  Arrow datasets are memory-mapped and
+        load in seconds instead of the ~10 minutes required for JSON parsing.
+
+        Returns:
+            True if Arrow dataset was loaded successfully, False otherwise.
+        """
+        if self.config.cache_dir is None:
+            return False
+
+        arrow_dir = Path(self.config.cache_dir + "_arrow") / self.split
+        if not arrow_dir.exists():
+            return False
+
+        logger.info(f"Loading from Arrow dataset: {arrow_dir}")
+        self.data = load_from_disk(str(arrow_dir))
+
+        if self.limit and self.limit < len(self.data):
+            self.data = self.data.select(range(self.limit))
+
+        logger.info(
+            f"Loaded {len(self.data)} samples for split '{self.split}' from Arrow"
+        )
+        return True
 
     def _try_load_local_json(self) -> bool:
         """Attempt to load dataset from local JSON files.
@@ -363,6 +384,10 @@ class MolInstructionsDataset(Dataset):
             # Derive source group from filename prefix (e.g., "mol_", "sp_", "wp_")
             prefix_match = re.match(r"^([a-z]+)_", json_file.name)
             source = prefix_match.group(1) if prefix_match else "other"
+            # Inject provenance metadata into each record
+            for record in records:
+                record["__source__"] = source
+                record["__filename__"] = json_file.stem
             source_groups.setdefault(source, [])
             source_groups[source].extend(records)
             logger.info(f"  {json_file.name}: {len(records)} samples (source: {source})")
@@ -481,37 +506,9 @@ class MolInstructionsDataset(Dataset):
         - Sequences wrapped in triple backticks (```...```)
         - Short sequences (< 10 AA)
         """
-        if not input_text:
-            return ""
+        from src.data.protein_utils import extract_protein_sequence
 
-        # Standard 20 + IUPAC ambiguous codes (X=unknown, B=D/N, Z=E/Q, U=Sec, O=Pyl)
-        aa_chars = set("ACDEFGHIKLMNPQRSTVWYBXZUO")
-
-        # Strip markdown code fences that wrap sequences in many datasets
-        text = input_text.strip()
-        if text.startswith("```") and text.endswith("```"):
-            text = text[3:-3].strip()
-
-        # Check if the entire input is a protein sequence
-        cleaned = text.strip().upper()
-        if cleaned and all(c in aa_chars for c in cleaned):
-            return cleaned
-
-        # Try to extract sequence from structured input
-        # Sometimes sequences are on their own line or after a colon
-        lines = text.split('\n')
-        for line in lines:
-            line = line.strip().upper()
-            if not line or line.startswith("```"):
-                continue
-            # Accept any line that's mostly AA characters (>= 4 chars to catch short seqs)
-            if len(line) >= 4:
-                aa_count = sum(1 for c in line if c in aa_chars)
-                if aa_count / len(line) > 0.9:
-                    return line
-
-        # Return the original input if no clear sequence is found
-        return input_text.strip()
+        return extract_protein_sequence(input_text)
 
     def _format_prompt(
         self,
@@ -579,17 +576,25 @@ class MolInstructionsDataset(Dataset):
         Uses character count / 4 as a rough proxy for token count (avoids
         expensive tokenization at dataset init). Good enough for grouping
         similar-length sequences to reduce padding waste.
+
+        If the Arrow dataset has a pre-computed ``__length__`` column
+        (from ``scripts/prepare_arrow.py``), uses that directly (instant).
         """
         if not hasattr(self, "_lengths"):
-            self._lengths = []
-            for i in range(len(self.data)):
-                item = self.data[i]
-                instruction = item.get("instruction", "")
-                input_text = item.get("input", "")
-                output = item.get("output", "")
-                # ~4 chars per token is a reasonable approximation
-                approx_tokens = (len(instruction) + len(input_text) + len(output)) // 4
-                self._lengths.append(approx_tokens)
+            if "__length__" in self.data.column_names:
+                # Use Arrow's native to_pylist() for bulk column extraction
+                # (~1s for 4.89M rows vs minutes for d["col"] on NFS)
+                self._lengths = self.data.data.column("__length__").to_pylist()
+            else:
+                self._lengths = []
+                for i in range(len(self.data)):
+                    item = self.data[i]
+                    instruction = item.get("instruction", "")
+                    input_text = item.get("input", "")
+                    output = item.get("output", "")
+                    # ~4 chars per token is a reasonable approximation
+                    approx_tokens = (len(instruction) + len(input_text) + len(output)) // 4
+                    self._lengths.append(approx_tokens)
         return self._lengths
 
     def __len__(self) -> int:
@@ -638,6 +643,8 @@ class MolInstructionsDataset(Dataset):
             "inference_prompt": inference_prompt,
             "input_text": input_text,
             "metadata": item.get("metadata", {}),
+            "source": item.get("__source__", "unknown"),
+            "task_file": item.get("__filename__", "unknown"),
         }
 
         if self.transform:

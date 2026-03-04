@@ -96,8 +96,3 @@ logging:
     tags:
       - go_prediction
       - evaluation
-
-  # TensorBoard logging
-  tensorboard:
-    enabled: false
-    log_dir: ./runs/go_prediction

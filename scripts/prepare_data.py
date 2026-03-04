@@ -61,6 +61,10 @@ def main(cfg: DictConfig) -> None:
         from src.data.protein2text_qa_converter import prepare_protein2text_qa
         stats = prepare_protein2text_qa(raw_dir, processed_dir, cfg)
         log.info(f"Protein2Text-QA conversion stats: {stats}")
+    elif data_name == "proteinlm_bench":
+        from src.data.download import download_proteinlm_bench
+        download_proteinlm_bench(str(raw_dir.parent.parent))
+        log.info(f"ProteinLMBench downloaded to: {raw_dir}")
     elif data_name in ("combined_sft_260225",):
         from src.data.assemble_combined import assemble_combined
         stats = assemble_combined(

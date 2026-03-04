@@ -1,0 +1,21 @@
+# Qwen3.5-4B: Hybrid architecture (Gated DeltaNet + Gated Attention)
+# Natively multimodal with 262K context, Apache 2.0 license
+# Same hidden_size as Qwen3-4B (2560) — projector dims unchanged
+# REQUIRES: transformers >= 5.0.0 (model_type: qwen3_5)
+name: qwen3_5_4b
+path: Qwen/Qwen3.5-4B
+type: causal_lm
+
+architecture:
+  hidden_size: 2560
+  num_attention_heads: 16
+  num_key_value_heads: 4
+  num_layers: 32
+  vocab_size: 248320
+  intermediate_size: 9216
+
+generation:
+  max_new_tokens: 512
+  temperature: 0.7
+  top_p: 0.9
+  do_sample: true

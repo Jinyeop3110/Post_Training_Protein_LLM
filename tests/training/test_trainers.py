@@ -344,10 +344,10 @@ class TestRunSFTFunctions:
         from src.training.sft_trainer import run_sft_lora
         assert run_sft_lora is not None
 
-    def test_run_sft_with_trl_import(self):
-        """Test run_sft_with_trl can be imported."""
-        from src.training.sft_trainer import run_sft_with_trl
-        assert run_sft_with_trl is not None
+    def test_run_sft_import(self):
+        """Test run_sft can be imported."""
+        from src.training.sft_trainer import run_sft
+        assert run_sft is not None
 
 
 class TestTrainingConfigLoading:

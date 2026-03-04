@@ -140,10 +140,20 @@ def main(cfg: DictConfig) -> None:
 
         results = evaluate_stability(cfg, checkpoint_path, model=model, output_dir=eval_dir_str)
 
+    elif eval_name == "proteinlm_bench":
+        from src.evaluation.proteinlm_bench import evaluate_proteinlm_bench
+
+        results = evaluate_proteinlm_bench(cfg, checkpoint_path, model=model, output_dir=eval_dir_str)
+
     elif eval_name == "sft":
         from src.evaluation.sft_eval import evaluate_sft
 
         results = evaluate_sft(cfg, checkpoint_path, model=model, output_dir=eval_dir_str)
+
+    elif eval_name == "sft_combined":
+        from src.evaluation.sft_eval_combined import evaluate_sft_combined
+
+        results = evaluate_sft_combined(cfg, checkpoint_path, model=model, output_dir=eval_dir_str)
 
     elif eval_name == "all":
         from src.evaluation.benchmarks import run_all_benchmarks

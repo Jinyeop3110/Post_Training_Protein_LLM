@@ -1,5 +1,7 @@
 # Post-Training Protein LLM: Improvement Plan
 
+> **Note (2026-03-02)**: Agent names consolidated from 5 roles (experiment-runner, research, code-reviewer, test-writer, + doc-tracker) to 3 (engineer, qa, researcher). See `SWE_AGENT_TEAM.md` for current structure. Historical references below are preserved as-is.
+
 **Date**: 2026-02-16
 **Objective**: Restructure project for optimal Claude Code integration and LLM post-training workflows
 

@@ -70,10 +70,10 @@ from src.models.protein_encoder import (
 logger = logging.getLogger(__name__)
 
 # Valid approach identifiers
-VALID_APPROACHES = ("text", "esm3")
+VALID_APPROACHES = ("text", "esm3", "flamingo")
 
 # Approaches that use an embedding encoder (require pooling + projector)
-EMBEDDING_APPROACHES = ("esm3",)
+EMBEDDING_APPROACHES = ("esm3", "flamingo")
 
 # Special tokens for inline protein embeddings (ESM-3 approach).
 # In the prompt, the protein sequence text is replaced with
@@ -192,6 +192,15 @@ class ProteinLLM(nn.Module):
         load_encoder: bool = True,
         encoder_dtype: str = "bfloat16",
         encoder_batch_size: int = 4,
+        # Flamingo-specific parameters
+        xattn_every: int = 4,
+        xattn_dim_head: int = 64,
+        xattn_heads: int = 8,
+        xattn_ff_mult: int = 4,
+        flamingo_num_queries: int = 64,
+        flamingo_perceiver_layers: int = 6,
+        flamingo_ff_mult: int = 4,
+        flamingo_max_seq_len: int = 2048,
     ) -> None:
         super().__init__()
 
@@ -224,6 +233,18 @@ class ProteinLLM(nn.Module):
         self.encoder_dtype = encoder_dtype
         self.encoder_batch_size = encoder_batch_size
 
+        # Flamingo-specific config
+        self.xattn_every = xattn_every
+        self.xattn_dim_head = xattn_dim_head
+        self.xattn_heads = xattn_heads
+        self.xattn_ff_mult = xattn_ff_mult
+        self.flamingo_num_queries = flamingo_num_queries
+        self.flamingo_perceiver_layers = flamingo_perceiver_layers
+        self.flamingo_ff_mult = flamingo_ff_mult
+        self.flamingo_max_seq_len = flamingo_max_seq_len
+        self.gated_xattn_blocks: Optional[nn.ModuleList] = None
+        self._flamingo_wrapped_layers: Optional[list] = None
+
         # Determine device (DDP-aware: use LOCAL_RANK for correct GPU)
         if device is None:
             if torch.cuda.is_available():
@@ -252,6 +273,12 @@ class ProteinLLM(nn.Module):
         if self.approach == "text":
             self.encoder = TextProteinEncoder()
             logger.info("Text approach: no embedding encoder, pooling, or projector needed")
+        elif self.approach == "flamingo":
+            if load_encoder:
+                self._load_encoder()
+            # Flamingo: no separate pooling — FlamingoPerceiverResampler handles it
+            # Gated XATTN injection happens after LLM is loaded
+            logger.info("Flamingo approach: encoder loaded, XATTN injection deferred to after LLM load")
         elif load_encoder and self.approach in EMBEDDING_APPROACHES:
             self._load_encoder()
             # Only build separate pooling for MLP path
@@ -278,7 +305,7 @@ class ProteinLLM(nn.Module):
             logger.info("Text approach: skipping encoder loading")
             return
 
-        if self.approach == "esm3":
+        if self.approach in ("esm3", "flamingo"):
             logger.info(f"Loading ESM-3 encoder: {self.encoder_name}")
             self.encoder = ESM3ProteinEncoder(
                 model_name=self.encoder_name,
@@ -341,10 +368,10 @@ class ProteinLLM(nn.Module):
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
 
-        # Add protein special tokens for embedding approaches (idempotent —
-        # add_special_tokens returns 0 if tokens already exist, e.g. when
-        # loading from a saved tokenizer that already has them).
-        if self.approach in EMBEDDING_APPROACHES:
+        # Add protein special tokens for embedding approaches that use inline
+        # placeholders (esm3 only — flamingo doesn't need embed placeholders).
+        # Idempotent: add_special_tokens returns 0 if tokens already exist.
+        if self.approach in ("esm3",):
             num_added = self.tokenizer.add_special_tokens(
                 {"additional_special_tokens": PROTEIN_SPECIAL_TOKENS}
             )
@@ -423,8 +450,11 @@ class ProteinLLM(nn.Module):
         logger.info(f"LLM hidden size: {self.llm_hidden_size}")
 
     def _build_projector(self) -> None:
-        """Build the projector module (MLP or Perceiver Resampler)."""
-        if self.projector_type == "perceiver":
+        """Build the projector module (MLP, Perceiver Resampler, or Flamingo)."""
+        if self.projector_type == "flamingo":
+            self._build_flamingo_components()
+            return
+        elif self.projector_type == "perceiver":
             from src.models.perceiver import PerceiverResampler
 
             latent_str = f", latent_dim={self.perceiver_latent_dim}" if self.perceiver_latent_dim else ""
@@ -456,6 +486,80 @@ class ProteinLLM(nn.Module):
                 activation="gelu",
                 dropout=self.projector_dropout,
             ).to(self.device)
+
+    def _build_flamingo_components(self) -> None:
+        """Build Flamingo-specific components: perceiver + gated XATTN blocks.
+
+        Creates:
+          1. FlamingoPerceiverResampler as self.projector
+          2. GatedCrossAttentionBlocks injected into LLM decoder layers
+        """
+        from src.models.flamingo_perceiver import FlamingoPerceiverResampler
+        from src.models.gated_cross_attention import (
+            GatedCrossAttentionBlock,
+            inject_cross_attention_layers,
+        )
+
+        # Build FlamingoPerceiverResampler
+        latent_dim = self.perceiver_latent_dim
+        logger.info(
+            f"Building Flamingo Perceiver Resampler: {self.encoder_embed_dim} -> "
+            f"{self.llm_hidden_size} ({self.flamingo_perceiver_layers} layers, "
+            f"{self.flamingo_num_queries} queries, latent_dim={latent_dim})"
+        )
+        self.projector = FlamingoPerceiverResampler(
+            encoder_dim=self.encoder_embed_dim,
+            output_dim=self.llm_hidden_size,
+            latent_dim=latent_dim,
+            num_queries=self.flamingo_num_queries,
+            num_layers=self.flamingo_perceiver_layers,
+            max_seq_len=self.flamingo_max_seq_len,
+            num_heads=self.perceiver_heads,
+            dim_head=self.xattn_dim_head,
+            ff_mult=self.flamingo_ff_mult,
+        ).to(self.device)
+
+        # Determine number of LLM layers for XATTN injection
+        base_model = self.llm
+        if hasattr(self.llm, "get_base_model"):
+            base_model = self.llm.get_base_model()
+
+        num_llm_layers = len(base_model.model.layers)
+        num_xattn = len(range(self.xattn_every - 1, num_llm_layers, self.xattn_every))
+
+        logger.info(
+            f"Building {num_xattn} Gated Cross-Attention blocks "
+            f"(every {self.xattn_every}th of {num_llm_layers} layers)"
+        )
+
+        # Build gated XATTN blocks
+        self.gated_xattn_blocks = nn.ModuleList([
+            GatedCrossAttentionBlock(
+                dim=self.llm_hidden_size,
+                dim_visual=self.llm_hidden_size,  # Perceiver output matches LLM dim
+                dim_head=self.xattn_dim_head,
+                heads=self.xattn_heads,
+                ff_mult=self.xattn_ff_mult,
+            )
+            for _ in range(num_xattn)
+        ])
+
+        # Move to device
+        self.gated_xattn_blocks = self.gated_xattn_blocks.to(self.device)
+
+        # Inject into LLM decoder layers
+        self._flamingo_wrapped_layers = inject_cross_attention_layers(
+            self.llm, self.gated_xattn_blocks, xattn_every=self.xattn_every,
+        )
+
+        # Log parameter counts
+        perceiver_params = sum(p.numel() for p in self.projector.parameters())
+        xattn_params = sum(p.numel() for p in self.gated_xattn_blocks.parameters())
+        logger.info(
+            f"Flamingo components: perceiver={perceiver_params:,} params, "
+            f"xattn={xattn_params:,} params, "
+            f"total={perceiver_params + xattn_params:,} params"
+        )
 
     def encode_protein(
         self,
@@ -566,7 +670,14 @@ class ProteinLLM(nn.Module):
         num_protein_tokens = protein_embeds.shape[1]
 
         # Get text embeddings from LLM [B, T, D]
-        if hasattr(self.llm, "get_base_model"):
+        # FSDP: embed_tokens weights are sharded; use cached copy instead.
+        # The cache is set by sft_trainer before FSDP wrapping and is valid
+        # because embed_tokens is not a LoRA target (weights don't change).
+        if hasattr(self, "_fsdp_embed_cache") and self._fsdp_embed_cache is not None:
+            text_embeds = torch.nn.functional.embedding(
+                text_input_ids, self._fsdp_embed_cache
+            )
+        elif hasattr(self.llm, "get_base_model"):
             base_model = self.llm.get_base_model()
             text_embeds = base_model.model.embed_tokens(text_input_ids)
         else:
@@ -652,6 +763,76 @@ class ProteinLLM(nn.Module):
 
         return result
 
+    def forward_flamingo(
+        self,
+        protein_sequences: List[str],
+        input_ids: torch.Tensor,
+        attention_mask: torch.Tensor,
+        labels: Optional[torch.Tensor] = None,
+        **kwargs,
+    ) -> Dict[str, torch.Tensor]:
+        """Flamingo forward pass: protein features via cross-attention, not prefix.
+
+        1. Encode protein via FlamingoPerceiverResampler
+        2. Set protein features on all wrapped decoder layers
+        3. Standard LLM forward with text-only input
+        4. Clear protein features
+
+        Args:
+            protein_sequences: List of protein sequences.
+            input_ids: Text input token IDs [B, T].
+            attention_mask: Text attention mask [B, T].
+            labels: Labels for language modeling loss [B, T].
+
+        Returns:
+            Dictionary with loss and logits.
+        """
+        from src.models.gated_cross_attention import (
+            clear_protein_features,
+            set_protein_features,
+        )
+
+        # 1. Encode protein via FlamingoPerceiverResampler
+        protein_features = self.encode_protein(protein_sequences)  # [B, 64, dim]
+
+        # 2. Set protein features on all wrapped decoder layers
+        set_protein_features(self.llm, protein_features)
+
+        try:
+            # 3. Standard LLM forward with text-only input
+            fwd_labels = labels
+            if not torch.is_grad_enabled() and fwd_labels is not None:
+                # Eval mode: chunked CE to save memory
+                outputs = self.llm(
+                    input_ids=input_ids,
+                    attention_mask=attention_mask,
+                    **kwargs,
+                )
+                logits = outputs.logits
+                shift_logits = logits[..., :-1, :].contiguous()
+                shift_labels = fwd_labels[..., 1:].contiguous()
+                loss = torch.nn.functional.cross_entropy(
+                    shift_logits.view(-1, shift_logits.size(-1)),
+                    shift_labels.view(-1),
+                    ignore_index=-100,
+                )
+            else:
+                outputs = self.llm(
+                    input_ids=input_ids,
+                    attention_mask=attention_mask,
+                    labels=fwd_labels,
+                    **kwargs,
+                )
+                loss = outputs.loss if hasattr(outputs, "loss") else None
+        finally:
+            # 4. Always clear protein features after forward
+            clear_protein_features(self.llm)
+
+        return {
+            "loss": loss,
+            "logits": outputs.logits,
+        }
+
     def forward(
         self,
         protein_sequences: List[str],
@@ -675,7 +856,13 @@ class ProteinLLM(nn.Module):
                 - loss: Language modeling loss (if labels provided)
                 - logits: Output logits [B, N + T, vocab_size]
         """
-        # Prepare combined inputs
+        # Flamingo approach: protein info via cross-attention, not prefix
+        if self.approach == "flamingo":
+            return self.forward_flamingo(
+                protein_sequences, input_ids, attention_mask, labels, **kwargs
+            )
+
+        # Prepare combined inputs (esm3/text approaches)
         prepared = self.prepare_inputs(
             protein_sequences=protein_sequences,
             text_input_ids=input_ids,
@@ -770,16 +957,68 @@ class ProteinLLM(nn.Module):
             truncation=True,
         ).to(self.device)
 
-        # Prepare combined inputs
+        # Flamingo approach: set protein features via cross-attention, then generate
+        if self.approach == "flamingo":
+            from src.models.gated_cross_attention import (
+                clear_protein_features,
+                set_protein_features,
+            )
+
+            protein_features = self.encode_protein(protein_sequences)
+            set_protein_features(self.llm, protein_features)
+
+            try:
+                # Disable torch.compile for generation — compiled graph
+                # can't handle autoregressive decoding's dynamic shapes.
+                # torch.compiler.disable suppresses dynamo even inside
+                # FSDP(OptimizedModule(model)) where _orig_mod unwrapping
+                # doesn't reach.
+                _generate = torch.compiler.disable(
+                    self.llm.generate, recursive=True
+                )
+                input_length = text_inputs["input_ids"].shape[1]
+                outputs = _generate(
+                    input_ids=text_inputs["input_ids"],
+                    attention_mask=text_inputs["attention_mask"],
+                    max_new_tokens=max_new_tokens,
+                    temperature=temperature,
+                    top_p=top_p,
+                    do_sample=do_sample,
+                    pad_token_id=self.tokenizer.pad_token_id,
+                    eos_token_id=self.tokenizer.eos_token_id,
+                    **generate_kwargs,
+                )
+            finally:
+                clear_protein_features(self.llm)
+
+            # Slice off input tokens
+            generated_tokens = outputs[:, input_length:]
+            generated_texts = self.tokenizer.batch_decode(
+                generated_tokens, skip_special_tokens=True,
+            )
+            if return_token_ids:
+                return generated_texts, generated_tokens, input_length
+            return generated_texts
+
+        # ESM-3/text approaches: prepare combined inputs with prefix embeddings
         prepared = self.prepare_inputs(
             protein_sequences=protein_sequences,
             text_input_ids=text_inputs["input_ids"],
             text_attention_mask=text_inputs["attention_mask"],
         )
 
+        # Disable torch.compile for generation — compiled graph can't
+        # handle autoregressive decoding's dynamic shapes.
+        # torch.compiler.disable suppresses dynamo even inside
+        # FSDP(OptimizedModule(model)) where _orig_mod unwrapping
+        # doesn't reach.
+        _generate = torch.compiler.disable(
+            self.llm.generate, recursive=True
+        )
+
         # Generate
         input_length = prepared["inputs_embeds"].shape[1]
-        outputs = self.llm.generate(
+        outputs = _generate(
             inputs_embeds=prepared["inputs_embeds"],
             attention_mask=prepared["attention_mask"],
             max_new_tokens=max_new_tokens,
@@ -870,6 +1109,9 @@ class ProteinLLM(nn.Module):
         lora_cfg = training_cfg.get("lora", {})
         quantization_cfg = training_cfg.get("quantization", {})
 
+        # Extract flamingo config
+        flamingo_cfg = encoder_cfg.get("flamingo", {})
+
         # Extract approach from top-level config (default to DEFAULT_APPROACH)
         approach = cfg.get("approach", cls.DEFAULT_APPROACH)
 
@@ -897,6 +1139,15 @@ class ProteinLLM(nn.Module):
             lora_alpha=lora_cfg.get("alpha", cls.DEFAULT_LORA_ALPHA),
             lora_dropout=lora_cfg.get("dropout", cls.DEFAULT_LORA_DROPOUT),
             lora_target_modules=lora_cfg.get("target_modules", cls.DEFAULT_LORA_TARGET_MODULES),
+            # Flamingo-specific
+            xattn_every=flamingo_cfg.get("xattn_every", 4),
+            xattn_dim_head=flamingo_cfg.get("xattn_dim_head", 64),
+            xattn_heads=flamingo_cfg.get("xattn_heads", 8),
+            xattn_ff_mult=flamingo_cfg.get("xattn_ff_mult", 4),
+            flamingo_num_queries=projector_cfg.get("num_queries", 64),
+            flamingo_perceiver_layers=projector_cfg.get("perceiver_layers", 6),
+            flamingo_ff_mult=projector_cfg.get("ff_mult", 4),
+            flamingo_max_seq_len=projector_cfg.get("max_seq_len", 2048),
         )
 
     def save_pretrained(self, path: Union[str, Path]) -> None:
@@ -945,9 +1196,18 @@ class ProteinLLM(nn.Module):
             "vocab_size": len(self.tokenizer) if self.tokenizer else None,
             "protein_special_tokens": (
                 PROTEIN_SPECIAL_TOKENS
-                if self.approach in EMBEDDING_APPROACHES
+                if self.approach in ("esm3",)
                 else None
             ),
+            # Flamingo-specific config
+            "xattn_every": self.xattn_every,
+            "xattn_dim_head": self.xattn_dim_head,
+            "xattn_heads": self.xattn_heads,
+            "xattn_ff_mult": self.xattn_ff_mult,
+            "flamingo_num_queries": self.flamingo_num_queries,
+            "flamingo_perceiver_layers": self.flamingo_perceiver_layers,
+            "flamingo_ff_mult": self.flamingo_ff_mult,
+            "flamingo_max_seq_len": self.flamingo_max_seq_len,
         }
 
         with open(path / "config.json", "w") as f:
@@ -967,10 +1227,24 @@ class ProteinLLM(nn.Module):
         if self.projector is not None:
             torch.save(self.projector.state_dict(), path / "projector.pt")
 
-        # Save LoRA adapter weights (works for both LoRA and QLoRA)
+        # Save gated cross-attention weights (flamingo approach)
+        if self.gated_xattn_blocks is not None:
+            torch.save(self.gated_xattn_blocks.state_dict(), path / "xattn.pt")
+            logger.info(f"Saved {len(self.gated_xattn_blocks)} gated XATTN blocks")
+
+        # Save LoRA adapter weights (works for both LoRA and QLoRA).
+        # Skip when the model is FSDP-wrapped or torch.compiled — those
+        # wrappers need all-rank collective ops that hang in single-rank
+        # save.  The caller (SFTTrainer.save_checkpoint) copies adapter
+        # files from the HF Trainer checkpoint instead.
         if self.llm is not None and hasattr(self.llm, "save_pretrained"):
-            adapter_path = path / "adapter"
-            self.llm.save_pretrained(adapter_path)
+            llm_class = type(self.llm).__name__
+            is_wrapped = llm_class in (
+                "FullyShardedDataParallel", "OptimizedModule",
+            )
+            if not is_wrapped:
+                adapter_path = path / "adapter"
+                self.llm.save_pretrained(adapter_path)
 
         logger.info(f"Model saved to {path}")
 
@@ -1046,6 +1320,15 @@ class ProteinLLM(nn.Module):
             device=device,
             load_llm=False,  # Deferred — load with tokenizer_path below
             load_encoder=load_encoder,
+            # Flamingo-specific
+            xattn_every=config.get("xattn_every", 4),
+            xattn_dim_head=config.get("xattn_dim_head", 64),
+            xattn_heads=config.get("xattn_heads", 8),
+            xattn_ff_mult=config.get("xattn_ff_mult", 4),
+            flamingo_num_queries=config.get("flamingo_num_queries", 64),
+            flamingo_perceiver_layers=config.get("flamingo_perceiver_layers", 6),
+            flamingo_ff_mult=config.get("flamingo_ff_mult", 4),
+            flamingo_max_seq_len=config.get("flamingo_max_seq_len", 2048),
         )
 
         # Load LLM with the saved tokenizer (ensures correct vocab size
@@ -1063,12 +1346,20 @@ class ProteinLLM(nn.Module):
                 torch.load(pooling_path, map_location=model.device, weights_only=True)
             )
 
-        # Load projector weights
+        # Load projector weights (perceiver or flamingo perceiver)
         projector_path = path / "projector.pt"
         if projector_path.exists() and model.projector is not None:
             model.projector.load_state_dict(
                 torch.load(projector_path, map_location=model.device, weights_only=True)
             )
+
+        # Load gated cross-attention weights (flamingo approach)
+        xattn_path = path / "xattn.pt"
+        if xattn_path.exists() and model.gated_xattn_blocks is not None:
+            model.gated_xattn_blocks.load_state_dict(
+                torch.load(xattn_path, map_location=model.device, weights_only=True)
+            )
+            logger.info(f"Loaded gated XATTN blocks from {xattn_path}")
 
         # Load LoRA adapter weights (works for both LoRA and QLoRA)
         adapter_path = path / "adapter"
@@ -1111,6 +1402,10 @@ class ProteinLLM(nn.Module):
         if self.projector is not None:
             total, trainable = count_params(self.projector)
             result["projector"] = {"total": total, "trainable": trainable}
+
+        if self.gated_xattn_blocks is not None:
+            total, trainable = count_params(self.gated_xattn_blocks)
+            result["gated_xattn"] = {"total": total, "trainable": trainable}
 
         if self.llm is not None:
             total, trainable = count_params(self.llm)

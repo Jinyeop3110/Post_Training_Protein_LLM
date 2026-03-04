@@ -91,10 +91,6 @@ logging:
     project: protein-llm-evaluation
     entity: null
 
-  tensorboard:
-    enabled: false
-    log_dir: ./runs/stability_evaluation
-
 # Demo dataset info (used when no dataset path is provided)
 # Contains mutations from well-characterized proteins:
 #

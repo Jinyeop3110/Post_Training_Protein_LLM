@@ -1,14 +1,14 @@
 """
 SFT Trainer Implementation
 
-This module provides Supervised Fine-Tuning (SFT) functionality using TRL's SFTTrainer
-with QLoRA/LoRA for efficient training of the multimodal ProteinLLM.
+This module provides Supervised Fine-Tuning (SFT) functionality using
+QLoRA/LoRA for efficient training of the multimodal ProteinLLM.
 
 Main components:
-- get_qlora_config: Extract LoRA configuration from Hydra config
-- run_sft_qlora: Run SFT training with QLoRA (4-bit quantization)
-- run_sft_lora: Run SFT training with LoRA (no quantization)
-- SFTTrainerWrapper: Wrapper class for training with custom ProteinLLM forward pass
+- SFTTrainer: High-level trainer class that orchestrates setup and training
+- ProteinLLMTrainer: Custom HF Trainer for multimodal forward pass
+- run_sft: Unified entry point for SFT training
+- run_sft_qlora / run_sft_lora: Backward-compatible aliases for run_sft
 """
 
 import json
@@ -16,7 +16,7 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import torch
 import torch.nn as nn
@@ -26,16 +26,10 @@ try:
     from transformers import (
         AutoModelForCausalLM,
         AutoTokenizer,
-        BitsAndBytesConfig,
-        PreTrainedModel,
         PreTrainedTokenizer,
         Trainer,
-        TrainerCallback,
-        TrainerControl,
-        TrainerState,
         TrainingArguments,
     )
-    from transformers.trainer_utils import EvalPrediction
     HAS_TRANSFORMERS = True
 except ImportError:
     HAS_TRANSFORMERS = False
@@ -44,20 +38,12 @@ try:
     from peft import (
         LoraConfig,
         PeftModel,
-        TaskType,
         get_peft_model,
         prepare_model_for_kbit_training,
     )
     HAS_PEFT = True
 except ImportError:
     HAS_PEFT = False
-
-try:
-    from trl import SFTConfig
-    from trl import SFTTrainer as TRLSFTTrainer
-    HAS_TRL = True
-except ImportError:
-    HAS_TRL = False
 
 try:
     import wandb
@@ -68,690 +54,22 @@ except ImportError:
 
 log = logging.getLogger(__name__)
 
-
-def get_qlora_config(cfg: DictConfig) -> LoraConfig:
-    """Get QLoRA/LoRA configuration from Hydra config.
-
-    Args:
-        cfg: Hydra configuration containing training.lora settings.
-
-    Returns:
-        LoraConfig object for PEFT.
-
-    Raises:
-        ImportError: If PEFT is not installed.
-    """
-    if not HAS_PEFT:
-        raise ImportError("PEFT is required for LoRA. Install with: pip install peft")
-
-    lora_cfg = cfg.training.lora if hasattr(cfg.training, "lora") else cfg.training.get("lora", {})
-
-    # Handle OmegaConf objects
-    if hasattr(lora_cfg, "get"):
-        r = lora_cfg.get("r", 8)
-        alpha = lora_cfg.get("alpha", 16)
-        dropout = lora_cfg.get("dropout", 0.05)
-        target_modules = list(lora_cfg.get("target_modules", [
-            "q_proj", "k_proj", "v_proj", "o_proj",
-            "gate_proj", "up_proj", "down_proj",
-        ]))
-        bias = lora_cfg.get("bias", "none")
-        task_type_str = lora_cfg.get("task_type", "CAUSAL_LM")
-    else:
-        r = getattr(lora_cfg, "r", 8)
-        alpha = getattr(lora_cfg, "alpha", 16)
-        dropout = getattr(lora_cfg, "dropout", 0.05)
-        target_modules = list(getattr(lora_cfg, "target_modules", [
-            "q_proj", "k_proj", "v_proj", "o_proj",
-            "gate_proj", "up_proj", "down_proj",
-        ]))
-        bias = getattr(lora_cfg, "bias", "none")
-        task_type_str = getattr(lora_cfg, "task_type", "CAUSAL_LM")
-
-    # Map task type string to TaskType enum
-    task_type_map = {
-        "CAUSAL_LM": TaskType.CAUSAL_LM,
-        "SEQ_2_SEQ_LM": TaskType.SEQ_2_SEQ_LM,
-        "SEQ_CLS": TaskType.SEQ_CLS,
-        "TOKEN_CLS": TaskType.TOKEN_CLS,
-    }
-    task_type = task_type_map.get(task_type_str, TaskType.CAUSAL_LM)
-
-    return LoraConfig(
-        r=r,
-        lora_alpha=alpha,
-        lora_dropout=dropout,
-        target_modules=target_modules,
-        bias=bias,
-        task_type=task_type,
-    )
-
-
-def get_quantization_config(cfg: DictConfig) -> Optional[BitsAndBytesConfig]:
-    """Get quantization configuration from Hydra config.
-
-    Args:
-        cfg: Hydra configuration containing training.quantization settings.
-
-    Returns:
-        BitsAndBytesConfig for 4-bit quantization or None if disabled.
-    """
-    quant_cfg = cfg.training.get("quantization", {})
-
-    if not quant_cfg.get("enabled", True):
-        return None
-
-    bits = quant_cfg.get("bits", 4)
-    compute_dtype_str = quant_cfg.get("bnb_4bit_compute_dtype", "bfloat16")
-    quant_type = quant_cfg.get("bnb_4bit_quant_type", "nf4")
-    double_quant = quant_cfg.get("bnb_4bit_use_double_quant", True)
-
-    # Map dtype string to torch dtype
-    dtype_map = {
-        "bfloat16": torch.bfloat16,
-        "float16": torch.float16,
-        "float32": torch.float32,
-    }
-    compute_dtype = dtype_map.get(compute_dtype_str, torch.bfloat16)
-
-    if bits == 4:
-        return BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_compute_dtype=compute_dtype,
-            bnb_4bit_quant_type=quant_type,
-            bnb_4bit_use_double_quant=double_quant,
-        )
-    elif bits == 8:
-        return BitsAndBytesConfig(load_in_8bit=True)
-    else:
-        raise ValueError(f"Unsupported quantization bits: {bits}. Use 4 or 8.")
-
-
-def get_training_arguments(cfg: DictConfig) -> TrainingArguments:
-    """Create TrainingArguments from Hydra config.
-
-    Args:
-        cfg: Hydra configuration.
-
-    Returns:
-        TrainingArguments for HuggingFace Trainer.
-    """
-    training_cfg = cfg.training
-    paths_cfg = cfg.get("paths", {})
-    logging_cfg = cfg.get("logging", {})
-
-    # Get output directory
-    output_dir = paths_cfg.get("checkpoint_dir", "./checkpoints")
-    log_dir = paths_cfg.get("log_dir", "./logs")
-
-    # Determine reporting backends
-    report_to = []
-    if logging_cfg.get("wandb", {}).get("enabled", False) and HAS_WANDB:
-        report_to.append("wandb")
-    if logging_cfg.get("tensorboard", {}).get("enabled", False):
-        report_to.append("tensorboard")
-    if not report_to:
-        report_to = ["none"]
-
-    # Get optimizer type
-    optimizer_cfg = training_cfg.get("optimizer", {})
-    optim_type = optimizer_cfg.get("type", "adamw_torch")
-
-    # Map optimizer names
-    optim_map = {
-        "adamw_8bit": "adamw_bnb_8bit",
-        "adamw": "adamw_torch",
-        "adam": "adam",
-        "sgd": "sgd",
-        "adafactor": "adafactor",
-    }
-    optim = optim_map.get(optim_type, optim_type)
-
-    # Get learning rate scheduler
-    lr_scheduler_cfg = training_cfg.get("lr_scheduler", {})
-    lr_scheduler_type = lr_scheduler_cfg.get("type", "cosine")
-    warmup_steps = lr_scheduler_cfg.get("num_warmup_steps", 0)
-
-    return TrainingArguments(
-        output_dir=output_dir,
-        num_train_epochs=training_cfg.get("epochs", 3),
-        per_device_train_batch_size=training_cfg.get("batch_size", 8),
-        per_device_eval_batch_size=training_cfg.get("eval_batch_size", 16),
-        gradient_accumulation_steps=training_cfg.get("gradient_accumulation_steps", 4),
-        learning_rate=training_cfg.get("lr", 2e-4),
-        weight_decay=training_cfg.get("weight_decay", 0.01),
-        max_grad_norm=training_cfg.get("max_grad_norm", 1.0),
-        warmup_ratio=training_cfg.get("warmup_ratio", 0.03),
-        warmup_steps=warmup_steps,
-        lr_scheduler_type=lr_scheduler_type,
-        optim=optim,
-        logging_dir=log_dir,
-        logging_steps=training_cfg.get("logging_steps", 10),
-        eval_strategy="steps" if training_cfg.get("eval_steps") else "epoch",
-        eval_steps=training_cfg.get("eval_steps", 100),
-        save_strategy=training_cfg.get("save_strategy", "steps"),
-        save_steps=training_cfg.get("save_steps", 500),
-        save_total_limit=training_cfg.get("save_total_limit", 3),
-        bf16=cfg.get("hardware", {}).get("precision", "bf16") == "bf16",
-        fp16=cfg.get("hardware", {}).get("precision", "bf16") == "fp16",
-        report_to=report_to,
-        dataloader_num_workers=4,
-        dataloader_persistent_workers=True,  # Reuse workers across epochs (skip fork overhead)
-        dataloader_prefetch_factor=4,  # Prefetch 4 batches per worker (default=2)
-        remove_unused_columns=False,  # Important for custom collator
-        group_by_length=True,  # Groups similar-length sequences to reduce padding waste
-        ddp_find_unused_parameters=False,
-        gradient_checkpointing=True,
-        gradient_checkpointing_kwargs={"use_reentrant": False},
-        dataloader_drop_last=True,  # Prevent DDP hang on uneven last batch
-        torch_compile=True,  # Compile LLM into fused CUDA kernels (~10-20% speedup)
-        bf16_full_eval=True,  # Run eval in bf16 for speed
-    )
-
-
-class ProteinLLMDataCollator:
-    """
-    Custom data collator for ProteinLLM training.
-
-    Handles tokenization while preserving protein sequences for the
-    multimodal forward pass.
-    """
-
-    def __init__(
-        self,
-        tokenizer: PreTrainedTokenizer,
-        max_length: int = 2048,
-        padding: str = "longest",
-        label_pad_token_id: int = -100,
-    ):
-        """
-        Initialize the collator.
-
-        Args:
-            tokenizer: HuggingFace tokenizer.
-            max_length: Maximum sequence length.
-            padding: Padding strategy.
-            label_pad_token_id: Token ID for padding labels.
-        """
-        self.tokenizer = tokenizer
-        self.max_length = max_length
-        self.padding = padding
-        self.label_pad_token_id = label_pad_token_id
-
-        # Ensure tokenizer has pad token
-        if self.tokenizer.pad_token is None:
-            self.tokenizer.pad_token = self.tokenizer.eos_token
-
-    def __call__(self, batch: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """
-        Collate a batch of samples.
-
-        Masks labels so the loss is only computed on response tokens
-        (everything after "### Response:\\n"). Instruction and input
-        tokens are set to -100 in labels.
-
-        Args:
-            batch: List of samples from MolInstructionsDataset.
-
-        Returns:
-            Dict containing tokenized inputs and protein sequences.
-        """
-        # Extract formatted prompts and protein sequences
-        prompts = [item["formatted_prompt"] for item in batch]
-        protein_sequences = [item["protein_sequence"] for item in batch]
-
-        # Tokenize the inference prompt (instruction + input, no response)
-        # to determine where the response starts
-        inference_prompts = [item["inference_prompt"] for item in batch]
-
-        # Tokenize full prompts
-        encoded = self.tokenizer(
-            prompts,
-            max_length=self.max_length,
-            padding=self.padding,
-            truncation=True,
-            return_tensors="pt",
-        )
-
-        # Tokenize inference prompts (without padding) to get prompt lengths
-        prompt_lengths = []
-        for inf_prompt in inference_prompts:
-            inf_ids = self.tokenizer.encode(
-                inf_prompt, add_special_tokens=False, truncation=True,
-                max_length=self.max_length,
-            )
-            prompt_lengths.append(len(inf_ids))
-
-        # Create labels: mask prompt tokens with -100, keep response tokens
-        labels = encoded["input_ids"].clone()
-        for i, prompt_len in enumerate(prompt_lengths):
-            labels[i, :prompt_len] = self.label_pad_token_id
-        # Also mask padding tokens
-        labels[labels == self.tokenizer.pad_token_id] = self.label_pad_token_id
-
-        return {
-            "input_ids": encoded["input_ids"],
-            "attention_mask": encoded["attention_mask"],
-            "labels": labels,
-            "protein_sequences": protein_sequences,
-        }
-
-
-class PackedDataset(torch.utils.data.Dataset):
-    """
-    Concatenation+packing dataset for efficient SFT training.
-
-    Pre-tokenizes all examples, concatenates them with EOS separators,
-    and chunks into fixed-length blocks. Eliminates padding waste for
-    variable-length protein instruction data.
-
-    Each packed block contains multiple concatenated examples:
-        [tokens_1] [EOS] [tokens_2] [EOS] ... [tokens_k] [EOS] [PAD...]
-
-    Labels mask the EOS separators between documents with -100 so the
-    model only learns to predict within each document.
-
-    For multimodal (ESM-3) training, protein_sequences are stored per-block
-    as a list of sequences from the constituent examples.
-    """
-
-    def __init__(
-        self,
-        dataset: torch.utils.data.Dataset,
-        tokenizer: PreTrainedTokenizer,
-        max_length: int = 2048,
-        shuffle: bool = True,
-        seed: int = 42,
-    ):
-        """
-        Initialize the packed dataset.
-
-        Args:
-            dataset: Source dataset (e.g., MolInstructionsDataset).
-            tokenizer: HuggingFace tokenizer.
-            max_length: Fixed block length for packed sequences.
-            shuffle: Whether to shuffle examples before packing.
-            seed: Random seed for shuffling.
-        """
-        super().__init__()
-        self.max_length = max_length
-        self.tokenizer = tokenizer
-
-        if self.tokenizer.pad_token is None:
-            self.tokenizer.pad_token = self.tokenizer.eos_token
-
-        self.eos_token_id = self.tokenizer.eos_token_id
-        self.pad_token_id = self.tokenizer.pad_token_id
-
-        self.blocks: List[Dict[str, Any]] = []
-        self._pack(dataset, shuffle=shuffle, seed=seed)
-
-    def _pack(
-        self,
-        dataset: torch.utils.data.Dataset,
-        shuffle: bool = True,
-        seed: int = 42,
-    ) -> None:
-        """Tokenize all examples and pack into fixed-length blocks."""
-        import random
-
-        log.info(f"Packing {len(dataset)} examples into blocks of {self.max_length} tokens...")
-
-        # 1. Pre-tokenize all examples
-        tokenized_examples = []
-        for i in range(len(dataset)):
-            item = dataset[i]
-            tokens = self.tokenizer.encode(
-                item["formatted_prompt"],
-                add_special_tokens=False,
-                truncation=True,
-                max_length=self.max_length - 1,  # Reserve space for EOS
-            )
-            # Determine prompt length (instruction+input) for label masking
-            prompt_tokens = self.tokenizer.encode(
-                item["inference_prompt"],
-                add_special_tokens=False,
-                truncation=True,
-                max_length=self.max_length - 1,
-            )
-            prompt_len = len(prompt_tokens)
-            # Append EOS as document boundary
-            tokens.append(self.eos_token_id)
-            tokenized_examples.append({
-                "token_ids": tokens,
-                "prompt_len": prompt_len,
-                "protein_sequence": item.get("protein_sequence", ""),
-            })
-
-        # 2. Shuffle before concatenation (so adjacent docs are random)
-        if shuffle:
-            rng = random.Random(seed)
-            rng.shuffle(tokenized_examples)
-
-        # 3. Concatenate into a single stream and chunk into blocks
-        token_stream = []
-        protein_stream = []  # Track which protein maps to which token position
-
-        # Pack into blocks
-        current_tokens = []
-        current_labels = []
-        current_proteins = []
-        current_protein_set = set()  # Track unique proteins in current block
-
-        for ex in tokenized_examples:
-            token_ids = ex["token_ids"]
-            prompt_len = ex["prompt_len"]
-            protein_seq = ex["protein_sequence"]
-
-            # If adding this example would exceed block size, finalize current block
-            if len(current_tokens) + len(token_ids) > self.max_length:
-                # If current block has content, pad and save it
-                if current_tokens:
-                    self._finalize_block(
-                        current_tokens, current_labels,
-                        list(current_proteins),
-                    )
-
-                # Start new block — if example itself is too long, it gets its own block
-                current_tokens = []
-                current_labels = []
-                current_proteins = []
-                current_protein_set = set()
-
-            # Build labels: mask prompt tokens + boundary EOS, keep response tokens
-            doc_labels = [-100] * prompt_len + list(token_ids[prompt_len:])
-            # The last token (EOS) is a separator — mask it in labels
-            doc_labels[-1] = -100
-
-            current_tokens.extend(token_ids)
-            current_labels.extend(doc_labels)
-
-            # Track protein sequence (deduplicate within block)
-            if protein_seq and protein_seq not in current_protein_set:
-                current_proteins.append(protein_seq)
-                current_protein_set.add(protein_seq)
-
-        # Finalize last block
-        if current_tokens:
-            self._finalize_block(
-                current_tokens, current_labels,
-                list(current_proteins),
-            )
-
-        log.info(
-            f"Packed into {len(self.blocks)} blocks "
-            f"(from {len(tokenized_examples)} examples, "
-            f"{len(self.blocks) * self.max_length:,} total tokens)"
-        )
-
-    def _finalize_block(
-        self,
-        tokens: List[int],
-        labels: List[int],
-        proteins: List[str],
-    ) -> None:
-        """Pad a block to max_length and add to self.blocks."""
-        pad_len = self.max_length - len(tokens)
-
-        input_ids = tokens + [self.pad_token_id] * pad_len
-        attention_mask = [1] * len(tokens) + [0] * pad_len
-        block_labels = labels + [-100] * pad_len
-
-        self.blocks.append({
-            "input_ids": torch.tensor(input_ids, dtype=torch.long),
-            "attention_mask": torch.tensor(attention_mask, dtype=torch.long),
-            "labels": torch.tensor(block_labels, dtype=torch.long),
-            "protein_sequences": proteins,
-        })
-
-    def __len__(self) -> int:
-        return len(self.blocks)
-
-    def __getitem__(self, idx: int) -> Dict[str, Any]:
-        return self.blocks[idx]
-
-
-class PackedDataCollator:
-    """Simple collator for PackedDataset — just stacks pre-tokenized blocks."""
-
-    def __call__(self, batch: List[Dict[str, Any]]) -> Dict[str, Any]:
-        return {
-            "input_ids": torch.stack([b["input_ids"] for b in batch]),
-            "attention_mask": torch.stack([b["attention_mask"] for b in batch]),
-            "labels": torch.stack([b["labels"] for b in batch]),
-            "protein_sequences": [
-                seq for b in batch for seq in b["protein_sequences"]
-            ],
-        }
-
-
-class GPUMemoryCallback(TrainerCallback):
-    """Callback to log GPU memory usage during training."""
-
-    def on_log(
-        self,
-        args: TrainingArguments,
-        state: TrainerState,
-        control: TrainerControl,
-        logs: Optional[Dict[str, float]] = None,
-        **kwargs,
-    ):
-        """Log GPU memory usage."""
-        if torch.cuda.is_available():
-            # Get current GPU memory usage
-            allocated = torch.cuda.memory_allocated() / 1024**3  # GB
-            reserved = torch.cuda.memory_reserved() / 1024**3    # GB
-            max_allocated = torch.cuda.max_memory_allocated() / 1024**3  # GB
-
-            if logs is not None:
-                logs["gpu_memory_allocated_gb"] = round(allocated, 2)
-                logs["gpu_memory_reserved_gb"] = round(reserved, 2)
-                logs["gpu_memory_max_allocated_gb"] = round(max_allocated, 2)
-
-            log.debug(
-                f"GPU Memory - Allocated: {allocated:.2f}GB, "
-                f"Reserved: {reserved:.2f}GB, Max: {max_allocated:.2f}GB"
-            )
-
-
-class GenerationSamplesCallback(TrainerCallback):
-    """Callback to generate and log sample outputs during evaluation.
-
-    Samples a few examples per category from the eval dataset, runs
-    model.generate(), and logs results to console and wandb table.
-    Only runs on rank 0.
-    """
-
-    # Keyword patterns to infer task category from instruction text
-    CATEGORY_PATTERNS = [
-        ("catalytic", ["catalytic activity", "catalytic", "enzyme commission", "ec number"]),
-        ("domain", ["domain", "motif", "structural domain"]),
-        ("design", ["design", "generate a protein", "create a protein"]),
-        ("function", ["function", "functional description", "what does", "predict the function"]),
-    ]
-
-    def __init__(
-        self,
-        protein_llm: Optional[nn.Module],
-        eval_dataset,
-        tokenizer,
-        num_samples_per_category: int = 2,
-        max_new_tokens: int = 256,
-    ):
-        super().__init__()
-        self.protein_llm = protein_llm
-        self.eval_dataset = eval_dataset
-        self.tokenizer = tokenizer
-        self.num_samples_per_category = num_samples_per_category
-        self.max_new_tokens = max_new_tokens
-        # Pre-select sample indices grouped by category
-        self._sample_indices = self._select_samples()
-
-    def _infer_category(self, instruction: str) -> str:
-        """Infer task category from instruction text."""
-        instruction_lower = instruction.lower()
-        for category, keywords in self.CATEGORY_PATTERNS:
-            if any(kw in instruction_lower for kw in keywords):
-                return category
-        return "general"
-
-    def _select_samples(self) -> Dict[str, List[int]]:
-        """Pre-select sample indices grouped by category."""
-        category_indices: Dict[str, List[int]] = {}
-        for i in range(len(self.eval_dataset)):
-            item = self.eval_dataset[i]
-            category = self._infer_category(item.get("instruction", ""))
-            category_indices.setdefault(category, [])
-            if len(category_indices[category]) < self.num_samples_per_category:
-                category_indices[category].append(i)
-
-            # Early exit if we have enough samples for all seen categories
-            if all(
-                len(v) >= self.num_samples_per_category
-                for v in category_indices.values()
-            ):
-                # Check if we've seen at least 100 items (to discover categories)
-                if i >= min(100, len(self.eval_dataset) - 1):
-                    break
-
-        total = sum(len(v) for v in category_indices.values())
-        log.info(
-            f"GenerationSamplesCallback: selected {total} samples "
-            f"across {len(category_indices)} categories: "
-            f"{', '.join(f'{k}({len(v)})' for k, v in category_indices.items())}"
-        )
-        return category_indices
-
-    def on_evaluate(
-        self,
-        args: TrainingArguments,
-        state: TrainerState,
-        control: TrainerControl,
-        **kwargs,
-    ):
-        """Generate sample outputs after each evaluation step."""
-        # Only run on rank 0
-        if int(os.environ.get("RANK", 0)) != 0:
-            return
-
-        log.info("=" * 60)
-        log.info("Generation Samples (eval step %d)", state.global_step)
-        log.info("=" * 60)
-
-        table_rows = []
-
-        for category, indices in sorted(self._sample_indices.items()):
-            for idx in indices:
-                item = self.eval_dataset[idx]
-                protein_seq = item.get("protein_sequence", "")
-                instruction = item.get("instruction", "")
-                expected = item.get("response", "")
-                inference_prompt = item.get("inference_prompt", "")
-
-                # Generate
-                try:
-                    if self.protein_llm is not None:
-                        # Multimodal path: use ProteinLLM.generate()
-                        self.protein_llm.eval()
-                        with torch.no_grad():
-                            generated_texts = self.protein_llm.generate(
-                                protein_sequences=[protein_seq],
-                                prompt=[inference_prompt],
-                                max_new_tokens=self.max_new_tokens,
-                                min_new_tokens=10,
-                                do_sample=False,
-                                repetition_penalty=1.2,
-                            )
-                        generated = generated_texts[0] if generated_texts else ""
-                        # Debug: if output is empty, decode without stripping special tokens
-                        if not generated.strip():
-                            raw_texts, raw_ids, inp_len = self.protein_llm.generate(
-                                protein_sequences=[protein_seq],
-                                prompt=[inference_prompt],
-                                max_new_tokens=20,
-                                min_new_tokens=10,
-                                do_sample=False,
-                                repetition_penalty=1.2,
-                                return_token_ids=True,
-                            )
-                            raw_decode = self.tokenizer.decode(raw_ids[0], skip_special_tokens=False)
-                            raw_id_list = raw_ids[0].tolist()[:20]
-                            log.info(f"  [DEBUG] Empty output. Raw token IDs: {raw_id_list}")
-                            log.info(f"  [DEBUG] Raw decode: {raw_decode[:200]}")
-                    else:
-                        # Text-only path: use LLM directly
-                        model = kwargs.get("model")
-                        if model is None:
-                            continue
-                        model.eval()
-                        inputs = self.tokenizer(
-                            inference_prompt,
-                            return_tensors="pt",
-                            truncation=True,
-                            max_length=2048,
-                        ).to(model.device)
-                        with torch.no_grad():
-                            output_ids = model.generate(
-                                **inputs,
-                                max_new_tokens=self.max_new_tokens,
-                                min_new_tokens=10,
-                                do_sample=False,
-                                repetition_penalty=1.2,
-                            )
-                        # Slice off the input prompt tokens
-                        gen_ids = output_ids[0, inputs["input_ids"].shape[1]:]
-                        generated = self.tokenizer.decode(
-                            gen_ids, skip_special_tokens=True
-                        )
-                except Exception as e:
-                    log.warning(f"Generation failed for sample {idx}: {e}")
-                    generated = f"[ERROR: {e}]"
-
-                # Truncate for console display (500 chars to see more context)
-                gen_display = generated[:500] + ("..." if len(generated) > 500 else "")
-                exp_display = expected[:500] + ("..." if len(expected) > 500 else "")
-                seq_preview = protein_seq[:30] + "..." if len(protein_seq) > 30 else protein_seq
-
-                # Console log
-                log.info(f"[{category}] seq={seq_preview}")
-                log.info(f"  Instruction: {instruction[:100]}...")
-                log.info(f"  Expected:    {exp_display}")
-                log.info(f"  Generated:   {gen_display}")
-                log.info("")
-
-                table_rows.append([
-                    category,
-                    instruction[:100],
-                    exp_display,
-                    gen_display,
-                    seq_preview,
-                ])
-
-        # Restore train mode — HF Trainer only restores model.train() (the LLM),
-        # NOT protein_llm. Without this, pooling/projector stay in eval mode
-        # (no dropout), causing gradient distribution shift → NaN explosion.
-        # ProteinLLM.train() already keeps the ESM-3 encoder frozen.
-        if self.protein_llm is not None:
-            self.protein_llm.train()
-
-        # Log to wandb if available
-        if HAS_WANDB and wandb.run is not None and table_rows:
-            try:
-                table = wandb.Table(
-                    columns=[
-                        "category", "instruction", "expected",
-                        "generated", "protein_seq",
-                    ],
-                    data=table_rows,
-                )
-                wandb.log(
-                    {f"generation_samples/step_{state.global_step}": table},
-                    step=state.global_step,
-                )
-            except Exception as e:
-                log.warning(f"Failed to log generation samples to wandb: {e}")
-
-        log.info("=" * 60)
+# ---------------------------------------------------------------------------
+# Re-exports for backward compatibility.
+# External code (grpo_trainer, scripts/train.py, tests) can still do:
+#   from src.training.sft_trainer import get_qlora_config, ...
+# ---------------------------------------------------------------------------
+from .callbacks import GenerationSamplesCallback, GPUMemoryCallback  # noqa: F401, E402
+from .collators import PackedDataCollator, PackedDataset, ProteinLLMDataCollator  # noqa: F401, E402
+from .config_utils import (  # noqa: F401, E402
+    get_qlora_config,
+    get_quantization_config,
+    get_training_arguments,
+)
+
+# =========================================================================
+# ProteinLLMTrainer — Custom HF Trainer
+# =========================================================================
 
 
 class ProteinLLMTrainer(Trainer):
@@ -972,6 +290,7 @@ class ProteinLLMTrainer(Trainer):
         """
         optimizer = super().create_optimizer()
 
+        self._has_mm_param_group = False
         if self.protein_llm is not None:
             extra_params = []
             if self.protein_llm.pooling is not None:
@@ -984,6 +303,13 @@ class ProteinLLMTrainer(Trainer):
                     p for p in self.protein_llm.projector.parameters()
                     if p.requires_grad
                 )
+            # Gated XATTN params (flamingo approach — inside LLM layers)
+            if self.protein_llm.gated_xattn_blocks is not None:
+                for block in self.protein_llm.gated_xattn_blocks:
+                    extra_params.extend(
+                        p for p in block.parameters()
+                        if p.requires_grad
+                    )
             if extra_params:
                 # Use dedicated projector_lr (default: 10x base LR)
                 projector_lr = self.projector_lr
@@ -992,6 +318,7 @@ class ProteinLLMTrainer(Trainer):
                     "lr": projector_lr,
                     "weight_decay": self.args.weight_decay,
                 })
+                self._has_mm_param_group = True
                 num_extra = sum(p.numel() for p in extra_params)
                 log.info(
                     f"Added {num_extra:,} multimodal parameters "
@@ -1000,6 +327,204 @@ class ProteinLLMTrainer(Trainer):
                 )
 
         return optimizer
+
+    def _save_optimizer_and_scheduler(self, output_dir):
+        """Override: save FSDP optimizer WITHOUT save_fsdp_model.
+
+        The default super() call triggers both save_fsdp_model (14 GB full
+        state dict) and save_fsdp_optimizer. For LoRA training the full model
+        is redundant — adapter weights are already saved by save_model().
+        We call save_fsdp_optimizer directly, skipping the 14 GB file.
+
+        Multimodal params (pooling + projector) are NOT FSDP-wrapped, so we
+        pop them before the FSDP optimizer save, then restore and save
+        separately.
+        """
+        if not (self.is_fsdp_enabled and self._has_mm_param_group):
+            return super()._save_optimizer_and_scheduler(output_dir)
+
+        from accelerate.utils import save_fsdp_optimizer
+
+        # Pop the multimodal param group (always the last one, added by create_optimizer)
+        mm_group = self.optimizer.param_groups.pop()
+        mm_state = {}
+        for p in mm_group["params"]:
+            if p in self.optimizer.state:
+                mm_state[id(p)] = self.optimizer.state.pop(p)
+
+        try:
+            # Save FSDP optimizer ONLY (skip save_fsdp_model — no 14 GB file)
+            save_fsdp_optimizer(
+                self.accelerator.state.fsdp_plugin,
+                self.accelerator,
+                self.optimizer,
+                self.model,
+                output_dir,
+            )
+            # Save scheduler
+            torch.save(
+                self.lr_scheduler.state_dict(),
+                os.path.join(output_dir, "scheduler.pt"),
+            )
+        finally:
+            # Restore multimodal param group and state
+            self.optimizer.param_groups.append(mm_group)
+            for p in mm_group["params"]:
+                state = mm_state.get(id(p))
+                if state is not None:
+                    self.optimizer.state[p] = state
+
+        # Save multimodal optimizer state separately (rank 0 only)
+        if output_dir and int(os.environ.get("RANK", 0)) == 0:
+            mm_save = {
+                "config": {k: v for k, v in mm_group.items() if k != "params"},
+                "states": list(mm_state.values()),
+            }
+            save_path = os.path.join(output_dir, "mm_optimizer.pt")
+            torch.save(mm_save, save_path)
+            log.info(f"Saved multimodal optimizer state to {save_path}")
+
+    def _save_checkpoint(self, model, trial):
+        """Override: also save multimodal weights in intermediate checkpoints.
+
+        The base Trainer saves adapter weights via save_model(). We add
+        pooling.pt and projector.pt so intermediate checkpoints are fully
+        resumable without the 14 GB pytorch_model_fsdp.bin.
+        """
+        super()._save_checkpoint(model, trial)
+
+        if self.protein_llm is not None and self.args.should_save:
+            ckpt_dir = os.path.join(
+                self.args.output_dir,
+                f"checkpoint-{self.state.global_step}",
+            )
+            if self.protein_llm.pooling is not None:
+                torch.save(
+                    self.protein_llm.pooling.state_dict(),
+                    os.path.join(ckpt_dir, "pooling.pt"),
+                )
+            if self.protein_llm.projector is not None:
+                torch.save(
+                    self.protein_llm.projector.state_dict(),
+                    os.path.join(ckpt_dir, "projector.pt"),
+                )
+            if self.protein_llm.gated_xattn_blocks is not None:
+                torch.save(
+                    self.protein_llm.gated_xattn_blocks.state_dict(),
+                    os.path.join(ckpt_dir, "xattn.pt"),
+                )
+            log.info(f"Saved multimodal weights to {ckpt_dir}")
+
+    def _load_from_checkpoint(self, resume_from_checkpoint, model=None):
+        """Override: load minimal checkpoint (no pytorch_model_fsdp.bin).
+
+        Old-format checkpoints with pytorch_model_fsdp.bin fall through to
+        super(). New minimal checkpoints load adapter weights via FSDP
+        full-state-dict API and multimodal weights directly.
+        """
+        if model is None:
+            model = self.model
+
+        fsdp_path = os.path.join(resume_from_checkpoint, "pytorch_model_fsdp.bin")
+        if os.path.exists(fsdp_path) or not self.is_fsdp_enabled:
+            return super()._load_from_checkpoint(resume_from_checkpoint, model)
+
+        # New minimal checkpoint: load adapter via PeftModel.load_adapter
+        # under FSDP.summon_full_params (handles key mapping natively).
+        from torch.distributed.fsdp import (
+            FullyShardedDataParallel as FSDP,
+        )
+
+        adapter_cfg = os.path.join(
+            resume_from_checkpoint, "adapter_config.json"
+        )
+        if not os.path.exists(adapter_cfg):
+            log.warning(
+                f"No adapter_config.json in {resume_from_checkpoint}, "
+                "skipping adapter load"
+            )
+            return
+
+        # Gather all params, load adapter, then re-shard
+        with FSDP.summon_full_params(model, writeback=True):
+            # Unwrap FSDP → OptimizedModule → PeftModel
+            inner = model.module
+            while hasattr(inner, "_orig_mod"):
+                inner = inner._orig_mod
+
+            if hasattr(inner, "load_adapter"):
+                active = (
+                    inner.active_adapters[0]
+                    if hasattr(inner, "active_adapters")
+                    else inner.active_adapter
+                )
+                inner.load_adapter(
+                    resume_from_checkpoint, active, is_trainable=True
+                )
+                log.info(
+                    f"Loaded adapter '{active}' from {resume_from_checkpoint} "
+                    f"via PeftModel.load_adapter"
+                )
+            else:
+                log.warning(
+                    "Model does not have load_adapter method, "
+                    "skipping adapter load"
+                )
+
+        # Load multimodal weights (not FSDP-wrapped)
+        if self.protein_llm is not None:
+            for name, module in [
+                ("pooling", self.protein_llm.pooling),
+                ("projector", self.protein_llm.projector),
+                ("xattn", self.protein_llm.gated_xattn_blocks),
+            ]:
+                path = os.path.join(resume_from_checkpoint, f"{name}.pt")
+                if os.path.exists(path) and module is not None:
+                    module.load_state_dict(
+                        torch.load(path, map_location="cpu", weights_only=True)
+                    )
+                    log.info(f"Loaded {name} from {path}")
+
+    def _load_optimizer_and_scheduler(self, checkpoint):
+        """Override: restore multimodal optimizer state on resume.
+
+        Mirror of _save_optimizer_and_scheduler: pop multimodal group before
+        loading FSDP optimizer state, then restore and load mm state.
+        """
+        if not (self.is_fsdp_enabled and self._has_mm_param_group):
+            return super()._load_optimizer_and_scheduler(checkpoint)
+
+        # Pop multimodal group (not in FSDP optimizer state)
+        mm_group = self.optimizer.param_groups.pop()
+        mm_state = {}
+        for p in mm_group["params"]:
+            if p in self.optimizer.state:
+                mm_state[id(p)] = self.optimizer.state.pop(p)
+
+        try:
+            super()._load_optimizer_and_scheduler(checkpoint)
+        finally:
+            self.optimizer.param_groups.append(mm_group)
+            for p in mm_group["params"]:
+                state = mm_state.get(id(p))
+                if state is not None:
+                    self.optimizer.state[p] = state
+
+        # Load multimodal optimizer state
+        if checkpoint:
+            mm_path = os.path.join(checkpoint, "mm_optimizer.pt")
+            if os.path.exists(mm_path):
+                mm_data = torch.load(
+                    mm_path, map_location="cpu", weights_only=True
+                )
+                for p, state_data in zip(
+                    mm_group["params"], mm_data["states"]
+                ):
+                    self.optimizer.state[p] = {
+                        k: v.to(p.device) if isinstance(v, torch.Tensor) else v
+                        for k, v in state_data.items()
+                    }
+                log.info(f"Loaded multimodal optimizer state from {mm_path}")
 
     def compute_loss(
         self,
@@ -1025,6 +550,15 @@ class ProteinLLMTrainer(Trainer):
 
         # If we have a full ProteinLLM model with encoder, use custom forward
         if self.protein_llm is not None and protein_sequences is not None:
+            # FSDP: protein_llm.llm must point to the FSDP-wrapped model
+            # so that self.llm(...) triggers parameter all-gather.
+            # DDP: also safe — DDP forward registers gradient hooks.
+            if self.protein_llm.llm is not model:
+                self.protein_llm.llm = model
+                log.info(
+                    f"Synced protein_llm.llm to {type(model).__name__}"
+                )
+
             # Use the full ProteinLLM forward pass
             outputs = self.protein_llm(
                 protein_sequences=protein_sequences,
@@ -1188,6 +722,11 @@ class ProteinLLMTrainer(Trainer):
             torch.nn.utils.clip_grad_norm_(mm_params, max_grad_norm)
 
 
+# =========================================================================
+# SFTTrainer — High-level orchestrator
+# =========================================================================
+
+
 class SFTTrainer:
     """
     SFT trainer class for ProteinLLM.
@@ -1306,8 +845,20 @@ class SFTTrainer:
 
         # Add protein special tokens for ESM-3 approach:
         # <|protein_start|>, <|protein_embed|>, <|protein_end|>
+        # Flamingo uses boundary tokens only (no <|protein_embed|>)
         approach = self.cfg.get("approach", "text")
-        if approach in ("esm3",):
+        if approach == "flamingo":
+            from src.models.multimodal_llm import PROTEIN_END_TOKEN, PROTEIN_START_TOKEN
+            flamingo_tokens = [PROTEIN_START_TOKEN, PROTEIN_END_TOKEN]
+            num_added = self.tokenizer.add_special_tokens(
+                {"additional_special_tokens": flamingo_tokens}
+            )
+            if num_added > 0:
+                log.info(
+                    f"Added {num_added} flamingo boundary tokens: {flamingo_tokens} "
+                    f"(vocab size: {len(self.tokenizer)})"
+                )
+        elif approach in ("esm3",):
             num_added = self.tokenizer.add_special_tokens(
                 {"additional_special_tokens": PROTEIN_SPECIAL_TOKENS}
             )
@@ -1329,10 +880,11 @@ class SFTTrainer:
 
         # Get quantization config
         quantization_config = get_quantization_config(self.cfg) if use_quantization else None
+        use_fsdp = self.cfg.training.get("fsdp", {}).get("enabled", False)
 
         # Load base model
-        # For quantized models, use single-device placement (required by accelerate)
         if quantization_config is not None:
+            # QLoRA: explicit device placement (required by accelerate)
             device_map = {"": torch.cuda.current_device()}
             self.model = AutoModelForCausalLM.from_pretrained(
                 model_path,
@@ -1343,7 +895,16 @@ class SFTTrainer:
             )
             # Prepare for k-bit training
             self.model = prepare_model_for_kbit_training(self.model)
+        elif use_fsdp:
+            # FSDP: load on CPU — FSDP handles device placement and sharding
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model_path,
+                trust_remote_code=True,
+                torch_dtype=torch.bfloat16,
+            )
+            log.info("FSDP: loaded model on CPU (FSDP will shard to GPUs)")
         else:
+            # DDP: explicit device placement
             self.model = AutoModelForCausalLM.from_pretrained(
                 model_path,
                 device_map={"": torch.cuda.current_device()},
@@ -1359,18 +920,24 @@ class SFTTrainer:
                 f"{self.model.config.vocab_size} -> {len(self.tokenizer)}"
             )
 
-        # Apply LoRA
-        lora_config = get_qlora_config(self.cfg)
-        self.model = get_peft_model(self.model, lora_config)
-
-        log.info("LoRA configuration applied")
-        self.model.print_trainable_parameters()
-
-        # Load full ProteinLLM for multimodal training when using the esm3
-        # approach. Can also be forced with use_multimodal=True.
+        # Apply LoRA (skip if explicitly disabled, e.g. pure Flamingo)
         approach = self.cfg.get("approach", "text")
+        lora_enabled = self.cfg.training.get("lora", {}).get("enabled", True)
+        if lora_enabled:
+            lora_config = get_qlora_config(self.cfg)
+            self.model = get_peft_model(self.model, lora_config)
+            log.info("LoRA configuration applied")
+            self.model.print_trainable_parameters()
+        else:
+            # Freeze all LLM parameters — only Flamingo components are trainable
+            for param in self.model.parameters():
+                param.requires_grad = False
+            total = sum(p.numel() for p in self.model.parameters())
+            log.info(f"LoRA disabled: all {total:,} LLM parameters frozen")
+
+        # Load full ProteinLLM for multimodal training
         use_multimodal = self.cfg.get(
-            "use_multimodal", approach == "esm3"
+            "use_multimodal", approach in ("esm3", "flamingo")
         )
         if use_multimodal:
             self._load_protein_llm()
@@ -1406,6 +973,7 @@ class SFTTrainer:
             pooling_cfg = encoder_cfg.get("pooling", {})
             projector_cfg = encoder_cfg.get("projector", {})
             lora_cfg = training_cfg.get("lora", {})
+            flamingo_cfg = encoder_cfg.get("flamingo", {})
 
             # Determine if quantization is used (for correct save/load config)
             use_qlora = training_cfg.get("quantization", {}).get("enabled", False)
@@ -1445,6 +1013,15 @@ class SFTTrainer:
                 device=device,  # DDP: correct GPU per rank
                 encoder_dtype=encoder_cfg.get("dtype", "bfloat16"),
                 encoder_batch_size=encoder_cfg.get("encoder_batch_size", 4),
+                # Flamingo-specific params
+                xattn_every=flamingo_cfg.get("xattn_every", 4),
+                xattn_dim_head=flamingo_cfg.get("xattn_dim_head", 64),
+                xattn_heads=flamingo_cfg.get("xattn_heads", 8),
+                xattn_ff_mult=flamingo_cfg.get("xattn_ff_mult", 4),
+                flamingo_num_queries=projector_cfg.get("num_queries", 64),
+                flamingo_perceiver_layers=projector_cfg.get("perceiver_layers", 6),
+                flamingo_ff_mult=projector_cfg.get("ff_mult", 4),
+                flamingo_max_seq_len=projector_cfg.get("max_seq_len", 2048),
             )
 
             # Assign our already-loaded LoRA model and tokenizer
@@ -1456,6 +1033,26 @@ class SFTTrainer:
 
             # Build projector now that we know the LLM hidden size
             self.protein_llm._build_projector()
+
+            # FSDP: cache embed_tokens weights before FSDP shards them.
+            # embed_tokens is NOT LoRA-targeted, so weights are frozen and
+            # a cached copy stays correct throughout training.
+            # This avoids needing summon_full_params() in prepare_inputs().
+            # Skip for flamingo — it doesn't call embed_tokens manually.
+            use_fsdp = self.cfg.training.get("fsdp", {}).get("enabled", False)
+            if use_fsdp and approach != "flamingo":
+                base = (
+                    self.model.get_base_model()
+                    if hasattr(self.model, "get_base_model")
+                    else self.model
+                )
+                embed_weight = base.model.embed_tokens.weight.data
+                self.protein_llm._fsdp_embed_cache = embed_weight.clone().to(device)
+                cache_gb = embed_weight.numel() * embed_weight.element_size() / 1024**3
+                log.info(
+                    f"FSDP: cached embed_tokens {tuple(embed_weight.shape)} "
+                    f"on {device} ({cache_gb:.2f} GB)"
+                )
 
             log.info("ProteinLLM loaded successfully")
             self.protein_llm.print_trainable_parameters()
@@ -1481,9 +1078,17 @@ class SFTTrainer:
         sampling_temp = data_cfg.get("sampling_temperature", 1.0)
         exclude_files = list(data_cfg.get("exclude_files", []) or [])
 
-        # For ESM-3 approach, replace protein text with placeholder token
+        # For ESM-3 approach, replace protein text with placeholder token.
+        # For flamingo, use boundary tokens only (no embed placeholder —
+        # protein info comes via cross-attention, not inline embeddings).
         approach = self.cfg.get("approach", "text")
-        placeholder = PROTEIN_PLACEHOLDER if approach in ("esm3",) else ""
+        if approach == "flamingo":
+            from src.models.multimodal_llm import PROTEIN_END_TOKEN, PROTEIN_START_TOKEN
+            placeholder = f"{PROTEIN_START_TOKEN}{PROTEIN_END_TOKEN}"
+        elif approach in ("esm3",):
+            placeholder = PROTEIN_PLACEHOLDER
+        else:
+            placeholder = ""
 
         max_protein_length = data_cfg.get("processing", {}).get("max_protein_length", None)
 
@@ -1539,6 +1144,26 @@ class SFTTrainer:
         )
         log.info(f"Validation dataset loaded: {len(self.eval_dataset)} samples")
 
+        # Cap eval dataset to avoid burning time on huge validation sets
+        # (e.g., combined_sft_260225 has ~245K val samples)
+        max_eval = self.cfg.training.get("max_eval_samples", None)
+        if max_eval and len(self.eval_dataset) > max_eval:
+            import random
+            rng = random.Random(42)  # Fixed seed for reproducible eval subsets
+            indices = sorted(rng.sample(range(len(self.eval_dataset)), max_eval))
+            # flatten_indices() materializes the subset into a new PyArrow table
+            # so .data.data.column("__length__") returns only the selected rows.
+            # Without it, the raw PyArrow table still has all 271K rows, causing
+            # LengthGroupedSampler to generate out-of-bounds indices.
+            self.eval_dataset.data = self.eval_dataset.data.select(indices).flatten_indices()
+            # Invalidate cached lengths so they're recomputed for the subset
+            if hasattr(self.eval_dataset, "_lengths"):
+                del self.eval_dataset._lengths
+            log.info(
+                f"Eval dataset capped: {len(self.eval_dataset)} samples "
+                f"(max_eval_samples={max_eval})"
+            )
+
     def _create_collator(self) -> None:
         """Create the data collator.
 
@@ -1562,14 +1187,14 @@ class SFTTrainer:
         callbacks = [GPUMemoryCallback()]
 
         # Generation samples callback (logs model outputs during eval)
+        eval_cfg = self.cfg.get("evaluation", {})
         gen_callback = GenerationSamplesCallback(
             protein_llm=self.protein_llm,
             eval_dataset=self.eval_dataset,
             tokenizer=self.tokenizer,
             num_samples_per_category=5,
-            max_new_tokens=self.cfg.get("evaluation", {}).get(
-                "sft_gen_max_tokens", 256
-            ),
+            max_new_tokens=eval_cfg.get("sft_gen_max_tokens", 256),
+            generation_temperature=float(eval_cfg.get("generation_temperature", 0.0)),
         )
         callbacks.append(gen_callback)
 
@@ -1629,8 +1254,23 @@ class SFTTrainer:
         log.info(f"  Learning rate: {self.cfg.training.lr}")
         log.info(f"  Gradient accumulation steps: {self.cfg.training.gradient_accumulation_steps}")
 
+        # Auto-resume from latest checkpoint if any exist in output_dir
+        resume_from = None
+        ckpt_dir = self.cfg.paths.checkpoint_dir
+        if os.path.isdir(ckpt_dir):
+            ckpts = sorted(
+                [d for d in Path(ckpt_dir).iterdir()
+                 if d.is_dir() and d.name.startswith("checkpoint-")],
+                key=lambda x: int(x.name.rsplit("-", 1)[-1]),
+            )
+            if ckpts:
+                resume_from = str(ckpts[-1])
+                log.info(f"Auto-resuming from checkpoint: {resume_from}")
+
         # Train
-        train_result = self.trainer.train()
+        train_result = self.trainer.train(
+            resume_from_checkpoint=resume_from,
+        )
 
         # Log final metrics
         metrics = train_result.metrics
@@ -1745,6 +1385,9 @@ class SFTTrainer:
             "optimizer": OmegaConf.to_container(
                 self.cfg.training.get("optimizer", {}), resolve=True
             ),
+            "generation_temperature": self.cfg.get("evaluation", {}).get(
+                "generation_temperature", 0.0
+            ),
             "timestamp": datetime.now().isoformat(),
         }
         with open(experiment_dir / "training_args.json", "w") as f:
@@ -1763,16 +1406,42 @@ class SFTTrainer:
         if self.protein_llm is not None:
             self.protein_llm.save_pretrained(path / "protein_llm")
 
+            # Under FSDP/torch.compile, protein_llm.llm is wrapped and its
+            # save_pretrained doesn't emit adapter files. The HF Trainer
+            # already saved them in the latest checkpoint-{step}/ directory.
+            # Copy them into protein_llm/adapter/ so eval can find them.
+            adapter_dir = path / "protein_llm" / "adapter"
+            if not (adapter_dir / "adapter_config.json").exists():
+                import shutil
+                # Find the latest HF Trainer checkpoint
+                ckpt_dirs = sorted(path.glob("checkpoint-*"), key=os.path.getmtime)
+                if ckpt_dirs:
+                    latest_ckpt = ckpt_dirs[-1]
+                    src_config = latest_ckpt / "adapter_config.json"
+                    if src_config.exists():
+                        adapter_dir.mkdir(parents=True, exist_ok=True)
+                        for fn in ["adapter_config.json", "adapter_model.safetensors",
+                                    "adapter_model.bin"]:
+                            src = latest_ckpt / fn
+                            if src.exists():
+                                shutil.copy2(src, adapter_dir / fn)
+                        log.info(f"Copied LoRA adapter from {latest_ckpt} to {adapter_dir}")
+
         log.info(f"Checkpoint saved to {path}")
         return path
 
 
-def run_sft_qlora(cfg: DictConfig) -> Dict[str, Any]:
-    """
-    Run SFT training with QLoRA.
+# =========================================================================
+# Entry points
+# =========================================================================
 
-    This function orchestrates the full SFT training pipeline with
-    4-bit quantization (QLoRA) for memory-efficient fine-tuning.
+
+def run_sft(cfg: DictConfig) -> Dict[str, Any]:
+    """
+    Run SFT training (unified entry point).
+
+    Handles both QLoRA (4-bit quantization) and LoRA (no quantization)
+    based on cfg.training.quantization.enabled.
 
     Args:
         cfg: Hydra configuration.
@@ -1780,19 +1449,17 @@ def run_sft_qlora(cfg: DictConfig) -> Dict[str, Any]:
     Returns:
         Training metrics dictionary.
     """
+    use_quant = cfg.training.get("quantization", {}).get("enabled", False)
+    mode = "QLoRA" if use_quant else "LoRA"
+
     log.info("=" * 60)
-    log.info("Starting SFT with QLoRA")
+    log.info(f"Starting SFT with {mode}")
     log.info("=" * 60)
     log.info(f"Model: {cfg.model.path}")
     log.info(f"Encoder: {cfg.encoder.model_name}")
     log.info(f"Learning rate: {cfg.training.lr}")
     log.info(f"Batch size: {cfg.training.batch_size}")
     log.info(f"Epochs: {cfg.training.epochs}")
-
-    # Ensure quantization is enabled
-    if not cfg.training.get("quantization", {}).get("enabled", True):
-        log.warning("QLoRA requested but quantization disabled in config. Enabling...")
-        # Note: We should ideally modify cfg here, but OmegaConf may be frozen
 
     # Create and run trainer
     trainer = SFTTrainer(cfg)
@@ -1806,144 +1473,17 @@ def run_sft_qlora(cfg: DictConfig) -> Dict[str, Any]:
     metrics.update(eval_metrics)
 
     log.info("=" * 60)
-    log.info("SFT with QLoRA completed")
+    log.info(f"SFT with {mode} completed")
     log.info("=" * 60)
 
     return metrics
+
+
+def run_sft_qlora(cfg: DictConfig) -> Dict[str, Any]:
+    """Run SFT with QLoRA. Backward-compatible alias for run_sft()."""
+    return run_sft(cfg)
 
 
 def run_sft_lora(cfg: DictConfig) -> Dict[str, Any]:
-    """
-    Run SFT training with LoRA (no quantization).
-
-    This function orchestrates the full SFT training pipeline with
-    standard LoRA (no 4-bit quantization) for higher precision training.
-
-    Args:
-        cfg: Hydra configuration.
-
-    Returns:
-        Training metrics dictionary.
-    """
-    log.info("=" * 60)
-    log.info("Starting SFT with LoRA (no quantization)")
-    log.info("=" * 60)
-    log.info(f"Model: {cfg.model.path}")
-    log.info(f"Encoder: {cfg.encoder.model_name}")
-    log.info(f"Learning rate: {cfg.training.lr}")
-    log.info(f"Batch size: {cfg.training.batch_size}")
-    log.info(f"Epochs: {cfg.training.epochs}")
-
-    # Ensure quantization is disabled
-    # Note: The config should already have quantization.enabled = false
-
-    # Create and run trainer
-    trainer = SFTTrainer(cfg)
-    trainer.setup()
-
-    # Run training
-    metrics = trainer.train()
-
-    # Run final evaluation
-    eval_metrics = trainer.evaluate()
-    metrics.update(eval_metrics)
-
-    log.info("=" * 60)
-    log.info("SFT with LoRA completed")
-    log.info("=" * 60)
-
-    return metrics
-
-
-def run_sft_with_trl(cfg: DictConfig) -> Dict[str, Any]:
-    """
-    Run SFT training using TRL's SFTTrainer directly.
-
-    This is an alternative implementation using TRL's native SFTTrainer
-    for text-only training (without multimodal protein encoding).
-
-    Args:
-        cfg: Hydra configuration.
-
-    Returns:
-        Training metrics dictionary.
-    """
-    if not HAS_TRL:
-        raise ImportError("TRL is required. Install with: pip install trl")
-
-    log.info("Starting SFT with TRL's native SFTTrainer...")
-
-    # Load tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(
-        cfg.model.path,
-        trust_remote_code=True,
-        padding_side="left",
-    )
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-
-    # Get quantization config
-    use_quantization = cfg.training.get("quantization", {}).get("enabled", True)
-    quantization_config = get_quantization_config(cfg) if use_quantization else None
-
-    # Load model (single-device placement for DDP compatibility)
-    device_map = {"": torch.cuda.current_device()} if torch.cuda.is_available() else "auto"
-    if quantization_config is not None:
-        model = AutoModelForCausalLM.from_pretrained(
-            cfg.model.path,
-            quantization_config=quantization_config,
-            device_map=device_map,
-            trust_remote_code=True,
-            torch_dtype=torch.bfloat16,
-        )
-        model = prepare_model_for_kbit_training(model)
-    else:
-        model = AutoModelForCausalLM.from_pretrained(
-            cfg.model.path,
-            device_map=device_map,
-            trust_remote_code=True,
-            torch_dtype=torch.bfloat16,
-        )
-
-    # Apply LoRA
-    lora_config = get_qlora_config(cfg)
-    model = get_peft_model(model, lora_config)
-
-    # Load dataset
-    from src.data.mol_instructions import MolInstructionsDataset
-
-    train_dataset = MolInstructionsDataset(
-        split="train",
-        dataset_name=cfg.data.get("source", "zjunlp/Mol-Instructions"),
-        subset=cfg.data.get("subset", "Protein-oriented Instructions"),
-        tokenizer=tokenizer,
-    )
-
-    eval_dataset = MolInstructionsDataset(
-        split="validation",
-        dataset_name=cfg.data.get("source", "zjunlp/Mol-Instructions"),
-        subset=cfg.data.get("subset", "Protein-oriented Instructions"),
-        tokenizer=tokenizer,
-    )
-
-    # Create SFT config
-    training_args = get_training_arguments(cfg)
-
-    # Create TRL SFTTrainer
-    trainer = TRLSFTTrainer(
-        model=model,
-        tokenizer=tokenizer,
-        train_dataset=train_dataset,
-        eval_dataset=eval_dataset,
-        args=training_args,
-        dataset_text_field="formatted_prompt",
-        max_seq_length=cfg.training.get("max_seq_length", 2048),
-    )
-
-    # Train
-    train_result = trainer.train()
-
-    # Save
-    trainer.save_model(training_args.output_dir)
-
-    return train_result.metrics
+    """Run SFT with LoRA (no quantization). Backward-compatible alias for run_sft()."""
+    return run_sft(cfg)

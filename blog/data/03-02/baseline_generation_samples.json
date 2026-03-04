@@ -1,0 +1,155 @@
+{
+  "model": "Qwen/Qwen3-8B",
+  "approach": "vanilla",
+  "split": "test",
+  "date": "2026-03-03",
+  "generation_kwargs": {
+    "max_new_tokens": 256,
+    "min_new_tokens": 10,
+    "do_sample": false,
+    "repetition_penalty": 1.2
+  },
+  "total_samples": 20,
+  "samples": [
+    {
+      "category": "catalytic",
+      "instruction": "Analyze the following protein sequence and elucidate the catalytic activity of the corresponding enz",
+      "expected": "Evaluation of the protein sequence indicates that the associated enzyme exhibits catalytic activity in the form of this chemical reaction: [sulfur-carrier protein ThiS]-C-terminal Gly-Gly-AMP + AH2 +   S-sulfanyl-L-cysteinyl-[cysteine desulfurase] = [sulfur-carrier   protein ThiS]-C-terminal Gly-NH-CH2-C(O)SH + A + AMP + H(+) + L-   cysteinyl-[cysteine desulfurase].",
+      "generated": "The provided **protein sequence** is quite long (approximately 507 residues), which suggests that this could be an **enzyme with complex functional domains**, possibly involved in metabolic pathways or signal transduction.\n\n---\n\n## \ud83d\udd0d Step-by-Step Analysis of the Protein Sequence\n\n### \u2705 1. **Sequence Length & Complexity**\n- The length (~507 aa) indicates a multi-domain protein.\n- It contains multiple charged residues (e.g., lysine [K], arginine [R]), suggesting potential for enzymatic active site...",
+      "protein_seq": "MKFIVKLYPEIMMKSKSVRMRFTKMLETNI..."
+    },
+    {
+      "category": "catalytic",
+      "instruction": "Analyze the following protein sequence and elucidate the catalytic activity of the corresponding enz",
+      "expected": "By examining the input protein sequence, the enzyme catalyzes the subsequent chemical reaction: a ribonucleoside 5'-triphosphate + RNA(n) = diphosphate +   RNA(n+1).",
+      "generated": "Analyzing this long **protein sequence** (length: 724 residues), we can begin by identifying key features that may suggest enzymatic activity\u2014particularly those related to **catalytic domains**, conserved motifs, or functional sites such as active site residues.\n\n---\n\n## \ud83d\udd0d Step-by-Step Analysis\n\n### \u2705 1. **Sequence Length & Complexity**\nThe sequence is over **700 amino acids long**, which suggests it could be an **enzyme with multiple domains** or even a multi-domain complex involved in various ...",
+      "protein_seq": "MYITPLFFPNLLKLQRKSFLTFLKYGIKKE..."
+    },
+    {
+      "category": "catalytic",
+      "instruction": "Given the protein sequence below, please analyze and describe the catalytic activity of the correspo",
+      "expected": "Based on the provided protein sequence, the enzyme appears to facilitate the chemical reaction: ATP + meso-2,6-diaminoheptanedioate + UDP-N-acetyl-alpha-D-   muramoyl-L-alanyl-D-glutamate = ADP + H(+) + phosphate + UDP-N-   acetyl-alpha-D-muramoyl-L-alanyl-gamma-D-glutamyl-meso-2,6-   diaminoheptanedioate.",
+      "generated": "Based on the provided **protein sequence**, we can begin to infer potential functional roles by analyzing key features such as conserved motifs, domain architecture, hydrophobicity patterns, charge distribution, and similarity to known enzymes.\n\n---\n\n## \ud83d\udd0d Step 1: Sequence Analysis Overview\n\n### Length:\n- The sequence is approximately **605 residues** long.\n  \n### Hydrophilic vs. Hydrophobic Content:\n- There's a mix of both polar (hydrophilic) and non-polar (hydrophobic) residues throughout the s...",
+      "protein_seq": "MRLSALGAAEGGELRPAGADPQITGLCVDS..."
+    },
+    {
+      "category": "catalytic",
+      "instruction": "Please evaluate the following protein sequence and provide an explanation of the enzyme's catalytic ",
+      "expected": "By examining the input protein sequence, the enzyme catalyzes the subsequent chemical reaction: adenosine(37) in tRNA + 2 reduced [2Fe-2S]-[ferredoxin] + 2 S-   adenosyl-L-methionine = 2-methyladenosine(37) in tRNA + 5'-   deoxyadenosine + L-methionine + 2 oxidized [2Fe-2S]-[ferredoxin] + S-   adenosyl-L-homocysteine.",
+      "generated": "Based on the provided **protein sequence** (which is approximately 504 residues long), we can begin to infer potential functional roles by analyzing key features such as conserved motifs, domain architecture, charge distribution, hydrophobicity patterns, and similarity to known enzymes.\n\n---\n\n## \ud83d\udd0d Step-by-Step Analysis\n\n### \u2705 1. Sequence Length & Composition:\nThe length: ~504 aa  \nAmino acid composition includes both polar and non-polar residues with significant numbers of charged residues (e.g....",
+      "protein_seq": "MAEVMKKKREKSNRPNKRDSIYSMTFDELQ..."
+    },
+    {
+      "category": "catalytic",
+      "instruction": "Please evaluate the following protein sequence and provide an explanation of the enzyme's catalytic ",
+      "expected": "Evaluation of the protein sequence indicates that the associated enzyme exhibits catalytic activity in the form of this chemical reaction: ATP + L-proline + tRNA(Pro) = AMP + diphosphate + L-prolyl-   tRNA(Pro).",
+      "generated": "Based on the provided **protein sequence** (which is approximately 504 residues long), I will perform a detailed analysis to infer potential **catalytic activity**, **chemical reactions**, and possible **biological functions**.\n\n---\n\n## \ud83d\udd2c Step-by-Step Analysis\n\n### \u2705 1. Sequence Length & Composition:\nThe sequence length: **~504 amino acids**\n\nComposition:\n- Hydrophobic residues (e.g., V, L, M, A): ~32%\n- Polar uncharged (e.g., S, T, N, Q): ~28%\n- Charged residues (positive/negative) (e.g., R, K,...",
+      "protein_seq": "MRLSRYFLPILREVPKEAEIVSHRLMLRAG..."
+    },
+    {
+      "category": "domain",
+      "instruction": "Could you inspect the provided protein sequence and determine any possible motifs or domains? Here i",
+      "expected": "After analyzing the given sequence, the following protein domains or motifs are predicted: Glutamine amidotransferase, CTP synthase N-terminal domains",
+      "generated": "Certainly! Let's take a detailed look at this **protein sequence** to identify potential **motifs**, **domains**, and infer some functional insights.\n\n---\n\n## \ud83d\udd0d Step 1: Sequence Overview\n\nThe given sequence has length:\n- **Total residues**: `547` (counted manually)\n  \nThis suggests it could be an intermediate-sized protein with multiple structural elements.\n\n---\n\n## \ud83e\uddec Step 2: Identify Known Motifs & Domains Using Bioinformatics Tools\n\nSince I can't run external tools like InterProScan or Pfam di...",
+      "protein_seq": "MARYIFITGGVVSSLGKELASAALGAALQA..."
+    },
+    {
+      "category": "domain",
+      "instruction": "Given the following protein sequence, can you perform an analysis and identify any potential motifs ",
+      "expected": "Upon evaluating your submitted sequence, our predictive algorithms suggest the presence of: YjeF N-terminal domains",
+      "generated": "Certainly! Let's take a detailed look at this **protein sequence** to determine key features such as **motifs**, **domains**, **potential functions**, and possible **biological roles**.\n\n---\n\n## \ud83d\udd2c **1. Sequence Overview**\n\nThe given sequence has 537 residues (amino acids), which suggests it could be a relatively large multi-domain protein. The first few letters are:\n> `MKKELLTVEKMKSTEEKAIVAGVSEKELIERAGGAVVDVILENFSPGPTLVFCGTGKNGEDGQVVARLLQENGWPVQIIKTKHLPKFSQIEAALKQARLVIDGIFGAGLSRPLQGDILKLVNLINLSG...",
+      "protein_seq": "MKKELLTVEKMKSTEEKAIVAGVSEKELIE..."
+    },
+    {
+      "category": "domain",
+      "instruction": "Examine the following protein sequence and determine which, if any, known protein domains or motifs ",
+      "expected": "After analyzing the given sequence, the following protein domains or motifs are predicted: Response regulatory domains",
+      "generated": "Based on the provided **protein sequence**:\n```\nMARKEWKVLLIEDDPMVQEVNKDFITTVKGVTVCATAGNGEEGMKLIKEEQPDLVILDVYMPKKDGIKTLQEIRKQKLEVDVIVVSAAKDKETISLMLQNGAVDYILKPFKLERMRQALEKYKQYKQKIEANDTLSQEQLDAILNIPQQAVQDLPKGLNHFTMNEVTAFLKQQTASLSAEEVAKALGIARVTARRYLDYLEKTGIIKLDVQYGGVGRPVNRYVLKG\n```\n\nI will perform an analysis to identify potential **known protein domains**, **motifs**, and other features that may help in predicting its **function**, **structure**, and **biological role**.\n\n---\n\n## \ud83d\udd0d Step 1: Sequence...",
+      "protein_seq": "MARKEWKVLLIEDDPMVQEVNKDFITTVKG..."
+    },
+    {
+      "category": "domain",
+      "instruction": "Examine the following protein sequence and determine which, if any, known protein domains or motifs ",
+      "expected": "The computational analysis of the sequence suggests the presence of the following protein domains or motifs: TLDc domains",
+      "generated": "Based on the provided **protein sequence** (which appears to be approximately 305 residues long), I will perform an analysis for potential **known protein domains**, **motifs**, and other functional features.\n\n---\n\n## \ud83d\udd0d Step-by-Step Analysis\n\n### \u2705 Length:\nThe length is:  \n`Length = 305`\n\nThis suggests that this could potentially be a multi-domain protein with several structural elements.\n\n---\n\n## \ud83e\uddec Domain/Region Identification Using Bioinformatics Tools\n\nSince we don't have access to external d...",
+      "protein_seq": "MSFSDRNDSPETPESSGTGTPVNSNRASAS..."
+    },
+    {
+      "category": "domain",
+      "instruction": "Can you analyze the protein sequence provided below and predict any recognizable domains or motifs i",
+      "expected": "Using bioinformatic tools, we have identified potential protein domains or motifs within your provided sequence: YjeF N-terminal domains",
+      "generated": "Certainly! Let\u2019s take a detailed look at this **protein sequence** to identify potential **domains**, **motifs**, and make some educated predictions about its **function**, **structure**, and possible **biological roles**.\n\n---\n\n## \ud83d\udd0d Step 1: Sequence Overview & Basic Properties\n\n### Length:\n- The given sequence is approximately **450 residues long** (let me count for accuracy):\n\n> MHLKKGFPNGERILSTEEVRAVEQRFPSVSQQPTRVLMQRAGEVAFALTKRCWPEARRLTVLCGKGNNGGDGVVVATLAAKAGFEVQILMPELDESSGDAADARASCPIKPKRFSA...",
+      "protein_seq": "MHLKKGFPNGERILSTEEVRAVEQRFPSVS..."
+    },
+    {
+      "category": "function",
+      "instruction": "Analyze the following protein sequence and explain its functional role:",
+      "expected": "One of the essential components for the initiation of protein synthesis. Protects formylmethionyl-tRNA from spontaneous hydrolysis and promotes its binding to the 30S ribosomal subunits. Also involved in the hydrolysis of GTP during the formation of the 70S ribosomal complex. {ECO:0000255|HAMAP-Rule:MF_00100}.",
+      "generated": "The provided protein sequence is quite long (over 500 residues), which suggests it may be an integral membrane or cytoplasmic protein with multiple domains or functions. Let's break down this analysis step by step.\n\n---\n\n## \ud83d\udd2c **1. Sequence Overview**\n\n**Length:** ~624 amino acids  \n**Sequence:**\n> MAKKRIYEVAKELDIENKIVVKKAQDLGFDVKSHMSSLDDKQVSKLVDSLKSTNTTPSTEKDSKNSSRKEKAKIKVSVGAIRRRDNKNEHDNRHGNNKHRNNNFKKQQNNRRENEDKKTTSAKPAARDLLNKFKKKQRAEASELNAQTEASRRKWHQEQNPQRSKVKKVENTRKPKEEKLEGAAAVKARVQASQKPVGPKI...",
+      "protein_seq": "MAKKRIYEVAKELDIENKIVVKKAQDLGFD..."
+    },
+    {
+      "category": "function",
+      "instruction": "Based on the protein sequence provided, describe its biological function:",
+      "expected": "Catalyzes the irreversible NADPH-dependent deamination of GMP to IMP. It functions in the conversion of nucleobase, nucleoside and nucleotide derivatives of G to A nucleotides, and in maintaining the intracellular balance of A and G nucleotides.",
+      "generated": "The given protein sequence is quite long (approximately 350 residues), which suggests it may be an integral membrane or cytoplasmic protein with multiple functional domains. Let's break down what we can infer about this protein from its primary sequence.\n\n---\n\n### \ud83d\udd2c **1. Sequence Analysis**\n\n#### Length:\n- The length is approximately **349 amino acids**.\n  \n#### Hydrophobicity Profile:\nUsing tools like Kyte-Doolittle hydropathy plots, one would expect to see regions that could correspond to tran...",
+      "protein_seq": "MFNDIPVFDYEDIQLIPNKCIITSRSQADT..."
+    },
+    {
+      "category": "function",
+      "instruction": "Based on the protein sequence provided, describe its biological function:",
+      "expected": "Putative DNA-dependent ATPase required for providing the needed energy to achieve the termination of early transcripts.",
+      "generated": "The given protein sequence is quite long (approximately 507 residues), which suggests it may be an integral membrane or multi-domain protein with complex functional roles.\n\n### Step-by-Step Analysis:\n\n---\n\n## **1. Sequence Length & Complexity**\n- The length (~507 aa) indicates that this could be:\n  - A transmembrane receptor.\n  - An enzyme with multiple domains.\n  - A signaling molecule involved in cellular communication.\n  \nGiven the presence of hydrophobic regions and potential signal peptides...",
+      "protein_seq": "MSCVHNNTSFPVQTEAYLKEVFEKYKELQE..."
+    },
+    {
+      "category": "function",
+      "instruction": "What is the biological function of this protein?",
+      "expected": "Modifies, by uridylylation and deuridylylation, the PII regulatory proteins (GlnB and homologs), in response to the nitrogen status of the cell that GlnD senses through the glutamine level. Under low glutamine levels, catalyzes the conversion of the PII proteins and UTP to PII-UMP and PPi, while under higher glutamine levels, GlnD hydrolyzes PII-UMP to PII and UMP (deuridylylation). Thus, controls uridylylation state and activity of the PII proteins, and plays an important role in the regulation...",
+      "generated": "The provided **amino acid sequence** (length: 735 residues) appears to be that of an **unknown or uncharacterized protein**, as it does not match any known proteins in standard databases like UniProt or NCBI's BLAST tools when analyzed with current reference data.\n\nHowever, I can perform a detailed analysis of its structural features, potential functional domains, and possible roles using bioinformatics approaches:\n\n---\n\n## \ud83d\udd2c **1. Sequence Analysis**\n\n### \u2705 Length:\n- Total length = **735 amino a...",
+      "protein_seq": "MTDNRFSPDSTPPDASSPDSPVDTIASTQL..."
+    },
+    {
+      "category": "function",
+      "instruction": "Describe the biological function of the protein with the following sequence:",
+      "expected": "Activates E box-dependent transcription in collaboration with TCF3/E47. May be a trans-acting factor involved in the development and maintenance of the mammalian nervous system. Transactivates the promoter of its own gene (By similarity). {ECO:0000250}.",
+      "generated": "The provided amino acid sequence is quite long (over 400 residues), which suggests it may be an integral membrane or cytoplasmic protein involved in complex cellular processes such as signaling, transport, or structural support.\n\nLet\u2019s break down this analysis step by step to infer **biological function**, **structure**, and **potential roles** of this hypothetical protein.\n\n---\n\n## \ud83d\udd2c **1. Sequence Analysis**\n\n### A) Hydrophobicity & Membrane Association:\n- The presence of multiple hydrophobic r...",
+      "protein_seq": "MLTLPFDESVVMPESQMCRKFSRECEDQKQ..."
+    },
+    {
+      "category": "general",
+      "instruction": "What is the name of this protein?",
+      "expected": "This protein is Ribonuclease 3 {ECO:0000255|HAMAP-Rule:MF_00104}.",
+      "generated": "The given amino acid sequence:\n\n```\nMPYRKYREKKYETKYREAFKVFQEKIGITFTDEKLLIQAFTHSSYVNEHRKKPHEDNERLEFLGDAVLELTVSQYLFQKYPTMSEGELTKLRAAIVCEPSLVRFANELSFGSLVLLGKGEEMTGGRERPALLADVFEAFIGALYLDQGLETVWEFLKEIVYPKINEGAFSHVMDYKSQLQELIQRDGSGNVEYQILQEKGPAHNREFVSRVTLNNVALGLGSGKSKKEAEQQAAAEALKKLKEQL\n```\n\ndoes **not correspond to any known or well-characterized protein** in standard databases such as UniProt, NCBI Protein Database (nr), Pfam, InterPro, etc., when analyzed using current bioinformatics tools.\n\n### Po...",
+      "protein_seq": "MPYRKYREKKYETKYREAFKVFQEKIGITF..."
+    },
+    {
+      "category": "general",
+      "instruction": "Assess the following protein sequence and provide a brief report on its primary characteristics:",
+      "expected": "This protein is Aspartate--ammonia ligase, found in Streptococcus thermophilus (strain ATCC BAA-250 / LMG 18311).",
+      "generated": "**Protein Sequence Analysis Report**\n\n---\n\n### **1. Basic Information**\n- **Sequence Length:** 435 residues  \n- **Start Amino Acid (First Residue):** M (Met)  \n- **End Amino Acid (Last Residue):** K (Lys)\n\n---\n\n### **2. Primary Structure Characteristics**\n\n#### **A. Hydrophobicity Profile:**\nThe sequence contains both hydrophilic and hydrophobic regions:\n- **Hydrophobic Regions:** \n  - Early in the sequence (e.g., MKKSFID...), with several aromatic or branched aliphatic residues.\n  - Mid-sequenc...",
+      "protein_seq": "MKKSFIDQQKEISFVKNTFTQYLIDKLDVV..."
+    },
+    {
+      "category": "general",
+      "instruction": "What biological activities does this protein perform? Analyze the sequence below:",
+      "expected": "Catalyzes the transfer of the diacylglyceryl group from phosphatidylglycerol to the sulfhydryl group of the N-terminal cysteine of a prolipoprotein, the first step in the formation of mature lipoproteins.",
+      "generated": "Based on the provided **amino acid sequence** (which is approximately 405 residues long), I will conduct an analysis to infer potential **biological functions**, structural features, and possible interactions or roles in cellular processes.\n\n---\n\n## \ud83d\udd2c **1. Sequence Analysis Overview**\n\n### \ud83e\uddec Length:\n- The sequence contains **~405 amino acids**, which suggests it could be a medium-sized multi-domain protein with functional regions for binding, catalysis, signaling, etc.\n\n### \ud83d\udd0d Key Features Identi...",
+      "protein_seq": "MALNFPNIDPVIVKFGPFDIFGQTFEPALR..."
+    },
+    {
+      "category": "general",
+      "instruction": "Conduct a quick analysis of the protein represented by the following sequence and outline its main c",
+      "expected": "This protein is Glyoxylate/hydroxypyruvate reductase B, found in Pectobacterium carotovorum subsp. carotovorum (strain PC1).",
+      "generated": "Certainly! Let's perform a **quick bioinformatics-based analysis** of this protein sequence using standard tools and principles in molecular biology.\n\n---\n\n## \ud83d\udd2c Protein Sequence Analysis Summary\n\n### \ud83e\uddec Basic Information:\n- **Sequence length**: 357 residues  \n- **Starts with M (Met)**: Indicates it is likely to be a **predicted or known secreted protein**, as many proteins begin with methionine.\n- **No signal peptide identified via cleavage site prediction** (e.g., SignalP): Suggests that if this...",
+      "protein_seq": "MKPSVILYKKIADDLRARLDQHFTVTELDA..."
+    },
+    {
+      "category": "general",
+      "instruction": "In which cellular compartment is this protein found?",
+      "expected": "Cytoplasm {ECO:0000255|HAMAP-Rule:MF_00505}.",
+      "generated": "To determine the **cellular compartment** in which this protein resides, we need to consider several key features:\n\n---\n\n### \ud83d\udd0d Step 1: Analyze for Membrane-Associated Motifs or Transmembrane Domains  \nThe presence of transmembrane domains (TMDs) often indicates that a protein is located in membranes such as plasma membrane, ER, mitochondria, etc.\n\nLet\u2019s look at the given sequence:\n```\nMK G Q E T R G F Q S E V K Q L L H L M I H S L Y S N K E I F L R E L I S N A S D A A D K L R F R A L S N P E L F...",
+      "protein_seq": "MKGQETRGFQSEVKQLLHLMIHSLYSNKEI..."
+    }
+  ]
+}

@@ -44,10 +44,6 @@ logging:
     project: protein-llm-evaluation
     entity: null
 
-  tensorboard:
-    enabled: false
-    log_dir: ./runs/ppi_evaluation
-
 # Demo dataset info (used when no dataset path is provided)
 # Contains known interacting pairs:
 #   - Insulin - Insulin receptor (INS-INSR)

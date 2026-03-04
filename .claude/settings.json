@@ -30,13 +30,16 @@
       "Edit(src/**)",
       "Edit(configs/**)",
       "Edit(tests/**)",
-      "Edit(scripts/**)"
+      "Edit(scripts/**)",
+      "Edit(blog/**)",
+      "Write(blog/**)",
+      "Edit(/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/**)",
+      "Write(/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/**)"
     ],
     "deny": [],
     "ask": []
   },
   "env": {
-    "INSIDE_CLAUDE_CODE": "1",
     "PYTHONPATH": "${workspaceFolder}/src",
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },

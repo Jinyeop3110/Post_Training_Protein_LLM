@@ -1,0 +1,122 @@
+{
+  "experiments": {
+    "sft_lora_esm3_qwen3_8b_it_0226_151416": {
+      "approach": "mlp",
+      "projector_type": "mlp",
+      "dataset": null,
+      "learning_rate": 0.0002,
+      "num_epochs": 3,
+      "total_steps": 1677,
+      "final_token_avg_loss": 2.288,
+      "min_token_avg_loss": 1.6198,
+      "best_eval_loss": 1.9421406984329224,
+      "best_eval_step": 1677,
+      "convergence_step": 180,
+      "max_grad_norm": 6.92035722732544,
+      "mean_grad_norm": 1.228942511681311,
+      "anomalies": [
+        "loss_spike_step_60",
+        "loss_spike_step_70",
+        "loss_spike_step_250",
+        "loss_spike_step_750",
+        "grad_spike_step_70",
+        "grad_spike_step_1140"
+      ]
+    },
+    "sft_lora_esm3_qwen3_8b_it_0225_203237": {
+      "approach": "perceiver",
+      "projector_type": "perceiver",
+      "dataset": null,
+      "learning_rate": 0.0002,
+      "num_epochs": 3,
+      "total_steps": 1677,
+      "final_token_avg_loss": 2.2957,
+      "min_token_avg_loss": 1.6269,
+      "best_eval_loss": 1.9515460729599,
+      "best_eval_step": 1677,
+      "convergence_step": 180,
+      "max_grad_norm": 11.983203887939451,
+      "mean_grad_norm": 1.2627812909508893,
+      "anomalies": [
+        "loss_spike_step_60",
+        "loss_spike_step_70",
+        "loss_spike_step_250",
+        "grad_spike_step_70"
+      ]
+    },
+    "sft_text_qwen3_8b_it_0227_145821": {
+      "approach": "text",
+      "projector_type": null,
+      "dataset": null,
+      "learning_rate": 0.0002,
+      "num_epochs": 3,
+      "total_steps": 2595,
+      "final_token_avg_loss": 2.492,
+      "min_token_avg_loss": 2.359,
+      "best_eval_loss": 2.4151294231414795,
+      "best_eval_step": 2595,
+      "convergence_step": 180,
+      "max_grad_norm": 4.122328281402588,
+      "mean_grad_norm": 1.9295742663637552,
+      "anomalies": [
+        "loss_spike_step_60",
+        "loss_spike_step_70",
+        "loss_spike_step_90",
+        "grad_spike_step_810",
+        "grad_spike_step_960",
+        "grad_spike_step_1060",
+        "grad_spike_step_1110",
+        "grad_spike_step_1160"
+      ]
+    },
+    "sft_esm3_mlp_long_qwen3_8b_it_0302_175459": {
+      "approach": "mlp",
+      "projector_type": "mlp",
+      "dataset": "mol_instructions",
+      "learning_rate": 0.00012,
+      "num_epochs": 7,
+      "total_steps": 500,
+      "final_token_avg_loss": 2.378,
+      "min_token_avg_loss": 1.8126,
+      "best_eval_loss": 2.043976306915283,
+      "best_eval_step": 500,
+      "convergence_step": 200,
+      "max_grad_norm": 4.848777770996094,
+      "mean_grad_norm": 1.3618054807186126,
+      "anomalies": [
+        "loss_spike_step_60",
+        "grad_spike_step_80"
+      ]
+    }
+  },
+  "comparison": {
+    "best_experiment": "sft_lora_esm3_qwen3_8b_it_0226_151416",
+    "best_experiment_label": "MLP (0226, combined)",
+    "metric": "best_eval_loss",
+    "value": 1.9421406984329224,
+    "ranking": [
+      [
+        "sft_lora_esm3_qwen3_8b_it_0226_151416",
+        1.9421406984329224
+      ],
+      [
+        "sft_lora_esm3_qwen3_8b_it_0225_203237",
+        1.9515460729599
+      ],
+      [
+        "sft_esm3_mlp_long_qwen3_8b_it_0302_175459",
+        2.043976306915283
+      ],
+      [
+        "sft_text_qwen3_8b_it_0227_145821",
+        2.4151294231414795
+      ]
+    ]
+  },
+  "notes": {
+    "dataset_caveat": "MLP-long (0302) uses mol_instructions only (not combined_sft). Other runs use combined_sft_260225.",
+    "hyperparameter_diff": "MLP-long uses lr=1.2e-4, 7 epochs. Old runs use lr=2e-4, 3 epochs.",
+    "mlp_long_status": "Stopped at step 500/4809 (~10%). Eval loss 2.04 may improve further.",
+    "metric_note": "All training loss values use token_avg_loss (NOT HF running average 'loss')."
+  }
+}

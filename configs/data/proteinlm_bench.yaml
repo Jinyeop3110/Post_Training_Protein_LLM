@@ -1,0 +1,23 @@
+name: proteinlm_bench
+source: tsynbio/ProteinLMBench
+subset: evaluation
+task: proteinlm_bench  # Task type for reward routing in GRPOTrainer
+
+# Dataset paths
+paths:
+  raw: ${paths.raw_dir}/proteinlm_bench
+  processed: ${paths.processed_dir}/proteinlm_bench
+
+# Processing settings
+processing:
+  max_seq_length: 2048
+  include_structure: false
+
+# Split ratios
+splits:
+  train: 0.8
+  validation: 0.1
+  test: 0.1
+
+# Optional: limit number of samples (null = use all)
+limit: null

@@ -1,0 +1,36 @@
+# @package _global_
+
+# GRPO experiment: ProteinLMBench Multiple-Choice
+# Uses ProteinLMBench (944 questions) with MC accuracy reward.
+# Chain from a trained SFT checkpoint via parent_experiment.
+#
+# Usage:
+#   python scripts/train.py experiment=grpo_proteinlm_bench \
+#     parent_experiment=sft_esm3_mlp_XXXX
+
+defaults:
+  - override /model: qwen3_8b
+  - override /encoder: esm3_small
+  - override /data: proteinlm_bench
+  - override /training: grpo
+
+approach: esm3
+experiment_name: grpo_proteinlm_bench_${model.name}_${now:%m%d_%H%M%S}
+
+# Data task for reward routing
+data:
+  task: proteinlm_bench
+
+training:
+  grpo:
+    group_size: 4
+
+  # MC answers are short
+  rollout:
+    max_tokens: 128
+
+  wandb:
+    tags:
+      - grpo
+      - proteinlm_bench
+      - ${model.name}

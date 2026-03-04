@@ -76,7 +76,20 @@ from .ppi_prediction import (
     # Helper functions
     parse_ppi_prediction,
 )
+from .proteinlm_bench import (
+    ProteinLMBenchResult,
+    # Data classes
+    ProteinLMBenchSample,
+    compute_proteinlm_bench_metrics,
+    create_proteinlm_bench_prompt,
+    # Main evaluation function
+    evaluate_proteinlm_bench,
+    load_proteinlm_bench_dataset,
+    # Helper functions
+    parse_mc_answer,
+)
 from .sft_eval import evaluate_sft
+from .sft_eval_combined import evaluate_sft_combined
 from .stability import (
     DESTABILIZING_THRESHOLD,
     # Constants
@@ -130,10 +143,19 @@ __all__ = [
     "STABILITY_CLASSES",
     "STABILIZING_THRESHOLD",
     "DESTABILIZING_THRESHOLD",
+    # ProteinLMBench
+    "evaluate_proteinlm_bench",
+    "ProteinLMBenchSample",
+    "ProteinLMBenchResult",
+    "parse_mc_answer",
+    "compute_proteinlm_bench_metrics",
+    "load_proteinlm_bench_dataset",
+    "create_proteinlm_bench_prompt",
     # Benchmarks
     "run_all_benchmarks",
     # SFT Evaluation
     "evaluate_sft",
+    "evaluate_sft_combined",
     # Shared metrics utilities
     "safe_float",
     "sanitise_metrics",

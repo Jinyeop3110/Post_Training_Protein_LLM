@@ -17,6 +17,7 @@ experiment_name: sft_esm3_mlp_${model.name}_${now:%m%d_%H%M%S}
 
 # Force MLP projector (default, but explicit for clarity)
 encoder:
+  encoder_batch_size: 4  # ESM-3 sub-batch of 4; higher causes attention mask shape errors
   projector:
     type: mlp
 
@@ -35,14 +36,13 @@ training:
   projector_lr: 1e-3  # 5x base LR
 
   # Token-budget dynamic batching: short seqs → large batch, long seqs → small batch
-  # ESM-3 encoder sub-batches independently (encoder.encoder_batch_size=4)
-  max_tokens_per_batch: 6144
+  # FSDP shard_grad_op (ZeRO-2): keeps full params, shards grads+optimizer.
+  # ESM-3 encoder sub-batches independently (encoder.encoder_batch_size).
+  max_tokens_per_batch: 8192
   max_batch_size: 20
-  gradient_accumulation_steps: 4  # effective batch ~196K tokens (8 GPUs × 4 accum × 6144)
+  gradient_accumulation_steps: 4  # effective batch ~262K tokens (8 GPUs × 4 accum × 8192)
+  eval_batch_size: 4
 
-  # Projector alignment: freeze LoRA for first 500 steps so the randomly-
-  # initialized projector learns a basic embedding mapping before the LLM
-  # adapts. After 500 steps, LoRA unfreezes and both train jointly.
   freeze_lora_steps: 0
 
   epochs: 3

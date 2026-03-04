@@ -78,6 +78,19 @@ def run_all_benchmarks(
     except Exception as e:
         log.error(f"Stability prediction failed: {e}", exc_info=True)
 
+    # ---- ProteinLMBench (multiple-choice) ----
+    try:
+        from .proteinlm_bench import evaluate_proteinlm_bench
+
+        plb_results = evaluate_proteinlm_bench(cfg, checkpoint_path, model=model, output_dir=output_dir)
+        task_results["proteinlm_bench"] = plb_results
+        results.update({f"proteinlm_bench_{k}": v for k, v in plb_results.items()})
+        log.info(f"ProteinLMBench: {len(plb_results)} metrics computed")
+    except NotImplementedError:
+        log.warning("ProteinLMBench not implemented, skipping")
+    except Exception as e:
+        log.error(f"ProteinLMBench failed: {e}", exc_info=True)
+
     # ---- SFT evaluation (perplexity / BLEU / ROUGE) ----
     try:
         sft_results = evaluate_sft(cfg, checkpoint_path, model=model, output_dir=output_dir)
@@ -88,6 +101,26 @@ def run_all_benchmarks(
         log.warning("SFT evaluation not implemented, skipping")
     except Exception as e:
         log.error(f"SFT evaluation failed: {e}", exc_info=True)
+
+    # ---- Combined SFT evaluation (per-source / per-file, only for combined data) ----
+    data_cfg = cfg.get("data", {})
+    data_name = data_cfg.get("name", "")
+    cache_dir = data_cfg.get("paths", {}).get("raw", data_cfg.get("cache_dir", ""))
+    is_combined = data_name == "combined" or (isinstance(cache_dir, str) and "combined" in cache_dir)
+    if is_combined:
+        try:
+            from .sft_eval_combined import evaluate_sft_combined
+
+            combined_results = evaluate_sft_combined(cfg, checkpoint_path, model=model, output_dir=output_dir)
+            task_results["sft_combined"] = combined_results
+            results.update({f"sft_combined_{k}": v for k, v in combined_results.items()})
+            log.info(f"Combined SFT evaluation: {len(combined_results)} metrics computed")
+        except NotImplementedError:
+            log.warning("Combined SFT evaluation not implemented, skipping")
+        except Exception as e:
+            log.error(f"Combined SFT evaluation failed: {e}", exc_info=True)
+    else:
+        log.info("Skipping combined SFT evaluation (data is not 'combined')")
 
     # ---- Aggregated logging ----
     log.info(f"All benchmarks complete: {len(results)} total metrics across {len(task_results)} tasks")

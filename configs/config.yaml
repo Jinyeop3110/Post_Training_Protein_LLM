@@ -3,8 +3,8 @@ defaults:
   - encoder: esm3_small
   - data: mol_instructions
   - training: sft_qlora
-  - optional experiment: null
   - _self_
+  - optional experiment: null
 
 # Approach selection: text | esm3
 # - text: No encoder, raw protein sequence fed as text tokens to LLM
@@ -45,12 +45,15 @@ paths:
 eval_mode: protein_llm  # protein_llm | vanilla
 checkpoint_path: null  # Path to trained model checkpoint (protein_llm dir)
 evaluation:
-  name: go_prediction  # go_prediction | ppi | stability | sft | all
+  name: go_prediction  # go_prediction | ppi | stability | sft | sft_combined | all
   max_samples: null  # Limit eval samples (null = use all)
   batch_size: 1
   max_new_tokens: 256
   prompt_template: null  # Custom prompt template (null = use default)
   sft_gen_samples: 200  # Number of samples for SFT generation metrics
+  sft_combined_gen_per_file: 20  # Samples per task file for sft_combined eval
+  sft_combined_examples_per_file: 2  # Qualitative examples per task file
+  generation_temperature: 0.0  # 0.0 = greedy decoding, >0 = sampling
 
 # Hardware
 hardware:

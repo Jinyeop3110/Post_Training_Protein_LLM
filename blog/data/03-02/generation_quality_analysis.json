@@ -1,0 +1,537 @@
+{
+  "description": "Generation quality analysis across 3 SFT runs + baseline",
+  "date": "2026-03-03",
+  "data_source": "wandb generation_samples tables + baseline eval script",
+  "runs": {
+    "baseline": {
+      "approach": "vanilla",
+      "projector_type": "none",
+      "final_step": "step_0",
+      "total_sample_steps": 1,
+      "per_step_metrics": {
+        "step_0": {
+          "avg_word_overlap": 0.033,
+          "high_similarity_count": 0,
+          "degenerate_count": 0,
+          "avg_generation_length": 1009,
+          "total_samples": 20
+        }
+      },
+      "final_step_per_category": {
+        "catalytic": {
+          "high_similarity": 0,
+          "degenerate": 0,
+          "total": 5,
+          "unique_full_generations": 5,
+          "unique_generation_starts": 4,
+          "mode_collapse": false
+        },
+        "domain": {
+          "high_similarity": 0,
+          "degenerate": 0,
+          "total": 5,
+          "unique_full_generations": 5,
+          "unique_generation_starts": 4,
+          "mode_collapse": false
+        },
+        "function": {
+          "high_similarity": 0,
+          "degenerate": 0,
+          "total": 5,
+          "unique_full_generations": 5,
+          "unique_generation_starts": 4,
+          "mode_collapse": false
+        },
+        "general": {
+          "high_similarity": 0,
+          "degenerate": 0,
+          "total": 5,
+          "unique_full_generations": 5,
+          "unique_generation_starts": 5,
+          "mode_collapse": false
+        }
+      },
+      "mode_collapse_analysis": {},
+      "notes": "Qwen3-8B with no fine-tuning. 20 samples (4 categories; protein design excluded). Source: baseline_generation_quality.json"
+    },
+    "perceiver": {
+      "approach": "esm3",
+      "projector_type": "perceiver",
+      "final_step": "step_1677",
+      "total_sample_steps": 7,
+      "per_step_metrics": {
+        "step_250": {
+          "avg_word_overlap": 0.232,
+          "high_similarity_count": 2,
+          "degenerate_count": 7,
+          "avg_generation_length": 191,
+          "total_samples": 25
+        },
+        "step_500": {
+          "avg_word_overlap": 0.348,
+          "high_similarity_count": 4,
+          "degenerate_count": 0,
+          "avg_generation_length": 155,
+          "total_samples": 25
+        },
+        "step_750": {
+          "avg_word_overlap": 0.271,
+          "high_similarity_count": 3,
+          "degenerate_count": 1,
+          "avg_generation_length": 169,
+          "total_samples": 25
+        },
+        "step_1000": {
+          "avg_word_overlap": 0.246,
+          "high_similarity_count": 4,
+          "degenerate_count": 6,
+          "avg_generation_length": 211,
+          "total_samples": 25
+        },
+        "step_1250": {
+          "avg_word_overlap": 0.225,
+          "high_similarity_count": 0,
+          "degenerate_count": 0,
+          "avg_generation_length": 154,
+          "total_samples": 25
+        },
+        "step_1500": {
+          "avg_word_overlap": 0.284,
+          "high_similarity_count": 5,
+          "degenerate_count": 7,
+          "avg_generation_length": 214,
+          "total_samples": 25
+        },
+        "step_1677": {
+          "avg_word_overlap": 0.296,
+          "high_similarity_count": 3,
+          "degenerate_count": 6,
+          "avg_generation_length": 220,
+          "total_samples": 25
+        }
+      },
+      "final_step_per_category": {
+        "catalytic": {
+          "high_similarity": 1,
+          "degenerate": 0,
+          "total": 5,
+          "unique_full_generations": 3,
+          "unique_generation_starts": 2,
+          "mode_collapse": true
+        },
+        "design": {
+          "high_similarity": 0,
+          "degenerate": 4,
+          "total": 5,
+          "unique_full_generations": 5,
+          "unique_generation_starts": 4,
+          "mode_collapse": false
+        },
+        "domain": {
+          "high_similarity": 0,
+          "degenerate": 0,
+          "total": 5,
+          "unique_full_generations": 3,
+          "unique_generation_starts": 3,
+          "mode_collapse": true
+        },
+        "function": {
+          "high_similarity": 1,
+          "degenerate": 1,
+          "total": 5,
+          "unique_full_generations": 5,
+          "unique_generation_starts": 5,
+          "mode_collapse": false
+        },
+        "general": {
+          "high_similarity": 1,
+          "degenerate": 1,
+          "total": 5,
+          "unique_full_generations": 5,
+          "unique_generation_starts": 5,
+          "mode_collapse": false
+        }
+      },
+      "mode_collapse_analysis": {}
+    },
+    "mlp": {
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "final_step": "step_1677",
+      "total_sample_steps": 7,
+      "per_step_metrics": {
+        "step_250": {
+          "avg_word_overlap": 0.303,
+          "high_similarity_count": 1,
+          "degenerate_count": 3,
+          "avg_generation_length": 192,
+          "total_samples": 25
+        },
+        "step_500": {
+          "avg_word_overlap": 0.314,
+          "high_similarity_count": 2,
+          "degenerate_count": 0,
+          "avg_generation_length": 122,
+          "total_samples": 25
+        },
+        "step_750": {
+          "avg_word_overlap": 0.326,
+          "high_similarity_count": 2,
+          "degenerate_count": 1,
+          "avg_generation_length": 152,
+          "total_samples": 25
+        },
+        "step_1000": {
+          "avg_word_overlap": 0.311,
+          "high_similarity_count": 2,
+          "degenerate_count": 4,
+          "avg_generation_length": 184,
+          "total_samples": 25
+        },
+        "step_1250": {
+          "avg_word_overlap": 0.306,
+          "high_similarity_count": 3,
+          "degenerate_count": 0,
+          "avg_generation_length": 155,
+          "total_samples": 25
+        },
+        "step_1500": {
+          "avg_word_overlap": 0.326,
+          "high_similarity_count": 5,
+          "degenerate_count": 2,
+          "avg_generation_length": 175,
+          "total_samples": 25
+        },
+        "step_1677": {
+          "avg_word_overlap": 0.346,
+          "high_similarity_count": 4,
+          "degenerate_count": 3,
+          "avg_generation_length": 179,
+          "total_samples": 25
+        }
+      },
+      "final_step_per_category": {
+        "catalytic": {
+          "high_similarity": 1,
+          "degenerate": 0,
+          "total": 5,
+          "unique_full_generations": 5,
+          "unique_generation_starts": 2,
+          "mode_collapse": false
+        },
+        "design": {
+          "high_similarity": 0,
+          "degenerate": 3,
+          "total": 5,
+          "unique_full_generations": 5,
+          "unique_generation_starts": 2,
+          "mode_collapse": false
+        },
+        "domain": {
+          "high_similarity": 2,
+          "degenerate": 0,
+          "total": 5,
+          "unique_full_generations": 5,
+          "unique_generation_starts": 4,
+          "mode_collapse": false
+        },
+        "function": {
+          "high_similarity": 1,
+          "degenerate": 0,
+          "total": 5,
+          "unique_full_generations": 5,
+          "unique_generation_starts": 5,
+          "mode_collapse": false
+        },
+        "general": {
+          "high_similarity": 0,
+          "degenerate": 0,
+          "total": 5,
+          "unique_full_generations": 5,
+          "unique_generation_starts": 5,
+          "mode_collapse": false
+        }
+      },
+      "mode_collapse_analysis": {}
+    },
+    "text": {
+      "approach": "text",
+      "projector_type": "none",
+      "final_step": "step_2595",
+      "total_sample_steps": 11,
+      "per_step_metrics": {
+        "step_250": {
+          "avg_word_overlap": 0.43,
+          "high_similarity_count": 4,
+          "degenerate_count": 3,
+          "avg_generation_length": 315,
+          "total_samples": 25
+        },
+        "step_500": {
+          "avg_word_overlap": 0.497,
+          "high_similarity_count": 9,
+          "degenerate_count": 4,
+          "avg_generation_length": 315,
+          "total_samples": 25
+        },
+        "step_750": {
+          "avg_word_overlap": 0.434,
+          "high_similarity_count": 6,
+          "degenerate_count": 5,
+          "avg_generation_length": 300,
+          "total_samples": 25
+        },
+        "step_1000": {
+          "avg_word_overlap": 0.429,
+          "high_similarity_count": 6,
+          "degenerate_count": 4,
+          "avg_generation_length": 317,
+          "total_samples": 25
+        },
+        "step_1250": {
+          "avg_word_overlap": 0.482,
+          "high_similarity_count": 7,
+          "degenerate_count": 3,
+          "avg_generation_length": 305,
+          "total_samples": 25
+        },
+        "step_1500": {
+          "avg_word_overlap": 0.47,
+          "high_similarity_count": 9,
+          "degenerate_count": 4,
+          "avg_generation_length": 309,
+          "total_samples": 25
+        },
+        "step_1750": {
+          "avg_word_overlap": 0.519,
+          "high_similarity_count": 8,
+          "degenerate_count": 2,
+          "avg_generation_length": 310,
+          "total_samples": 25
+        },
+        "step_2000": {
+          "avg_word_overlap": 0.467,
+          "high_similarity_count": 5,
+          "degenerate_count": 4,
+          "avg_generation_length": 318,
+          "total_samples": 25
+        },
+        "step_2250": {
+          "avg_word_overlap": 0.467,
+          "high_similarity_count": 5,
+          "degenerate_count": 6,
+          "avg_generation_length": 316,
+          "total_samples": 25
+        },
+        "step_2500": {
+          "avg_word_overlap": 0.444,
+          "high_similarity_count": 5,
+          "degenerate_count": 4,
+          "avg_generation_length": 294,
+          "total_samples": 25
+        },
+        "step_2595": {
+          "avg_word_overlap": 0.443,
+          "high_similarity_count": 5,
+          "degenerate_count": 5,
+          "avg_generation_length": 319,
+          "total_samples": 25
+        }
+      },
+      "final_step_per_category": {
+        "catalytic": {
+          "high_similarity": 1,
+          "degenerate": 0,
+          "total": 5,
+          "unique_full_generations": 4,
+          "unique_generation_starts": 2,
+          "mode_collapse": true
+        },
+        "design": {
+          "high_similarity": 0,
+          "degenerate": 2,
+          "total": 5,
+          "unique_full_generations": 5,
+          "unique_generation_starts": 1,
+          "mode_collapse": false
+        },
+        "domain": {
+          "high_similarity": 2,
+          "degenerate": 0,
+          "total": 5,
+          "unique_full_generations": 5,
+          "unique_generation_starts": 4,
+          "mode_collapse": false
+        },
+        "function": {
+          "high_similarity": 1,
+          "degenerate": 2,
+          "total": 5,
+          "unique_full_generations": 5,
+          "unique_generation_starts": 4,
+          "mode_collapse": false
+        },
+        "general": {
+          "high_similarity": 1,
+          "degenerate": 1,
+          "total": 5,
+          "unique_full_generations": 5,
+          "unique_generation_starts": 5,
+          "mode_collapse": false
+        }
+      },
+      "mode_collapse_analysis": {}
+    }
+  },
+  "cross_run_comparison": {
+    "step_250": {
+      "perceiver": {
+        "avg_word_overlap": 0.232,
+        "high_similarity_count": 2,
+        "degenerate_count": 7
+      },
+      "mlp": {
+        "avg_word_overlap": 0.303,
+        "high_similarity_count": 1,
+        "degenerate_count": 3
+      },
+      "text": {
+        "avg_word_overlap": 0.43,
+        "high_similarity_count": 4,
+        "degenerate_count": 3
+      }
+    },
+    "step_500": {
+      "perceiver": {
+        "avg_word_overlap": 0.348,
+        "high_similarity_count": 4,
+        "degenerate_count": 0
+      },
+      "mlp": {
+        "avg_word_overlap": 0.314,
+        "high_similarity_count": 2,
+        "degenerate_count": 0
+      },
+      "text": {
+        "avg_word_overlap": 0.497,
+        "high_similarity_count": 9,
+        "degenerate_count": 4
+      }
+    },
+    "step_750": {
+      "perceiver": {
+        "avg_word_overlap": 0.271,
+        "high_similarity_count": 3,
+        "degenerate_count": 1
+      },
+      "mlp": {
+        "avg_word_overlap": 0.326,
+        "high_similarity_count": 2,
+        "degenerate_count": 1
+      },
+      "text": {
+        "avg_word_overlap": 0.434,
+        "high_similarity_count": 6,
+        "degenerate_count": 5
+      }
+    },
+    "step_1000": {
+      "perceiver": {
+        "avg_word_overlap": 0.246,
+        "high_similarity_count": 4,
+        "degenerate_count": 6
+      },
+      "mlp": {
+        "avg_word_overlap": 0.311,
+        "high_similarity_count": 2,
+        "degenerate_count": 4
+      },
+      "text": {
+        "avg_word_overlap": 0.429,
+        "high_similarity_count": 6,
+        "degenerate_count": 4
+      }
+    },
+    "step_1250": {
+      "perceiver": {
+        "avg_word_overlap": 0.225,
+        "high_similarity_count": 0,
+        "degenerate_count": 0
+      },
+      "mlp": {
+        "avg_word_overlap": 0.306,
+        "high_similarity_count": 3,
+        "degenerate_count": 0
+      },
+      "text": {
+        "avg_word_overlap": 0.482,
+        "high_similarity_count": 7,
+        "degenerate_count": 3
+      }
+    },
+    "step_1500": {
+      "perceiver": {
+        "avg_word_overlap": 0.284,
+        "high_similarity_count": 5,
+        "degenerate_count": 7
+      },
+      "mlp": {
+        "avg_word_overlap": 0.326,
+        "high_similarity_count": 5,
+        "degenerate_count": 2
+      },
+      "text": {
+        "avg_word_overlap": 0.47,
+        "high_similarity_count": 9,
+        "degenerate_count": 4
+      }
+    }
+  },
+  "key_findings": [
+    {
+      "id": 0,
+      "title": "Baseline (no SFT) has near-zero protein task performance",
+      "detail": "Qwen3-8B without fine-tuning achieves only 0.033 avg word overlap (0/20 high-similarity samples). Outputs are fluent but task-irrelevant. All SFT approaches improve dramatically: text-only 13.4x, MLP 10.5x, Perceiver 9.0x higher word overlap."
+    },
+    {
+      "id": 1,
+      "title": "Text-only achieves highest generation quality despite comparable eval_loss",
+      "detail": "Text-only avg word overlap 0.443 vs MLP 0.346 vs Perceiver 0.296 at final steps. Text-only gets 5/25 high-similarity samples vs MLP 4/25 vs Perceiver 3/25."
+    },
+    {
+      "id": 2,
+      "title": "Perceiver suffers severe mode collapse on catalytic tasks",
+      "detail": "3 out of 5 catalytic samples produce identical output (ATP + L-tyrosyl-[protein]...) regardless of input protein. Also collapses on domain prediction (YjeF N-terminal for 3/5)."
+    },
+    {
+      "id": 3,
+      "title": "MLP has stock sequence collapse for protein design",
+      "detail": "All 5 design samples and some function samples start with 'MSSKQVYR...' \u2014 a memorized signal peptide prefix, not conditioned on the instruction or functional requirements."
+    },
+    {
+      "id": 4,
+      "title": "Perceiver produces degenerate single-character repetition",
+      "detail": "6/25 samples at final step are degenerate (SSSSS..., EEEEE..., DDDDD...). Worst cases: pure 'S' repeated 300+ times for design/function/general tasks."
+    },
+    {
+      "id": 5,
+      "title": "Text-only achieves exact catalytic reaction matches",
+      "detail": "Text-only correctly predicts 'phosphate + xanthosine = alpha-D-ribose 1-phosphate + xanthine' (sample 2) and 'ATP + H2O = ADP + H(+) + phosphate' (sample 5) \u2014 neither ESM3 variant does."
+    },
+    {
+      "id": 6,
+      "title": "Text-only generates more diverse and longer protein sequences for design tasks",
+      "detail": "Text-only design sequences average ~300 chars with varied content, while MLP generates ~80-128 char stock sequences and Perceiver often degenerates to single-char repetition."
+    },
+    {
+      "id": 7,
+      "title": "All approaches struggle with design tasks (0/5 high similarity for all)",
+      "detail": "Design tasks (open-ended protein generation) have 0/5 high-similarity samples across all approaches. This is expected since exact sequence match is unlikely for generative tasks."
+    },
+    {
+      "id": 8,
+      "title": "Quality does not consistently improve with more training steps",
+      "detail": "Text-only peaks around step_500-750 (avg_sim 0.497-0.434) then fluctuates. Perceiver and MLP show minimal improvement between step_250 and step_1677."
+    }
+  ]
+}

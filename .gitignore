@@ -101,6 +101,10 @@ data/checkpoints/
 results/
 reports/
 
+# Blog: exclude stray images / large binaries
+blog/*.jpeg
+blog/*.jpg
+
 # Logs
 logs/
 *.log

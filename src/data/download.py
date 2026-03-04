@@ -372,6 +372,46 @@ def download_protein2text_qa(target_dir: str = "./data") -> str:
         return ""
 
 
+def download_proteinlm_bench(target_dir: str = "./data") -> str:
+    """Download ProteinLMBench evaluation dataset from HuggingFace.
+
+    Contains 944 manually verified multiple-choice questions testing
+    protein understanding (from tsynbio/ProteinLMBench).
+
+    Args:
+        target_dir: Directory to download to
+
+    Returns:
+        Path to dataset directory
+    """
+    target_dir = Path(target_dir)
+    raw_dir = target_dir / "raw" / "proteinlm_bench"
+
+    if raw_dir.exists() and any(raw_dir.iterdir()):
+        print(f"Dataset already exists at {raw_dir}")
+        return str(raw_dir)
+
+    raw_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        from datasets import load_dataset
+        ds = load_dataset("tsynbio/ProteinLMBench", "evaluation", split="train")
+        # Save as JSON for offline use
+        import json
+        records = [dict(ds[i]) for i in range(len(ds))]
+        out_path = raw_dir / "evaluation.json"
+        with open(out_path, "w") as f:
+            json.dump(records, f, indent=2)
+        print(f"Downloaded {len(records)} records to {out_path}")
+        return str(raw_dir)
+    except ImportError:
+        print("Please install datasets: pip install datasets")
+        return ""
+    except Exception as e:
+        print(f"Download failed: {e}")
+        return ""
+
+
 def list_available_datasets() -> dict:
     """List all available datasets with descriptions."""
     return {
@@ -429,6 +469,12 @@ def list_available_datasets() -> dict:
             "format": "JSON conversations",
             "download_fn": "download_protein2text_qa",
         },
+        "proteinlm_bench": {
+            "description": "ProteinLMBench multiple-choice evaluation benchmark",
+            "size": "944 questions",
+            "format": "JSON (from HuggingFace datasets)",
+            "download_fn": "download_proteinlm_bench",
+        },
     }
 
 
@@ -439,7 +485,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", type=str, choices=[
         "ipd_pdb_sample", "swissprot", "mol_instructions",
         "proteinlm", "swissprotclap", "protdescribe", "protein2text_qa",
-        "list",
+        "proteinlm_bench", "list",
     ], default="list", help="Dataset to download")
     parser.add_argument("--output_dir", type=str, default="./data",
                         help="Output directory")
@@ -469,3 +515,5 @@ if __name__ == "__main__":
         download_protdescribe(args.output_dir)
     elif args.dataset == "protein2text_qa":
         download_protein2text_qa(args.output_dir)
+    elif args.dataset == "proteinlm_bench":
+        download_proteinlm_bench(args.output_dir)

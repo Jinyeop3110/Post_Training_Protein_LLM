@@ -1,0 +1,440 @@
+{
+  "analysis_date": "2026-03-02",
+  "training_data": {
+    "directory": "/orcd/pool/006/yeopjin/workspace/Post_Training_Protein_LLM/data/processed/combined_sft_260225",
+    "total_unique_sequences": 596085,
+    "file_counts": {
+      "clap_protein_description.json": {
+        "records": 511322,
+        "unique_seqs": 435013
+      },
+      "mol_catalytic_activity.json": {
+        "records": 53174,
+        "unique_seqs": 52465
+      },
+      "mol_domain_motif.json": {
+        "records": 45100,
+        "unique_seqs": 43835
+      },
+      "mol_general_function.json": {
+        "records": 86572,
+        "unique_seqs": 85015
+      },
+      "mol_protein_design.json": {
+        "records": 195975,
+        "unique_seqs": 0
+      },
+      "mol_protein_function.json": {
+        "records": 114183,
+        "unique_seqs": 112158
+      },
+      "p2t_protein_qa.json": {
+        "records": 51521,
+        "unique_seqs": 1245
+      },
+      "pd_function_description.json": {
+        "records": 431943,
+        "unique_seqs": 362220
+      },
+      "pd_protein_naming.json": {
+        "records": 514427,
+        "unique_seqs": 429898
+      },
+      "pd_similarity_analysis.json": {
+        "records": 484303,
+        "unique_seqs": 401838
+      },
+      "pd_subcellular_location.json": {
+        "records": 324581,
+        "unique_seqs": 279174
+      },
+      "plm_disease.json": {
+        "records": 4431,
+        "unique_seqs": 4397
+      },
+      "plm_functionality.json": {
+        "records": 438993,
+        "unique_seqs": 368679
+      },
+      "plm_induction.json": {
+        "records": 23474,
+        "unique_seqs": 22112
+      },
+      "plm_ptm.json": {
+        "records": 40625,
+        "unique_seqs": 36271
+      },
+      "plm_subunit.json": {
+        "records": 275968,
+        "unique_seqs": 228767
+      },
+      "plm_tissue_specificity.json": {
+        "records": 42487,
+        "unique_seqs": 41743
+      },
+      "sp_gene_prediction.json": {
+        "records": 263061,
+        "unique_seqs": 231993
+      },
+      "sp_general_function.json": {
+        "records": 542287,
+        "unique_seqs": 455773
+      },
+      "sp_organism_prediction.json": {
+        "records": 271498,
+        "unique_seqs": 240230
+      }
+    },
+    "sequence_length_stats": {
+      "min": 10,
+      "max": 1000,
+      "median": 347
+    }
+  },
+  "benchmark_results": {
+    "CAFA5 GO Prediction": {
+      "file": "/orcd/pool/006/yeopjin/workspace/Post_Training_Protein_LLM/data/processed/cafa5_go/go_prediction.json",
+      "total_records": 10000,
+      "unique_eval_sequences": 10021,
+      "no_sequence_extracted": 7,
+      "exact_overlap_count": 5524,
+      "exact_overlap_pct": 55.1242,
+      "sample_overlapping_seqs": [
+        "GYGDRNFLRF",
+        "QPPGGSKVILF",
+        "SLLSLIRKLIT",
+        "DAQEKRQPWLPFG",
+        "VIGGDECNINEHRSL",
+        "FIGLLISAGKAIHDLIRRRH",
+        "MINGWTGNILRINLTTGAIS",
+        "GVFLDALKKFAKGGMNAVLNPK",
+        "AVITGACERDVQCGGGTCCAVSLI",
+        "IISPPVCGNELLEEGEECDCGTPEN"
+      ],
+      "training_source_overlap": {
+        "sp_general_function.json": 5395,
+        "clap_protein_description.json": 5214,
+        "pd_protein_naming.json": 4986,
+        "plm_functionality.json": 4785,
+        "pd_function_description.json": 4508,
+        "pd_subcellular_location.json": 4128,
+        "pd_similarity_analysis.json": 4064,
+        "plm_subunit.json": 3228,
+        "sp_organism_prediction.json": 2907,
+        "sp_gene_prediction.json": 2847,
+        "plm_tissue_specificity.json": 1978,
+        "plm_ptm.json": 1086,
+        "mol_protein_function.json": 1048,
+        "plm_induction.json": 832,
+        "mol_general_function.json": 768,
+        "plm_disease.json": 324,
+        "mol_domain_motif.json": 323,
+        "mol_catalytic_activity.json": 210,
+        "p2t_protein_qa.json": 72
+      }
+    },
+    "MegaScale Stability": {
+      "file": "/orcd/pool/006/yeopjin/workspace/Post_Training_Protein_LLM/data/processed/megascale_stability/stability.json",
+      "total_records": 10000,
+      "unique_eval_sequences": 9857,
+      "no_sequence_extracted": 0,
+      "exact_overlap_count": 0,
+      "exact_overlap_pct": 0.0,
+      "sample_overlapping_seqs": [],
+      "training_source_overlap": {}
+    },
+    "ProteinLMBench (disease)": {
+      "file": "/orcd/pool/006/yeopjin/workspace/Post_Training_Protein_LLM/data/processed/proteinlm/disease.json",
+      "total_records": 4431,
+      "unique_eval_sequences": 4410,
+      "no_sequence_extracted": 0,
+      "exact_overlap_count": 4397,
+      "exact_overlap_pct": 99.7052,
+      "sample_overlapping_seqs": [
+        "MVAYWRQAGLSYIRYSQICAKAVRDALKTEFKANAEKTSGSNVKIVKVKKE",
+        "MEKVQYLTRSAIRRASTIEMPQQARQKLQNLFINFCLILICLLLICIIVMLL",
+        "MCTTLFLLSTLAMLWRRRFANRVQPEPSDVDGAARGSSLDADPQSSGREKEPLK",
+        "MCTTLFLLSTLAMLWRRRFANRVQPEPSGADGAVVGSRSERDLQSSGRKEEPLK",
+        "MGHQQLYWSHPRKFGQGSRSCRVCSNRHGLIRKYGLNMCRQCFRQYAKDIGFIKLD",
+        "MPTGKQLADIGYKTFSTSMMLLTVYGGYLCSVRVYHYFQWRRAQRQAAEEQKTSGIM",
+        "MAGPESDAQYQFTGIKKYFNSYTLTGRMNCVLATYGSIALIVLYFKLRSKKTPAVKAT",
+        "MFLQYYLNEQGDRVYTLKKFDPMGQQTCSAHPARFSPDDKYSRHRITIKKRFKVLMTQQPRPVL",
+        "MDPPARKEKTKVKESVSRVEKAKQKSAQQELKQRQRAEIYALNRVMTELEQQQFDEFCKQMQPPGE",
+        "MTGLSMDGGGSPKGDVDPFYYDYETVRNGGLIFAGLAFIVGLLILLSRRFRCGGNKKRRQINEDEP"
+      ],
+      "training_source_overlap": {
+        "plm_disease.json": 4397,
+        "clap_protein_description.json": 4367,
+        "sp_general_function.json": 4358,
+        "plm_functionality.json": 4269,
+        "pd_protein_naming.json": 3855,
+        "pd_function_description.json": 3734,
+        "pd_subcellular_location.json": 3613,
+        "plm_subunit.json": 3588,
+        "pd_similarity_analysis.json": 3035,
+        "plm_tissue_specificity.json": 2755,
+        "sp_organism_prediction.json": 2303,
+        "sp_gene_prediction.json": 2290,
+        "plm_ptm.json": 1699,
+        "mol_protein_function.json": 564,
+        "mol_general_function.json": 560,
+        "plm_induction.json": 529,
+        "p2t_protein_qa.json": 257,
+        "mol_domain_motif.json": 224,
+        "mol_catalytic_activity.json": 138
+      }
+    },
+    "ProteinLMBench (functionality)": {
+      "file": "/orcd/pool/006/yeopjin/workspace/Post_Training_Protein_LLM/data/processed/proteinlm/functionality.json",
+      "total_records": 438993,
+      "unique_eval_sequences": 371869,
+      "no_sequence_extracted": 2,
+      "exact_overlap_count": 368680,
+      "exact_overlap_pct": 99.1424,
+      "sample_overlapping_seqs": [
+        "HSEGTFSNDYSKYLETRRAQDFVQWLKNS",
+        "MDAAHLSDLDIDALEISEFLDESRLEDSEVVAKVMSASCTTCECCCSCSS",
+        "HLLQFGDLIDKIAGRSGFWYYGFYGCYCGLGGRGRPQDATDRCCFVHDCC",
+        "ITFQGCSPARQTVITNAITRARADVRAAVSALPTKAPVSTFSTWFGVYND",
+        "MQDLKTYLSTAPVLAILCCSFLAGLVIEINRFFPDALTLTFPSFEFFSSP",
+        "MAETINKSGRGVNVCKRCGRKQGLVRKYDIYLCRHCFREIAHDMGFEKYS",
+        "MVRYRCCRSQSRSRCRRRRRRCRRRRRRCCQRRRVRKCCRRTYTLRCRRY",
+        "DCASGPCCRDCKFLKEGTICKRARGDNMDDYCNGKTCDCPRNPHKGEHDP",
+        "GEWEIIDIGPFTQNLGKFAVDEENKIGQYGRLTFNKVIRPCMKKTIYEEN",
+        "AEGDDPAKAAFDSLQASATEYIGYAWAMVVVIVGATIGIKLFKKFASKAS"
+      ],
+      "training_source_overlap": {
+        "plm_functionality.json": 368679,
+        "sp_general_function.json": 368170,
+        "clap_protein_description.json": 365182,
+        "pd_protein_naming.json": 362825,
+        "pd_function_description.json": 361954,
+        "pd_similarity_analysis.json": 336979,
+        "pd_subcellular_location.json": 242039,
+        "plm_subunit.json": 212749,
+        "sp_organism_prediction.json": 194242,
+        "sp_gene_prediction.json": 188248,
+        "mol_general_function.json": 49518,
+        "mol_protein_function.json": 49477,
+        "plm_tissue_specificity.json": 38239,
+        "plm_ptm.json": 34546,
+        "plm_induction.json": 20366,
+        "mol_catalytic_activity.json": 19320,
+        "mol_domain_motif.json": 10322,
+        "plm_disease.json": 4269,
+        "p2t_protein_qa.json": 778
+      }
+    },
+    "ProteinLMBench (induction)": {
+      "file": "/orcd/pool/006/yeopjin/workspace/Post_Training_Protein_LLM/data/processed/proteinlm/induction.json",
+      "total_records": 23474,
+      "unique_eval_sequences": 22221,
+      "no_sequence_extracted": 1,
+      "exact_overlap_count": 22113,
+      "exact_overlap_pct": 99.514,
+      "sample_overlapping_seqs": [
+        "HSEGTFSNDYSKYLETRRAQDFVQWLKNS",
+        "MEHTTQCKSKQGKPCDCQSKCGCQDCKESCGCKSSAVDNCKCSSCKCASK",
+        "MVRNKEKGFPYENENKFQGEPRAKDDYASKRADGSINQHPQERMRASGKR",
+        "MVRNKAKGFPNQNNNKFEGEPRAKDDYASKRADGSINSHPQERMRASGRR",
+        "MKLPVQQVYSVYGGKDLPKGHSHSTMPFLSKLQFLTKIYLLDIHTQPFFI",
+        "MSGFMNSLRKCIGNINSHLEGFMRTYLLRIIRKIKPAAQLSIEDDHYKCL",
+        "MLTKYALAAVIVLCLTVLGFTLLVGDSLCEFTVKERNIEFKAVLAYEPKK",
+        "MPQKYRLLSLIVICFTLLFFTWMIRDSLCELHIKQESYELAAFLACKLKE",
+        "MDFVIQWSCYLLAFLGGSAVAWVVVTLSIKRASRDEGAAEAPSAAETGAQ",
+        "MAGLLRFLLSKGRALYNWAKSHVGKVWEWLKSGATYEQIKEWIENALGWR"
+      ],
+      "training_source_overlap": {
+        "plm_induction.json": 22112,
+        "sp_general_function.json": 22070,
+        "clap_protein_description.json": 21510,
+        "pd_protein_naming.json": 20698,
+        "plm_functionality.json": 20366,
+        "pd_function_description.json": 19238,
+        "pd_similarity_analysis.json": 17368,
+        "pd_subcellular_location.json": 15183,
+        "sp_organism_prediction.json": 11803,
+        "sp_gene_prediction.json": 11501,
+        "plm_subunit.json": 10560,
+        "plm_tissue_specificity.json": 7375,
+        "plm_ptm.json": 3827,
+        "mol_protein_function.json": 3774,
+        "mol_general_function.json": 3305,
+        "mol_domain_motif.json": 1008,
+        "mol_catalytic_activity.json": 943,
+        "plm_disease.json": 529,
+        "p2t_protein_qa.json": 140
+      }
+    },
+    "ProteinLMBench (ptm)": {
+      "file": "/orcd/pool/006/yeopjin/workspace/Post_Training_Protein_LLM/data/processed/proteinlm/ptm.json",
+      "total_records": 40625,
+      "unique_eval_sequences": 36930,
+      "no_sequence_extracted": 0,
+      "exact_overlap_count": 36272,
+      "exact_overlap_pct": 98.2183,
+      "sample_overlapping_seqs": [
+        "MDAAHLSDLDIDALEISEFLDESRLEDSEVVAKVMSASCTTCECCCSCSS",
+        "MKYILLGLLLMVVLANANRLADPNCGVCTLRSICFMEKESCPKGFKMLCF",
+        "VVGGDECDINEHPFLAFLYSHGYFCGLTLINQEWVLTAAHCDRRFMRIYL",
+        "VVGGDECNINEHRSLVAIFNSTGFFCSGILLNQEWVLTASHCDSTNFQMK",
+        "KFCEKPSGTWSGVCGNSGACKDQCIRLEGAKHGSCNYKLPAHRCICYYEC",
+        "KFCEKPSGTWSGVCGNSGACKDQCIRLEGAKHGSCNYKPPAHRCICYYEC",
+        "DLWQFGKMILKVAGKLPFPYYGAYGCYCGWGGRGKPKDPTDRCCFVHDCC",
+        "LHYQEVKWRKLGSYEHRLHLKPGRLAKHELEVFNGYFVHFPAPENMIPIG",
+        "MLLPATMSDKPDMAEIEKFDKSKLKKTETQEKNPLPSKETIEQEKQAGES",
+        "DFTPVCTTELGRLAPEFAKRVVFIFGPDKKLKLSILYPATTGRNFDEILR"
+      ],
+      "training_source_overlap": {
+        "plm_ptm.json": 36271,
+        "sp_general_function.json": 36179,
+        "clap_protein_description.json": 35853,
+        "pd_protein_naming.json": 35059,
+        "plm_functionality.json": 34547,
+        "pd_function_description.json": 33364,
+        "pd_subcellular_location.json": 30231,
+        "pd_similarity_analysis.json": 30039,
+        "plm_subunit.json": 25816,
+        "sp_organism_prediction.json": 18827,
+        "sp_gene_prediction.json": 17698,
+        "plm_tissue_specificity.json": 9879,
+        "mol_protein_function.json": 4487,
+        "mol_general_function.json": 4019,
+        "plm_induction.json": 3827,
+        "plm_disease.json": 1699,
+        "mol_domain_motif.json": 1458,
+        "mol_catalytic_activity.json": 1045,
+        "p2t_protein_qa.json": 340
+      }
+    },
+    "ProteinLMBench (subunit)": {
+      "file": "/orcd/pool/006/yeopjin/workspace/Post_Training_Protein_LLM/data/processed/proteinlm/subunit.json",
+      "total_records": 275968,
+      "unique_eval_sequences": 230701,
+      "no_sequence_extracted": 0,
+      "exact_overlap_count": 228767,
+      "exact_overlap_pct": 99.1617,
+      "sample_overlapping_seqs": [
+        "HLLQFGDLIDKIAGRSGFWYYGFYGCYCGLGGRGRPQDATDRCCFVHDCC",
+        "ILKKDNYSYISFYNALIHEGYKDLAALLHSGIPVISSSNGGKDSVGGITS",
+        "MGQKWKLYEIKDGKVIRKNKFCPRCGPGVFMADHGDRWACGKCGYTEWKK",
+        "MARYRCCRSHSRSRCRPRRRRCRRRRRRCCPRRRRAVCCRRYTVIRCRRC",
+        "MAETINKSGRGVNVCKRCGRKQGLVRKYDIYLCRHCFREIAHDMGFEKYS",
+        "MVRYRCCRSQSRSRCRRRRRRCRRRRRRCCQRRRVRKCCRRTYTLRCRRY",
+        "MAPPQHLCGSHLVDALYLVCGDRGFFYNSGIVEQCCHRPCDKFDLQSYCN",
+        "DCASGPCCRDCKFLKEGTICKRARGDNMDDYCNGKTCDCPRNPHKGEHDP",
+        "VVGGDECDINEHPFLAFLYSHGYFCGLTLINQEWVLTAAHCDRRFMRIYL",
+        "MTQTVKNFGRGANECKRCGRKQGLVRKYGIYLCRHCFREIAHDMGFEKYS"
+      ],
+      "training_source_overlap": {
+        "plm_subunit.json": 228767,
+        "sp_general_function.json": 228458,
+        "clap_protein_description.json": 226930,
+        "pd_protein_naming.json": 224803,
+        "plm_functionality.json": 212749,
+        "pd_similarity_analysis.json": 209664,
+        "pd_function_description.json": 208643,
+        "pd_subcellular_location.json": 152247,
+        "sp_organism_prediction.json": 120949,
+        "sp_gene_prediction.json": 118488,
+        "mol_protein_function.json": 30787,
+        "mol_general_function.json": 26887,
+        "plm_ptm.json": 25816,
+        "plm_tissue_specificity.json": 22121,
+        "mol_catalytic_activity.json": 11901,
+        "plm_induction.json": 10560,
+        "mol_domain_motif.json": 6427,
+        "plm_disease.json": 3588,
+        "p2t_protein_qa.json": 611
+      }
+    },
+    "ProteinLMBench (tissue_specificity)": {
+      "file": "/orcd/pool/006/yeopjin/workspace/Post_Training_Protein_LLM/data/processed/proteinlm/tissue_specificity.json",
+      "total_records": 42487,
+      "unique_eval_sequences": 42134,
+      "no_sequence_extracted": 2,
+      "exact_overlap_count": 41743,
+      "exact_overlap_pct": 99.072,
+      "sample_overlapping_seqs": [
+        "DEAQFKECYDTCHKECSDKGNGFTFCEMKCDTDCSVKDVKEKLENYKPKN",
+        "MKAIMVLFYVMMLTIIASVSMVNGSPGKDDYVNPKEQLGYDILEKLRQKP",
+        "HLLQFGDLIDKIAGRSGFWYYGFYGCYCGLGGRGRPQDATDRCCFVHDCC",
+        "FLGTINLSLCEQERDADEEERRDEPDESDVEVEKRFLPIVTNLLSGLLGK",
+        "FLGTINLSLCEQERDADEEERRDEPDGSNVEVEKRFLSHIAGFLSNLFGK",
+        "MARYRCCRSQSRSRCYRQRRRGRRRRRRTCRRRRASRCCRRRYKLTCRRY",
+        "ANACTKQADCAEDECCLDNLFFKRPYCEMRYGAGKRCAAASVYKEDKDLY",
+        "LTTTVVSFPSDSASDGRDNEAKDERSDMYELKRNGRCCHPACGKYFKCGR",
+        "MARYRCCRSHSRSRCRPRRRRCRRRRRRCCPRRRRAVCCRRYTVIRCRRC",
+        "KDRPKKPGLCPPRPQKPCVKECKNDDSCPGQQKCCNYGCKDECRDPIFVG"
+      ],
+      "training_source_overlap": {
+        "plm_tissue_specificity.json": 41743,
+        "sp_general_function.json": 41584,
+        "clap_protein_description.json": 41062,
+        "pd_protein_naming.json": 39243,
+        "plm_functionality.json": 38239,
+        "pd_function_description.json": 36018,
+        "pd_subcellular_location.json": 34897,
+        "pd_similarity_analysis.json": 32081,
+        "plm_subunit.json": 22121,
+        "sp_organism_prediction.json": 21268,
+        "sp_gene_prediction.json": 17286,
+        "plm_ptm.json": 9879,
+        "plm_induction.json": 7375,
+        "mol_protein_function.json": 6691,
+        "mol_general_function.json": 5547,
+        "plm_disease.json": 2755,
+        "mol_domain_motif.json": 2105,
+        "mol_catalytic_activity.json": 1140,
+        "p2t_protein_qa.json": 526
+      }
+    },
+    "Structure Quality": {
+      "file": "/orcd/pool/006/yeopjin/workspace/Post_Training_Protein_LLM/data/processed/structure_quality/structure_quality.json",
+      "total_records": 10000,
+      "unique_eval_sequences": 9982,
+      "no_sequence_extracted": 0,
+      "exact_overlap_count": 6047,
+      "exact_overlap_pct": 60.579,
+      "sample_overlapping_seqs": [
+        "MKRISTTITTTITITTGNGAG",
+        "CPAIQRCCQQLRNIQPPCRCCQ",
+        "GFRDVLKGAAKAFVKTVAGHIAN",
+        "MPLIVSSSIMIHAKLIYTFEDAQLD",
+        "SPAPPACDPRLLNKLLRDDHVLHGRL",
+        "DLMQFETLIMKIAGRSGVWIYGSYGCYCG",
+        "KIPCGESCVWIPCLTSVFNCKCENKVCYHD",
+        "NLYQFGGMIGCANKGTRSWLSYVNYGCYCG",
+        "EAVDFDSQCVPTADPGKCKFYFPMWNVNVFT",
+        "MERSTRELCLNFTVVLITVILIWLLVRSYQY"
+      ],
+      "training_source_overlap": {
+        "sp_general_function.json": 5911,
+        "clap_protein_description.json": 5724,
+        "pd_protein_naming.json": 5457,
+        "plm_functionality.json": 5231,
+        "pd_function_description.json": 4924,
+        "pd_subcellular_location.json": 4535,
+        "pd_similarity_analysis.json": 4431,
+        "plm_subunit.json": 3462,
+        "sp_organism_prediction.json": 3148,
+        "sp_gene_prediction.json": 3114,
+        "plm_tissue_specificity.json": 2107,
+        "plm_ptm.json": 1170,
+        "mol_protein_function.json": 1136,
+        "mol_general_function.json": 919,
+        "plm_induction.json": 917,
+        "plm_disease.json": 370,
+        "mol_domain_motif.json": 335,
+        "mol_catalytic_activity.json": 230,
+        "p2t_protein_qa.json": 70
+      }
+    }
+  },
+  "methodology": {
+    "extraction": "Regex extraction from 'input' field: code-block format (```SEQ```) and plain AA sequences",
+    "matching": "Exact string match on full sequences",
+    "valid_aa": "ACDEFGHIKLMNPQRSTVWY (standard 20 amino acids)",
+    "min_seq_length": 10
+  }
+}

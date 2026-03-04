@@ -1,0 +1,34 @@
+# @package _global_
+defaults:
+  - /model: qwen3_4b
+  - /encoder: esm3_small
+  - /training: sft_lora
+  - /data: combined
+
+approach: flamingo
+
+encoder:
+  projector:
+    type: flamingo
+    perceiver_layers: 6
+    num_queries: 64
+    perceiver_latent_dim: 1024
+    ff_mult: 4
+    max_seq_len: 2048
+
+  flamingo:
+    xattn_every: 4         # Insert cross-attn every N layers
+    xattn_dim_head: 64
+    xattn_heads: 8
+    xattn_ff_mult: 4
+
+training:
+  lr: 2e-4
+  projector_lr: 2e-4       # Same as base LR (all new params)
+  lora:
+    enabled: false          # Pure Flamingo: no LoRA (LLM frozen)
+  fsdp:
+    enabled: true
+  max_tokens_per_batch: 8192
+  num_train_epochs: 5
+  warmup_steps: 100

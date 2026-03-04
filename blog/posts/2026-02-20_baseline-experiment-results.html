@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baseline Experiment Results: Where We Stand</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #1a1a2e;
+            --accent: #2563eb;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --code-bg: #f3f4f6;
+            --table-header: #f9fafb;
+            --blockquote-bg: #fffbeb;
+            --blockquote-border: #f59e0b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--fg);
+            background: var(--bg);
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        header {
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+        header .meta {
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        header .tags {
+            margin-top: 0.5rem;
+        }
+        header .tag {
+            display: inline-block;
+            background: var(--code-bg);
+            color: var(--accent);
+            padding: 0.15rem 0.6rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            margin-right: 0.4rem;
+            font-weight: 500;
+        }
+        h1 {
+            font-size: 1.9rem;
+            line-height: 1.3;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        h2 {
+            font-size: 1.4rem;
+            margin: 2.5rem 0 1rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+        }
+        h3 {
+            font-size: 1.15rem;
+            margin: 1.8rem 0 0.8rem;
+            font-weight: 600;
+        }
+        h4 {
+            font-size: 1.0rem;
+            margin: 1.4rem 0 0.6rem;
+            font-weight: 600;
+        }
+        p {
+            margin: 0.8rem 0;
+        }
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            margin: 1rem 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.92rem;
+        }
+        th, td {
+            padding: 0.6rem 0.8rem;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        th {
+            background: var(--table-header);
+            font-weight: 600;
+        }
+        tr:hover {
+            background: #f9fafb;
+        }
+        code {
+            font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+            background: var(--code-bg);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.88em;
+        }
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem 1.2rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+        blockquote {
+            background: var(--blockquote-bg);
+            border-left: 4px solid var(--blockquote-border);
+            padding: 0.8rem 1.2rem;
+            margin: 1rem 0;
+            border-radius: 0 6px 6px 0;
+            font-style: italic;
+        }
+        blockquote p {
+            margin: 0.3rem 0;
+        }
+        ul, ol {
+            margin: 0.8rem 0;
+            padding-left: 1.5rem;
+        }
+        li {
+            margin: 0.3rem 0;
+        }
+        strong {
+            font-weight: 600;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 2rem 0;
+        }
+        em {
+            font-style: italic;
+        }
+        footer {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid var(--border);
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+        nav.blog-nav {
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+        nav.blog-nav a {
+            margin-right: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="blog-nav">
+        <a href="../index.html">&larr; All Posts</a>
+    </nav>
+    <header>
+        <h1>Baseline Experiment Results: Where We Stand</h1>
+        <div class="meta">2026-02-20 &middot; yeopjin</div>
+        <div class="tags"><span class="tag">evaluation</span><span class="tag">sft</span><span class="tag">training</span><span class="tag">milestone</span></div>
+    </header>
+    <article>
+<p>With the ESM-3 + Qwen3 multimodal pipeline fully operational, we ran a comprehensive set of baseline experiments to establish performance benchmarks across three protein understanding tasks: GO term prediction, protein-protein interaction (PPI) prediction, and protein stability prediction. This post documents the results, compares model scales, and outlines what they tell us about the path forward.</p>
+<h2 id="experiment-setup">Experiment Setup</h2>
+<p>All experiments share the same core architecture:</p>
+<ul>
+<li><strong>Protein Encoder</strong>: ESM-3 small (1.4B params, frozen, 1536-dim embeddings)</li>
+<li><strong>Pooling</strong>: Attention pooling compressing to 32 fixed tokens</li>
+<li><strong>Projector</strong>: MLP (1536 → 2048 → 2560), trainable</li>
+<li><strong>LLM</strong>: Qwen3-4B / Qwen3-8B / Qwen3-14B with LoRA on k/v matrices (r=8)</li>
+<li><strong>Trainable parameters</strong>: ~20M (0.49% of 4B model)</li>
+</ul>
+<p>Training used the Mol-Instructions dataset with differential learning rates (projector LR at 10x base) and cosine scheduling.</p>
+<h3 id="training-runs-summary">Training Runs Summary</h3>
+<table>
+<thead>
+<tr>
+<th>Run</th>
+<th>Samples</th>
+<th>Epochs</th>
+<th>Loss (Start → End)</th>
+<th>Duration</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>500-sample test</td>
+<td>500</td>
+<td>3</td>
+<td>17.35 → 4.08</td>
+<td>~6 min</td>
+<td>First multimodal success</td>
+</tr>
+<tr>
+<td>10K baseline</td>
+<td>10,000</td>
+<td>3</td>
+<td>35.80 → 27.84</td>
+<td>~96 min</td>
+<td>Convergence test</td>
+</tr>
+<tr>
+<td>50K full</td>
+<td>50,000</td>
+<td>5</td>
+<td>34.25 → 14.77</td>
+<td>~2.35 hr</td>
+<td>Full-scale baseline</td>
+</tr>
+</tbody>
+</table>
+<p>The 50K run used an effective batch size of 32 (4 per device x 8 gradient accumulation steps) across 7,815 total steps, peaking at ~39 GB GPU memory.</p>
+<h2 id="evaluation-results">Evaluation Results</h2>
+<h3 id="1-vanilla-qwen3-4b-pre-sft-baseline">1. Vanilla Qwen3-4B (Pre-SFT Baseline)</h3>
+<p>Before any fine-tuning, the vanilla Qwen3-4B establishes the floor — what the LLM can do with protein sequences it has never been explicitly trained on.</p>
+<p><strong>GO Term Prediction</strong> (10 proteins):</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Accuracy</td>
+<td>0.0</td>
+</tr>
+<tr>
+<td>F1 Macro</td>
+<td>0.015</td>
+</tr>
+<tr>
+<td>F1 Micro</td>
+<td>0.047</td>
+</tr>
+<tr>
+<td>AUPR (macro)</td>
+<td>0.153</td>
+</tr>
+<tr>
+<td>Avg predicted terms</td>
+<td>11.9</td>
+</tr>
+<tr>
+<td>Avg ground truth terms</td>
+<td>5.0</td>
+</tr>
+</tbody>
+</table>
+<p>The model over-predicts GO terms (11.9 vs. 5.0 ground truth) and the predictions are mostly incorrect. Only 3 out of 10 proteins had any correct term predicted at all.</p>
+<p><strong>PPI Prediction</strong> (15 pairs):</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Accuracy</td>
+<td>0.667</td>
+</tr>
+<tr>
+<td>F1</td>
+<td>0.286</td>
+</tr>
+<tr>
+<td>Recall</td>
+<td>0.2</td>
+</tr>
+<tr>
+<td>Specificity</td>
+<td>0.9</td>
+</tr>
+<tr>
+<td>AUROC</td>
+<td>0.51</td>
+</tr>
+</tbody>
+</table>
+<p>The model is heavily biased toward predicting "No interaction" — it predicted negative for 13 out of 15 pairs. High specificity (0.9) but terrible recall (0.2). The AUROC of 0.51 is essentially random.</p>
+<p><strong>Stability Prediction</strong> (20 mutations):</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pearson r</td>
+<td>0.094</td>
+</tr>
+<tr>
+<td>MAE</td>
+<td>1.86 kcal/mol</td>
+</tr>
+<tr>
+<td>RMSE</td>
+<td>2.38</td>
+</tr>
+<tr>
+<td>Classification Accuracy</td>
+<td>0.35</td>
+</tr>
+</tbody>
+</table>
+<p>The model defaults to predicting "neutral" for most mutations, completely failing to distinguish stabilizing from destabilizing effects.</p>
+<h3 id="2-post-sft-results-model-scale-comparison">2. Post-SFT Results: Model Scale Comparison</h3>
+<p>After SFT on the Mol-Instructions dataset, we evaluated three model scales. The table below compares their performance.</p>
+<h4 id="sft-text-generation-quality">SFT Text Generation Quality</h4>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Perplexity</th>
+<th>BLEU</th>
+<th>ROUGE-L</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen3-4B</td>
+<td>84.42</td>
+<td>0.0076</td>
+<td>0.114</td>
+</tr>
+<tr>
+<td>Qwen3-8B</td>
+<td>76.02</td>
+<td>0.0075</td>
+<td>0.126</td>
+</tr>
+<tr>
+<td>Qwen3-14B</td>
+<td>72.80</td>
+<td>0.0074</td>
+<td>0.116</td>
+</tr>
+</tbody>
+</table>
+<p>Perplexity improves with scale as expected (84 → 76 → 73), but BLEU and ROUGE-L remain low across the board — the model generates relevant-sounding responses but doesn't closely match reference answers.</p>
+<p><strong>ROUGE-L by task category (Qwen3-4B / 8B / 14B)</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Task Category</th>
+<th>4B</th>
+<th>8B</th>
+<th>14B</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Protein Function</td>
+<td>0.113</td>
+<td>0.123</td>
+<td>0.113</td>
+</tr>
+<tr>
+<td>Domain/Motif</td>
+<td>0.137</td>
+<td>0.180</td>
+<td>0.160</td>
+</tr>
+<tr>
+<td>Protein Design</td>
+<td>0.050</td>
+<td>0.059</td>
+<td>0.065</td>
+</tr>
+<tr>
+<td>Catalytic Activity</td>
+<td>0.140</td>
+<td>0.181</td>
+<td>0.159</td>
+</tr>
+<tr>
+<td>Description</td>
+<td>0.130</td>
+<td>0.122</td>
+<td>0.118</td>
+</tr>
+</tbody>
+</table>
+<p>Domain/Motif and Catalytic Activity see the largest gains from scaling, while Protein Design remains challenging at all scales.</p>
+<h4 id="go-term-prediction-10-proteins">GO Term Prediction (10 proteins)</h4>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Vanilla 4B</th>
+<th>SFT 4B</th>
+<th>SFT 8B</th>
+<th>SFT 14B</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F1 Macro</td>
+<td>0.015</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+</tr>
+<tr>
+<td>F1 Micro</td>
+<td>0.047</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+</tr>
+<tr>
+<td>AUPR (macro)</td>
+<td>0.153</td>
+<td>0.138</td>
+<td>0.138</td>
+<td>0.138</td>
+</tr>
+<tr>
+<td>Avg predicted terms</td>
+<td>11.9</td>
+<td>2.2</td>
+<td>0.0</td>
+<td>0.3</td>
+</tr>
+</tbody>
+</table>
+<p>SFT actually <em>degrades</em> GO prediction. The vanilla model at least guessed some correct terms among its many predictions; after SFT, the models predict too few terms (or none at all for 8B). This suggests the current SFT objective doesn't teach structured GO term output.</p>
+<h4 id="ppi-prediction-15-pairs">PPI Prediction (15 pairs)</h4>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Vanilla 4B</th>
+<th>SFT 4B</th>
+<th>SFT 8B</th>
+<th>SFT 14B</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Accuracy</td>
+<td>0.667</td>
+<td>0.667</td>
+<td>0.667</td>
+<td>0.667</td>
+</tr>
+<tr>
+<td>F1</td>
+<td>0.286</td>
+<td>0.286</td>
+<td>0.0</td>
+<td>0.0</td>
+</tr>
+<tr>
+<td>AUROC</td>
+<td>0.51</td>
+<td>0.51</td>
+<td>0.60</td>
+<td>0.70</td>
+</tr>
+<tr>
+<td>AUPR</td>
+<td>0.367</td>
+<td>0.367</td>
+<td>0.385</td>
+<td>0.493</td>
+</tr>
+<tr>
+<td>Specificity</td>
+<td>0.9</td>
+<td>0.9</td>
+<td>1.0</td>
+<td>1.0</td>
+</tr>
+</tbody>
+</table>
+<p>The 4B model is unchanged by SFT. The 8B and 14B models become <em>more conservative</em> — predicting all pairs as negative (hence F1=0 but Specificity=1.0). However, AUROC and AUPR improve with scale (0.51 → 0.60 → 0.70), suggesting the models learn better internal representations even though they fail to express positive predictions.</p>
+<h4 id="stability-prediction-20-21-mutations">Stability Prediction (20-21 mutations)</h4>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Vanilla 4B</th>
+<th>SFT 4B</th>
+<th>SFT 8B</th>
+<th>SFT 14B</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pearson r</td>
+<td>0.094</td>
+<td>-0.093</td>
+<td>0.064</td>
+<td>-0.068</td>
+</tr>
+<tr>
+<td>MAE</td>
+<td>1.86</td>
+<td>1.61</td>
+<td>1.62</td>
+<td>1.64</td>
+</tr>
+<tr>
+<td>RMSE</td>
+<td>2.38</td>
+<td>1.90</td>
+<td>2.05</td>
+<td>1.94</td>
+</tr>
+<tr>
+<td>Classification Acc.</td>
+<td>0.35</td>
+<td>0.24</td>
+<td>0.52</td>
+<td>0.24</td>
+</tr>
+<tr>
+<td>F1 Macro</td>
+<td>0.240</td>
+<td>0.155</td>
+<td>0.236</td>
+<td>0.167</td>
+</tr>
+<tr>
+<td>F1 (Destabilizing)</td>
+<td>0.267</td>
+<td>0.118</td>
+<td>0.643</td>
+<td>0.300</td>
+</tr>
+</tbody>
+</table>
+<p>Mixed picture. MAE and RMSE improve slightly after SFT (1.86 → 1.61), indicating the model learns to produce more reasonable magnitude estimates. But correlations hover around zero and classification accuracy is inconsistent across scales. The 8B model stands out with notably better destabilizing mutation detection (F1=0.643) and overall classification accuracy (0.52).</p>
+<h2 id="key-takeaways">Key Takeaways</h2>
+<h3 id="what-works">What Works</h3>
+<ol>
+<li>
+<p><strong>Architecture is functional.</strong> ESM-3 + Qwen3-4B trains stably at scale, using only ~39 GB of GPU memory for 50K samples. The 20M trainable parameters (0.49%) via attention pooling + projector + LoRA k/v is efficient.</p>
+</li>
+<li>
+<p><strong>Training converges.</strong> Loss drops consistently across runs (17.35 → 4.08 for 500 samples; 34.25 → 14.77 for 50K). Differential learning rates for the projector (10x base) were critical — without them, the projector couldn't bridge the embedding spaces.</p>
+</li>
+<li>
+<p><strong>Scale helps internal representations.</strong> AUROC for PPI improves with model size (0.51 → 0.60 → 0.70), and perplexity drops (84 → 76 → 73). The models are learning; they're just not expressing it well.</p>
+</li>
+</ol>
+<h3 id="what-doesnt-work-yet">What Doesn't Work (Yet)</h3>
+<ol>
+<li>
+<p><strong>GO prediction degrades after SFT.</strong> The model goes from over-predicting terms (at least hitting some) to under-predicting (hitting none). The instruction-tuning format may not be well-suited for multi-label structured output.</p>
+</li>
+<li>
+<p><strong>PPI is stuck at majority-class prediction.</strong> All models prefer "No" regardless of training. The class imbalance in training data (or evaluation prompting) needs addressing.</p>
+</li>
+<li>
+<p><strong>Stability prediction has no signal.</strong> Correlations near zero means the model isn't learning the relationship between mutations and thermodynamic stability. The raw magnitude estimates improve, but direction prediction remains random.</p>
+</li>
+<li>
+<p><strong>Text generation quality is low.</strong> BLEU scores below 0.01 and ROUGE-L around 0.12 indicate the generated answers don't closely match references — though this may partly reflect the open-ended nature of protein function description.</p>
+</li>
+</ol>
+<h2 id="whats-next">What's Next</h2>
+<p>These baselines point to clear priorities for the next phase:</p>
+<ol>
+<li>
+<p><strong>GO prediction needs structured output training.</strong> Explore constrained decoding or a classification head for multi-label GO term prediction instead of free-form generation.</p>
+</li>
+<li>
+<p><strong>PPI needs balanced training.</strong> Investigate class-weighted loss, balanced sampling, or explicit positive-example prompting to overcome the negative bias.</p>
+</li>
+<li>
+<p><strong>GRPO alignment for reward-guided improvement.</strong> The task-specific reward functions (GO F1, PPI accuracy, stability Gaussian) are already implemented. Once the gradient flow bug is fixed, GRPO should help push these metrics beyond what SFT alone achieves.</p>
+</li>
+<li>
+<p><strong>Scale the evaluation set.</strong> 10-21 samples per task is too small for reliable conclusions. We need at least 100-500 samples per benchmark for statistical significance.</p>
+</li>
+<li>
+<p><strong>Try the 8B model as default.</strong> The Qwen3-8B showed the most promising results on stability prediction and has better perplexity. The compute cost is manageable on our 8x H100 setup.</p>
+</li>
+</ol>
+<p>The architecture works. The training pipeline works. Now it's time to make the model actually learn protein biology.</p>
+    </article>
+    <footer>
+        <p>Post-Training Protein LLM &middot; 2026-02-20</p>
+    </footer>
+</body>
+</html>

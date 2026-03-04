@@ -56,8 +56,7 @@ results/{experiment_name}/
 ├── checkpoints/
 │   └── protein_llm/       # ProteinLLM save (config, pooling, projector, adapter)
 ├── logs/
-│   ├── .hydra/            # Hydra config snapshots
-│   └── tensorboard/       # TensorBoard events
+│   └── .hydra/            # Hydra config snapshots
 └── eval/
     └── {task}_metrics.json
 ```
@@ -142,18 +141,19 @@ CUDA_VISIBLE_DEVICES=0 python scripts/train.py
 
 ## Training Phases
 
-### Phase 1: SFT with QLoRA
+### Phase 1: SFT with LoRA (FSDP)
 
 ```bash
-python scripts/train.py training=sft_qlora experiment_name=sft_esm3_50k
+python scripts/train.py training=sft_lora experiment_name=sft_esm3_50k
 ```
 
 Key settings:
 - `training.lr`: 2e-4 (default)
 - `training.projector_lr`: 2e-3 (10x base — essential for projector convergence)
 - `training.epochs`: 3
-- `training.batch_size`: 8
-- `training.lora.r`: 8 (targets: k_proj, v_proj only)
+- `training.batch_size`: 16
+- `training.lora.r`: 8 (targets: all linear layers)
+- `training.fsdp.enabled`: true (default — shards LLM across GPUs)
 
 ### Phase 2: GRPO Alignment
 
@@ -180,15 +180,30 @@ wandb sync --view
 open https://wandb.ai/your-project
 ```
 
-### TensorBoard
-```bash
-tensorboard --logdir=results/{experiment_name}/logs/tensorboard
-```
-
 ### GPU Usage
 ```bash
 watch -n 1 nvidia-smi
 ```
+
+## FSDP (Fully Sharded Data Parallel)
+
+FSDP is **enabled by default** in `configs/training/sft_lora.yaml`. It shards LLM weights across all GPUs, saving ~14 GB/GPU for 8B models.
+
+```bash
+# Default: FSDP enabled
+python scripts/train.py experiment_name=my_run
+
+# Disable FSDP (single-GPU or debugging)
+python scripts/train.py training.fsdp.enabled=false
+```
+
+Key details:
+- Strategy: `full_shard` (ZeRO-3) — shards params, gradients, and optimizer states
+- ESM-3 encoder stays replicated (not FSDP-sharded) — it's frozen and needs no gradient sharding
+- `embed_tokens` weights are cached before FSDP shards the model (used for multimodal input preparation)
+- Activation checkpointing replaces gradient checkpointing when FSDP is active (avoids redundant AllGather ops)
+- `torch_compile=true` is compatible with FSDP and enabled by default
+- Requires `torchrun` launch (used by `scripts/launch_train.sh`)
 
 ## Common Issues
 
@@ -197,7 +212,7 @@ watch -n 1 nvidia-smi
 # Reduce batch size
 python scripts/train.py training.batch_size=4
 
-# Gradient checkpointing is already enabled by default
+# FSDP activation checkpointing is already enabled by default
 ```
 
 ### Slow Triton Compilation

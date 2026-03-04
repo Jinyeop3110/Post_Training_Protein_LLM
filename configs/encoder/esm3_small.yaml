@@ -41,3 +41,14 @@ projector:
   perceiver_heads: 8
   perceiver_ffn_dim: 2048
   perceiver_latent_dim: 1024
+  # Flamingo-specific (only used when type=flamingo)
+  num_queries: 64
+  ff_mult: 4
+  max_seq_len: 2048
+
+# Flamingo gated cross-attention settings (only used when approach=flamingo)
+flamingo:
+  xattn_every: 4         # Insert cross-attn every N layers
+  xattn_dim_head: 64
+  xattn_heads: 8
+  xattn_ff_mult: 4

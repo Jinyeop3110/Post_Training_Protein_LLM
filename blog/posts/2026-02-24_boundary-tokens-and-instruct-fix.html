@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Protein Boundary Tokens, Instruct Model Fix, and Full Pipeline Validation</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #1a1a2e;
+            --accent: #2563eb;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --code-bg: #f3f4f6;
+            --table-header: #f9fafb;
+            --blockquote-bg: #fffbeb;
+            --blockquote-border: #f59e0b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--fg);
+            background: var(--bg);
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        header {
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+        header .meta {
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        header .tags {
+            margin-top: 0.5rem;
+        }
+        header .tag {
+            display: inline-block;
+            background: var(--code-bg);
+            color: var(--accent);
+            padding: 0.15rem 0.6rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            margin-right: 0.4rem;
+            font-weight: 500;
+        }
+        h1 {
+            font-size: 1.9rem;
+            line-height: 1.3;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        h2 {
+            font-size: 1.4rem;
+            margin: 2.5rem 0 1rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+        }
+        h3 {
+            font-size: 1.15rem;
+            margin: 1.8rem 0 0.8rem;
+            font-weight: 600;
+        }
+        h4 {
+            font-size: 1.0rem;
+            margin: 1.4rem 0 0.6rem;
+            font-weight: 600;
+        }
+        p {
+            margin: 0.8rem 0;
+        }
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            margin: 1rem 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.92rem;
+        }
+        th, td {
+            padding: 0.6rem 0.8rem;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        th {
+            background: var(--table-header);
+            font-weight: 600;
+        }
+        tr:hover {
+            background: #f9fafb;
+        }
+        code {
+            font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+            background: var(--code-bg);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.88em;
+        }
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem 1.2rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+        blockquote {
+            background: var(--blockquote-bg);
+            border-left: 4px solid var(--blockquote-border);
+            padding: 0.8rem 1.2rem;
+            margin: 1rem 0;
+            border-radius: 0 6px 6px 0;
+            font-style: italic;
+        }
+        blockquote p {
+            margin: 0.3rem 0;
+        }
+        ul, ol {
+            margin: 0.8rem 0;
+            padding-left: 1.5rem;
+        }
+        li {
+            margin: 0.3rem 0;
+        }
+        strong {
+            font-weight: 600;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 2rem 0;
+        }
+        em {
+            font-style: italic;
+        }
+        footer {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid var(--border);
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+        nav.blog-nav {
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+        nav.blog-nav a {
+            margin-right: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="blog-nav">
+        <a href="../index.html">&larr; All Posts</a>
+    </nav>
+    <header>
+        <h1>Protein Boundary Tokens, Instruct Model Fix, and Full Pipeline Validation</h1>
+        <div class="meta">2026-02-24 &middot; yeopjin</div>
+        <div class="tags"><span class="tag">architecture</span><span class="tag">training</span><span class="tag">debug</span><span class="tag">milestone</span></div>
+    </header>
+    <article>
+<p>Today's session addressed two critical issues and validated the entire pipeline end-to-end. We (1) fixed a model config bug where the 8B training run used a base model instead of Instruct, (2) introduced structured protein boundary tokens for the ESM-3 embedding path, and (3) ran comprehensive validation across all task types, reward functions, and configs.</p>
+<h2 id="1-the-instruct-model-bug">1. The Instruct Model Bug</h2>
+<h3 id="discovery">Discovery</h3>
+<p>While reviewing the latest training run (<code>sft_lora_esm3_qwen3_8b_0224_011654</code>), we noticed degenerate generation at every evaluation step — outputs like <code>KQKQKQKQ...</code>, <code>SSSSSSSS...</code>, or empty strings. The model had been training for 5000 steps (epoch 2.27/3) with a reasonable loss curve:</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Train Loss</th>
+<th>Eval Loss</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>250</td>
+<td>8.30</td>
+<td>2.09</td>
+</tr>
+<tr>
+<td>1000</td>
+<td>4.80</td>
+<td>1.89</td>
+</tr>
+<tr>
+<td>5000</td>
+<td>3.86</td>
+<td>1.84</td>
+</tr>
+</tbody>
+</table>
+<p>The eval loss looked fine, but generation was garbage. The root cause: <code>configs/model/qwen3_8b.yaml</code> had <code>path: Qwen/Qwen3-8B</code> — the <strong>base</strong> model, not <code>Qwen/Qwen3-8B-Instruct-2507</code>.</p>
+<h3 id="why-base-vs-instruct-matters">Why Base vs Instruct Matters</h3>
+<p>Using a base model for instruction-tuned training is harmful at two levels:</p>
+<ol>
+<li>
+<p><strong>Training waste</strong>: The model must learn basic instruction-following from scratch (chat templates, turn-taking, stop tokens), consuming LoRA capacity that should go toward protein understanding.</p>
+</li>
+<li>
+<p><strong>Generation failure</strong>: The base model never learned to stop generating or follow the chat template's turn structure, causing repetitive loops. The LoRA adapter is bound to the base model's weight space and <strong>cannot be transferred</strong> to the Instruct variant.</p>
+</li>
+</ol>
+<p>The checkpoint is not salvageable — the entire run must be re-done.</p>
+<h3 id="fix">Fix</h3>
+<p>All model configs now use <code>-it</code> suffix to distinguish from base models:</p>
+<table>
+<thead>
+<tr>
+<th>Config</th>
+<th><code>name</code> (before)</th>
+<th><code>name</code> (after)</th>
+<th><code>path</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>qwen3_4b.yaml</td>
+<td><code>qwen3_4b</code></td>
+<td><code>qwen3_4b_it</code></td>
+<td>Qwen/Qwen3-4B-Instruct-2507 (unchanged)</td>
+</tr>
+<tr>
+<td>qwen3_8b.yaml</td>
+<td><code>qwen3_8b</code></td>
+<td><code>qwen3_8b_it</code></td>
+<td><strong>Qwen/Qwen3-8B-Instruct-2507</strong> (FIXED)</td>
+</tr>
+<tr>
+<td>qwen3_14b.yaml</td>
+<td><code>qwen3_14b</code></td>
+<td><code>qwen3_14b_it</code></td>
+<td>Qwen/Qwen3-14B-Instruct-2507 (unchanged)</td>
+</tr>
+<tr>
+<td>llama3_8b.yaml</td>
+<td><code>llama3_8b</code></td>
+<td><code>llama3_8b_it</code></td>
+<td>meta-llama/Llama-3.1-8B-Instruct (unchanged)</td>
+</tr>
+</tbody>
+</table>
+<p>Auto-generated experiment names now include <code>-it</code>: <code>sft_qlora_esm3_qwen3_8b_it_0224_HHMMSS</code>.</p>
+<h2 id="2-protein-boundary-tokens">2. Protein Boundary Tokens</h2>
+<h3 id="motivation">Motivation</h3>
+<p>Previously, the ESM-3 embedding path used a single <code>&lt;|protein_embed|&gt;</code> placeholder token. The LLM had no explicit signal for where the protein representation starts and ends. We added structured boundary tokens so the LLM can learn to attend to protein embeddings as a distinct modality.</p>
+<h3 id="design">Design</h3>
+<p>Three special tokens, registered in the tokenizer:</p>
+<div class="highlight"><pre><span></span><code>&lt;|protein_start|&gt;  &lt;|protein_embed|&gt;  &lt;|protein_end|&gt;
+     ID 151669         ID 151670          ID 151671
+</code></pre></div>
+
+<p>At training/inference time, the full placeholder <code>&lt;|protein_start|&gt;&lt;|protein_embed|&gt;&lt;|protein_end|&gt;</code> is embedded as:</p>
+<div class="highlight"><pre><span></span><code>[..., text_tokens, start_embed, prot_1, prot_2, ..., prot_32, end_embed, text_tokens, ...]
+                   ↑ regular LLM   ↑ 32 ESM-3 pooled tokens ↑  regular LLM
+                     embedding       (replaced at forward)      embedding
+</code></pre></div>
+
+<ul>
+<li><code>&lt;|protein_start|&gt;</code> and <code>&lt;|protein_end|&gt;</code> remain as regular LLM token embeddings — the model learns what they mean through training.</li>
+<li><code>&lt;|protein_embed|&gt;</code> is replaced at forward time by the 32 pooled ESM-3 embeddings.</li>
+<li>All three get <code>label = -100</code> in training — no cross-entropy loss on boundary or embedding tokens.</li>
+</ul>
+<h3 id="implementation">Implementation</h3>
+<p>Changes across 4 files:<br />
+- <code>src/models/multimodal_llm.py</code>: Constants <code>PROTEIN_START_TOKEN</code>, <code>PROTEIN_EMBED_TOKEN</code>, <code>PROTEIN_END_TOKEN</code>, <code>PROTEIN_PLACEHOLDER</code>, <code>PROTEIN_SPECIAL_TOKENS</code>; <code>prepare_inputs()</code> searches only for <code>PROTEIN_EMBED_TOKEN</code> to replace.<br />
+- <code>src/training/sft_trainer.py</code>: <code>_load_tokenizer()</code> registers all 3 tokens via <code>add_special_tokens</code>.<br />
+- <code>src/training/grpo_trainer.py</code>: <code>_load_tokenizer()</code> now also registers all 3 tokens (was missing entirely before).</p>
+<h2 id="3-task-by-task-example-prompts-inputs-answers">3. Task-by-Task: Example Prompts, Inputs, Answers</h2>
+<p>Here is what each task looks like in the pipeline, with actual data examples and how the loss/reward is computed.</p>
+<h3 id="sft-tasks-mol-instructions-505k-total">SFT Tasks (Mol-Instructions, 505K total)</h3>
+<p>All SFT tasks use the Qwen3 chat template with the protein expert system prompt. Loss is standard <strong>causal LM cross-entropy on assistant tokens only</strong> — instruction/system/protein embedding tokens are masked with <code>label = -100</code>.</p>
+<h4 id="catalytic-activity-prediction-53k-samples">Catalytic Activity Prediction (53K samples)</h4>
+<div class="highlight"><pre><span></span><code>SYSTEM: You are a protein science expert...
+USER:   Please evaluate the following protein sequence and provide an explanation
+        of the enzyme&#39;s catalytic activity...
+
+        &lt;|protein_start|&gt;&lt;|protein_embed|&gt;&lt;|protein_end|&gt;
+
+ASSISTANT: By examining the input protein sequence, the enzyme catalyzes the
+           subsequent chemical reaction: ATP + meso-2,6-diaminoheptanedioate =
+           ADP + H+ + meso-2,6-diaminopimelate...
+</code></pre></div>
+
+<p><strong>Loss</strong>: Cross-entropy on assistant tokens. The model learns to describe enzyme reactions from structural embeddings.</p>
+<h4 id="protein-function-prediction-114k-samples">Protein Function Prediction (114K samples)</h4>
+<div class="highlight"><pre><span></span><code>USER:   Using the given protein sequence, predict its functional role and the
+        potential biological pathway it may be a part of:
+
+        &lt;|protein_start|&gt;&lt;|protein_embed|&gt;&lt;|protein_end|&gt;
+
+ASSISTANT: The analysis suggests its potential function as ATP binding, ligase
+           activity, magnesium ion binding...
+</code></pre></div>
+
+<h4 id="general-function-description-87k-samples">General Function Description (87K samples)</h4>
+<div class="highlight"><pre><span></span><code>USER:   Inspect the protein with the subsequent sequence and offer a concise
+        description of its properties:
+
+        &lt;|protein_start|&gt;&lt;|protein_embed|&gt;&lt;|protein_end|&gt;
+
+ASSISTANT: Catalyzes the NADPH-dependent formation of L-pipecolic acid from
+           delta-1-piperideine-6-L-carboxylate (P6C)...
+</code></pre></div>
+
+<h4 id="domainmotif-prediction-45k-samples">Domain/Motif Prediction (45K samples)</h4>
+<div class="highlight"><pre><span></span><code>USER:   Find and list any domains or motifs that are likely present in this
+        protein sequence:
+
+        &lt;|protein_start|&gt;&lt;|protein_embed|&gt;&lt;|protein_end|&gt;
+
+ASSISTANT: The prediction suggests the presence of these domains and motifs:
+           Pkinase domain, ATP-binding region...
+</code></pre></div>
+
+<h4 id="protein-design-196k-samples-largest-category">Protein Design (196K samples — largest category)</h4>
+<div class="highlight"><pre><span></span><code>USER:   Synthesize a protein sequence that has the desired solubility or other
+        physical properties for the intended use.
+
+        1. The protein must exhibit the following characteristics: Also acts as
+           a cofactor with GATA4, a key cardiac regulator...
+
+ASSISTANT: Here&#39;s a protein sequence with the above functions:
+           MIGMLESLQHESDLLQHDQIHTGEKPYECNECRKTFSL...
+</code></pre></div>
+
+<p><strong>Note</strong>: Protein design is the only task where the protein sequence is in the <em>output</em>, not input. No ESM-3 encoding is used for the input.</p>
+<h3 id="grpo-downstream-tasks-10k-samples-each">GRPO Downstream Tasks (10K samples each)</h3>
+<p>GRPO tasks use <strong>verifiable reward functions</strong> instead of cross-entropy. The model generates multiple completions per prompt, rewards are computed, and group-relative advantages guide policy optimization.</p>
+<h4 id="go-term-prediction-cafa5-10k-samples">GO Term Prediction (CAFA5, 10K samples)</h4>
+<div class="highlight"><pre><span></span><code>USER:   Predict the Gene Ontology (GO) terms for this protein across Molecular
+        Function (MF), Biological Process (BP), and Cellular Component (CC):
+
+        &lt;|protein_start|&gt;&lt;|protein_embed|&gt;&lt;|protein_end|&gt;
+
+GROUND TRUTH: GO:0003674, GO:0005488, GO:0005515, GO:0019955, GO:0019956, GO:0019957
+</code></pre></div>
+
+<p><strong>Reward</strong>: F1 score between predicted and ground truth GO terms (regex <code>GO:\d{7}</code>).<br />
+- Partial match (2/3 correct): reward = 0.80<br />
+- Exact match: reward = 1.00<br />
+- No match: reward = 0.00</p>
+<h4 id="stabilityddg-prediction-megascale-10k-samples">Stability/ddG Prediction (MegaScale, 10K samples)</h4>
+<div class="highlight"><pre><span></span><code>USER:   Predict the change in protein stability (ddG in kcal/mol) for this
+        mutation. Classify as stabilizing (&lt;-1.0), neutral (-1.0 to 1.0), or
+        destabilizing (&gt;1.0).
+
+        &lt;|protein_start|&gt;&lt;|protein_embed|&gt;&lt;|protein_end|&gt;
+
+GROUND TRUTH: ddG = 0.03 kcal/mol. This mutation is neutral.
+METADATA:     {&quot;ddG&quot;: 0.03, &quot;mutation&quot;: &quot;G22I&quot;, &quot;stability_class&quot;: &quot;neutral&quot;}
+</code></pre></div>
+
+<p><strong>Reward</strong>: Gaussian decay on prediction error: <code>R = exp(-error^2 / 2sigma^2)</code> with sigma=1.0 kcal/mol.<br />
+- Error of 0.2 kcal/mol: reward = 0.98<br />
+- Error of 1.0 kcal/mol: reward = 0.61<br />
+- No parseable number: reward = 0.00</p>
+<h4 id="structure-quality-assessment-alphafold-db-10k-samples">Structure Quality Assessment (AlphaFold DB, 10K samples)</h4>
+<div class="highlight"><pre><span></span><code>USER:   Assess the structural quality of this protein. Report the predicted fold
+        quality (high/medium/low), estimated pLDDT (0-100), and whether the
+        protein is well-folded or likely disordered.
+
+        &lt;|protein_start|&gt;&lt;|protein_embed|&gt;&lt;|protein_end|&gt;
+
+GROUND TRUTH: Fold quality: high. pLDDT: 88.4. This protein is well-folded
+              with high confidence.
+METADATA:     {&quot;plddt&quot;: 88.44, &quot;fold_category&quot;: &quot;high&quot;, &quot;source&quot;: &quot;alphafold&quot;}
+</code></pre></div>
+
+<p><strong>Reward</strong>: Three components summing to max 1.0:<br />
+1. <strong>Quality alignment</strong> (0.4): "well-folded" claim matches pLDDT &gt; 70? (or "disordered" matches pLDDT &lt; 50?)<br />
+2. <strong>Numerical pLDDT accuracy</strong> (0.3): Gaussian on <code>|predicted - actual|</code> with sigma=10<br />
+3. <strong>Category match</strong> (0.3): high/medium/low matches pLDDT threshold</p>
+<p>Example: claiming "well-folded" + predicting pLDDT=85 for actual 88.4 = 0.4 + 0.29 + 0.3 = 0.99.</p>
+<h2 id="4-pipeline-validation-results">4. Pipeline Validation Results</h2>
+<p>We ran 4 independent test agents covering the full pipeline. All passed.</p>
+<h3 id="agent-1-data-pipeline-prompt-formatting-44-pass">Agent 1: Data Pipeline &amp; Prompt Formatting (4/4 PASS)</h3>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MolInstructions ESM-3 approach (boundary tokens in prompt)</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>MolInstructions text approach (raw sequence, no tokens)</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Tokenization roundtrip (3 tokens → 3 IDs → 3 tokens)</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>DataCollator label masking (49% masked = prompt, 51% = response)</td>
+<td>PASS</td>
+</tr>
+</tbody>
+</table>
+<h3 id="agent-2-evaluation-pipelines-55-pass">Agent 2: Evaluation Pipelines (5/5 PASS)</h3>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Status</th>
+<th>Key Metrics</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GO prediction parsing + metrics</td>
+<td>PASS</td>
+<td>fmax=0.737, f1_micro=0.75</td>
+</tr>
+<tr>
+<td>PPI prediction parsing + metrics</td>
+<td>PASS</td>
+<td>18 metrics including MCC, AUC</td>
+</tr>
+<tr>
+<td>Stability parsing + metrics</td>
+<td>PASS</td>
+<td>Pearson=0.997, RMSE=0.24</td>
+</tr>
+<tr>
+<td>SFT evaluation module</td>
+<td>PASS</td>
+<td>perplexity + BLEU + ROUGE-L</td>
+</tr>
+<tr>
+<td>Benchmarks runner</td>
+<td>PASS</td>
+<td>Orchestrates all 4 tasks</td>
+</tr>
+</tbody>
+</table>
+<h3 id="agent-3-grpo-rewards-downstream-tasks-44-pass">Agent 3: GRPO Rewards &amp; Downstream Tasks (4/4 PASS)</h3>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4 reward functions (GO, PPI, stability, ESMFold)</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>3 downstream datasets loadable</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Boundary tokens in all downstream data</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>ESMFold reward (pre-computed mode)</td>
+<td>PASS</td>
+</tr>
+</tbody>
+</table>
+<h3 id="agent-4-config-inference-consistency-77-pass">Agent 4: Config &amp; Inference Consistency (7/7 PASS)</h3>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Default config resolves (qwen3_4b_it)</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>8B config resolves (qwen3_8b_it, Instruct path)</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Experiment name includes <code>-it</code> suffix</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Protein token constants importable</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Vanilla LLM (text path) doesn't use boundary tokens</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>All 9 experiment configs resolve</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>evaluate.py Hydra resolution</td>
+<td>PASS</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total: 20/20 tests passed, 0 failures, 0 code changes needed.</strong></p>
+<h2 id="5-code-review-findings-from-earlier-session">5. Code Review Findings (From Earlier Session)</h2>
+<p>A parallel code review identified issues to address in the next session:</p>
+<table>
+<thead>
+<tr>
+<th>Severity</th>
+<th>Issue</th>
+<th>File</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Critical</td>
+<td><code>DEFAULT_LORA_TARGET_MODULES</code> only has k/v (should be all 7)</td>
+<td>multimodal_llm.py</td>
+</tr>
+<tr>
+<td>Critical</td>
+<td><code>DEFAULT_LLM_NAME</code> uses base model variant</td>
+<td>multimodal_llm.py</td>
+</tr>
+<tr>
+<td>Warning</td>
+<td><code>torch.load()</code> without <code>weights_only=True</code> (5 locations)</td>
+<td>multiple</td>
+</tr>
+<tr>
+<td>Warning</td>
+<td>GRPO <code>_load_protein_llm</code> missing perceiver params</td>
+<td>grpo_trainer.py</td>
+</tr>
+<tr>
+<td>Info</td>
+<td><code>from_config</code> defaults perceiver_layers=6 (should be 2)</td>
+<td>multimodal_llm.py</td>
+</tr>
+<tr>
+<td>Info</td>
+<td>Code duplication between SFT and GRPO trainers</td>
+<td>trainers</td>
+</tr>
+</tbody>
+</table>
+<p>These are tracked and will be addressed before the next training run.</p>
+<h2 id="whats-next">What's Next</h2>
+<ol>
+<li><strong>Re-run 8B training</strong> with the fixed Instruct model and boundary tokens</li>
+<li><strong>Fix the code review issues</strong> (LoRA target modules, torch.load security)</li>
+<li><strong>Launch GRPO</strong> on downstream tasks (GO prediction first, as it has the clearest reward signal)</li>
+<li><strong>Begin Perceiver Resampler comparison</strong> — the MLP vs Perceiver ablation is the core thesis experiment</li>
+</ol>
+    </article>
+    <footer>
+        <p>Post-Training Protein LLM &middot; 2026-02-24</p>
+    </footer>
+</body>
+</html>

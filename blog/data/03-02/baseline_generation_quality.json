@@ -1,0 +1,57 @@
+{
+  "description": "Baseline generation quality for Qwen/Qwen3-8B (no fine-tuning)",
+  "date": "2026-03-03",
+  "model": "Qwen/Qwen3-8B",
+  "approach": "vanilla",
+  "projector_type": "none",
+  "generation_kwargs": {
+    "max_new_tokens": 256,
+    "min_new_tokens": 10,
+    "do_sample": false,
+    "repetition_penalty": 1.2
+  },
+  "per_step_metrics": {
+    "step_0": {
+      "avg_word_overlap": 0.033,
+      "high_similarity_count": 0,
+      "degenerate_count": 0,
+      "avg_generation_length": 1009,
+      "total_samples": 20
+    }
+  },
+  "final_step_per_category": {
+    "catalytic": {
+      "high_similarity": 0,
+      "degenerate": 0,
+      "total": 5,
+      "unique_full_generations": 5,
+      "unique_generation_starts": 4,
+      "mode_collapse": false
+    },
+    "domain": {
+      "high_similarity": 0,
+      "degenerate": 0,
+      "total": 5,
+      "unique_full_generations": 5,
+      "unique_generation_starts": 4,
+      "mode_collapse": false
+    },
+    "function": {
+      "high_similarity": 0,
+      "degenerate": 0,
+      "total": 5,
+      "unique_full_generations": 5,
+      "unique_generation_starts": 4,
+      "mode_collapse": false
+    },
+    "general": {
+      "high_similarity": 0,
+      "degenerate": 0,
+      "total": 5,
+      "unique_full_generations": 5,
+      "unique_generation_starts": 5,
+      "mode_collapse": false
+    }
+  },
+  "mode_collapse_analysis": {}
+}

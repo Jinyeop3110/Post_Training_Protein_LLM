@@ -11,6 +11,7 @@ from .download import (
     download_protdescribe,
     download_protein2text_qa,
     download_proteinlm,
+    download_proteinlm_bench,
     download_rcsb_structures,
     download_swissprot_sequences,
     download_swissprotclap,
