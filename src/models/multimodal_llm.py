@@ -908,6 +908,36 @@ class ProteinLLM(nn.Module):
             "logits": outputs.logits,
         }
 
+    def _find_fsdp_module(self):
+        """Find the FSDP wrapper in self.llm's module hierarchy.
+
+        Under torch.compile + FSDP the model is typically:
+            OptimizedModule(FSDP(PeftModel(Qwen3)))
+        We need the FSDP module for summon_full_params during generate().
+
+        Returns:
+            The FullyShardedDataParallel module, or None if not found.
+        """
+        try:
+            from torch.distributed.fsdp import (
+                FullyShardedDataParallel as FSDP,
+            )
+        except ImportError:
+            return None
+
+        # Direct check
+        if isinstance(self.llm, FSDP):
+            return self.llm
+
+        # Unwrap OptimizedModule layers (torch.compile)
+        model = self.llm
+        while hasattr(model, "_orig_mod"):
+            model = model._orig_mod
+            if isinstance(model, FSDP):
+                return model
+
+        return None
+
     @torch.no_grad()
     def generate(
         self,
@@ -967,6 +997,8 @@ class ProteinLLM(nn.Module):
             protein_features = self.encode_protein(protein_sequences)
             set_protein_features(self.llm, protein_features)
 
+            fsdp_module = self._find_fsdp_module()
+
             try:
                 # Disable torch.compile for generation — compiled graph
                 # can't handle autoregressive decoding's dynamic shapes.
@@ -977,7 +1009,7 @@ class ProteinLLM(nn.Module):
                     self.llm.generate, recursive=True
                 )
                 input_length = text_inputs["input_ids"].shape[1]
-                outputs = _generate(
+                flamingo_gen_kwargs = dict(
                     input_ids=text_inputs["input_ids"],
                     attention_mask=text_inputs["attention_mask"],
                     max_new_tokens=max_new_tokens,
@@ -988,6 +1020,16 @@ class ProteinLLM(nn.Module):
                     eos_token_id=self.tokenizer.eos_token_id,
                     **generate_kwargs,
                 )
+                if fsdp_module is not None:
+                    from torch.distributed.fsdp import (
+                        FullyShardedDataParallel as FSDP,
+                    )
+                    with FSDP.summon_full_params(
+                        fsdp_module, writeback=False
+                    ):
+                        outputs = _generate(**flamingo_gen_kwargs)
+                else:
+                    outputs = _generate(**flamingo_gen_kwargs)
             finally:
                 clear_protein_features(self.llm)
 
@@ -1007,6 +1049,15 @@ class ProteinLLM(nn.Module):
             text_attention_mask=text_inputs["attention_mask"],
         )
 
+        # Find the innermost FSDP module (if any) by unwrapping
+        # torch.compile's OptimizedModule.  Under FSDP, generate()
+        # resolves through __getattr__ chains down to the inner model,
+        # where self(...) bypasses FSDP's __call__ hooks.  This leaves
+        # parameters in their sharded state (empty with use_orig_params),
+        # causing shape mismatches.  summon_full_params gathers all
+        # parameters so the inner forward passes see full weights.
+        fsdp_module = self._find_fsdp_module()
+
         # Disable torch.compile for generation — compiled graph can't
         # handle autoregressive decoding's dynamic shapes.
         # torch.compiler.disable suppresses dynamo even inside
@@ -1016,9 +1067,7 @@ class ProteinLLM(nn.Module):
             self.llm.generate, recursive=True
         )
 
-        # Generate
-        input_length = prepared["inputs_embeds"].shape[1]
-        outputs = _generate(
+        gen_kwargs_full = dict(
             inputs_embeds=prepared["inputs_embeds"],
             attention_mask=prepared["attention_mask"],
             max_new_tokens=max_new_tokens,
@@ -1029,6 +1078,16 @@ class ProteinLLM(nn.Module):
             eos_token_id=self.tokenizer.eos_token_id,
             **generate_kwargs,
         )
+
+        # Generate — use summon_full_params under FSDP so generate's
+        # internal forward passes see full (ungathered) weights.
+        input_length = prepared["inputs_embeds"].shape[1]
+        if fsdp_module is not None:
+            from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+            with FSDP.summon_full_params(fsdp_module, writeback=False):
+                outputs = _generate(**gen_kwargs_full)
+        else:
+            outputs = _generate(**gen_kwargs_full)
 
         # Slice off the input positions from the output.  Behavior depends
         # on the transformers version:

@@ -1186,17 +1186,21 @@ class SFTTrainer:
         # Add callbacks
         callbacks = [GPUMemoryCallback()]
 
-        # Generation samples callback (logs model outputs during eval)
-        eval_cfg = self.cfg.get("evaluation", {})
-        gen_callback = GenerationSamplesCallback(
-            protein_llm=self.protein_llm,
-            eval_dataset=self.eval_dataset,
-            tokenizer=self.tokenizer,
-            num_samples_per_category=5,
-            max_new_tokens=eval_cfg.get("sft_gen_max_tokens", 256),
-            generation_temperature=float(eval_cfg.get("generation_temperature", 0.0)),
-        )
-        callbacks.append(gen_callback)
+        # Generation samples callback disabled — causes FSDP crashes due to
+        # generate() bypassing FSDP's all-gather hooks (sharded params appear
+        # as empty tensors).  Train/eval loss is sufficient for monitoring.
+        # The summon_full_params fix exists in ProteinLLM.generate() but is
+        # not yet validated in multi-GPU FSDP runs.
+        # eval_cfg = self.cfg.get("evaluation", {})
+        # gen_callback = GenerationSamplesCallback(
+        #     protein_llm=self.protein_llm,
+        #     eval_dataset=self.eval_dataset,
+        #     tokenizer=self.tokenizer,
+        #     num_samples_per_category=5,
+        #     max_new_tokens=eval_cfg.get("sft_gen_max_tokens", 256),
+        #     generation_temperature=float(eval_cfg.get("generation_temperature", 0.0)),
+        # )
+        # callbacks.append(gen_callback)
 
         # Always use ProteinLLMTrainer — handles both multimodal (protein_llm set)
         # and text-only (protein_llm=None) modes. Also provides _get_train_sampler

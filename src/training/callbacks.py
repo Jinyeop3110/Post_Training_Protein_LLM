@@ -146,6 +146,12 @@ class GenerationSamplesCallback(TrainerCallback):
         FSDP note: when FSDP is active, ALL ranks must call generate()
         because FSDP triggers all-gather during forward pass. Only rank 0
         collects and logs results; other ranks discard them.
+
+        Under FSDP, generate() resolves through __getattr__ chains down
+        to the inner model, where self(...) bypasses FSDP's __call__
+        hooks.  ProteinLLM.generate() handles this via
+        summon_full_params.  If generation still fails, we catch the
+        error and skip rather than crashing the entire training run.
         """
         is_rank_0 = int(os.environ.get("RANK", 0)) == 0
         use_fsdp = bool(args.fsdp)
@@ -160,10 +166,25 @@ class GenerationSamplesCallback(TrainerCallback):
             log.info("Generation Samples (eval step %d)", state.global_step)
             log.info("=" * 60)
 
+        # Track consecutive failures under FSDP to bail early and
+        # prevent NCCL timeouts from cascading.
+        consecutive_failures = 0
+        max_consecutive_failures = 3
+
         table_rows = []
 
         for category, indices in sorted(self._sample_indices.items()):
             for idx in indices:
+                # Under FSDP, bail early if generation consistently fails
+                # to prevent NCCL timeouts from ranks going out of sync.
+                if use_fsdp and consecutive_failures >= max_consecutive_failures:
+                    if is_rank_0:
+                        log.warning(
+                            "Skipping remaining generation samples after "
+                            f"{max_consecutive_failures} consecutive FSDP failures"
+                        )
+                    break
+
                 item = self.eval_dataset[idx]
                 protein_seq = item.get("protein_sequence", "")
                 instruction = item.get("instruction", "")
@@ -186,17 +207,19 @@ class GenerationSamplesCallback(TrainerCallback):
                             gen_kwargs.update(do_sample=True, temperature=self.generation_temperature)
                         else:
                             gen_kwargs["do_sample"] = False
-                        # autocast required: pooling/projector weights are float32
-                        # but ESM-3 encoder outputs bfloat16 under its own autocast.
-                        # During training HF Trainer's autocast handles this; during
-                        # callback generation we must provide the context explicitly.
-                        with torch.no_grad(), torch.amp.autocast("cuda", dtype=torch.bfloat16):
+                        # NOTE: Do NOT wrap in torch.amp.autocast here.
+                        # ESM-3 encoder manages its own autocast internally, and
+                        # the LLM (loaded in bf16) handles dtypes natively.
+                        # Adding an outer autocast causes shape mismatches during
+                        # autoregressive generation with torch.compile + FSDP.
+                        with torch.no_grad():
                             generated_texts = self.protein_llm.generate(**gen_kwargs)
                         generated = generated_texts[0] if generated_texts else ""
+                        consecutive_failures = 0  # Reset on success
                         # Debug: if output is empty, decode without stripping special tokens.
                         # Skip in FSDP mode — debug generate would deadlock other ranks.
                         if is_rank_0 and not use_fsdp and not generated.strip():
-                            with torch.no_grad(), torch.amp.autocast("cuda", dtype=torch.bfloat16):
+                            with torch.no_grad():
                                 raw_texts, raw_ids, inp_len = self.protein_llm.generate(
                                     protein_sequences=[protein_seq],
                                     prompt=[inference_prompt],
@@ -234,18 +257,23 @@ class GenerationSamplesCallback(TrainerCallback):
                             text_gen_kwargs.update(do_sample=True, temperature=self.generation_temperature)
                         else:
                             text_gen_kwargs["do_sample"] = False
-                        # autocast for FSDP consistency (matches multimodal path)
-                        with torch.no_grad(), torch.amp.autocast("cuda", dtype=torch.bfloat16):
+                        with torch.no_grad():
                             output_ids = model.generate(**text_gen_kwargs)
                         # Slice off the input prompt tokens
                         gen_ids = output_ids[0, inputs["input_ids"].shape[1]:]
                         generated = self.tokenizer.decode(
                             gen_ids, skip_special_tokens=True
                         )
+                        consecutive_failures = 0  # Reset on success
                 except Exception as e:
+                    consecutive_failures += 1
                     if is_rank_0:
                         log.warning(f"Generation failed for sample {idx}: {e}")
                     generated = f"[ERROR: {e}]"
+
+                # Free GPU memory after each generation to prevent
+                # fragmentation from accumulating across samples
+                torch.cuda.empty_cache()
 
                 # Only rank 0 collects and logs results
                 if is_rank_0:
@@ -266,6 +294,11 @@ class GenerationSamplesCallback(TrainerCallback):
                         gen_display,
                         seq_preview,
                     ])
+            else:
+                # Inner loop completed normally — continue outer loop
+                continue
+            # Inner loop broke (FSDP bail-out) — break outer loop too
+            break
 
         # Restore train mode — HF Trainer only restores model.train() (the LLM),
         # NOT protein_llm. Without this, pooling/projector stay in eval mode
