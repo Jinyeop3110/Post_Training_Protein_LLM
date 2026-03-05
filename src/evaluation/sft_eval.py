@@ -57,11 +57,20 @@ def _classify_task(instruction: str) -> str:
     return "other"
 
 
-def _load_test_dataset(cfg: DictConfig, max_samples: Optional[int] = None):
-    """Load Mol-Instructions test split."""
+from src.evaluation.utils import resolve_placeholder as _resolve_placeholder
+
+
+def _load_test_dataset(cfg: DictConfig, max_samples: Optional[int] = None, model=None):
+    """Load Mol-Instructions test split with tokenizer and placeholder.
+
+    Args:
+        cfg: Hydra configuration.
+        max_samples: Limit on number of test samples.
+        model: Model instance (ProteinLLM or VanillaLLMWrapper) to extract
+            tokenizer from. If None, dataset is loaded without chat template.
+    """
     from src.data.mol_instructions import MolInstructionsDataset
 
-    # Build a config dict suitable for MolInstructionsDataset.from_config
     data_cfg = cfg.get("data", {})
 
     ds_cfg = {
@@ -78,50 +87,79 @@ def _load_test_dataset(cfg: DictConfig, max_samples: Optional[int] = None):
         ds_cfg["processing"] = data_cfg["processing"]
     if "splits" in data_cfg:
         ds_cfg["splits"] = data_cfg["splits"]
+    if "exclude_files" in data_cfg:
+        ds_cfg["exclude_files"] = data_cfg["exclude_files"]
+    if "sampling_temperature" in data_cfg:
+        ds_cfg["sampling_temperature"] = data_cfg["sampling_temperature"]
+    if "enable_thinking" in data_cfg:
+        ds_cfg["enable_thinking"] = data_cfg["enable_thinking"]
 
-    dataset = MolInstructionsDataset.from_config(ds_cfg)
+    # Extract tokenizer and determine placeholder
+    tokenizer = getattr(model, "tokenizer", None) if model else None
+    placeholder = _resolve_placeholder(cfg)
+
+    dataset = MolInstructionsDataset.from_config(
+        ds_cfg, tokenizer=tokenizer, protein_placeholder=placeholder,
+    )
     log.info(f"Loaded {len(dataset)} test samples for SFT evaluation")
     return dataset
 
 
-def _compute_perplexity(model, dataset, tokenizer, batch_size: int = 4) -> float:
-    """Compute perplexity over dataset using teacher-forced forward passes."""
+def _compute_perplexity(
+    model, dataset, tokenizer, batch_size: int = 4,
+    enable_thinking: bool = False,
+) -> float:
+    """Compute perplexity over dataset using teacher-forced forward passes.
+
+    Uses the training collator for proper prompt masking (loss only on
+    response tokens) and the model's full forward pass (including protein
+    encoder for ESM-3 models).
+    """
+    from src.training.collators import ProteinLLMDataCollator
+
+    collator = ProteinLLMDataCollator(
+        tokenizer=tokenizer,
+        max_length=2048,
+        padding="longest",
+        enable_thinking=enable_thinking,
+    )
+
     total_loss = 0.0
     total_tokens = 0
 
     for i in range(0, len(dataset), batch_size):
         batch_samples = [dataset[j] for j in range(i, min(i + batch_size, len(dataset)))]
-        prompts = [s["formatted_prompt"] for s in batch_samples]
 
-        encodings = tokenizer(
-            prompts,
-            return_tensors="pt",
-            padding=True,
-            truncation=True,
-            max_length=2048,
-        )
+        # Use the training collator for proper prompt masking
+        batch = collator(batch_samples)
+        input_ids = batch["input_ids"]
+        attention_mask = batch["attention_mask"]
+        labels = batch["labels"]
+        protein_sequences = batch["protein_sequences"]
 
-        input_ids = encodings["input_ids"]
-        attention_mask = encodings["attention_mask"]
-
-        # Labels = input_ids shifted; pad tokens masked with -100
-        labels = input_ids.clone()
-        labels[attention_mask == 0] = -100
-
-        # Use model's compute_loss if available, otherwise do manual forward
-        if hasattr(model, "compute_loss"):
-            loss_val = model.compute_loss(input_ids, attention_mask, labels)
-        else:
-            device = next(model.llm.parameters()).device
-            with torch.no_grad():
+        # Use model.forward() for full pipeline (encoder + projector + LLM)
+        # for ProteinLLM; fall back to model.llm() for VanillaLLMWrapper
+        device = next(model.llm.parameters()).device
+        with torch.no_grad():
+            if hasattr(model, "forward") and hasattr(model, "approach"):
+                # ProteinLLM — use full forward with protein encoding
+                outputs = model.forward(
+                    protein_sequences=protein_sequences,
+                    input_ids=input_ids.to(device),
+                    attention_mask=attention_mask.to(device),
+                    labels=labels.to(device),
+                )
+                loss_val = outputs["loss"].item()
+            else:
+                # VanillaLLMWrapper — direct LLM forward
                 outputs = model.llm(
                     input_ids=input_ids.to(device),
                     attention_mask=attention_mask.to(device),
                     labels=labels.to(device),
                 )
-            loss_val = outputs.loss.item()
+                loss_val = outputs.loss.item()
 
-        # Count non-padding tokens in this batch
+        # Count non-masked tokens (response tokens only)
         n_tokens = (labels != -100).sum().item()
         total_loss += loss_val * n_tokens
         total_tokens += n_tokens
@@ -393,8 +431,8 @@ def evaluate_sft(
     max_gen_samples = eval_cfg.get("sft_gen_samples", 200)
     batch_size = eval_cfg.get("batch_size", 4)
 
-    # Load test data
-    dataset = _load_test_dataset(cfg, max_samples=max_samples)
+    # Load test data (pass model for tokenizer + placeholder detection)
+    dataset = _load_test_dataset(cfg, max_samples=max_samples, model=model)
     if len(dataset) == 0:
         log.error("No test samples loaded for SFT evaluation")
         return {"error": "no_test_samples"}
@@ -402,8 +440,12 @@ def evaluate_sft(
     metrics: Dict[str, Any] = {"num_samples": len(dataset)}
 
     # 1. Perplexity
+    enable_thinking = cfg.get("data", {}).get("enable_thinking", False)
     try:
-        ppl = _compute_perplexity(model, dataset, tokenizer, batch_size=batch_size)
+        ppl = _compute_perplexity(
+            model, dataset, tokenizer, batch_size=batch_size,
+            enable_thinking=enable_thinking,
+        )
         metrics["perplexity"] = ppl
         log.info(f"Perplexity: {ppl:.2f}")
     except Exception as e:

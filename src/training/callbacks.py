@@ -9,6 +9,7 @@ Classes:
 
 import logging
 import os
+import traceback
 from typing import Dict, List, Optional
 
 import torch
@@ -161,6 +162,23 @@ class GenerationSamplesCallback(TrainerCallback):
         if not is_rank_0 and not use_fsdp:
             return
 
+        # --- Free eval memory before generation ---
+        # By this point, HF Trainer's eval loop is finished but PyTorch/CUDA
+        # still holds reserved memory from eval forward passes (logits, KV
+        # cache, torch.compile buffers).  Under FSDP, summon_full_params will
+        # gather all sharded weights onto each GPU (~2x memory), so we need
+        # to release everything we can first.
+        import gc
+        gc.collect()
+        torch.cuda.empty_cache()
+        if is_rank_0:
+            alloc_gb = torch.cuda.memory_allocated() / 1024**3
+            reserved_gb = torch.cuda.memory_reserved() / 1024**3
+            log.info(
+                f"Pre-generation memory cleanup: "
+                f"allocated={alloc_gb:.1f}GB, reserved={reserved_gb:.1f}GB"
+            )
+
         if is_rank_0:
             log.info("=" * 60)
             log.info("Generation Samples (eval step %d)", state.global_step)
@@ -202,6 +220,7 @@ class GenerationSamplesCallback(TrainerCallback):
                             max_new_tokens=self.max_new_tokens,
                             min_new_tokens=10,
                             repetition_penalty=1.2,
+                            wrap_chat_template=False,  # inference_prompt is already formatted
                         )
                         if self.generation_temperature > 0:
                             gen_kwargs.update(do_sample=True, temperature=self.generation_temperature)
@@ -228,6 +247,7 @@ class GenerationSamplesCallback(TrainerCallback):
                                     do_sample=False,
                                     repetition_penalty=1.2,
                                     return_token_ids=True,
+                                    wrap_chat_template=False,
                                 )
                             raw_decode = self.tokenizer.decode(raw_ids[0], skip_special_tokens=False)
                             raw_id_list = raw_ids[0].tolist()[:20]
@@ -269,6 +289,7 @@ class GenerationSamplesCallback(TrainerCallback):
                     consecutive_failures += 1
                     if is_rank_0:
                         log.warning(f"Generation failed for sample {idx}: {e}")
+                        log.warning(f"  Traceback:\n{traceback.format_exc()}")
                     generated = f"[ERROR: {e}]"
 
                 # Free GPU memory after each generation to prevent

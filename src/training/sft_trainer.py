@@ -1091,6 +1091,7 @@ class SFTTrainer:
             placeholder = ""
 
         max_protein_length = data_cfg.get("processing", {}).get("max_protein_length", None)
+        enable_thinking = data_cfg.get("enable_thinking", False)
 
         log.info("Loading training dataset...")
         raw_train = MolInstructionsDataset(
@@ -1105,6 +1106,7 @@ class SFTTrainer:
             exclude_files=exclude_files,
             protein_placeholder=placeholder,
             tokenizer=self.tokenizer,
+            enable_thinking=enable_thinking,
         )
         log.info(f"Training dataset loaded: {len(raw_train)} samples")
 
@@ -1118,6 +1120,7 @@ class SFTTrainer:
                 max_length=max_length,
                 shuffle=True,
                 seed=data_cfg.get("seed", 42),
+                enable_thinking=enable_thinking,
             )
             log.info(
                 f"Packing enabled: {len(raw_train)} examples -> "
@@ -1141,6 +1144,7 @@ class SFTTrainer:
             exclude_files=exclude_files,
             protein_placeholder=placeholder,
             tokenizer=self.tokenizer,
+            enable_thinking=enable_thinking,
         )
         log.info(f"Validation dataset loaded: {len(self.eval_dataset)} samples")
 
@@ -1170,13 +1174,16 @@ class SFTTrainer:
         Uses ``PackedDataCollator`` when packing_sequences is enabled (blocks
         are already tokenized), otherwise the standard ``ProteinLLMDataCollator``.
         """
+        enable_thinking = self.cfg.data.get("enable_thinking", False)
         if self.use_packing:
+            # Thinking masking is handled during packing (in PackedDataset)
             self.data_collator = PackedDataCollator()
         else:
             self.data_collator = ProteinLLMDataCollator(
                 tokenizer=self.tokenizer,
                 max_length=self.cfg.training.get("max_seq_length", 2048),
                 padding="longest",
+                enable_thinking=enable_thinking,
             )
 
     def _create_trainer(self) -> None:
@@ -1186,21 +1193,18 @@ class SFTTrainer:
         # Add callbacks
         callbacks = [GPUMemoryCallback()]
 
-        # Generation samples callback disabled — causes FSDP crashes due to
-        # generate() bypassing FSDP's all-gather hooks (sharded params appear
-        # as empty tensors).  Train/eval loss is sufficient for monitoring.
-        # The summon_full_params fix exists in ProteinLLM.generate() but is
-        # not yet validated in multi-GPU FSDP runs.
-        # eval_cfg = self.cfg.get("evaluation", {})
-        # gen_callback = GenerationSamplesCallback(
-        #     protein_llm=self.protein_llm,
-        #     eval_dataset=self.eval_dataset,
-        #     tokenizer=self.tokenizer,
-        #     num_samples_per_category=5,
-        #     max_new_tokens=eval_cfg.get("sft_gen_max_tokens", 256),
-        #     generation_temperature=float(eval_cfg.get("generation_temperature", 0.0)),
-        # )
-        # callbacks.append(gen_callback)
+        # Generation samples callback — uses summon_full_params fix in
+        # ProteinLLM.generate() to gather FSDP-sharded weights during eval.
+        eval_cfg = self.cfg.get("evaluation", {})
+        gen_callback = GenerationSamplesCallback(
+            protein_llm=self.protein_llm,
+            eval_dataset=self.eval_dataset,
+            tokenizer=self.tokenizer,
+            num_samples_per_category=2,
+            max_new_tokens=min(eval_cfg.get("sft_gen_max_tokens", 256), 50),
+            generation_temperature=float(eval_cfg.get("generation_temperature", 0.0)),
+        )
+        callbacks.append(gen_callback)
 
         # Always use ProteinLLMTrainer — handles both multimodal (protein_llm set)
         # and text-only (protein_llm=None) modes. Also provides _get_train_sampler

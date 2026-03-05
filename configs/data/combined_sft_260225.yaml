@@ -26,4 +26,8 @@ splits:
 # alpha < 1.0 upsamples smaller sources relative to larger ones
 sampling_temperature: 0.7
 
+# Qwen3 thinking mode: when true, training data includes <think></think>
+# block and loss is only on response after </think>.
+enable_thinking: false
+
 limit: null

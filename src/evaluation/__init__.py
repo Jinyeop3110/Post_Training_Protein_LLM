@@ -109,6 +109,7 @@ from .stability import (
     # Helper functions
     parse_stability_prediction,
 )
+from .utils import resolve_placeholder
 
 __all__ = [
     # GO Prediction

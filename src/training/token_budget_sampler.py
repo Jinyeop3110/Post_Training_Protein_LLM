@@ -59,25 +59,37 @@ class TokenBudgetBatchSampler(BatchSampler):
         self._build_batches()
 
     def _build_batches(self) -> None:
-        """Greedily pack sampler indices into token-budgeted batches."""
+        """Greedily pack sampler indices into token-budgeted batches.
+
+        Uses *padded* token count (max_length * batch_size) rather than
+        sum-of-lengths to budget memory, because the collator pads all
+        sequences in a batch to the longest one.  This prevents OOM on
+        batches with high length variance (e.g. one 4000-token sample
+        padded across 16 samples = 64K tokens vs sum = 7K).
+        """
         batches: List[List[int]] = []
         current_batch: List[int] = []
-        current_tokens = 0
+        current_max_len = 0
 
         for idx in self.base_sampler:
             length = self.lengths[idx]
 
+            # Estimate padded token count if we add this sample
+            new_max_len = max(current_max_len, length)
+            new_batch_size = len(current_batch) + 1
+            padded_tokens = new_max_len * new_batch_size
+
             # Would this sample exceed the budget or batch-size cap?
-            would_exceed_tokens = (current_tokens + length) > self.max_tokens
+            would_exceed_tokens = current_batch and padded_tokens > self.max_tokens
             would_exceed_size = len(current_batch) >= self.max_batch_size
 
             if current_batch and (would_exceed_tokens or would_exceed_size):
                 batches.append(current_batch)
                 current_batch = []
-                current_tokens = 0
+                current_max_len = 0
 
             current_batch.append(idx)
-            current_tokens += length
+            current_max_len = max(current_max_len, length)
 
         # Flush remaining
         if current_batch:
@@ -97,11 +109,15 @@ class TokenBudgetBatchSampler(BatchSampler):
         # Log statistics
         if batches:
             sizes = [len(b) for b in batches]
-            token_counts = [sum(self.lengths[i] for i in b) for b in batches]
+            padded_counts = [
+                max(self.lengths[i] for i in b) * len(b) for b in batches
+            ]
+            raw_counts = [sum(self.lengths[i] for i in b) for b in batches]
             log.info(
                 f"TokenBudgetBatchSampler: {len(batches)} batches, "
                 f"batch_size range [{min(sizes)}, {max(sizes)}], "
-                f"tokens/batch range [{min(token_counts)}, {max(token_counts)}], "
+                f"padded tokens/batch range [{min(padded_counts)}, {max(padded_counts)}], "
+                f"raw tokens/batch range [{min(raw_counts)}, {max(raw_counts)}], "
                 f"budget={self.max_tokens}, cap={self.max_batch_size}"
             )
 

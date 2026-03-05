@@ -562,6 +562,7 @@ def create_ppi_prompt(
     sequence_1: str,
     sequence_2: str,
     prompt_template: Optional[str] = None,
+    protein_placeholder: str = "",
 ) -> str:
     """
     Create a prompt for PPI prediction.
@@ -570,17 +571,21 @@ def create_ppi_prompt(
         sequence_1: First protein sequence.
         sequence_2: Second protein sequence.
         prompt_template: Optional custom prompt template with {sequence_1} and {sequence_2} placeholders.
+        protein_placeholder: When set (ESM-3/flamingo approach), replaces the
+            raw sequences in the prompt text.
 
     Returns:
         Formatted prompt string.
     """
+    display_1 = protein_placeholder or sequence_1
+    display_2 = protein_placeholder or sequence_2
     if prompt_template:
-        return prompt_template.format(sequence_1=sequence_1, sequence_2=sequence_2)
+        return prompt_template.format(sequence_1=display_1, sequence_2=display_2)
 
     # Default prompt template
-    return f"""Protein A: {sequence_1}
+    return f"""Protein A: {display_1}
 
-Protein B: {sequence_2}
+Protein B: {display_2}
 
 Do these two proteins physically interact?
 Answer with "Yes" or "No" and explain your reasoning.
@@ -779,6 +784,11 @@ def evaluate_ppi(
     prompt_template = eval_cfg.get("prompt_template", None)
     thresholds = eval_cfg.get("thresholds", [0.5, 0.7, 0.9])
 
+    # Determine protein placeholder for ESM-3/flamingo approaches
+    approach = cfg.get("approach", "text")
+    from src.evaluation.utils import resolve_placeholder
+    protein_placeholder = resolve_placeholder(cfg)
+
     # Load test dataset
     test_samples = load_ppi_test_dataset(cfg, max_samples=max_samples)
 
@@ -796,7 +806,7 @@ def evaluate_ppi(
 
         # Prepare prompts
         prompts = [
-            create_ppi_prompt(sample.sequence_1, sample.sequence_2, prompt_template)
+            create_ppi_prompt(sample.sequence_1, sample.sequence_2, prompt_template, protein_placeholder)
             for sample in batch
         ]
 

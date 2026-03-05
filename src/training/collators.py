@@ -38,6 +38,7 @@ class ProteinLLMDataCollator:
         max_length: int = 2048,
         padding: str = "longest",
         label_pad_token_id: int = -100,
+        enable_thinking: bool = False,
     ):
         """
         Initialize the collator.
@@ -47,11 +48,29 @@ class ProteinLLMDataCollator:
             max_length: Maximum sequence length.
             padding: Padding strategy.
             label_pad_token_id: Token ID for padding labels.
+            enable_thinking: When True, mask loss on everything up to and
+                including ``</think>`` so the model only learns the response.
         """
         self.tokenizer = tokenizer
         self.max_length = max_length
         self.padding = padding
         self.label_pad_token_id = label_pad_token_id
+        self.enable_thinking = enable_thinking
+
+        # Cache </think> token ID for thinking-aware masking
+        if self.enable_thinking:
+            think_close_ids = self.tokenizer.encode("</think>", add_special_tokens=False)
+            if len(think_close_ids) == 1:
+                self._think_close_id = think_close_ids[0]
+            else:
+                log.warning(
+                    f"</think> tokenizes to {len(think_close_ids)} tokens "
+                    f"(expected 1); thinking masking disabled"
+                )
+                self.enable_thinking = False
+                self._think_close_id = None
+        else:
+            self._think_close_id = None
 
         # Ensure tokenizer has pad token
         if self.tokenizer.pad_token is None:
@@ -79,13 +98,15 @@ class ProteinLLMDataCollator:
         # to determine where the response starts
         inference_prompts = [item["inference_prompt"] for item in batch]
 
-        # Tokenize full prompts
+        # Tokenize full prompts (add_special_tokens=False because the chat
+        # template already includes all special tokens like <|im_start|>)
         encoded = self.tokenizer(
             prompts,
             max_length=self.max_length,
             padding=self.padding,
             truncation=True,
             return_tensors="pt",
+            add_special_tokens=False,
         )
 
         # Tokenize inference prompts (without padding) to get prompt lengths
@@ -99,8 +120,24 @@ class ProteinLLMDataCollator:
 
         # Create labels: mask prompt tokens with -100, keep response tokens
         labels = encoded["input_ids"].clone()
-        for i, prompt_len in enumerate(prompt_lengths):
-            labels[i, :prompt_len] = self.label_pad_token_id
+        if self.enable_thinking:
+            # Thinking-aware masking: mask everything up to and including
+            # the first </think> after the prompt boundary.  Using first
+            # (not last) avoids over-masking if the response itself
+            # contains literal "</think>" text.
+            for i in range(labels.size(0)):
+                ids = encoded["input_ids"][i]
+                think_positions = (ids == self._think_close_id).nonzero(as_tuple=True)[0]
+                valid = think_positions[think_positions >= prompt_lengths[i]]
+                if len(valid) > 0:
+                    mask_end = valid[0].item() + 1
+                    labels[i, :mask_end] = self.label_pad_token_id
+                else:
+                    # No </think> found after prompt — fall back to prompt masking
+                    labels[i, :prompt_lengths[i]] = self.label_pad_token_id
+        else:
+            for i, prompt_len in enumerate(prompt_lengths):
+                labels[i, :prompt_len] = self.label_pad_token_id
         # Also mask padding tokens
         labels[labels == self.tokenizer.pad_token_id] = self.label_pad_token_id
 
@@ -137,6 +174,7 @@ class PackedDataset(torch.utils.data.Dataset):
         max_length: int = 2048,
         shuffle: bool = True,
         seed: int = 42,
+        enable_thinking: bool = False,
     ):
         """
         Initialize the packed dataset.
@@ -147,16 +185,28 @@ class PackedDataset(torch.utils.data.Dataset):
             max_length: Fixed block length for packed sequences.
             shuffle: Whether to shuffle examples before packing.
             seed: Random seed for shuffling.
+            enable_thinking: When True, mask loss up to ``</think>`` per doc.
         """
         super().__init__()
         self.max_length = max_length
         self.tokenizer = tokenizer
+        self.enable_thinking = enable_thinking
 
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
 
         self.eos_token_id = self.tokenizer.eos_token_id
         self.pad_token_id = self.tokenizer.pad_token_id
+
+        # Cache </think> token ID for thinking-aware masking
+        if self.enable_thinking:
+            think_close_ids = self.tokenizer.encode("</think>", add_special_tokens=False)
+            self._think_close_id = think_close_ids[0] if len(think_close_ids) == 1 else None
+            if self._think_close_id is None:
+                log.warning("</think> is not a single token; thinking masking disabled in packing")
+                self.enable_thinking = False
+        else:
+            self._think_close_id = None
 
         self.blocks: List[Dict[str, Any]] = []
         self._pack(dataset, shuffle=shuffle, seed=seed)
@@ -229,8 +279,17 @@ class PackedDataset(torch.utils.data.Dataset):
                 current_proteins = []
                 current_protein_set = set()
 
-            # Build labels: mask prompt tokens + boundary EOS, keep response tokens
-            doc_labels = [-100] * prompt_len + list(token_ids[prompt_len:])
+            # Build labels: mask prompt/thinking tokens + boundary EOS, keep response tokens
+            if self.enable_thinking and self._think_close_id is not None:
+                # Find </think> in this doc's tokens and mask everything up to it
+                try:
+                    think_idx = token_ids.index(self._think_close_id)
+                    mask_end = think_idx + 1  # mask up to and including </think>
+                except ValueError:
+                    mask_end = prompt_len  # no </think> — fall back to prompt masking
+                doc_labels = [-100] * mask_end + list(token_ids[mask_end:])
+            else:
+                doc_labels = [-100] * prompt_len + list(token_ids[prompt_len:])
             # The last token (EOS) is a separator — mask it in labels
             doc_labels[-1] = -100
 

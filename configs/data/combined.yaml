@@ -27,5 +27,9 @@ splits:
 # 1.0 = no rebalancing, 0.5 = moderate, 0.0 = fully equalized
 sampling_temperature: 0.75
 
+# Qwen3 thinking mode: when true, training data includes <think></think>
+# block and loss is only on response after </think>.
+enable_thinking: false
+
 # Optional: limit number of samples (null = use all)
 limit: null

@@ -20,5 +20,9 @@ splits:
   validation: 0.025
   test: 0.025
 
+# Qwen3 thinking mode: when true, training data includes <think></think>
+# block and loss is only on response after </think>.
+enable_thinking: false
+
 # Optional: limit number of samples (null = use all)
 limit: null

@@ -561,6 +561,7 @@ def create_stability_prompt(
     mutation: str,
     wild_type_sequence: Optional[str] = None,
     prompt_template: Optional[str] = None,
+    protein_placeholder: str = "",
 ) -> str:
     """
     Create a prompt for stability prediction.
@@ -574,11 +575,14 @@ def create_stability_prompt(
     Returns:
         Formatted prompt string.
     """
+    display_seq = protein_placeholder or sequence
+    display_wt = protein_placeholder or wild_type_sequence or sequence
+
     if prompt_template:
         return prompt_template.format(
-            sequence=sequence,
+            sequence=display_seq,
             mutation=mutation,
-            wild_type_sequence=wild_type_sequence or sequence,
+            wild_type_sequence=display_wt,
         )
 
     # Parse mutation for readable format
@@ -603,7 +607,7 @@ def create_stability_prompt(
 
     # Build prompt
     if wild_type_sequence:
-        prompt = f"""Wild-type protein sequence: {wild_type_sequence}
+        prompt = f"""Wild-type protein sequence: {display_wt}
 
 Mutation: {mutation_description}
 
@@ -611,7 +615,7 @@ Predict the change in protein stability (ddG) caused by this mutation.
 Provide the ddG value in kcal/mol and classify as stabilizing (ddG < -1), neutral (-1 <= ddG <= 1), or destabilizing (ddG > 1).
 """
     else:
-        prompt = f"""Protein sequence: {sequence}
+        prompt = f"""Protein sequence: {display_seq}
 
 Mutation: {mutation_description}
 
@@ -924,6 +928,11 @@ def evaluate_stability(
     max_samples = eval_cfg.get("max_samples", None)
     prompt_template = eval_cfg.get("prompt_template", None)
 
+    # Determine protein placeholder for ESM-3/flamingo approaches
+    approach = cfg.get("approach", "text")
+    from src.evaluation.utils import resolve_placeholder
+    protein_placeholder = resolve_placeholder(cfg)
+
     # Load test dataset
     test_samples = load_stability_test_dataset(cfg, max_samples=max_samples)
 
@@ -946,6 +955,7 @@ def evaluate_stability(
                 sample.mutation,
                 sample.wild_type_sequence,
                 prompt_template,
+                protein_placeholder,
             )
             for sample in batch
         ]

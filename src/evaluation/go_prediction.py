@@ -735,6 +735,7 @@ def _create_demo_dataset(num_samples: int = 10) -> List[GOTestSample]:
 def create_go_prompt(
     sequence: str,
     prompt_template: Optional[str] = None,
+    protein_placeholder: str = "",
 ) -> str:
     """
     Create a prompt for GO term prediction.
@@ -742,15 +743,19 @@ def create_go_prompt(
     Args:
         sequence: Protein sequence.
         prompt_template: Optional custom prompt template with {sequence} placeholder.
+        protein_placeholder: When set (ESM-3/flamingo approach), replaces the
+            raw sequence in the prompt text since protein info comes via
+            learned embeddings instead.
 
     Returns:
         Formatted prompt string.
     """
+    display_seq = protein_placeholder or sequence
     if prompt_template:
-        return prompt_template.format(sequence=sequence)
+        return prompt_template.format(sequence=display_seq)
 
     # Default prompt template
-    return f"""Protein sequence: {sequence}
+    return f"""Protein sequence: {display_seq}
 
 What are the Gene Ontology (GO) terms for this protein?
 List the molecular functions, biological processes, and cellular components.
@@ -810,6 +815,10 @@ def evaluate_go(
     max_samples = eval_cfg.get("max_samples", None)
     prompt_template = eval_cfg.get("prompt_template", None)
 
+    # Determine protein placeholder for ESM-3/flamingo approaches
+    from src.evaluation.utils import resolve_placeholder
+    protein_placeholder = resolve_placeholder(cfg)
+
     # Load test dataset
     test_samples = load_go_test_dataset(cfg, max_samples=max_samples)
 
@@ -827,7 +836,7 @@ def evaluate_go(
 
         # Prepare prompts
         sequences = [sample.sequence for sample in batch]
-        prompts = [create_go_prompt(seq, prompt_template) for seq in sequences]
+        prompts = [create_go_prompt(seq, prompt_template, protein_placeholder) for seq in sequences]
 
         # Generate responses
         try:

@@ -77,11 +77,16 @@ def format_chat_messages(
     output: str = "",
     system_prompt: str = DEFAULT_SYSTEM_PROMPT,
     for_inference: bool = False,
+    enable_thinking: bool = False,
 ) -> list:
     """Build chat messages list for tokenizer.apply_chat_template().
 
     Returns a list of message dicts suitable for apply_chat_template().
     This ensures training and inference use the same prompt format.
+
+    When ``enable_thinking=True``, the assistant response is prefixed with
+    ``<think>\\n\\n</think>\\n\\n`` so the model learns the thinking format.
+    At inference time the model can fill the ``<think>`` block with reasoning.
     """
     messages = []
     if system_prompt:
@@ -91,7 +96,10 @@ def format_chat_messages(
     messages.append({"role": "user", "content": user_content})
 
     if not for_inference and output:
-        messages.append({"role": "assistant", "content": output.strip()})
+        content = output.strip()
+        if enable_thinking:
+            content = f"<think>\n\n</think>\n\n{content}"
+        messages.append({"role": "assistant", "content": content})
 
     return messages
 
@@ -172,6 +180,7 @@ class MolInstructionsDataset(Dataset):
         exclude_files: Optional[List[str]] = None,
         tokenizer: Optional[Any] = None,
         protein_placeholder: str = "",
+        enable_thinking: bool = False,
     ):
         """
         Initialize the Mol-Instructions dataset.
@@ -210,6 +219,7 @@ class MolInstructionsDataset(Dataset):
                 sampling_temperature=sampling_temperature,
                 exclude_files=exclude_files,
                 protein_placeholder=protein_placeholder,
+                enable_thinking=enable_thinking,
             )
 
         self.split = split
@@ -530,29 +540,22 @@ class MolInstructionsDataset(Dataset):
                 output=output,
                 system_prompt=self.config.system_prompt,
                 for_inference=for_inference,
+                enable_thinking=self.config.enable_thinking,
             )
             # apply_chat_template() is model-agnostic: each tokenizer carries
             # its own Jinja2 template, so Qwen3 produces <|im_start|>/<|im_end|>
             # blocks while Llama produces <|begin_of_text|> style tokens, etc.
             #
-            # enable_thinking=False is Qwen3-specific — it forces empty
-            # <think></think> blocks so the model skips reasoning and outputs
-            # the response directly.  Non-Qwen tokenizers don't accept this
-            # kwarg, so we catch TypeError and fall back to the plain call.
-            try:
-                formatted = self.tokenizer.apply_chat_template(
-                    messages,
-                    tokenize=False,
-                    add_generation_prompt=for_inference,
-                    enable_thinking=self.config.enable_thinking,
-                )
-            except TypeError:
-                # Non-Qwen models (Llama, Mistral, etc.) — no enable_thinking
-                formatted = self.tokenizer.apply_chat_template(
-                    messages,
-                    tokenize=False,
-                    add_generation_prompt=for_inference,
-                )
+            # Thinking support (<think>...</think>) is handled by
+            # format_chat_messages() which prepends the block to assistant
+            # content when enable_thinking=True.  We don't pass
+            # enable_thinking to apply_chat_template because the Qwen3-2507
+            # template doesn't have native thinking support.
+            formatted = self.tokenizer.apply_chat_template(
+                messages,
+                tokenize=False,
+                add_generation_prompt=for_inference,
+            )
             return formatted
 
         # Fallback: Alpaca-style template
@@ -653,12 +656,19 @@ class MolInstructionsDataset(Dataset):
         return sample
 
     @classmethod
-    def from_config(cls, cfg: Any) -> "MolInstructionsDataset":
+    def from_config(
+        cls,
+        cfg: Any,
+        tokenizer: Optional[Any] = None,
+        protein_placeholder: str = "",
+    ) -> "MolInstructionsDataset":
         """
         Create dataset from Hydra/OmegaConf configuration.
 
         Args:
-            cfg: Configuration object with dataset parameters
+            cfg: Configuration object with dataset parameters.
+            tokenizer: HuggingFace tokenizer for chat template formatting.
+            protein_placeholder: Placeholder token for ESM-3 approach.
 
         Returns:
             MolInstructionsDataset instance
@@ -675,15 +685,20 @@ class MolInstructionsDataset(Dataset):
             subset=cfg.get("subset", "Protein-oriented Instructions"),
             cache_dir=cfg.get("paths", {}).get("raw", cfg.get("cache_dir")),
             max_seq_length=cfg.get("processing", {}).get("max_seq_length", 2048),
+            max_protein_length=cfg.get("processing", {}).get("max_protein_length", None),
             train_split=cfg.get("splits", {}).get("train", 0.9),
             val_split=cfg.get("splits", {}).get("validation", 0.05),
             test_split=cfg.get("splits", {}).get("test", 0.05),
+            exclude_files=cfg.get("exclude_files", None),
+            sampling_temperature=cfg.get("sampling_temperature", 1.0),
+            protein_placeholder=protein_placeholder,
+            enable_thinking=cfg.get("enable_thinking", False),
         )
 
         split = cfg.get("split", "train")
         limit = cfg.get("limit", None)
 
-        return cls(split=split, config=config, limit=limit)
+        return cls(split=split, config=config, limit=limit, tokenizer=tokenizer)
 
 
 class MolInstructionsCollator:

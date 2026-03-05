@@ -32,8 +32,17 @@ log = logging.getLogger(__name__)
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _load_combined_test_dataset(cfg: DictConfig, max_samples: Optional[int] = None):
-    """Load combined test split with source/task_file metadata."""
+from src.evaluation.utils import resolve_placeholder as _resolve_placeholder
+
+
+def _load_combined_test_dataset(cfg: DictConfig, max_samples: Optional[int] = None, model=None):
+    """Load combined test split with source/task_file metadata.
+
+    Args:
+        cfg: Hydra configuration.
+        max_samples: Limit on number of test samples.
+        model: Model instance to extract tokenizer from.
+    """
     from src.data.mol_instructions import MolInstructionsDataset
 
     data_cfg = cfg.get("data", {})
@@ -51,8 +60,19 @@ def _load_combined_test_dataset(cfg: DictConfig, max_samples: Optional[int] = No
         ds_cfg["processing"] = data_cfg["processing"]
     if "splits" in data_cfg:
         ds_cfg["splits"] = data_cfg["splits"]
+    if "exclude_files" in data_cfg:
+        ds_cfg["exclude_files"] = data_cfg["exclude_files"]
+    if "sampling_temperature" in data_cfg:
+        ds_cfg["sampling_temperature"] = data_cfg["sampling_temperature"]
+    if "enable_thinking" in data_cfg:
+        ds_cfg["enable_thinking"] = data_cfg["enable_thinking"]
 
-    dataset = MolInstructionsDataset.from_config(ds_cfg)
+    tokenizer = getattr(model, "tokenizer", None) if model else None
+    placeholder = _resolve_placeholder(cfg)
+
+    dataset = MolInstructionsDataset.from_config(
+        ds_cfg, tokenizer=tokenizer, protein_placeholder=placeholder,
+    )
     log.info(f"Loaded {len(dataset)} test samples for combined SFT evaluation")
     return dataset
 
@@ -151,8 +171,8 @@ def evaluate_sft_combined(
     n_per_file = eval_cfg.get("sft_combined_gen_per_file", 20)
     n_examples_per_file = eval_cfg.get("sft_combined_examples_per_file", 2)
 
-    # Load test data
-    dataset = _load_combined_test_dataset(cfg, max_samples=max_samples)
+    # Load test data (pass model for tokenizer + placeholder detection)
+    dataset = _load_combined_test_dataset(cfg, max_samples=max_samples, model=model)
     if len(dataset) == 0:
         log.error("No test samples loaded for combined SFT evaluation")
         return {"error": "no_test_samples"}

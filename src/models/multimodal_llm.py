@@ -948,6 +948,8 @@ class ProteinLLM(nn.Module):
         top_p: float = 0.9,
         do_sample: bool = True,
         return_token_ids: bool = False,
+        wrap_chat_template: bool = True,
+        system_prompt: Optional[str] = None,
         **generate_kwargs,
     ) -> Union[List[str], Tuple[List[str], torch.Tensor, int]]:
         """
@@ -963,6 +965,12 @@ class ProteinLLM(nn.Module):
             return_token_ids: If True, return (texts, token_ids, input_length)
                 tuple instead of just texts. Used by GRPO to re-compute
                 differentiable log probabilities from sampled tokens.
+            wrap_chat_template: If True (or auto-detected), wrap raw prompts
+                in the model's chat template with system prompt + user message
+                + generation prompt.  Auto-detects if prompt lacks chat
+                markers (e.g. ``<|im_start|>``).
+            system_prompt: System prompt for chat wrapping.  Defaults to the
+                protein-expert system prompt used during training.
             **generate_kwargs: Additional arguments for generate().
 
         Returns:
@@ -978,6 +986,29 @@ class ProteinLLM(nn.Module):
         # Handle single prompt
         if isinstance(prompt, str):
             prompt = [prompt] * len(protein_sequences)
+
+        # Skip wrapping if prompt already has chat markers (avoid double-wrapping)
+        has_chat_template = hasattr(self.tokenizer, "apply_chat_template")
+        _CHAT_MARKERS = ("<|im_start|>", "<|begin_of_text|>", "[INST]")
+        if wrap_chat_template and prompt:
+            first = prompt[0]
+            if any(marker in first for marker in _CHAT_MARKERS):
+                wrap_chat_template = False
+
+        if wrap_chat_template and has_chat_template:
+            from src.data.mol_instructions import DEFAULT_SYSTEM_PROMPT
+            sys_prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
+            wrapped = []
+            for p in prompt:
+                messages = [
+                    {"role": "system", "content": sys_prompt},
+                    {"role": "user", "content": p},
+                ]
+                text = self.tokenizer.apply_chat_template(
+                    messages, tokenize=False, add_generation_prompt=True,
+                )
+                wrapped.append(text)
+            prompt = wrapped
 
         # Tokenize prompts
         text_inputs = self.tokenizer(
@@ -997,17 +1028,7 @@ class ProteinLLM(nn.Module):
             protein_features = self.encode_protein(protein_sequences)
             set_protein_features(self.llm, protein_features)
 
-            fsdp_module = self._find_fsdp_module()
-
             try:
-                # Disable torch.compile for generation — compiled graph
-                # can't handle autoregressive decoding's dynamic shapes.
-                # torch.compiler.disable suppresses dynamo even inside
-                # FSDP(OptimizedModule(model)) where _orig_mod unwrapping
-                # doesn't reach.
-                _generate = torch.compiler.disable(
-                    self.llm.generate, recursive=True
-                )
                 input_length = text_inputs["input_ids"].shape[1]
                 flamingo_gen_kwargs = dict(
                     input_ids=text_inputs["input_ids"],
@@ -1020,16 +1041,11 @@ class ProteinLLM(nn.Module):
                     eos_token_id=self.tokenizer.eos_token_id,
                     **generate_kwargs,
                 )
-                if fsdp_module is not None:
-                    from torch.distributed.fsdp import (
-                        FullyShardedDataParallel as FSDP,
-                    )
-                    with FSDP.summon_full_params(
-                        fsdp_module, writeback=False
-                    ):
-                        outputs = _generate(**flamingo_gen_kwargs)
-                else:
-                    outputs = _generate(**flamingo_gen_kwargs)
+                # Unwrap torch.compile for generation (same as ESM-3 path)
+                gen_model = self.llm
+                while hasattr(gen_model, "_orig_mod"):
+                    gen_model = gen_model._orig_mod
+                outputs = gen_model.generate(**flamingo_gen_kwargs)
             finally:
                 clear_protein_features(self.llm)
 
@@ -1049,24 +1065,6 @@ class ProteinLLM(nn.Module):
             text_attention_mask=text_inputs["attention_mask"],
         )
 
-        # Find the innermost FSDP module (if any) by unwrapping
-        # torch.compile's OptimizedModule.  Under FSDP, generate()
-        # resolves through __getattr__ chains down to the inner model,
-        # where self(...) bypasses FSDP's __call__ hooks.  This leaves
-        # parameters in their sharded state (empty with use_orig_params),
-        # causing shape mismatches.  summon_full_params gathers all
-        # parameters so the inner forward passes see full weights.
-        fsdp_module = self._find_fsdp_module()
-
-        # Disable torch.compile for generation — compiled graph can't
-        # handle autoregressive decoding's dynamic shapes.
-        # torch.compiler.disable suppresses dynamo even inside
-        # FSDP(OptimizedModule(model)) where _orig_mod unwrapping
-        # doesn't reach.
-        _generate = torch.compiler.disable(
-            self.llm.generate, recursive=True
-        )
-
         gen_kwargs_full = dict(
             inputs_embeds=prepared["inputs_embeds"],
             attention_mask=prepared["attention_mask"],
@@ -1079,15 +1077,45 @@ class ProteinLLM(nn.Module):
             **generate_kwargs,
         )
 
-        # Generate — use summon_full_params under FSDP so generate's
-        # internal forward passes see full (ungathered) weights.
+        # Generate — unwrap torch.compile (OptimizedModule) to avoid
+        # compiled-graph shape mismatches during autoregressive decoding.
+        # The compiled forward graph is traced with training shapes and
+        # can't handle generate's dynamic inputs_embeds → input_ids + KV
+        # cache transition.  torch.compiler.disable doesn't help because
+        # the already-compiled C++ graph still fires inside generate's
+        # forward calls.
+        #
+        # With FSDP shard_grad_op + use_orig_params, all params are fully
+        # present on each GPU (not sharded), so the unwrapped model's
+        # forward runs correctly in eager mode without FSDP hooks.
         input_length = prepared["inputs_embeds"].shape[1]
+        gen_model = self.llm
+        while hasattr(gen_model, "_orig_mod"):
+            gen_model = gen_model._orig_mod
+
+        # Guard: FSDP full_shard leaves params sharded — unwrapped generate
+        # would read garbage.  Warn and fall back to summon_full_params.
+        fsdp_module = self._find_fsdp_module()
         if fsdp_module is not None:
-            from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
-            with FSDP.summon_full_params(fsdp_module, writeback=False):
-                outputs = _generate(**gen_kwargs_full)
-        else:
-            outputs = _generate(**gen_kwargs_full)
+            try:
+                from torch.distributed.fsdp import ShardingStrategy
+                if fsdp_module.sharding_strategy == ShardingStrategy.FULL_SHARD:
+                    log.warning(
+                        "Generation with FSDP FULL_SHARD: using summon_full_params "
+                        "(consider shard_grad_op for faster generation)"
+                    )
+                    from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+                    torch.cuda.empty_cache()
+                    with FSDP.summon_full_params(fsdp_module, writeback=False), \
+                         torch.amp.autocast("cuda", dtype=torch.bfloat16):
+                        outputs = gen_model.generate(**gen_kwargs_full)
+                    # Skip the normal generate below
+                    gen_kwargs_full = None
+            except (ImportError, AttributeError):
+                pass
+
+        if gen_kwargs_full is not None:
+            outputs = gen_model.generate(**gen_kwargs_full)
 
         # Slice off the input positions from the output.  Behavior depends
         # on the transformers version:

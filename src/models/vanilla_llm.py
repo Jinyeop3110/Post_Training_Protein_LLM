@@ -78,23 +78,12 @@ class VanillaLLMWrapper:
                 {"role": "user", "content": p},
             ]
 
-            # Build input via chat template when available.
-            # enable_thinking=False is Qwen3-specific (disables reasoning);
-            # non-Qwen tokenizers raise TypeError, caught below.
-            try:
-                text = self.tokenizer.apply_chat_template(
-                    messages,
-                    tokenize=False,
-                    add_generation_prompt=True,
-                    enable_thinking=False,
-                )
-            except TypeError:
-                # Non-Qwen models (Llama, Mistral, etc.)
-                text = self.tokenizer.apply_chat_template(
-                    messages,
-                    tokenize=False,
-                    add_generation_prompt=True,
-                )
+            # Build input via chat template.
+            text = self.tokenizer.apply_chat_template(
+                messages,
+                tokenize=False,
+                add_generation_prompt=True,
+            )
 
             inputs = self.tokenizer(text, return_tensors="pt").to(self.device)
             input_length = inputs["input_ids"].shape[1]
