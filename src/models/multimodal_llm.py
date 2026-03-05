@@ -90,6 +90,28 @@ PROTEIN_PLACEHOLDER = f"{PROTEIN_START_TOKEN}{PROTEIN_EMBED_TOKEN}{PROTEIN_END_T
 PROTEIN_SPECIAL_TOKENS = [PROTEIN_START_TOKEN, PROTEIN_EMBED_TOKEN, PROTEIN_END_TOKEN]
 
 
+def _fix_orig_mod_prefix(adapter_path: Path) -> None:
+    """Strip ``_orig_mod.`` prefix from FSDP+torch.compile adapter files.
+
+    When training with ``torch_compile=True`` + FSDP, HF Trainer saves adapter
+    weights with ``_orig_mod.`` key prefix that PEFT cannot load.  This rewrites
+    the safetensors file in-place if the prefix is detected.
+    """
+    safetensors_path = adapter_path / "adapter_model.safetensors"
+    if not safetensors_path.exists():
+        return
+    try:
+        from safetensors.torch import load_file, save_file
+        tensors = load_file(str(safetensors_path))
+        if not any(k.startswith("_orig_mod.") for k in tensors):
+            return
+        cleaned = {k.replace("_orig_mod.", ""): v for k, v in tensors.items()}
+        save_file(cleaned, str(safetensors_path))
+        logger.info("Stripped _orig_mod. prefix from %s (%d keys)", safetensors_path, len(cleaned))
+    except Exception as e:
+        logger.warning("Failed to fix _orig_mod prefix: %s", e)
+
+
 class ProteinLLM(nn.Module):
     """
     Multimodal Protein-LLM model with approach-based encoder selection.
@@ -998,11 +1020,19 @@ class ProteinLLM(nn.Module):
         if wrap_chat_template and has_chat_template:
             from src.data.mol_instructions import DEFAULT_SYSTEM_PROMPT
             sys_prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
+            # For embedding approaches (esm3, flamingo), append the protein
+            # placeholder to the user message so the tokenizer produces the
+            # placeholder token IDs that prepare_inputs() replaces with
+            # protein embeddings — matching the training prompt format.
+            use_placeholder = self.approach in EMBEDDING_APPROACHES
             wrapped = []
             for p in prompt:
+                user_content = p
+                if use_placeholder:
+                    user_content = f"{p}\n\n{PROTEIN_PLACEHOLDER}"
                 messages = [
                     {"role": "system", "content": sys_prompt},
-                    {"role": "user", "content": p},
+                    {"role": "user", "content": user_content},
                 ]
                 text = self.tokenizer.apply_chat_template(
                     messages, tokenize=False, add_generation_prompt=True,
@@ -1449,16 +1479,23 @@ class ProteinLLM(nn.Module):
             logger.info(f"Loaded gated XATTN blocks from {xattn_path}")
 
         # Load LoRA adapter weights (works for both LoRA and QLoRA)
+        # Look in path/adapter/ first (protein_llm save format), then path/
+        # itself (raw HF checkpoint directory with adapter_config.json).
         adapter_path = path / "adapter"
-        if adapter_path.exists() and model.llm is not None:
+        if not (adapter_path / "adapter_config.json").exists():
+            if (path / "adapter_config.json").exists():
+                adapter_path = path
+        if (adapter_path / "adapter_config.json").exists() and model.llm is not None:
             if PEFT_AVAILABLE:
+                # Strip _orig_mod. prefix from FSDP+torch.compile checkpoints
+                _fix_orig_mod_prefix(adapter_path)
                 # Get the base model if already wrapped by PeftModel
                 base = (
                     model.llm.get_base_model()
                     if hasattr(model.llm, "get_base_model")
                     else model.llm
                 )
-                model.llm = PeftModel.from_pretrained(base, adapter_path)
+                model.llm = PeftModel.from_pretrained(base, str(adapter_path))
 
         logger.info(f"Model loaded from {path}")
         return model
