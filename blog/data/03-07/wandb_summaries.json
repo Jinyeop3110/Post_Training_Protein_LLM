@@ -1,0 +1,839 @@
+{
+  "runs": [
+    {
+      "wandb_id": "cre9zvww",
+      "wandb_name": "sft_text_combined_qwen3_8b_it_0307_190324",
+      "state": "running",
+      "created_at": "2026-03-08T00:03:31Z",
+      "summary": {
+        "_step": 18,
+        "_runtime": 2838.95114358,
+        "train/epoch": 0.01969626289327735
+      },
+      "config": {
+        "approach": "text",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 1,
+        "max_steps": -1,
+        "experiment_name": "sft_text_combined_qwen3_8b_it_0307_190324"
+      }
+    },
+    {
+      "wandb_id": "7tlnudtu",
+      "wandb_name": "sft_text_combined_qwen3_8b_it_0307_061432",
+      "state": "failed",
+      "created_at": "2026-03-07T11:14:42Z",
+      "summary": {
+        "_runtime": 74
+      },
+      "config": {
+        "approach": "text",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 1,
+        "max_steps": -1,
+        "experiment_name": "sft_text_combined_qwen3_8b_it_0307_061432"
+      }
+    },
+    {
+      "wandb_id": "i8rebnp7",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "state": "crashed",
+      "created_at": "2026-03-06T15:56:59Z",
+      "summary": {
+        "eval/loss": 0.360674113035202,
+        "_step": 9525,
+        "_runtime": 68939.580177091,
+        "train/epoch": 1.0336909760016586
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 3,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+      }
+    },
+    {
+      "wandb_id": "p4ojn2n0",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "state": "crashed",
+      "created_at": "2026-03-06T06:04:16Z",
+      "summary": {
+        "eval/loss": 0.41335898637771606,
+        "_step": 375,
+        "_runtime": 35248.734727067,
+        "train/epoch": 0.3752656403877054
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 3,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+      }
+    },
+    {
+      "wandb_id": "63hgdksr",
+      "wandb_name": "sft_esm3_mlp_long_qwen3_8b_it_0305_105828",
+      "state": "crashed",
+      "created_at": "2026-03-05T15:58:38Z",
+      "summary": {
+        "eval/loss": 1.9016149044036863,
+        "_step": 1758,
+        "_runtime": 45403.29821162,
+        "train/epoch": 2.846846846846847
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.00012,
+        "num_train_epochs": 7,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_long_qwen3_8b_it_0305_105828"
+      }
+    },
+    {
+      "wandb_id": "qmmunwx8",
+      "wandb_name": "prof_mlp_enc8",
+      "state": "finished",
+      "created_at": "2026-03-03T17:15:15Z",
+      "summary": {
+        "eval/loss": 3.8273379802703857,
+        "_step": 6,
+        "_runtime": 156,
+        "train/epoch": 1.3076923076923077
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 3,
+        "max_steps": 5,
+        "experiment_name": "prof_mlp_enc8"
+      }
+    },
+    {
+      "wandb_id": "x2eow09p",
+      "wandb_name": "prof_mlp_enc6",
+      "state": "finished",
+      "created_at": "2026-03-03T17:12:29Z",
+      "summary": {
+        "eval/loss": 3.847581624984741,
+        "_step": 6,
+        "_runtime": 147,
+        "train/epoch": 1.3076923076923077
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 3,
+        "max_steps": 5,
+        "experiment_name": "prof_mlp_enc6"
+      }
+    },
+    {
+      "wandb_id": "1keil9w5",
+      "wandb_name": "prof_mlp_16k_a2",
+      "state": "finished",
+      "created_at": "2026-03-03T17:10:08Z",
+      "summary": {
+        "eval/loss": 3.730537414550781,
+        "_step": 6,
+        "_runtime": 126,
+        "train/epoch": 0.9090909090909092
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 3,
+        "max_steps": 5,
+        "experiment_name": "prof_mlp_16k_a2"
+      }
+    },
+    {
+      "wandb_id": "cboyjb8l",
+      "wandb_name": "prof_mlp_24k",
+      "state": "failed",
+      "created_at": "2026-03-03T17:08:56Z",
+      "summary": {
+        "_runtime": 59
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 3,
+        "max_steps": 5,
+        "experiment_name": "prof_mlp_24k"
+      }
+    },
+    {
+      "wandb_id": "r8y2i0yk",
+      "wandb_name": "prof_mlp_20k",
+      "state": "finished",
+      "created_at": "2026-03-03T17:06:28Z",
+      "summary": {
+        "eval/loss": 3.698927640914917,
+        "_step": 6,
+        "_runtime": 132,
+        "train/epoch": 0.9090909090909092
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 3,
+        "max_steps": 5,
+        "experiment_name": "prof_mlp_20k"
+      }
+    },
+    {
+      "wandb_id": "pf27dcys",
+      "wandb_name": "prof_mlp_16k",
+      "state": "finished",
+      "created_at": "2026-03-03T17:03:35Z",
+      "summary": {
+        "eval/loss": 3.7564966678619385,
+        "_step": 6,
+        "_runtime": 156,
+        "train/epoch": 1.2727272727272727
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 3,
+        "max_steps": 5,
+        "experiment_name": "prof_mlp_16k"
+      }
+    },
+    {
+      "wandb_id": "eae01gyd",
+      "wandb_name": "prof_mlp_12k",
+      "state": "finished",
+      "created_at": "2026-03-03T17:00:50Z",
+      "summary": {
+        "eval/loss": 3.735589265823364,
+        "_step": 6,
+        "_runtime": 147,
+        "train/epoch": 1.3076923076923077
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 3,
+        "max_steps": 5,
+        "experiment_name": "prof_mlp_12k"
+      }
+    },
+    {
+      "wandb_id": "65y8eaiz",
+      "wandb_name": "prof_mlp_base",
+      "state": "finished",
+      "created_at": "2026-03-03T16:58:07Z",
+      "summary": {
+        "eval/loss": 3.8091766834259033,
+        "_step": 6,
+        "_runtime": 147,
+        "train/epoch": 1.3076923076923077
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 3,
+        "max_steps": 5,
+        "experiment_name": "prof_mlp_base"
+      }
+    },
+    {
+      "wandb_id": "r65mh6ia",
+      "wandb_name": "profile_test",
+      "state": "crashed",
+      "created_at": "2026-03-03T16:46:35Z",
+      "summary": {},
+      "config": {
+        "approach": "esm3",
+        "experiment_name": "profile_test"
+      }
+    },
+    {
+      "wandb_id": "zjsghweb",
+      "wandb_name": "smoke_mlp_long_0303",
+      "state": "finished",
+      "created_at": "2026-03-03T16:31:43Z",
+      "summary": {
+        "eval/loss": 4.48808479309082,
+        "_step": 2,
+        "_runtime": 135,
+        "train/epoch": 0.3076923076923077
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.00012,
+        "num_train_epochs": 1,
+        "max_steps": 1,
+        "experiment_name": "smoke_mlp_long_0303"
+      }
+    },
+    {
+      "wandb_id": "wy300bxe",
+      "wandb_name": "smoke_mlp_combined_0303",
+      "state": "crashed",
+      "created_at": "2026-03-03T14:38:46Z",
+      "summary": {
+        "eval/loss": 4.244760036468506,
+        "_step": 0,
+        "_runtime": 4428.444954746,
+        "train/epoch": 0.00012985748141414798
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 1,
+        "max_steps": 1,
+        "experiment_name": "smoke_mlp_combined_0303"
+      }
+    },
+    {
+      "wandb_id": "5gp4u3dr",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_093105",
+      "state": "crashed",
+      "created_at": "2026-03-03T14:31:13Z",
+      "summary": {
+        "_step": 1,
+        "_runtime": 108.930367157,
+        "train/epoch": 1
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 1,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_093105"
+      }
+    },
+    {
+      "wandb_id": "gk763cla",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_092257",
+      "state": "crashed",
+      "created_at": "2026-03-03T14:23:06Z",
+      "summary": {
+        "_step": 0,
+        "_runtime": 104.169507353,
+        "train/epoch": 1
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 1,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_092257"
+      }
+    },
+    {
+      "wandb_id": "80oosrm8",
+      "wandb_name": "sft_esm3_mlp_long_qwen3_8b_it_0303_004216",
+      "state": "crashed",
+      "created_at": "2026-03-03T05:42:26Z",
+      "summary": {
+        "_step": 0,
+        "_runtime": 140.196580518,
+        "train/epoch": 1
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.00012,
+        "num_train_epochs": 1,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_long_qwen3_8b_it_0303_004216"
+      }
+    },
+    {
+      "wandb_id": "94pgeudi",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_003037",
+      "state": "crashed",
+      "created_at": "2026-03-03T05:30:45Z",
+      "summary": {
+        "_step": 0,
+        "_runtime": 99.655182816,
+        "train/epoch": 1
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 1,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_003037"
+      }
+    },
+    {
+      "wandb_id": "9u7hnil5",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_002301",
+      "state": "failed",
+      "created_at": "2026-03-03T05:23:10Z",
+      "summary": {
+        "_runtime": 71
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 1,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_002301"
+      }
+    },
+    {
+      "wandb_id": "eilad0su",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_002034",
+      "state": "failed",
+      "created_at": "2026-03-03T05:20:42Z",
+      "summary": {
+        "_runtime": 73
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 1,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_002034"
+      }
+    },
+    {
+      "wandb_id": "qp3t2a72",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_001755",
+      "state": "failed",
+      "created_at": "2026-03-03T05:18:04Z",
+      "summary": {
+        "_runtime": 76
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 1,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_001755"
+      }
+    },
+    {
+      "wandb_id": "571mm5s8",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_001507",
+      "state": "failed",
+      "created_at": "2026-03-03T05:15:15Z",
+      "summary": {
+        "_runtime": 66
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 1,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_001507"
+      }
+    },
+    {
+      "wandb_id": "pgrtp0h8",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_001253",
+      "state": "failed",
+      "created_at": "2026-03-03T05:13:01Z",
+      "summary": {
+        "_runtime": 64
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 1,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_001253"
+      }
+    },
+    {
+      "wandb_id": "pl5pidg7",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_000905",
+      "state": "failed",
+      "created_at": "2026-03-03T05:09:13Z",
+      "summary": {
+        "_runtime": 64
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 1,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_000905"
+      }
+    },
+    {
+      "wandb_id": "723xs78t",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_000637",
+      "state": "failed",
+      "created_at": "2026-03-03T05:06:45Z",
+      "summary": {
+        "_runtime": 71
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 1,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_000637"
+      }
+    },
+    {
+      "wandb_id": "zk5d8dpr",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_225652",
+      "state": "failed",
+      "created_at": "2026-03-03T03:56:57Z",
+      "summary": {
+        "_runtime": 86
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 1,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_225652"
+      }
+    },
+    {
+      "wandb_id": "qgl5nkvt",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_225521",
+      "state": "failed",
+      "created_at": "2026-03-03T03:55:27Z",
+      "summary": {
+        "_runtime": 28
+      },
+      "config": {
+        "approach": "esm3",
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_225521"
+      }
+    },
+    {
+      "wandb_id": "7u78bfbn",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_225408",
+      "state": "crashed",
+      "created_at": "2026-03-03T03:54:14Z",
+      "summary": {},
+      "config": {
+        "approach": "esm3",
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_225408"
+      }
+    },
+    {
+      "wandb_id": "u98xky4x",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_203338",
+      "state": "crashed",
+      "created_at": "2026-03-03T01:33:47Z",
+      "summary": {
+        "eval/loss": 0.7066686153411865,
+        "_step": 25,
+        "_runtime": 8561.572965351,
+        "train/epoch": 0.024353812183400443
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 3,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_203338"
+      }
+    },
+    {
+      "wandb_id": "mlygpqcu",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_201516",
+      "state": "crashed",
+      "created_at": "2026-03-03T01:15:26Z",
+      "summary": {
+        "_step": 0,
+        "_runtime": 102.301157843,
+        "train/epoch": 1
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 1,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_201516"
+      }
+    },
+    {
+      "wandb_id": "quqbgspx",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_200916",
+      "state": "crashed",
+      "created_at": "2026-03-03T01:09:24Z",
+      "summary": {},
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 1,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_200916"
+      }
+    },
+    {
+      "wandb_id": "om14php7",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_183813",
+      "state": "failed",
+      "created_at": "2026-03-02T23:38:21Z",
+      "summary": {
+        "_step": 24,
+        "_runtime": 2992,
+        "train/epoch": 0.02889783651530622
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 3,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_183813"
+      }
+    },
+    {
+      "wandb_id": "jmoj25t7",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_182252",
+      "state": "crashed",
+      "created_at": "2026-03-02T23:23:01Z",
+      "summary": {},
+      "config": {
+        "approach": "esm3",
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_182252"
+      }
+    },
+    {
+      "wandb_id": "bakj786m",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_181756",
+      "state": "crashed",
+      "created_at": "2026-03-02T23:18:04Z",
+      "summary": {},
+      "config": {
+        "approach": "esm3",
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_181756"
+      }
+    },
+    {
+      "wandb_id": "3coojape",
+      "wandb_name": "sft_esm3_mlp_long_qwen3_8b_it_0302_175459",
+      "state": "crashed",
+      "created_at": "2026-03-02T22:55:07Z",
+      "summary": {
+        "eval/loss": 2.029557943344116,
+        "_step": 755,
+        "_runtime": 17370.150922923,
+        "train/epoch": 1.3656227239621268
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.00012,
+        "num_train_epochs": 7,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_long_qwen3_8b_it_0302_175459"
+      }
+    },
+    {
+      "wandb_id": "l9s9wjqe",
+      "wandb_name": "sft_esm3_mlp_long_qwen3_8b_it_0302_174959",
+      "state": "crashed",
+      "created_at": "2026-03-02T22:50:08Z",
+      "summary": {},
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.00012,
+        "num_train_epochs": 7,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_long_qwen3_8b_it_0302_174959"
+      }
+    },
+    {
+      "wandb_id": "u83l7n3j",
+      "wandb_name": "sft_esm3_mlp_long_qwen3_8b_it_0302_172950",
+      "state": "crashed",
+      "created_at": "2026-03-02T22:30:04Z",
+      "summary": {},
+      "config": {
+        "approach": "esm3",
+        "experiment_name": "sft_esm3_mlp_long_qwen3_8b_it_0302_172950"
+      }
+    },
+    {
+      "wandb_id": "69bw5d63",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_172425",
+      "state": "failed",
+      "created_at": "2026-03-02T22:24:33Z",
+      "summary": {
+        "_step": 5,
+        "_runtime": 1585,
+        "train/epoch": 0.006213270510264841
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 3,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_172425"
+      }
+    },
+    {
+      "wandb_id": "6ytg5r9g",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_172256",
+      "state": "crashed",
+      "created_at": "2026-03-02T22:23:04Z",
+      "summary": {},
+      "config": {
+        "approach": "esm3",
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_172256"
+      }
+    },
+    {
+      "wandb_id": "usbo8nyo",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_163226",
+      "state": "failed",
+      "created_at": "2026-03-02T21:32:35Z",
+      "summary": {
+        "_step": 5,
+        "_runtime": 1587,
+        "train/epoch": 0.006213270510264841
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 3,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_163226"
+      }
+    },
+    {
+      "wandb_id": "xh7efq5t",
+      "wandb_name": "sft_esm3_mlp_long_qwen3_8b_it_0302_161408",
+      "state": "crashed",
+      "created_at": "2026-03-02T21:14:17Z",
+      "summary": {
+        "_step": 3,
+        "_runtime": 893.940792884,
+        "train/epoch": 0.05826656955571741
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.00012,
+        "num_train_epochs": 7,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_long_qwen3_8b_it_0302_161408"
+      }
+    },
+    {
+      "wandb_id": "tqkubxta",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_140349",
+      "state": "failed",
+      "created_at": "2026-03-02T19:04:04Z",
+      "summary": {
+        "_step": 5,
+        "_runtime": 1473,
+        "train/epoch": 0.006213270510264841
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 3,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_140349"
+      }
+    },
+    {
+      "wandb_id": "omn34yoq",
+      "wandb_name": "sft_esm3_mlp_long_qwen3_8b_it_0302_125842",
+      "state": "crashed",
+      "created_at": "2026-03-02T17:58:56Z",
+      "summary": {
+        "_step": 17,
+        "_runtime": 3769.159062654,
+        "train/epoch": 0.26219956300072833
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.00012,
+        "num_train_epochs": 7,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_long_qwen3_8b_it_0302_125842"
+      }
+    },
+    {
+      "wandb_id": "qgbijsd6",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_125834",
+      "state": "crashed",
+      "created_at": "2026-03-02T17:58:44Z",
+      "summary": {},
+      "config": {
+        "approach": "esm3",
+        "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_125834"
+      }
+    },
+    {
+      "wandb_id": "kty0ymk4",
+      "wandb_name": "sft_esm3_mlp_long_qwen3_8b_it_0302_122343",
+      "state": "crashed",
+      "created_at": "2026-03-02T17:23:52Z",
+      "summary": {
+        "_step": 8,
+        "_runtime": 1929.624142021,
+        "train/epoch": 0.13109978150036417
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.00012,
+        "num_train_epochs": 7,
+        "max_steps": -1,
+        "experiment_name": "sft_esm3_mlp_long_qwen3_8b_it_0302_122343"
+      }
+    },
+    {
+      "wandb_id": "z9ys68kg",
+      "wandb_name": "sft_text_qwen3_8b_it_0227_145821",
+      "state": "finished",
+      "created_at": "2026-02-27T19:58:30Z",
+      "summary": {
+        "eval/loss": 2.4151294231414795,
+        "_step": 2595,
+        "_runtime": 55988.929672415,
+        "train/epoch": 2.9933964972724665
+      },
+      "config": {
+        "approach": "text",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 3,
+        "max_steps": -1,
+        "experiment_name": "sft_text_qwen3_8b_it_0227_145821"
+      }
+    },
+    {
+      "wandb_id": "0vx0aryw",
+      "wandb_name": "sft_lora_esm3_qwen3_8b_it_0226_151416",
+      "state": "finished",
+      "created_at": "2026-02-26T20:14:25Z",
+      "summary": {
+        "eval/loss": 1.9421406984329224,
+        "_step": 1677,
+        "_runtime": 40277.808219275,
+        "train/epoch": 2.814275309541151
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 3,
+        "max_steps": -1,
+        "experiment_name": "sft_lora_esm3_qwen3_8b_it_0226_151416"
+      }
+    },
+    {
+      "wandb_id": "nmpuhbnk",
+      "wandb_name": "sft_lora_esm3_qwen3_8b_it_0225_203237",
+      "state": "finished",
+      "created_at": "2026-02-26T01:32:45Z",
+      "summary": {
+        "eval/loss": 1.9515460729599,
+        "_step": 1677,
+        "_runtime": 41052.093695492,
+        "train/epoch": 2.814275309541151
+      },
+      "config": {
+        "approach": "esm3",
+        "learning_rate": 0.0002,
+        "num_train_epochs": 3,
+        "max_steps": -1,
+        "experiment_name": "sft_lora_esm3_qwen3_8b_it_0225_203237"
+      }
+    }
+  ]
+}

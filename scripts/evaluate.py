@@ -44,7 +44,7 @@ from omegaconf import DictConfig, OmegaConf
 log = logging.getLogger(__name__)
 
 
-def load_model(cfg: DictConfig, eval_mode: str, checkpoint_path):
+def load_model(cfg: DictConfig, eval_mode: str, checkpoint_path, quantize: bool = False):
     """Load model once based on eval_mode.
 
     Args:
@@ -53,6 +53,8 @@ def load_model(cfg: DictConfig, eval_mode: str, checkpoint_path):
                    ``"protein_llm"`` for ProteinLLM checkpoint.
         checkpoint_path: Path to ProteinLLM checkpoint (used when
                          eval_mode is ``"protein_llm"``).
+        quantize: If True, load LLM in 4-bit NF4 (for intermediate
+                  checkpoints only).
 
     Returns:
         Model instance with ``generate()`` and ``eval()`` methods.
@@ -65,8 +67,23 @@ def load_model(cfg: DictConfig, eval_mode: str, checkpoint_path):
         from src.models.multimodal_llm import ProteinLLM
 
         if checkpoint_path:
-            log.info(f"Loading ProteinLLM from checkpoint: {checkpoint_path}")
-            model = ProteinLLM.from_pretrained(checkpoint_path)
+            ckpt = Path(checkpoint_path)
+            if (ckpt / "config.json").exists():
+                # Final protein_llm/ save — self-contained
+                log.info(f"Loading ProteinLLM from checkpoint: {checkpoint_path}")
+                model = ProteinLLM.from_pretrained(checkpoint_path)
+            else:
+                # Intermediate FSDP checkpoint (e.g. checkpoint-2750)
+                experiment_dir = ckpt.parent.parent  # checkpoints/../
+                log.info(
+                    f"Loading ProteinLLM from intermediate checkpoint: "
+                    f"{checkpoint_path}"
+                )
+                model = ProteinLLM.from_fsdp_checkpoint(
+                    experiment_dir=experiment_dir,
+                    checkpoint_dir=ckpt,
+                    quantize=quantize,
+                )
         else:
             log.info("Creating ProteinLLM from config (no checkpoint)")
             model = ProteinLLM.from_config(cfg)
@@ -85,13 +102,29 @@ def main(cfg: DictConfig) -> None:
     eval_mode = cfg.get("eval_mode", "protein_llm")
     checkpoint_path = cfg.get("checkpoint_path", None)
 
+    quantize = cfg.get("quantize", False)
+
     # Auto-detect checkpoint from experiment_name if not set explicitly
     if eval_mode != "vanilla" and not checkpoint_path:
         experiment_dir = Path(cfg.paths.experiment_dir)
+        # Prefer final protein_llm/ save, fall back to latest intermediate
         auto_checkpoint = experiment_dir / "checkpoints" / "protein_llm"
         if auto_checkpoint.exists():
             checkpoint_path = str(auto_checkpoint)
             log.info(f"Auto-detected checkpoint from experiment: {checkpoint_path}")
+        else:
+            # Find latest intermediate checkpoint
+            ckpt_dir = experiment_dir / "checkpoints"
+            if ckpt_dir.exists():
+                intermediates = sorted(
+                    ckpt_dir.glob("checkpoint-*"),
+                    key=lambda p: int(p.name.split("-")[1]),
+                )
+                if intermediates:
+                    checkpoint_path = str(intermediates[-1])
+                    log.info(
+                        f"Auto-detected intermediate checkpoint: {checkpoint_path}"
+                    )
 
     log.info(f"Evaluation mode: {eval_mode}")
     log.info(f"Running evaluation: {eval_name}")
@@ -119,7 +152,7 @@ def main(cfg: DictConfig) -> None:
         log.info(f"Config saved to {config_path}")
 
     # Load model once
-    model = load_model(cfg, eval_mode, checkpoint_path)
+    model = load_model(cfg, eval_mode, checkpoint_path, quantize=quantize)
 
     eval_dir_str = str(eval_dir)
 
@@ -154,6 +187,11 @@ def main(cfg: DictConfig) -> None:
         from src.evaluation.sft_eval_combined import evaluate_sft_combined
 
         results = evaluate_sft_combined(cfg, checkpoint_path, model=model, output_dir=eval_dir_str)
+
+    elif eval_name == "generation":
+        from src.evaluation.generation import evaluate_generation
+
+        results = evaluate_generation(cfg, checkpoint_path, model=model, output_dir=eval_dir_str)
 
     elif eval_name == "all":
         from src.evaluation.benchmarks import run_all_benchmarks

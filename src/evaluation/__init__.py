@@ -39,6 +39,7 @@ Example usage:
 """
 
 from .benchmarks import run_all_benchmarks
+from .generation import GenerationEvaluator, evaluate_generation
 from .go_prediction import (
     GOPredictionResult,
     # Data classes
@@ -154,6 +155,9 @@ __all__ = [
     "create_proteinlm_bench_prompt",
     # Benchmarks
     "run_all_benchmarks",
+    # Generation Evaluation
+    "GenerationEvaluator",
+    "evaluate_generation",
     # SFT Evaluation
     "evaluate_sft",
     "evaluate_sft_combined",

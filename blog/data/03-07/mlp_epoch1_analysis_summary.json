@@ -1,0 +1,45 @@
+{
+  "experiments": {
+    "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408": {
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "base_model": "Qwen/Qwen3-8B",
+      "total_steps": 9750,
+      "max_steps": 28941,
+      "final_token_avg_loss": 0.3659,
+      "min_token_avg_loss": 0.3059,
+      "best_eval_loss": 0.360674113035202,
+      "best_eval_step": 9750,
+      "convergence_step": 210,
+      "anomalies": [
+        "loss_spike_step_10",
+        "loss_spike_step_20",
+        "loss_spike_step_30",
+        "loss_spike_step_40",
+        "loss_spike_step_50",
+        "loss_spike_step_60",
+        "loss_spike_step_70",
+        "loss_spike_step_80",
+        "loss_spike_step_90",
+        "loss_spike_step_100",
+        "grad_spike_step_10",
+        "grad_spike_step_20",
+        "grad_spike_step_30",
+        "grad_spike_step_40",
+        "grad_spike_step_70",
+        "grad_spike_step_2290"
+      ],
+      "latest_bleu": 0.25536475140139897,
+      "latest_rouge_l": 0.4813674071985893,
+      "best_bleu": 0.31470982521071206,
+      "best_rouge_l": 0.5145342658161157,
+      "max_grad_norm": 7.598205089569092,
+      "mean_grad_norm": 0.6271629141232906
+    }
+  },
+  "comparison": {
+    "best_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+    "metric": "best_eval_loss",
+    "value": 0.360674113035202
+  }
+}

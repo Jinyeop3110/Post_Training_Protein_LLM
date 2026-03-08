@@ -1095,8 +1095,14 @@ class ProteinLLM(nn.Module):
             text_attention_mask=text_inputs["attention_mask"],
         )
 
+        # Cast inputs_embeds to bf16 for generation.  prepare_inputs uses
+        # _fsdp_embed_cache (float32, cached pre-FSDP) so outputs are float32,
+        # but FSDP-sharded LoRA weights run in bf16 — causing dtype mismatch
+        # during autoregressive decoding (no autocast active in generate).
+        inputs_embeds = prepared["inputs_embeds"].to(torch.bfloat16)
+
         gen_kwargs_full = dict(
-            inputs_embeds=prepared["inputs_embeds"],
+            inputs_embeds=inputs_embeds,
             attention_mask=prepared["attention_mask"],
             max_new_tokens=max_new_tokens,
             temperature=temperature,
@@ -1123,24 +1129,22 @@ class ProteinLLM(nn.Module):
         while hasattr(gen_model, "_orig_mod"):
             gen_model = gen_model._orig_mod
 
-        # Guard: FSDP full_shard leaves params sharded — unwrapped generate
-        # would read garbage.  Warn and fall back to summon_full_params.
+        # FSDP guard: use summon_full_params for ANY FSDP strategy.
+        # Even shard_grad_op leaves FSDP handles in FORWARD state after
+        # generate() because the unwrapped model still references
+        # FSDP-managed parameters.  Without summon_full_params, the dirty
+        # handle state causes AssertionError ("IDLE but got FORWARD") when
+        # HF Trainer tries to save a checkpoint right after eval.
         fsdp_module = self._find_fsdp_module()
         if fsdp_module is not None:
             try:
-                from torch.distributed.fsdp import ShardingStrategy
-                if fsdp_module.sharding_strategy == ShardingStrategy.FULL_SHARD:
-                    log.warning(
-                        "Generation with FSDP FULL_SHARD: using summon_full_params "
-                        "(consider shard_grad_op for faster generation)"
-                    )
-                    from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
-                    torch.cuda.empty_cache()
-                    with FSDP.summon_full_params(fsdp_module, writeback=False), \
-                         torch.amp.autocast("cuda", dtype=torch.bfloat16):
-                        outputs = gen_model.generate(**gen_kwargs_full)
-                    # Skip the normal generate below
-                    gen_kwargs_full = None
+                from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+                torch.cuda.empty_cache()
+                with FSDP.summon_full_params(fsdp_module, writeback=False), \
+                     torch.amp.autocast("cuda", dtype=torch.bfloat16):
+                    outputs = gen_model.generate(**gen_kwargs_full)
+                # Skip the normal generate below
+                gen_kwargs_full = None
             except (ImportError, AttributeError):
                 pass
 
@@ -1399,11 +1403,15 @@ class ProteinLLM(nn.Module):
         with open(path / "config.json", "r") as f:
             config = json.load(f)
 
-        # Locate tokenizer: inside checkpoint (new) or sibling dir (backward compat)
+        # Locate tokenizer: inside checkpoint (new), at checkpoint root (HF format),
+        # or sibling dir (backward compat)
         tokenizer_path = None
         if (path / "tokenizer").exists():
             tokenizer_path = str(path / "tokenizer")
             logger.info(f"Found tokenizer inside checkpoint: {tokenizer_path}")
+        elif (path / "tokenizer_config.json").exists():
+            tokenizer_path = str(path)
+            logger.info(f"Found tokenizer at checkpoint root (HF format): {tokenizer_path}")
         elif (path.parent / "tokenizer").exists():
             tokenizer_path = str(path.parent / "tokenizer")
             logger.info(
@@ -1498,6 +1506,119 @@ class ProteinLLM(nn.Module):
                 model.llm = PeftModel.from_pretrained(base, str(adapter_path))
 
         logger.info(f"Model loaded from {path}")
+        return model
+
+    @classmethod
+    def from_fsdp_checkpoint(
+        cls,
+        experiment_dir: Union[str, Path],
+        checkpoint_dir: Union[str, Path],
+        device: Optional[str] = None,
+        quantize: bool = False,
+    ) -> "ProteinLLM":
+        """Load ProteinLLM from an intermediate FSDP/training checkpoint.
+
+        Intermediate checkpoints (e.g. ``checkpoint-2750``) have adapter +
+        ``pooling.pt`` + ``projector.pt`` but no ``config.json`` (that is only
+        in the final ``protein_llm/`` save).  This method reads the
+        experiment's ``config.yaml`` to reconstruct the model.
+
+        Args:
+            experiment_dir: Experiment root (e.g. ``results/my_experiment``).
+            checkpoint_dir: Specific checkpoint directory inside
+                ``experiment_dir/checkpoints/``.
+            device: CUDA device string (e.g. ``"cuda:0"``).
+            quantize: If True, load LLM in 4-bit NF4 (~5 GB vs ~16 GB).
+
+        Returns:
+            Loaded ProteinLLM instance in eval mode.
+        """
+        from omegaconf import OmegaConf
+        from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+
+        experiment_dir = Path(experiment_dir)
+        checkpoint_dir = Path(checkpoint_dir)
+
+        cfg = OmegaConf.load(experiment_dir / "config.yaml")
+        device = device or ("cuda:0" if torch.cuda.is_available() else "cpu")
+
+        logger.info(f"Loading model from FSDP checkpoint: {checkpoint_dir.name}")
+        logger.info(f"  LLM: {cfg.model.path}, Encoder: {cfg.encoder.model_name}")
+        logger.info(f"  Quantize: {quantize}, Device: {device}")
+
+        # 1. Load tokenizer from checkpoint (has protein special tokens)
+        tokenizer = AutoTokenizer.from_pretrained(
+            str(checkpoint_dir), trust_remote_code=True, padding_side="left",
+        )
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
+
+        # 2. Load base LLM (optionally quantized)
+        load_kwargs = dict(
+            trust_remote_code=True, torch_dtype=torch.bfloat16,
+            device_map={"": device},
+        )
+        if quantize:
+            load_kwargs["quantization_config"] = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_compute_dtype=torch.bfloat16,
+                bnb_4bit_quant_type="nf4",
+                bnb_4bit_use_double_quant=True,
+            )
+
+        llm = AutoModelForCausalLM.from_pretrained(cfg.model.path, **load_kwargs)
+
+        if len(tokenizer) != llm.config.vocab_size:
+            llm.resize_token_embeddings(len(tokenizer))
+
+        # 3. Load LoRA adapter
+        if (checkpoint_dir / "adapter_config.json").exists():
+            _fix_orig_mod_prefix(checkpoint_dir)
+            llm = PeftModel.from_pretrained(llm, str(checkpoint_dir))
+            logger.info("  Loaded LoRA adapter")
+
+        # 4. Construct ProteinLLM shell with injected LLM
+        model = cls(
+            approach=cfg.approach,
+            llm_name=cfg.model.path,
+            encoder_name=cfg.encoder.model_name,
+            encoder_embed_dim=cfg.encoder.embedding_dim,
+            num_prefix_tokens=cfg.encoder.pooling.num_output_tokens,
+            pooling_type=cfg.encoder.pooling.method,
+            projector_type=cfg.encoder.projector.type,
+            projector_hidden_dim=cfg.encoder.projector.get("hidden_dim", 5120),
+            projector_num_layers=cfg.encoder.projector.get("num_layers", 2),
+            projector_dropout=cfg.encoder.projector.get("dropout", 0.1),
+            freeze_encoder=cfg.encoder.freeze,
+            use_qlora=False,
+            lora_r=cfg.training.lora.r,
+            lora_alpha=cfg.training.lora.alpha,
+            lora_dropout=cfg.training.lora.dropout,
+            lora_target_modules=list(cfg.training.lora.target_modules),
+            device=device,
+            load_llm=False,
+            load_encoder=True,
+        )
+        model.llm = llm
+        model.tokenizer = tokenizer
+        model.llm_hidden_size = llm.config.hidden_size
+        model._build_projector()
+
+        # 5. Load pooling + projector weights
+        pooling_path = checkpoint_dir / "pooling.pt"
+        if pooling_path.exists() and model.pooling is not None:
+            model.pooling.load_state_dict(
+                torch.load(pooling_path, map_location=device, weights_only=True)
+            )
+
+        projector_path = checkpoint_dir / "projector.pt"
+        if projector_path.exists() and model.projector is not None:
+            model.projector.load_state_dict(
+                torch.load(projector_path, map_location=device, weights_only=True)
+            )
+
+        model.eval()
+        logger.info(f"  Model loaded successfully on {device}")
         return model
 
     def get_trainable_parameters(self) -> Dict[str, int]:

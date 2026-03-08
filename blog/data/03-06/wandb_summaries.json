@@ -1,0 +1,481 @@
+{
+  "runs": [
+    {
+      "wandb_id": "z9ys68kg",
+      "wandb_name": "sft_text_qwen3_8b_it_0227_145821",
+      "state": "finished",
+      "summary": {
+        "eval/loss": 2.4151294231414795,
+        "eval/runtime": 280.5941,
+        "eval/samples_per_second": 88.206,
+        "eval/steps_per_second": 0.691,
+        "generation_samples/step_1000": "{'_latest_artifact_path': 'wandb-client-artifact://gs99g1tulaafelp2or9rp4pj7veo7fui0j2ljvmba7mjrg47packhsbmblq90a5m8ij1ep9nc5obqiux22fra5a6gxuvee01ql7pccm0molqtmmftnj04n928bvb0foy:latest/generation_samples/step_1000.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://p5mp0r51vz52zelceooui5qhs1okzjks45x25n746rviglddh11f8jdxh8j6erq7cd5wzcb5r3b9nekvoui8e8ngfui50oycoh9kxuam0zddmfjx6zx3wohve17azsc4/generation_samples/step_1000.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 5, 'nrows': 25, 'path': 'media/table/generation_samples/step_1000_776_a9ec912c307dc91ff36b.table.json', 'sha256': 'a9ec912c307dc91ff36be3f4af21515b2c350208a56b59923eb3ea653feb9ee8', 'size': 19312}",
+        "generation_samples/step_1250": "{'_latest_artifact_path': 'wandb-client-artifact://qtsjor3foypadaxjv3dvc2i94mg8f0dm1bat6nnj4h3hpshq1b9j0mpp2zalq9wjbvgh5kfv6cl97t09nv6tuu0tjftlpt3azmn0l5uegx7fte3dm29m4ga3etn3n0ho:latest/generation_samples/step_1250.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://81jbiqvng31oy6tnfsr9w6vnzowfvcd1nq37gzabterc6xds77wjolci4tusc5v353212pq85hoy79huzczhobgzlmjoo16dhq6pj0fozh6j7ey7aidi5vfvnrvpl228/generation_samples/step_1250.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 5, 'nrows': 25, 'path': 'media/table/generation_samples/step_1250_1026_5793c5d845ea448941bd.table.json', 'sha256': '5793c5d845ea448941bd7152f8adbea619efc693928d7274100eaee9260d2ae5', 'size': 19020}",
+        "generation_samples/step_1500": "{'_latest_artifact_path': 'wandb-client-artifact://id2o58l0rqyukfv41ojuqmklbpb6sgwhna408nper4107xugffje6qm8lom2gc312dhzgk521oum0xwu7wlfbvnhroz5iznmc3jsdd0j19nledg2j8v335igzbx7yup8:latest/generation_samples/step_1500.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://k3gz48bztz8vf69ydwsqc2qbzj54bj4e1v8w6pa21blgpbdwl71r59k13a0zoygt5wuvoo8ud2k24sxkp4umqww2oetr4vnk9h44plcjbmnyku1rdzmmp8221dqdw843/generation_samples/step_1500.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 5, 'nrows': 25, 'path': 'media/table/generation_samples/step_1500_1276_2a1287158dfe3dd4ff25.table.json', 'sha256': '2a1287158dfe3dd4ff25e8e4c6f7c5e014cc31ac8e8cbe59f486ea91c9e2af7f', 'size': 19114}",
+        "generation_samples/step_1750": "{'_latest_artifact_path': 'wandb-client-artifact://hw3rykund3wktdg1dcl6a8bjex28kwzzn47luh9p1y7mfhiy5ai8uo6oponm9unev7x6uk0xbtvsvl0n1wzoum6lu4zisic6got57ejwcv1sy3n8npctptnj3zvogp90:latest/generation_samples/step_1750.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://6bdzdzt7ueg14nq1ob5lymaukfob3mzylh6w6pzkii2yzng3c29bqtvfrnb7y4qpjjh4j8j5xmo5lmm9chbje4ty2ni8anjccz8ooagkz2qq3mmlzzkfpvpu3dkvgjc5/generation_samples/step_1750.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 5, 'nrows': 25, 'path': 'media/table/generation_samples/step_1750_1526_aa29a13affb2460cdb08.table.json', 'sha256': 'aa29a13affb2460cdb08de0a0456805714d8c67e19f288bc5cf3744fadd741c4', 'size': 19143}",
+        "generation_samples/step_2000": "{'_latest_artifact_path': 'wandb-client-artifact://9itia17k3eb6cb36xsnot9azissfcabwlri9cv9h1dfw9aughdupj8jte8pq6wf7729k1cybku0434ze8r549sxh79acw6ko3ghxtcrxbi181dmptf19q6qdiuuzw0u6:latest/generation_samples/step_2000.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://octabfor92smduxyeltqm3nidlmlipbm6bgx4pi3eomdmk1lqkz05rwnolepob3cqej7pg97encms5hnyi5684orqbzmgwfd6xy5ku1zud4w8el42e137i9si0azskpe/generation_samples/step_2000.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 5, 'nrows': 25, 'path': 'media/table/generation_samples/step_2000_1776_c10db53cac55c93e8e95.table.json', 'sha256': 'c10db53cac55c93e8e953de0acfb589999a617e0a9445334f3faf6eb52f030fd', 'size': 19332}",
+        "generation_samples/step_2250": "{'_latest_artifact_path': 'wandb-client-artifact://3igk3sqx8vjv12m0tjcg0qr2pzoync4z7wk5z8or6e5j9gq72ff14s72suhpak9k2fknfrjtlejco73ndi3h9oy7tgs0ds30nrye6wwxlpvhrqyywzujq1mty6rttaap:latest/generation_samples/step_2250.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://l11povr3i2unqb94d4ithzozi79h0mz4upar93fk155uk2uzbutbea0s01lvfjukuibonyw04v59w22648o5w18f9vt7wpz3j884dcey3hgvpxcbz81fqiix92bezn87/generation_samples/step_2250.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 5, 'nrows': 25, 'path': 'media/table/generation_samples/step_2250_2026_97773856debe33a18adf.table.json', 'sha256': '97773856debe33a18adf97e704be273971249362dfe38c438c87e216cb6e363a', 'size': 19302}",
+        "generation_samples/step_250": "{'_latest_artifact_path': 'wandb-client-artifact://qxyv4nof60kv9yxnl1ao51y7xd5qasnsh65rgfggaf6ucf4gptv0w9majjcz5a8amdzk8q4qt2cvwvdejvgw17m7nz1iit8mmvnkfqzalax0d2tiuxkcc1ue3f0ggd9c:latest/generation_samples/step_250.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://g1tihfo0pn3m3wcbqywpu8rhc2z9ekqaq378rd42ypzxuu798a9ojpjx7h6p6evnsabrct337qgm1rulczwgbhsdf28z8qygbr3u3gzv7rrctxqajim1zkgv6ac0d5ux/generation_samples/step_250.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 5, 'nrows': 25, 'path': 'media/table/generation_samples/step_250_26_7653a3f6ab6cd867c0c8.table.json', 'sha256': '7653a3f6ab6cd867c0c8ebb8eacff58a6aee961428fbff114506cfab508efcb6', 'size': 19265}",
+        "generation_samples/step_2500": "{'_latest_artifact_path': 'wandb-client-artifact://tl9tkl93jsjsjrlvcwrytc14ci2w1epi2bo5573vl8qk2p9mp8f601k7fd9yytel55a0v5h0k25u50dt3mj1btelivy7bey0gs53ut252qd8yeo6a8faahehjkfx9dxb:latest/generation_samples/step_2500.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://gubvpg857ibb56p2z69rjamemexaiucvu99dby3h7sh6yfh9wshlavi75du2zzzjrpeav2ztscqd9bf83yjwf0o7b59bvjgw3q9vmcnqpd14ctpup25lqe8dz2xo4xpc/generation_samples/step_2500.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 5, 'nrows': 25, 'path': 'media/table/generation_samples/step_2500_2276_6062e900bdc8d9d32b9e.table.json', 'sha256': '6062e900bdc8d9d32b9e87c21c64b604dca09915acab17cb5d88532f2d283529', 'size': 18737}",
+        "generation_samples/step_2595": "{'_latest_artifact_path': 'wandb-client-artifact://5e85091n1y03fpa597kg7m190pmgq7mtco3nzbcplx8y4ibtg3n23klruejkklbm7dwae368xe4mzy3orlhx8mgtq99v2hh6nha9zrdy0zkd88vnjhig0hod0b3vmbif:latest/generation_samples/step_2595.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://49l7v7y5i95dr4khzmqy1gqms3jft6kd28o779uaznmi7c0f5v1hcipmml3qt687r22es6usmjcwf4lts0xmsdr11elzn1708ow7ebmsd0hh9en9av1aw59wamcrdvhd/generation_samples/step_2595.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 5, 'nrows': 25, 'path': 'media/table/generation_samples/step_2595_2511_24656d2555c623054914.table.json', 'sha256': '24656d2555c623054914ecfed6b7b7e12b85d055c96a91140d34630ecccf9974', 'size': 19366}",
+        "generation_samples/step_500": "{'_latest_artifact_path': 'wandb-client-artifact://8zswimo9qnqxt202m2wc9iswgsn8jla5nruujm247tql8h5j9u0glz1selinyabdfpbe6flur6pmkprzctqv66rnrifynsrfqk313xobonqa8da651b0exkju45qnsgx:latest/generation_samples/step_500.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://ohkejd6a52exprzzbp13vfsbcw9n0unywyfu7uhevsxbxu05oo3nt40lj0pn28cdfqu5xof6ntmi8p5scmhruto11abkrqvl6p6cw45zo8i1wy52m02knuk374mso556/generation_samples/step_500.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 5, 'nrows': 25, 'path': 'media/table/generation_samples/step_500_276_0635e5085a37cb806b04.table.json', 'sha256': '0635e5085a37cb806b0410ba52ea5fa2aae01c9a1cc37f3c1cb1ce84a050a8ce', 'size': 19267}",
+        "generation_samples/step_750": "{'_latest_artifact_path': 'wandb-client-artifact://jw8riee3ppl74ebxb3mibq8dumrr055i8zakb7bvdlsu4lsclr59uzlmlrhx08swzafy9tiyd0khdpze0h6cvmci3oohjycb03a2vwz1b17nt3o8th39ydsn6tyyy9kq:latest/generation_samples/step_750.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://yuko0w66lkxqcdl32ui0gom3x0s2cnviln6hrtk36o6fb4md09tw70rsqcngeqbkyrgdgbr8ypsy3qi7dwvevo1obpzhxuhjrkwkmoqamjy76skxekmd8idl6a2pazky/generation_samples/step_750.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 5, 'nrows': 25, 'path': 'media/table/generation_samples/step_750_526_bd039f038bd9f7bbd881.table.json', 'sha256': 'bd039f038bd9f7bbd88155da809a6ed9864c0ba6c96b5fea4f1ddc29077bbf59', 'size': 18885}",
+        "total_flos": 27477063652800987000,
+        "train/epoch": 2.9933964972724665,
+        "train/global_step": 2595,
+        "train/grad_norm": 1.483182430267334,
+        "train/learning_rate": 4.5006441536965536e-08,
+        "train/loss": 9.8802,
+        "train/token_avg_loss": 2.5513,
+        "train/total_tokens": 617556,
+        "train_loss": 10.321230285291726,
+        "train_runtime": 55479.607,
+        "train_samples_per_second": 24.09,
+        "train_steps_per_second": 0.047
+      }
+    },
+    {
+      "wandb_id": "kty0ymk4",
+      "wandb_name": "sft_esm3_mlp_long_qwen3_8b_it_0302_122343",
+      "state": "crashed",
+      "summary": {
+        "train/epoch": 0.13109978150036417,
+        "train/global_step": 90,
+        "train/grad_norm": 1.523229956626892,
+        "train/learning_rate": 0.0001068,
+        "train/loss": 8.7635,
+        "train/token_avg_loss": 2.2999,
+        "train/total_tokens": 147909
+      }
+    },
+    {
+      "wandb_id": "qgbijsd6",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_125834",
+      "state": "crashed",
+      "summary": {}
+    },
+    {
+      "wandb_id": "omn34yoq",
+      "wandb_name": "sft_esm3_mlp_long_qwen3_8b_it_0302_125842",
+      "state": "crashed",
+      "summary": {
+        "train/epoch": 0.26219956300072833,
+        "train/global_step": 180,
+        "train/grad_norm": 0.8848426342010498,
+        "train/learning_rate": 0.00011991668613761968,
+        "train/loss": 7.0973,
+        "train/token_avg_loss": 1.9286,
+        "train/total_tokens": 137963
+      }
+    },
+    {
+      "wandb_id": "tqkubxta",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_140349",
+      "state": "failed",
+      "summary": {
+        "train/epoch": 0.006213270510264841,
+        "train/global_step": 60,
+        "train/grad_norm": 1.8486459255218504,
+        "train/learning_rate": 0.000118,
+        "train/loss": 4.4765,
+        "train/token_avg_loss": 1.1834,
+        "train/total_tokens": 66265
+      }
+    },
+    {
+      "wandb_id": "xh7efq5t",
+      "wandb_name": "sft_esm3_mlp_long_qwen3_8b_it_0302_161408",
+      "state": "crashed",
+      "summary": {
+        "train/epoch": 0.05826656955571741,
+        "train/global_step": 40,
+        "train/grad_norm": 2.3664615154266357,
+        "train/learning_rate": 4.6800000000000006e-05,
+        "train/loss": 12.169,
+        "train/token_avg_loss": 3.1603,
+        "train/total_tokens": 146957
+      }
+    },
+    {
+      "wandb_id": "usbo8nyo",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_163226",
+      "state": "failed",
+      "summary": {
+        "train/epoch": 0.006213270510264841,
+        "train/global_step": 60,
+        "train/grad_norm": 1.7997199296951294,
+        "train/learning_rate": 0.000118,
+        "train/loss": 4.4838,
+        "train/token_avg_loss": 1.1794,
+        "train/total_tokens": 66265
+      }
+    },
+    {
+      "wandb_id": "6ytg5r9g",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_172256",
+      "state": "crashed",
+      "summary": {}
+    },
+    {
+      "wandb_id": "69bw5d63",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_172425",
+      "state": "failed",
+      "summary": {
+        "train/epoch": 0.006213270510264841,
+        "train/global_step": 60,
+        "train/grad_norm": 1.865072250366211,
+        "train/learning_rate": 0.000118,
+        "train/loss": 4.5122,
+        "train/token_avg_loss": 1.1887,
+        "train/total_tokens": 66265
+      }
+    },
+    {
+      "wandb_id": "u83l7n3j",
+      "wandb_name": "sft_esm3_mlp_long_qwen3_8b_it_0302_172950",
+      "state": "crashed",
+      "summary": {}
+    },
+    {
+      "wandb_id": "l9s9wjqe",
+      "wandb_name": "sft_esm3_mlp_long_qwen3_8b_it_0302_174959",
+      "state": "crashed",
+      "summary": {}
+    },
+    {
+      "wandb_id": "3coojape",
+      "wandb_name": "sft_esm3_mlp_long_qwen3_8b_it_0302_175459",
+      "state": "crashed",
+      "summary": {
+        "eval/loss": 2.029557943344116,
+        "eval/runtime": 278.3927,
+        "eval/samples_per_second": 84.575,
+        "eval/steps_per_second": 0.661,
+        "generation_samples/step_250": "{'_latest_artifact_path': 'wandb-client-artifact://pa2tm5owxq5r5yfqtvne8fslg0xpgvk5mhsrykuruo5kd1bo4nwkh7okee56dkuilbh510w3hsil8uu3fvy7yb33hzvws4q0x2c79otqj17kjq20ymsjuj80geoia9g9:latest/generation_samples/step_250.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://yl0rzhg1cnmjwlbfrsg92bt0udwqjx2nrym4i8f7jx51vn94kyimdcl9u5s7fis7d8f2z2nlvujg0fbq3evgal5mykp50dgggu92uv7xsp9eypz3w45hm96vels8w2lx/generation_samples/step_250.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 5, 'nrows': 25, 'path': 'media/table/generation_samples/step_250_26_916e9861631043137dfc.table.json', 'sha256': '916e9861631043137dfc8590d6793492e5f807003faafce404361c83a728cf66', 'size': 15650}",
+        "generation_samples/step_500": "{'_latest_artifact_path': 'wandb-client-artifact://nisr3xotcwr8dm0f66tndvtknjf9ulr1zn98nwzzc4n2uwkcqre8d7oeq2u9flvb1i871tpv0qcp1ru2ahcf1eynpyfydy0ka7ulaptoef1qgcr6mpv0frdlfuwz99mr:latest/generation_samples/step_500.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://clnjkqvwe97nq9n2ytou89nj229bo5fry4ew5s1u5u1pnujeemgnhxfq3yp4c2kyj3y5wpwtj3efz0i4gd3vdko0m8udm24o3v9053vvtqxxyfp1i16qq0onhut3ok73/generation_samples/step_500.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 5, 'nrows': 25, 'path': 'media/table/generation_samples/step_500_276_7cdf214fa156e53dbfe6.table.json', 'sha256': '7cdf214fa156e53dbfe606e455ac5cb1c6e594d236ade723de3d0977755ba139', 'size': 14877}",
+        "generation_samples/step_750": "{'_latest_artifact_path': 'wandb-client-artifact://96h5c6zyl03n5tyc170zwjq5tnm62l8jmoyyfwcs23k1o5a89k9dhkmwww9i5ksskywm71lidyn4a83f3qpk182lliw783ujaktpe66b60vtbyu9f10l4vvuph3vsuzt:latest/generation_samples/step_750.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://ji6xitweyqjtvwy5scf33a06vl4ewk4am38wsnzxtjqwjshkixoqjcm747vrk78bsx2xb6jhkarix6k9bjp66283rmzkos4gdr8pd1makpehg3oudhybqpx7a0a7u99f/generation_samples/step_750.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 5, 'nrows': 25, 'path': 'media/table/generation_samples/step_750_526_41592fae36e41949678e.table.json', 'sha256': '41592fae36e41949678e729c26d5b95d2ab25c7df818590ec4e74aee07127882', 'size': 15276}",
+        "train/epoch": 1.3656227239621268,
+        "train/global_step": 810,
+        "train/grad_norm": 1.1713261604309082,
+        "train/learning_rate": 0.00011341215030217144,
+        "train/loss": 7.0545,
+        "train/token_avg_loss": 1.8553,
+        "train/total_tokens": 143285
+      }
+    },
+    {
+      "wandb_id": "bakj786m",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_181756",
+      "state": "crashed",
+      "summary": {}
+    },
+    {
+      "wandb_id": "jmoj25t7",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_182252",
+      "state": "crashed",
+      "summary": {}
+    },
+    {
+      "wandb_id": "om14php7",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_183813",
+      "state": "failed",
+      "summary": {
+        "train/epoch": 0.02889783651530622,
+        "train/global_step": 250,
+        "train/grad_norm": 1.852392077445984,
+        "train/learning_rate": 0.00019998361268709077,
+        "train/loss": 4.3581,
+        "train/token_avg_loss": 0.7485,
+        "train/total_tokens": 70442
+      }
+    },
+    {
+      "wandb_id": "quqbgspx",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_200916",
+      "state": "crashed",
+      "summary": {}
+    },
+    {
+      "wandb_id": "mlygpqcu",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_201516",
+      "state": "crashed",
+      "summary": {
+        "total_flos": 389583128756224,
+        "train/epoch": 1,
+        "train/global_step": 1,
+        "train/token_avg_loss": 3.7186,
+        "train/total_tokens": 4928,
+        "train_loss": 7.605481147766113,
+        "train_runtime": 64.3914,
+        "train_samples_per_second": 3.106,
+        "train_steps_per_second": 0.016
+      }
+    },
+    {
+      "wandb_id": "u98xky4x",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_203338",
+      "state": "crashed",
+      "summary": {
+        "eval/loss": 0.7066686153411865,
+        "eval/runtime": 5106.2467,
+        "eval/samples_per_second": 53.218,
+        "eval/steps_per_second": 1.663,
+        "train/epoch": 0.024353812183400443,
+        "train/global_step": 250,
+        "train/grad_norm": 1.019764065742493,
+        "train/learning_rate": 0.00019998837444465536,
+        "train/loss": 1.8782,
+        "train/token_avg_loss": 0.8115,
+        "train/total_tokens": 3288431
+      }
+    },
+    {
+      "wandb_id": "7u78bfbn",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_225408",
+      "state": "crashed",
+      "summary": {}
+    },
+    {
+      "wandb_id": "qgl5nkvt",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_225521",
+      "state": "failed",
+      "summary": {}
+    },
+    {
+      "wandb_id": "zk5d8dpr",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_225652",
+      "state": "failed",
+      "summary": {}
+    },
+    {
+      "wandb_id": "723xs78t",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_000637",
+      "state": "failed",
+      "summary": {}
+    },
+    {
+      "wandb_id": "pl5pidg7",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_000905",
+      "state": "failed",
+      "summary": {}
+    },
+    {
+      "wandb_id": "pgrtp0h8",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_001253",
+      "state": "failed",
+      "summary": {}
+    },
+    {
+      "wandb_id": "571mm5s8",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_001507",
+      "state": "failed",
+      "summary": {}
+    },
+    {
+      "wandb_id": "qp3t2a72",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_001755",
+      "state": "failed",
+      "summary": {}
+    },
+    {
+      "wandb_id": "eilad0su",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_002034",
+      "state": "failed",
+      "summary": {}
+    },
+    {
+      "wandb_id": "9u7hnil5",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_002301",
+      "state": "failed",
+      "summary": {}
+    },
+    {
+      "wandb_id": "94pgeudi",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_003037",
+      "state": "crashed",
+      "summary": {
+        "total_flos": 334385450582016,
+        "train/epoch": 1,
+        "train/global_step": 1,
+        "train/token_avg_loss": 3.5461,
+        "train/total_tokens": 4989,
+        "train_loss": 7.923595905303955,
+        "train_runtime": 62.5905,
+        "train_samples_per_second": 3.195,
+        "train_steps_per_second": 0.016
+      }
+    },
+    {
+      "wandb_id": "80oosrm8",
+      "wandb_name": "sft_esm3_mlp_long_qwen3_8b_it_0303_004216",
+      "state": "crashed",
+      "summary": {
+        "total_flos": 531381138489344,
+        "train/epoch": 1,
+        "train/global_step": 1,
+        "train/token_avg_loss": 4.2542,
+        "train/total_tokens": 8303,
+        "train_loss": 8.599300384521484,
+        "train_runtime": 80.6395,
+        "train_samples_per_second": 2.381,
+        "train_steps_per_second": 0.012
+      }
+    },
+    {
+      "wandb_id": "gk763cla",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_092257",
+      "state": "crashed",
+      "summary": {
+        "total_flos": 334385450582016,
+        "train/epoch": 1,
+        "train/global_step": 1,
+        "train/token_avg_loss": 3.6104,
+        "train/total_tokens": 4989,
+        "train_loss": 8.12497615814209,
+        "train_runtime": 67.1406,
+        "train_samples_per_second": 2.979,
+        "train_steps_per_second": 0.015
+      }
+    },
+    {
+      "wandb_id": "5gp4u3dr",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0303_093105",
+      "state": "crashed",
+      "summary": {
+        "eval/runtime": 0.2488,
+        "eval/samples_per_second": 80.393,
+        "eval/steps_per_second": 4.02,
+        "total_flos": 334385450582016,
+        "train/epoch": 1,
+        "train/global_step": 1,
+        "train/token_avg_loss": 3.5328,
+        "train/total_tokens": 4989,
+        "train_loss": 7.908702373504639,
+        "train_runtime": 66.6773,
+        "train_samples_per_second": 3,
+        "train_steps_per_second": 0.015
+      }
+    },
+    {
+      "wandb_id": "wy300bxe",
+      "wandb_name": "smoke_mlp_combined_0303",
+      "state": "crashed",
+      "summary": {
+        "eval/loss": 4.244760036468506,
+        "eval/runtime": 4292.4231,
+        "eval/samples_per_second": 63.308,
+        "eval/steps_per_second": 1.979,
+        "train/epoch": 0.00012985748141414798,
+        "train/global_step": 1,
+        "train/token_avg_loss": 3.4698,
+        "train/total_tokens": 3288431
+      }
+    },
+    {
+      "wandb_id": "zjsghweb",
+      "wandb_name": "smoke_mlp_long_0303",
+      "state": "finished",
+      "summary": {
+        "eval/loss": 4.48808479309082,
+        "eval/runtime": 2.5684,
+        "eval/samples_per_second": 73.977,
+        "eval/steps_per_second": 2.336,
+        "generation_samples/step_1": "{'_latest_artifact_path': 'wandb-client-artifact://9x5ket8mekjyudvjqchzitijzeh7htm0kreu7b3zdbfguhh3i9snr9arwx98keh6a388bzh6ntva8y73ua50u1aj6010uog2eizqlxodf5yoihi53h1kq661l0emc14g:latest/generation_samples/step_1.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://ffvlf4mlmleoyjm3sr8f54n2tt76clircq0l8z011xvprtj133dfpb6ft80ed1qzyyn7ov75p2k7g7o8dgaq68n3apjx5cjrwliu3d1uj1ksprv77didrbcfmcmu1742/generation_samples/step_1.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 5, 'nrows': 25, 'path': 'media/table/generation_samples/step_1_1_b1e34bb95ea7fa6026dc.table.json', 'sha256': 'b1e34bb95ea7fa6026dcc68e7373f97b700495f387d788f44ae6efb5ba7a5b4e', 'size': 13897}",
+        "total_flos": 1469543595638784,
+        "train/epoch": 0.3076923076923077,
+        "train/global_step": 1,
+        "train/token_avg_loss": 4.6264,
+        "train/total_tokens": 3566,
+        "train_loss": 17.976852416992188,
+        "train_runtime": 69.5095,
+        "train_samples_per_second": 7.366,
+        "train_steps_per_second": 0.014
+      }
+    },
+    {
+      "wandb_id": "63hgdksr",
+      "wandb_name": "sft_esm3_mlp_long_qwen3_8b_it_0305_105828",
+      "state": "crashed",
+      "summary": {
+        "eval/loss": 1.9016149044036863,
+        "eval/runtime": 72.2996,
+        "eval/samples_per_second": 69.157,
+        "eval/steps_per_second": 2.172,
+        "generation_samples/step_1000": "{'_latest_artifact_path': 'wandb-client-artifact://9j3rw5tnl8jpb9g88o6w7y2b9jwcayp3pc7ph2alkbwwrwu1v600uitex0aixbl5mqfxm87su16o2rm7zgznbf6s5vf29phz16ebm2q5hzsnq8iuqw2fklzbsrd9yaxc:latest/generation_samples/step_1000.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://83n4m1w2z95yra4u6ubtxa0ci2erhvfaxokued2wynu8rpwt19vo8989pruat4qd7tlet5eerdijk96c05wgvvw3ej0920z1ppldbtyzojvquwz252q685stgo8x9kqu/generation_samples/step_1000.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 5, 'nrows': 10, 'path': 'media/table/generation_samples/step_1000_776_6d7de239e24fe5413494.table.json', 'sha256': '6d7de239e24fe5413494125ea493d495e6a751275557c974988f6f23f74cb313', 'size': 6486}",
+        "generation_samples/step_1250": "{'_latest_artifact_path': 'wandb-client-artifact://jpq6265awc8hmmpqxoa93ug7jrresc7hdzusnmbhxblgchnij9wwg0gugco5sqfyus8eo2x8eic3ph2i84ip50qzrbjunl8mspwm88err4xr669b2xsrpoqu9dg98fqf:latest/generation_samples/step_1250.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://838ztbq7yiitj4anr94mjggmxdo9g2kae5g3v1bg7yocro4lr8kiilxbjuv4cdlf7byptu8ln4nhfi79toyjihrqgjg0qc8h5ik030kzyx7u2016qwxwjid72a9yj697/generation_samples/step_1250.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 5, 'nrows': 10, 'path': 'media/table/generation_samples/step_1250_1026_e79a0d74f148c2ff24f5.table.json', 'sha256': 'e79a0d74f148c2ff24f51534b43906c01da2d880e5a09f77baa65de82399b970', 'size': 6501}",
+        "generation_samples/step_1500": "{'_latest_artifact_path': 'wandb-client-artifact://5p04ooale3kbuupbauq4vnze6kkdtb473cl05bcxd137t87luqepez69xnfdmls2m5jdmljg5jy6z4h5mkl69mp9x61z16ibj426rl6ysnr73l2z7oyrnsyk2n84l20g:latest/generation_samples/step_1500.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://0ibmkdg70xvw2b8gghtksjt7r5cfywajv137ze4urosd9fyd596xdf5c0o983pdc0g7axjxsiwxthu9e1vzblxhpxb5znj3ireele3j10419ial8vkjydfc4dmc70trz/generation_samples/step_1500.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 5, 'nrows': 10, 'path': 'media/table/generation_samples/step_1500_1276_9966f82cb415d9e14a05.table.json', 'sha256': '9966f82cb415d9e14a05c0b2e9cdc9f39ba2b644f859330e931fbd0d5af5c925', 'size': 6540}",
+        "generation_samples/step_1750": "{'_latest_artifact_path': 'wandb-client-artifact://dqus3yjlnoy1xbquxi0r8z7phpqmpgtvc9ejaurmx2ifcpykvyhpfiyob24t468yjayq95efledolc0sa8djcfbn3d8qhsdbfnwdt2t9qt0gw9nnvwp9t1scio17apv5:latest/generation_samples/step_1750.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://70rx6nucza239ain862xxw1aflhhtighvg4428q140e1ospk5l3jodyasrtq2msj41p0wqtz6w6b2tl02d7876g9t3nb3s6tb0ehmdmv1xmygq4yvtxompx4v0jsls8x/generation_samples/step_1750.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 5, 'nrows': 10, 'path': 'media/table/generation_samples/step_1750_1526_7e88bc7921b264f443d9.table.json', 'sha256': '7e88bc7921b264f443d92df4a26ff77bd670b8bad0a785c367bda66888ff6023', 'size': 6444}",
+        "generation_samples/step_250": "{'_latest_artifact_path': 'wandb-client-artifact://dlo9du6of3jwnwfoqpicyf0av0urj5grj6ic6kq0h99novav7qtc7fvpph7hmfhv4yuge7lx8926xkjz2tp04neqmc4gsdu7roste3b16hh33bbrgszs07k22x9bnpek:latest/generation_samples/step_250.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://uolno5rjs9h535aivt2zkwah3f91t00h9jkor30tbcpppgild1ljbqnef9fjq6wic2l8ie5dd7i2jdou275xkmbb244xfuh5jflgxcz5ezmu41o8xxrgexjt2njlsfzl/generation_samples/step_250.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 5, 'nrows': 10, 'path': 'media/table/generation_samples/step_250_26_abf6b7d9180b39fcdf20.table.json', 'sha256': 'abf6b7d9180b39fcdf204004828a238d6176f4d48000052c3a89551a75206e53', 'size': 6622}",
+        "generation_samples/step_500": "{'_latest_artifact_path': 'wandb-client-artifact://araew6kzww1l7xibmyb15f90ikp0mn0xxliwr69rekm6aqh8z15nthuamqth4ec1li3z73ujf8kx4y89r55dnstnss297963uwmrhq0p1k8c6107y8w8i4usvrdbqdnt:latest/generation_samples/step_500.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://zkx0bxr39h0pap0sw2elhvp4dbv02u5ixbyxzcat4b81w2zduzwiwx1idl097rgd4lb3h868qkfs6qoozim4l9xrtpgudl9axzgawgwe6e07cftltdwx3r9duj9obyyq/generation_samples/step_500.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 5, 'nrows': 10, 'path': 'media/table/generation_samples/step_500_276_e3c11dda492457b655f4.table.json', 'sha256': 'e3c11dda492457b655f42eb502dedc5d6a8ab76734ecda37daaec105a8306549', 'size': 6547}",
+        "generation_samples/step_750": "{'_latest_artifact_path': 'wandb-client-artifact://iqb6de7cvvoafc0z3lj8cotkjcqd8izxztzpjtdgniuwyhet3sctl91i8gmumed3bzuqo2k3bi97zgwadxd1csacfqzp0wn9c6t2dabwtrzy43kzb9yxc8x90fdeb5o3:latest/generation_samples/step_750.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://l4ro97dr3luikb4j0afejnbgj8r3uryj7h7o0aqo7why7khkx1upbtglulhjhwa2kzfvkdtduvifhogn54hmlhi0zu6od743rla72npnvdb76kr0fb9m4xtzmfgz4wyq/generation_samples/step_750.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 5, 'nrows': 10, 'path': 'media/table/generation_samples/step_750_526_361e0a6d54cdcb771127.table.json', 'sha256': '361e0a6d54cdcb77112726e6d30c40ab826429cde79dc18ed9db259742d48095', 'size': 6431}",
+        "train/epoch": 2.846846846846847,
+        "train/global_step": 1840,
+        "train/grad_norm": 1.1707966327667236,
+        "train/learning_rate": 8.187832972164423e-05,
+        "train/loss": 6.9376,
+        "train/token_avg_loss": 2.0362,
+        "train/total_tokens": 151702
+      }
+    },
+    {
+      "wandb_id": "p4ojn2n0",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "state": "crashed",
+      "summary": {
+        "eval/loss": 0.41335898637771606,
+        "eval/runtime": 54.4921,
+        "eval/samples_per_second": 91.756,
+        "eval/steps_per_second": 2.881,
+        "train/epoch": 0.3752656403877054,
+        "train/global_step": 3620,
+        "train/grad_norm": 0.6454928517341614,
+        "train/learning_rate": 0.00019274289400799448,
+        "train/loss": 1.5257,
+        "train/token_avg_loss": 0.3751,
+        "train/total_tokens": 61517
+      }
+    },
+    {
+      "wandb_id": "i8rebnp7",
+      "wandb_name": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "state": "running",
+      "summary": {
+        "eval/loss": 0.37444639205932617,
+        "eval/runtime": 52.1445,
+        "eval/samples_per_second": 95.887,
+        "eval/steps_per_second": 3.011,
+        "generation/bleu": 0.30695361180817293,
+        "generation/bleu_catalytic": 0.3924166175761328,
+        "generation/bleu_domain": 0.1655250519504074,
+        "generation/bleu_function": 0.40437583144566663,
+        "generation/bleu_general": 0.2654969462604847,
+        "generation/rouge_l": 0.48310541876779406,
+        "generation/rouge_l_catalytic": 0.5409442025831435,
+        "generation/rouge_l_domain": 0.4328139654480293,
+        "generation/rouge_l_function": 0.5230908167578593,
+        "generation/rouge_l_general": 0.4355726902821441,
+        "generation_samples/step_3750": "{'_latest_artifact_path': 'wandb-client-artifact://2kaojdje6skh6yyongqou77a7wu0475cji0rnvjv4w8zen3waohv2cybwua5lto4knsm3qluhjb6jt3gbi9wv27yz1jvrdo3f47i7o61dzz7th20xcd2h6k8s1mavul1:latest/generation_samples/step_3750.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://4g4gy1bzstv3nx0lxf3qgoo0bdnqif41pjuxkvjs8r0vfd0rw94r9fhj5lazx913s9b0e29gnwptj8fbgy5fknusj5fcbgg3ad1rvcg5xq1r3mupgry7qi9gih1jal80/generation_samples/step_3750.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 7, 'nrows': 40, 'path': 'media/table/generation_samples/step_3750_3750_fe38b1a908768fcb324b.table.json', 'sha256': 'fe38b1a908768fcb324bb3b9d7bbc99cea08022f2217e0cd1f40e08075813d87', 'size': 34666}",
+        "generation_samples/step_4000": "{'_latest_artifact_path': 'wandb-client-artifact://kjd9pzqe1pbl8qntgzyp86g5owvin73x447byhyowyl4sq0egbjf5vahar7hx6cju4azi8im0i1qy17v2icutavsx72qwgebhrg9mjiazcme5kdf4u7qyl2svsrzju1y:latest/generation_samples/step_4000.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://9cnm5uqkuxytdtjzs36fpvd17rdqty0veaqp9e7aucfcl5ehbmmp8rjkj4dvbybntgf8nfj1tdi749q90ih5l5z1wxhkgvhkmpl0toebwybvk1ouuu7iksc6u9nbp2j6/generation_samples/step_4000.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 7, 'nrows': 40, 'path': 'media/table/generation_samples/step_4000_4000_b026693f4c82d4cdf7b0.table.json', 'sha256': 'b026693f4c82d4cdf7b072dcd34b7736349497c700ca9f57aa77a77ec2d27022', 'size': 36005}",
+        "generation_samples/step_4250": "{'_latest_artifact_path': 'wandb-client-artifact://i18359vn7gwxs6h56pho13sklmsvxreu77nhyb7tsabdfzucqkl454wducnhtxrli6rs8om9nr8h5cm0s29m02rd1opev1jm6hf8qhdnsipd2lujritfkug588znfbxe:latest/generation_samples/step_4250.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://txswesu1927wt59kknorckrxnlgn99tl3d817ov4xob57cs2nqta4vtymwaiof0j7zdylqh77xqb8k0nsow0y8wjlob4uefd798uxlxnr6zuomzq7krlde7b6oz7ddyz/generation_samples/step_4250.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 7, 'nrows': 40, 'path': 'media/table/generation_samples/step_4250_4250_edd35831c5364a14be50.table.json', 'sha256': 'edd35831c5364a14be50c55dd2d3a3239c2553cdcc24491515e1f873c1cbdf70', 'size': 35334}",
+        "generation_samples/step_4500": "{'_latest_artifact_path': 'wandb-client-artifact://twkudjcpfusmc1wlrzm0v2roo9tnaufe3jxuusd0hri2n7at15iwr74ovzpir08o6a5sw7gqfxvmzfni7w0ecaf7i3w8ez9cmu48jjps83u1nyt1pa0zgo6sdsbsasgz:latest/generation_samples/step_4500.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://3s5coa73n20sj8kitr4jd9crlcb6yxlclzdgaua8n5xx5xmmfcx6kr5gi1miwrs8oqo9xtv0r8i2zgm6zviixksvfrobp988ucordt6qiibvg0br032x56is145v1qd0/generation_samples/step_4500.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 7, 'nrows': 40, 'path': 'media/table/generation_samples/step_4500_4500_f21f0f3b9e0b4c2070c1.table.json', 'sha256': 'f21f0f3b9e0b4c2070c14b52be61329d7a712698ecfb480b70645e48b5467be7', 'size': 34799}",
+        "generation_samples/step_4750": "{'_latest_artifact_path': 'wandb-client-artifact://eerqois5u6oa18xjkhl09ef7yel08z4r70kn6u14vgm7bfq30av69ofqohsr30f0onqxjsxc8jaq3ahs83simyphbu86iow07rkp6na3v41keq5rgixthjmotjvlmcix:latest/generation_samples/step_4750.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://i2foi6qiicmwwryvw89txhy9isvgfmh99rqg20kqn3dtvd07s30s0do8kp2r10gbr2eoe2ytphm0x6qt0j0itn6zknjhkstv9icbw1gc2ittxbmlqe83iqj09nefubrd/generation_samples/step_4750.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 7, 'nrows': 40, 'path': 'media/table/generation_samples/step_4750_4750_d9623eb84ecb2a1096ba.table.json', 'sha256': 'd9623eb84ecb2a1096baeb97b15a847cce00592803fbcfd1154628f12d9186b6', 'size': 34718}",
+        "generation_samples/step_5000": "{'_latest_artifact_path': 'wandb-client-artifact://a249ftmrlirgbeyy6yrwcy434hs3nsmuc9zh2og8b00t6wq528giuyrgpah4rhtgnvbl4pcpuog2eqtw0wngh1ley1s9hy5p3mgunapd6co6hmms5yug6hwb63r204d1:latest/generation_samples/step_5000.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://r0f8y79estf4gkr9kcn1xba1e5205gqzethkmv3h19yehudw9zwzs85vsee00xazfkpw1dh1o9bsb6dg5ts499wymr6aunvv1hq7omualgkx1lg6sd1zm67yb8d94ndp/generation_samples/step_5000.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 7, 'nrows': 40, 'path': 'media/table/generation_samples/step_5000_5000_cf309f043df62aa256f1.table.json', 'sha256': 'cf309f043df62aa256f174fbaa76421ae88743d3fbad40b271ac54d120f0aa5c', 'size': 35748}",
+        "generation_samples/step_5250": "{'_latest_artifact_path': 'wandb-client-artifact://2zztobzg8d2pqwo41y58o0czqds5eqi3f0o01spyvrap4az2mlkcs22ut0cldnlch0of511dvm7lwwemj1c5cgcayhje1oaz889f59skw2w72dec9h4aeqii6bybhtfz:latest/generation_samples/step_5250.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://nfdoudu99462jlaumrzj52ilztnffh019trvu98o0dxu5yo99bl0s35khn4tgz74f4ti7yraljaxsq8qrlwqbe7xac6m61k33d2joyv65hkatqcz7z696rp9206svytw/generation_samples/step_5250.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 7, 'nrows': 40, 'path': 'media/table/generation_samples/step_5250_5250_120c60972ce3c35ea982.table.json', 'sha256': '120c60972ce3c35ea982efee4a676282a6b04a57794d5d004681b011631a36c1', 'size': 35406}",
+        "generation_samples/step_5500": "{'_latest_artifact_path': 'wandb-client-artifact://ugzx316q7y6eei69la5fs1m3emeto9fzbcmjs5e3f5kow8pe8h4va6uvsc82nj8xbcbceyo5zz70m0rdz0rv4r7oxnxhoba5bqf3ol3lf4qfautrzvxfas98ynhncf27:latest/generation_samples/step_5500.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://klu1czn68a0892ajh14pu2bsfh5d26swkoh6mvekpz8gmvmug5a73bkgnhdohhuzdvjx4ojxb6gy5jon3cj1im1art3djoawfikjyscwf4sx3gw8czi4qi0e9gjkzmaz/generation_samples/step_5500.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 7, 'nrows': 40, 'path': 'media/table/generation_samples/step_5500_5500_01a92e4d5b1c49828097.table.json', 'sha256': '01a92e4d5b1c49828097cb03f2b01e823de2991ebb07b995443de1d10d7c93db', 'size': 35292}",
+        "generation_samples/step_5750": "{'_latest_artifact_path': 'wandb-client-artifact://xse578g90s5ug5azk69ing69icgp35wsgvtauk34vvibx9h8biqqd8djnji3vk9f27idbjk8vijr2sco3s9eu7v8m8lfs4gba2sj53bicrm9v7eeipkd346rpiuy2y13:latest/generation_samples/step_5750.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://nb65y74wlxnk8v31cz357lb52sbjfjtv9zujsdswu47h2uv9ewesv46fsou5hvxesf9a6tvwl6tddzph1gq3hjidmpy1pd8ihfi8kdyhx9hvnlw2tpqsa5g2itryi0fh/generation_samples/step_5750.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 7, 'nrows': 40, 'path': 'media/table/generation_samples/step_5750_5750_841a04c44b3a800a4fc0.table.json', 'sha256': '841a04c44b3a800a4fc0d7bfd5d188f60a4478e6aee498747b23b7801805cb9c', 'size': 35783}",
+        "generation_samples/step_6000": "{'_latest_artifact_path': 'wandb-client-artifact://w1sx1p2041ucupnaqhuzo354df1mz7p92nt49nztmo0vy9j063s6ep5h509l1vssvqt9nz3g1kagbxxrxoi7ipp20h5yf2tfzn5en2ottho36ugsosecae1am0afdv3q:latest/generation_samples/step_6000.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://swc5vasbtcxcigkpdw06kgcouqp33ku1b5m6ghliosp03qfx53l3qeu78ieg5fhokr9pm6op4zw7xsvkp1829buklqcllgr6rvbxo7cnhzqfo8yghgxi14p8ij2dm57d/generation_samples/step_6000.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 7, 'nrows': 40, 'path': 'media/table/generation_samples/step_6000_6000_b16965c436709ab2c473.table.json', 'sha256': 'b16965c436709ab2c4738c6a6e3536a9ef391961d311bbb84e358129beef4625', 'size': 35193}",
+        "generation_samples/step_6250": "{'_latest_artifact_path': 'wandb-client-artifact://n4rlasel1r83myato7jgi213jxsm5b7bpnq66u2xx8i1xhoimkajc5bfbtygjryj77ucf5av9x5npbgsky6atpkwycl3l11ao65ao3gb7paguyz4ddxyss6usgxsqs4p:latest/generation_samples/step_6250.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://w3pmrws6zonllrx6hga9vx6v7gf3r411vhiijryw6j6qcls1qd5wdhcv54q8tf3er4onhxgdifuudh18aoi4eqida7k4rsojv22o4gzw357kat6s3f1aeitkx3j303wd/generation_samples/step_6250.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 7, 'nrows': 40, 'path': 'media/table/generation_samples/step_6250_6250_c524cd75964984d99c81.table.json', 'sha256': 'c524cd75964984d99c813597e4de66a853ef3995d6a437c918b45f72ed7e96b9', 'size': 35571}",
+        "generation_samples/step_6500": "{'_latest_artifact_path': 'wandb-client-artifact://1vxx10cjiwvw12t343jwe7s29agkjmw1mtum6l4z60zjicyw23sl4z0d5ugrzw3nyprevcvrcas035fm3iepuq7xh47if881cq21klt8vxqgh3qaoqp6osy27cts08z5:latest/generation_samples/step_6500.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://7ah4or97cumd4rycsnl6ixdcdyb696uvi8gtdrr4y5ilqyrw4cx51vazqe48ws6yrowljaoxf19e4ha1mstfjektqabwnwjy72oxjvftyhq7raq9kygzlw02zl7g99qi/generation_samples/step_6500.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 7, 'nrows': 40, 'path': 'media/table/generation_samples/step_6500_6500_b8b377956e366613842b.table.json', 'sha256': 'b8b377956e366613842ba0910966d6acfdb1596d43f4237601fbbe1b76d08ae5', 'size': 35515}",
+        "generation_samples/step_6750": "{'_latest_artifact_path': 'wandb-client-artifact://bwjv65cqj6ttjfaz9evdk2ucsv6r10f3hvttp60t6xtzz50zb37x3hq2xha13l6fcrajp608cz18p7aigmadydultqdg087b2nxk5sm2dokgsvyjfhudx79rzedhouzu:latest/generation_samples/step_6750.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://jzo87qmxaiar2749fh1c2ocvhtxy0vu86qdsmee63twwkxosh4pw65vnj48zedc80apwgp6yklf06e73f2irnfg80pt59km2ygrp4oe5mlnrqy9tvx0gpkvmrbbd4v12/generation_samples/step_6750.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 7, 'nrows': 40, 'path': 'media/table/generation_samples/step_6750_6750_662f80a6d571bd3171d5.table.json', 'sha256': '662f80a6d571bd3171d5eda624808f4f141ec453bf7da49e9de21a16be2896f7', 'size': 35295}",
+        "generation_samples/step_7000": "{'_latest_artifact_path': 'wandb-client-artifact://oc8fvi9ysqsen7btd1p2qjpisuqvqdgpr363sla095z9tn0l6qrb9gmgz0a88anqmq4tiqct7sl0cceksrg0vmv100vbh1da7qih2hpwk0six7gcvn9ja6g63yah4a5m:latest/generation_samples/step_7000.table.json', '_type': 'table-file', 'artifact_path': 'wandb-client-artifact://a7v6ti7njmshmfrq13nja326xle5ca3x80drlbnifcx6nk1qx8liojqtqmqh89vczijrza7a8myljmwtydr25cadjmwousx6cwtz5t0i2hghlyt0sqlja6sgl5b0aqsm/generation_samples/step_7000.table.json', 'log_mode': 'IMMUTABLE', 'ncols': 7, 'nrows': 40, 'path': 'media/table/generation_samples/step_7000_7000_3ff81ea6f55b7a4a1918.table.json', 'sha256': '3ff81ea6f55b7a4a19187d87a6a946eb8bc2342a29d7728b9f78ea931b30b9ae', 'size': 34937}",
+        "train/epoch": 0.734981599543876,
+        "train/global_step": 7090,
+        "train/grad_norm": 0.5321687459945679,
+        "train/learning_rate": 0.0001723941289475143,
+        "train/loss": 1.4029,
+        "train/token_avg_loss": 0.3408,
+        "train/total_tokens": 66230
+      }
+    }
+  ]
+}

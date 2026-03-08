@@ -1,0 +1,109 @@
+{
+  "experiments": {
+    "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408": {
+      "approach": "mlp",
+      "projector_type": "mlp",
+      "dataset": "combined_sft_260225",
+      "learning_rate": 0.0002,
+      "projector_lr": 0.001,
+      "total_steps_planned": 28941,
+      "total_steps_logged": 7000,
+      "progress_pct": 24.2,
+      "final_token_avg_loss": 0.4663,
+      "min_token_avg_loss": 0.3071,
+      "best_eval_loss": 0.3744463920593261,
+      "best_eval_step": 7000,
+      "convergence_step": 210,
+      "max_grad_norm": 7.598205089569092,
+      "mean_grad_norm": 0.6593776782069888,
+      "anomalies": [
+        "loss_spike_step_60",
+        "loss_spike_step_70",
+        "loss_spike_step_80",
+        "loss_spike_step_90",
+        "loss_spike_step_100",
+        "loss_spike_step_110",
+        "loss_spike_step_120",
+        "loss_spike_step_130",
+        "loss_spike_step_140",
+        "loss_spike_step_170",
+        "loss_spike_step_180",
+        "loss_spike_step_250",
+        "grad_spike_step_70",
+        "grad_spike_step_100",
+        "grad_spike_step_2290"
+      ]
+    },
+    "sft_esm3_mlp_combined_qwen3_8b_it_0305_100040": {
+      "approach": "mlp",
+      "projector_type": "mlp",
+      "dataset": "combined_sft_260225",
+      "learning_rate": 0.0002,
+      "projector_lr": 0.001,
+      "total_steps_planned": 28941,
+      "total_steps_logged": 250,
+      "progress_pct": 0.9,
+      "final_token_avg_loss": 0.8596,
+      "min_token_avg_loss": 0.6038,
+      "best_eval_loss": 0.6940006613731384,
+      "best_eval_step": 250,
+      "convergence_step": 210,
+      "max_grad_norm": 7.154790878295898,
+      "mean_grad_norm": 1.5711116003990173,
+      "anomalies": [
+        "grad_spike_step_100"
+      ]
+    },
+    "sft_esm3_mlp_long_qwen3_8b_it_0305_105828": {
+      "approach": "mlp",
+      "projector_type": "mlp",
+      "dataset": "mol_instructions",
+      "learning_rate": 0.00012,
+      "projector_lr": 0.0006,
+      "total_steps_planned": 4662,
+      "total_steps_logged": 1500,
+      "progress_pct": 32.2,
+      "final_token_avg_loss": 2.2821,
+      "min_token_avg_loss": 1.9157,
+      "best_eval_loss": 1.907511830329895,
+      "best_eval_step": 1500,
+      "convergence_step": 160,
+      "max_grad_norm": 6.133896350860596,
+      "mean_grad_norm": 1.6715377569198608,
+      "anomalies": [
+        "loss_spike_step_60",
+        "loss_spike_step_70",
+        "grad_spike_step_750",
+        "grad_spike_step_880",
+        "grad_spike_step_1340"
+      ]
+    }
+  },
+  "comparison": {
+    "best_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+    "best_experiment_label": "MLP-Combined (0306, main)",
+    "metric": "best_eval_loss",
+    "value": 0.3744463920593261,
+    "ranking": [
+      [
+        "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+        0.3744463920593261
+      ],
+      [
+        "sft_esm3_mlp_combined_qwen3_8b_it_0305_100040",
+        0.6940006613731384
+      ],
+      [
+        "sft_esm3_mlp_long_qwen3_8b_it_0305_105828",
+        1.907511830329895
+      ]
+    ]
+  },
+  "notes": {
+    "main_run_status": "0306_010408 at step 7000/28941 (24.2%). Still running.",
+    "dataset_info": "Main runs use combined_sft_260225 (4.89M samples). Long run uses mol_instructions only.",
+    "hyperparameter_info": "Main: lr=2e-4, proj_lr=1e-3. Long: lr=1.2e-4, proj_lr=6e-4.",
+    "metric_note": "All training loss values use token_avg_loss (NOT HF running average 'loss').",
+    "all_experiments_count": "12 total experiments found, 3 with sufficient data for analysis."
+  }
+}

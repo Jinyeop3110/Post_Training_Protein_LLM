@@ -1193,16 +1193,19 @@ class SFTTrainer:
         # Add callbacks
         callbacks = [GPUMemoryCallback()]
 
-        # Generation samples callback — uses summon_full_params fix in
-        # ProteinLLM.generate() to gather FSDP-sharded weights during eval.
+        # Generation samples callback — runs under FSDP too, since
+        # ProteinLLM.generate() now wraps all FSDP strategies in
+        # summon_full_params to keep handle state clean.
         eval_cfg = self.cfg.get("evaluation", {})
+        eval_dir = self.cfg.get("paths", {}).get("eval_dir", None)
         gen_callback = GenerationSamplesCallback(
             protein_llm=self.protein_llm,
             eval_dataset=self.eval_dataset,
             tokenizer=self.tokenizer,
-            num_samples_per_category=2,
-            max_new_tokens=min(eval_cfg.get("sft_gen_max_tokens", 256), 50),
+            num_samples_per_category=eval_cfg.get("gen_samples_per_category", 10),
+            max_new_tokens=eval_cfg.get("sft_gen_max_tokens", 256),
             generation_temperature=float(eval_cfg.get("generation_temperature", 0.0)),
+            output_dir=eval_dir,
         )
         callbacks.append(gen_callback)
 

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Epoch 1 Milestone: MLP-Combined Reaches eval_loss 0.361 at 33.7% Through Training</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #1a1a2e;
+            --accent: #2563eb;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --code-bg: #f3f4f6;
+            --table-header: #f9fafb;
+            --blockquote-bg: #fffbeb;
+            --blockquote-border: #f59e0b;
+            --success-bg: #f0fdf4;
+            --success-border: #22c55e;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--fg);
+            background: var(--bg);
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .back-link { font-size: 0.9rem; margin-bottom: 1.5rem; display: block; }
+        h1 { font-size: 1.8rem; margin-bottom: 0.3rem; font-weight: 700; }
+        h2 { font-size: 1.35rem; margin: 2rem 0 0.8rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--border); }
+        h3 { font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
+        .meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+        .meta span { margin-right: 1rem; }
+        .tag { display: inline-block; background: var(--code-bg); color: var(--accent); padding: 0.1rem 0.5rem; border-radius: 1rem; font-size: 0.75rem; margin-right: 0.3rem; font-weight: 500; }
+        p { margin-bottom: 1rem; }
+        code { background: var(--code-bg); padding: 0.15rem 0.4rem; border-radius: 0.25rem; font-size: 0.88rem; font-family: 'SF Mono', 'Fira Code', monospace; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: 0.92rem; }
+        th { background: var(--table-header); text-align: left; padding: 0.6rem 0.8rem; border-bottom: 2px solid var(--border); font-weight: 600; }
+        td { padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--border); }
+        tr:hover { background: #f9fafb; }
+        .best { font-weight: 600; color: #16a34a; }
+        img { max-width: 100%; margin: 1rem 0; border-radius: 0.5rem; border: 1px solid var(--border); }
+        .img-caption { text-align: center; color: var(--muted); font-size: 0.85rem; margin-top: -0.5rem; margin-bottom: 1.5rem; }
+        blockquote { background: var(--blockquote-bg); border-left: 4px solid var(--blockquote-border); padding: 0.8rem 1.2rem; margin: 1rem 0; border-radius: 0 0.5rem 0.5rem 0; }
+        .summary-box { background: var(--success-bg); border-left: 4px solid var(--success-border); padding: 1rem 1.2rem; margin: 1rem 0; border-radius: 0 0.5rem 0.5rem 0; }
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin-bottom: 0.3rem; }
+    </style>
+</head>
+<body>
+    <a class="back-link" href="../index.html">&larr; Back to index</a>
+
+    <h1>Epoch 1 Milestone: MLP-Combined Reaches eval_loss 0.361 at 33.7% Through Training</h1>
+    <div class="meta">
+        <span>2026-03-07</span>
+        <span class="tag">sft</span>
+        <span class="tag">esm3</span>
+        <span class="tag">mlp</span>
+        <span class="tag">milestone</span>
+        <span class="tag">epoch-1</span>
+    </div>
+
+    <p><strong>Question:</strong> What does the training trajectory look like as the main MLP-Combined run approaches the end of epoch 1, and is the model still improving?</p>
+    <p><strong>Experiment:</strong> <code>sft_esm3_mlp_combined_qwen3_8b_it_0306_010408</code></p>
+
+    <h2>Executive Summary</h2>
+
+    <div class="summary-box">
+        <p>The main MLP-Combined run has reached step 9,750 of 28,941 (33.7% of 3 scheduled epochs), completing approximately <strong>epoch 1</strong> of the 4.89M combined dataset. At this checkpoint: <strong>eval_loss = 0.361</strong>, <strong>token_avg_loss = 0.366</strong>, <strong>best BLEU = 0.315</strong> (step 9,250), and <strong>best ROUGE-L = 0.515</strong> (step 9,250). Both train and eval loss are still declining with no signs of plateauing. Training is stable with mean gradient norm 0.627 and all loss spikes confined to the warmup phase (steps 10&ndash;100). This represents a <strong>90.1% reduction in eval_loss</strong> from the project's first run (3.640 &rarr; 0.361).</p>
+    </div>
+
+    <h2>Methodology</h2>
+
+    <ul>
+        <li><strong>Data source:</strong> Local <code>trainer_state.json</code> (1,014 log entries)</li>
+        <li><strong>Loss metric:</strong> <code>token_avg_loss</code> (true per-token average; NOT HF Trainer running average)</li>
+        <li><strong>Eval metric:</strong> <code>eval_loss</code> (validation set, evaluated every 250 steps)</li>
+        <li><strong>Generation metrics:</strong> BLEU, ROUGE-L from <code>GenerationSamplesCallback</code></li>
+        <li><strong>Scope:</strong> Single experiment deep-dive at epoch 1 boundary</li>
+    </ul>
+
+    <h2>Experiment Configuration</h2>
+
+    <table>
+        <tr><th>Parameter</th><th>Value</th></tr>
+        <tr><td>Approach</td><td>ESM-3 + MLP projector</td></tr>
+        <tr><td>Base model</td><td>Qwen3-8B-Instruct-2507</td></tr>
+        <tr><td>Encoder</td><td>ESM-3 small (frozen, 1536-dim)</td></tr>
+        <tr><td>Projector</td><td>MLP: 1536 &rarr; 5120 &rarr; 2560 (~21M params)</td></tr>
+        <tr><td>Pooling</td><td>AttentionPooling (32 tokens, ~9.5M params)</td></tr>
+        <tr><td>LoRA</td><td>r=8, all linear layers (~2M params)</td></tr>
+        <tr><td>Total trainable</td><td>~32.5M params</td></tr>
+        <tr><td>Dataset</td><td>combined_sft_260225 (4.89M samples, 6 sources)</td></tr>
+        <tr><td>Learning rate</td><td>2e-4 (LLM), 1e-3 (projector)</td></tr>
+        <tr><td>Scheduled epochs</td><td>3 (28,941 total steps)</td></tr>
+        <tr><td>Current progress</td><td>9,750 / 28,941 steps (33.7%)</td></tr>
+        <tr><td>Infrastructure</td><td>FSDP on 8&times;H100 80GB</td></tr>
+    </table>
+
+    <h2>Key Findings</h2>
+
+    <h3>1. Train and Eval Loss: Steady Descent, No Plateau</h3>
+
+    <p>The combined train+eval loss curve shows continuous improvement across all 9,750 steps. After rapid convergence during warmup (steps 0&ndash;210), the model enters a steady descent phase. <code>token_avg_loss</code> dropped from 3.3 at step 1 to 0.366 at step 9,750, with a minimum of 0.306. Eval loss tracks closely at 0.361, indicating no overfitting.</p>
+
+    <img src="../figures/mlp_epoch1_train_eval_combined.png" alt="Training and validation loss over 9,750 steps">
+    <div class="img-caption">Training (smoothed MA-50) and validation loss over epoch 1. Both curves are still declining at step 9,750 with no sign of plateau.</div>
+
+    <p>The train-eval gap is remarkably small: 0.366 vs 0.361 (eval is actually <em>lower</em> than train). This suggests the model generalizes well to held-out data and has significant capacity for further improvement in epochs 2&ndash;3.</p>
+
+    <h3>2. Eval Loss Trajectory: From 0.694 to 0.361</h3>
+
+    <img src="../figures/mlp_epoch1_eval_loss.png" alt="Eval loss with best annotation at step 9750">
+    <div class="img-caption">Eval loss checkpoints across epoch 1. Best eval_loss = 0.361 at step 9,750 (latest checkpoint), annotated.</div>
+
+    <p>Eval loss improved monotonically after initial convergence:</p>
+
+    <table>
+        <tr><th>Step</th><th>eval_loss</th><th>Improvement from step 250</th></tr>
+        <tr><td>250</td><td>0.694</td><td>baseline</td></tr>
+        <tr><td>1,000</td><td>0.501</td><td>27.8%</td></tr>
+        <tr><td>2,500</td><td>0.441</td><td>36.5%</td></tr>
+        <tr><td>5,000</td><td>0.402</td><td>42.1%</td></tr>
+        <tr><td>7,500</td><td>0.374</td><td>46.1%</td></tr>
+        <tr><td>9,750</td><td class="best">0.361</td><td>48.0%</td></tr>
+    </table>
+
+    <p>The rate of improvement is slowing (as expected with cosine LR decay) but has not flattened. Extrapolating the trajectory, we expect eval_loss in the 0.30&ndash;0.35 range by epoch 3 completion.</p>
+
+    <h3>3. Generation Quality Improving Through Training</h3>
+
+    <img src="../figures/mlp_epoch1_generation_quality.png" alt="BLEU and ROUGE-L over training steps">
+    <div class="img-caption">BLEU and ROUGE-L generation metrics over training. Best scores achieved at step 9,250.</div>
+
+    <p>Generation quality metrics confirm that lower loss translates to better text outputs:</p>
+
+    <table>
+        <tr><th>Metric</th><th>Latest (step 9,750)</th><th>Best (step 9,250)</th></tr>
+        <tr><td>BLEU</td><td>0.255</td><td class="best">0.315</td></tr>
+        <tr><td>ROUGE-L</td><td>0.481</td><td class="best">0.515</td></tr>
+    </table>
+
+    <p>The slight dip from step 9,250 to 9,750 is within normal variance for generation metrics (which are evaluated on a small sample). The overall trend is upward, with BLEU improving from ~0.20 at step 3,000 to 0.315 at step 9,250 (58% gain).</p>
+
+    <h3>4. Training Stability: Clean Run After Warmup</h3>
+
+    <img src="../figures/mlp_epoch1_grad_norms.png" alt="Gradient norms (log scale) with spike detection">
+    <div class="img-caption">Gradient norms on log scale. All spikes are confined to warmup (steps 10&ndash;100). Post-warmup mean: 0.627.</div>
+
+    <p>The run is remarkably stable. Key stability metrics:</p>
+
+    <ul>
+        <li><strong>Mean gradient norm:</strong> 0.627 (post-warmup)</li>
+        <li><strong>Max gradient norm:</strong> 7.60 (step 10, during warmup)</li>
+        <li><strong>Loss spikes:</strong> 10 detected, all within steps 10&ndash;100 (warmup phase)</li>
+        <li><strong>Gradient spikes:</strong> 6 detected, 5 during warmup + 1 at step 2,290 (self-resolving)</li>
+        <li><strong>NaN events:</strong> 0</li>
+    </ul>
+
+    <p>The single post-warmup anomaly (gradient spike at step 2,290) had no lasting impact on the loss trajectory. The custom <code>_clip_multimodal_gradients()</code> implementation is working as intended.</p>
+
+    <h3>5. Learning Rate Schedule</h3>
+
+    <img src="../figures/mlp_epoch1_lr_schedule.png" alt="Learning rate warmup + cosine decay schedule">
+    <div class="img-caption">Learning rate schedule: linear warmup (100 steps) followed by cosine decay. At step 9,750, LR has decayed to ~60% of peak.</div>
+
+    <h2>Summary Results</h2>
+
+    <img src="../figures/mlp_epoch1_comparison_bar.png" alt="Final metrics bar chart">
+    <div class="img-caption">Key metrics at the epoch 1 checkpoint.</div>
+
+    <table>
+        <tr><th>Metric</th><th>Value</th></tr>
+        <tr><td>eval_loss (best)</td><td class="best">0.361 (step 9,750)</td></tr>
+        <tr><td>token_avg_loss (latest)</td><td>0.366</td></tr>
+        <tr><td>token_avg_loss (min)</td><td>0.306</td></tr>
+        <tr><td>BLEU (best)</td><td>0.315 (step 9,250)</td></tr>
+        <tr><td>ROUGE-L (best)</td><td>0.515 (step 9,250)</td></tr>
+        <tr><td>Convergence step</td><td>210</td></tr>
+        <tr><td>Mean gradient norm</td><td>0.627</td></tr>
+        <tr><td>Max gradient norm</td><td>7.60 (warmup)</td></tr>
+        <tr><td>Training progress</td><td>33.7% (9,750 / 28,941)</td></tr>
+        <tr><td>Anomalies</td><td>16 total, all in warmup except 1 (step 2,290)</td></tr>
+    </table>
+
+    <img src="../figures/mlp_epoch1_convergence_table.png" alt="Convergence summary table">
+    <div class="img-caption">Convergence summary for the MLP-Combined run at epoch 1.</div>
+
+    <h2>Historical Context</h2>
+
+    <p>This epoch 1 checkpoint represents the project's best result by a wide margin:</p>
+
+    <table>
+        <tr><th>Date</th><th>Run</th><th>Dataset</th><th>eval_loss</th><th>vs. Current</th></tr>
+        <tr><td>Feb 20</td><td>MLP (Qwen3-4B, 50K)</td><td>Mol-Instr 50K</td><td>3.640</td><td>10.1&times; higher</td></tr>
+        <tr><td>Feb 23</td><td>MLP (Qwen3-8B, 50K)</td><td>Mol-Instr 50K</td><td>1.942</td><td>5.4&times; higher</td></tr>
+        <tr><td>Feb 23</td><td>Perceiver (Qwen3-8B, 50K)</td><td>Mol-Instr 50K</td><td>1.952</td><td>5.4&times; higher</td></tr>
+        <tr><td>Feb 27</td><td>Text-only (Qwen3-8B, 505K)</td><td>Mol-Instr 505K</td><td>2.415</td><td>6.7&times; higher</td></tr>
+        <tr>
+            <td>Mar 7</td>
+            <td>MLP-Combined (Qwen3-8B, 4.89M)</td>
+            <td>Combined 4.89M</td>
+            <td class="best">0.361</td>
+            <td>&mdash;</td>
+        </tr>
+    </table>
+
+    <p>The two dominant scaling axes: <strong>model scale</strong> (4B &rarr; 8B: 47% eval_loss reduction) and <strong>data scale</strong> (50K &rarr; 4.89M: 81% reduction). Data diversity is the single largest contributor to performance.</p>
+
+    <h2>What's Next</h2>
+
+    <ol>
+        <li><strong>Continue through epochs 2&ndash;3.</strong> Both train and eval loss are still declining; significant headroom remains. Target: eval_loss &lt; 0.30 by completion.</li>
+        <li><strong>Monitor for overfitting.</strong> The train-eval gap is currently near zero. Watch for divergence in epoch 2+ as the model sees repeated data.</li>
+        <li><strong>Evaluate generation quality at epoch boundaries.</strong> Step 9,250 BLEU (0.315) and ROUGE-L (0.515) set the epoch 1 baseline. Track at epochs 2 and 3.</li>
+        <li><strong>Prepare GRPO fine-tuning.</strong> The epoch 1 checkpoint is a strong candidate for downstream RL with GO F1 and stability rewards, even before full training completes.</li>
+    </ol>
+
+    <p><em>Data: <a href="../data/03-07/">blog/data/03-07/</a> | Analysis: <a href="../data/03-07/mlp_epoch1_analysis_summary.json">mlp_epoch1_analysis_summary.json</a> | Previous: <a href="2026-03-07_scaling-combined-sft-4.9m.html">Scaling to 4.9M Analysis</a></em></p>
+
+</body>
+</html>

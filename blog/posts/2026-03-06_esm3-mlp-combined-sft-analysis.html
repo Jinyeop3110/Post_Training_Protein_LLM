@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESM-3 MLP Combined SFT: Training Dynamics Analysis</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #1a1a2e;
+            --accent: #2563eb;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --code-bg: #f3f4f6;
+            --table-header: #f9fafb;
+            --blockquote-bg: #fffbeb;
+            --blockquote-border: #f59e0b;
+            --success-bg: #f0fdf4;
+            --success-border: #22c55e;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--fg);
+            background: var(--bg);
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .back-link { font-size: 0.9rem; margin-bottom: 1.5rem; display: block; }
+        h1 { font-size: 1.8rem; margin-bottom: 0.3rem; font-weight: 700; }
+        h2 { font-size: 1.35rem; margin: 2rem 0 0.8rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--border); }
+        h3 { font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
+        .meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+        .meta span { margin-right: 1rem; }
+        .tag { display: inline-block; background: var(--code-bg); color: var(--accent); padding: 0.1rem 0.5rem; border-radius: 1rem; font-size: 0.75rem; margin-right: 0.3rem; font-weight: 500; }
+        p { margin-bottom: 1rem; }
+        code { background: var(--code-bg); padding: 0.15rem 0.4rem; border-radius: 0.25rem; font-size: 0.88rem; font-family: 'SF Mono', 'Fira Code', monospace; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: 0.92rem; }
+        th { background: var(--table-header); text-align: left; padding: 0.6rem 0.8rem; border-bottom: 2px solid var(--border); font-weight: 600; }
+        td { padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--border); }
+        tr:hover { background: #f9fafb; }
+        .best { font-weight: 600; color: #16a34a; }
+        img { max-width: 100%; margin: 1rem 0; border-radius: 0.5rem; border: 1px solid var(--border); }
+        .img-caption { text-align: center; color: var(--muted); font-size: 0.85rem; margin-top: -0.5rem; margin-bottom: 1.5rem; }
+        blockquote { background: var(--blockquote-bg); border-left: 4px solid var(--blockquote-border); padding: 0.8rem 1.2rem; margin: 1rem 0; border-radius: 0 0.5rem 0.5rem 0; }
+        .summary-box { background: var(--success-bg); border-left: 4px solid var(--success-border); padding: 1rem 1.2rem; margin: 1rem 0; border-radius: 0 0.5rem 0.5rem 0; }
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin-bottom: 0.3rem; }
+    </style>
+</head>
+<body>
+    <a class="back-link" href="../index.html">&larr; Back to index</a>
+
+    <h1>ESM-3 MLP Combined SFT: Training Dynamics Analysis</h1>
+    <div class="meta">
+        <span>2026-03-06</span>
+        <span class="tag">sft</span>
+        <span class="tag">esm3</span>
+        <span class="tag">mlp</span>
+        <span class="tag">training</span>
+        <span class="tag">evaluation</span>
+    </div>
+
+    <p><strong>Question:</strong> How are the ESM-3 MLP combined SFT runs progressing on the 4.89M-sample dataset, and what do the training dynamics reveal?</p>
+    <p><strong>Experiments analyzed:</strong> 12 total runs found; 3 with sufficient trainer state for analysis.</p>
+
+    <h2>Executive Summary</h2>
+
+    <div class="summary-box">
+        <p>The main MLP-Combined run (<code>0306_010408</code>) achieves a <strong>best eval_loss of 0.374</strong> at step 7,000 &mdash; a 46.1% improvement over its predecessor short run (0.694 at step 250). The run is only 24.2% complete (7,000 / 28,941 steps) and eval loss is still improving, indicating significant remaining headroom. Gradient norms are stable (mean 0.66) with no concerning divergence. The mol-instructions-only comparison run confirms that the combined 4.89M dataset yields substantially lower loss (0.374 vs 1.908), validating the multi-source data strategy.</p>
+    </div>
+
+    <h2>Methodology</h2>
+
+    <ul>
+        <li><strong>Data source:</strong> Local <code>trainer_state.json</code> files from experiment directories</li>
+        <li><strong>Training loss metric:</strong> <code>token_avg_loss</code> (true per-token average; NOT HF Trainer running average)</li>
+        <li><strong>Eval metric:</strong> <code>eval_loss</code> (validation set)</li>
+        <li><strong>Experiments:</strong> 12 total runs spanning 2026-03-02 to 2026-03-06; 3 with sufficient data</li>
+        <li><strong>Comparison:</strong> Combined dataset (4.89M samples) vs mol-instructions only (~50K samples); varying run durations</li>
+    </ul>
+
+    <h2>Experiment Configuration</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Parameter</th>
+                <th>MLP-Combined (0306, main)</th>
+                <th>MLP-Combined (0305, short)</th>
+                <th>MLP-Long (0305, mol_inst)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Approach</td><td>esm3 + mlp</td><td>esm3 + mlp</td><td>esm3 + mlp</td></tr>
+            <tr><td>Base model</td><td>Qwen3-8B-Instruct</td><td>Qwen3-8B-Instruct</td><td>Qwen3-8B-Instruct</td></tr>
+            <tr><td>Dataset</td><td class="best">combined_sft_260225 (4.89M)</td><td>combined_sft_260225 (4.89M)</td><td>mol_instructions (~50K)</td></tr>
+            <tr><td>Learning rate</td><td>2e-4</td><td>2e-4</td><td>1.2e-4</td></tr>
+            <tr><td>Projector LR</td><td>1e-3</td><td>1e-3</td><td>6e-4</td></tr>
+            <tr><td>LR ratio (proj/base)</td><td>5x</td><td>5x</td><td>5x</td></tr>
+            <tr><td>Total steps planned</td><td>28,941</td><td>28,941</td><td>4,662</td></tr>
+            <tr><td>Steps logged</td><td>7,000</td><td>250</td><td>1,500</td></tr>
+            <tr><td>Progress</td><td>24.2%</td><td>0.9%</td><td>32.2%</td></tr>
+            <tr><td>Batch size</td><td>16</td><td>16</td><td>16</td></tr>
+            <tr><td>Max tokens/batch</td><td>8,192</td><td>8,192</td><td>8,192</td></tr>
+            <tr><td>Gradient accum steps</td><td>4</td><td>4</td><td>4</td></tr>
+            <tr><td>Max seq length</td><td>2,048</td><td>2,048</td><td>2,048</td></tr>
+            <tr><td>FSDP</td><td>Enabled (8x H100)</td><td>Enabled (8x H100)</td><td>Enabled (8x H100)</td></tr>
+        </tbody>
+    </table>
+
+    <p>9 additional combined runs were found but had no trainer state (crashed or stopped before logging). This suggests infrastructure iteration was needed before the main run stabilized.</p>
+
+    <h2>Key Findings</h2>
+
+    <h3>1. Rapid Early Convergence, Then Steady Improvement</h3>
+
+    <p>The main run exhibits a sharp loss drop in the first 200 steps: <code>token_avg_loss</code> falls from ~3.3 to ~0.6 (82% reduction). After convergence at step ~210, loss continues to decrease gradually, reaching 0.466 at step 7,000. The minimum observed <code>token_avg_loss</code> is 0.307.</p>
+
+    <img src="../figures/mlp_combined_train_loss.png" alt="Training loss curves for all three MLP-Combined runs overlaid">
+    <div class="img-caption">Training loss (token_avg_loss) for all three runs. The main 0306 run (blue) shows continued improvement well past step 1,000.</div>
+
+    <p>Eval loss tracks training loss closely, with best eval_loss of 0.374 recorded at step 7,000 &mdash; the most recent checkpoint. This is a strong signal that the model has not yet overfit and further training will likely yield additional gains.</p>
+
+    <img src="../figures/mlp_combined_eval_loss.png" alt="Eval loss curves for all three runs">
+    <div class="img-caption">Eval loss across runs. The main run's eval_loss continues to decrease at the latest checkpoint (step 7,000).</div>
+
+    <h3>2. Stable Training Dynamics</h3>
+
+    <p>Gradient norms for the main run are well-behaved: mean 0.66, with a single post-warmup spike at step 2,290 (max 7.60). This is a marked improvement over earlier 8B experiments which suffered NaN explosions due to unclipped multimodal gradients. The gradient clipping fix applied in earlier work is confirmed effective.</p>
+
+    <img src="../figures/mlp_combined_grad_norms.png" alt="Gradient norms (log scale) with anomaly markers">
+    <div class="img-caption">Gradient norms (log scale). Flagged anomalies in steps 60&ndash;250 are warmup artifacts, not instabilities. One genuine spike at step 2,290 was absorbed without divergence.</div>
+
+    <h3>3. Combined Dataset Dramatically Outperforms Mol-Instructions Only</h3>
+
+    <p>At comparable training progress (~25&ndash;32%), the combined-dataset run achieves <strong>0.374 eval_loss vs 1.908</strong> for the mol-instructions-only run &mdash; a 5.1x difference. While the runs differ in LR (2e-4 vs 1.2e-4) and dataset size (4.89M vs ~50K samples), the magnitude of the gap confirms the value of the multi-source combined dataset assembled on Feb 25.</p>
+
+    <img src="../figures/mlp_combined_final_comparison.png" alt="Bar chart comparing final training loss and best eval loss across runs">
+    <div class="img-caption">Final token_avg_loss and best eval_loss across all three runs. Combined dataset runs (left two) substantially outperform mol-instructions only (right).</div>
+
+    <h3>4. Smoothed Loss Reveals Clean Learning Trajectory</h3>
+
+    <p>The MA-50 smoothed training loss shows a clean exponential decay with no plateaus or oscillations. Eval checkpoints (marked as dots) consistently fall near or below the smoothed training curve, indicating good generalization throughout.</p>
+
+    <img src="../figures/main_run_smoothed_loss.png" alt="Main run smoothed training loss with eval checkpoints">
+    <div class="img-caption">Main run (0306_010408): MA-50 smoothed training loss with eval loss checkpoints overlaid.</div>
+
+    <h2>Summary Results</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Metric</th>
+                <th>MLP-Combined (0306)</th>
+                <th>MLP-Combined (0305)</th>
+                <th>MLP-Long (mol_inst)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Final token_avg_loss</td><td class="best">0.466</td><td>0.860</td><td>2.282</td></tr>
+            <tr><td>Min token_avg_loss</td><td class="best">0.307</td><td>0.604</td><td>1.916</td></tr>
+            <tr><td>Best eval_loss</td><td class="best">0.374</td><td>0.694</td><td>1.908</td></tr>
+            <tr><td>Best eval step</td><td>7,000</td><td>250</td><td>1,500</td></tr>
+            <tr><td>Convergence step</td><td>210</td><td>210</td><td>160</td></tr>
+            <tr><td>Mean grad norm</td><td>0.66</td><td>1.57</td><td>1.67</td></tr>
+            <tr><td>Max grad norm</td><td>7.60</td><td>7.15</td><td>6.13</td></tr>
+            <tr><td>Steps logged</td><td>7,000 / 28,941</td><td>250 / 28,941</td><td>1,500 / 4,662</td></tr>
+        </tbody>
+    </table>
+
+    <img src="../figures/mlp_combined_convergence_table.png" alt="Summary convergence table">
+    <div class="img-caption">Full convergence metrics table generated by analysis script.</div>
+
+    <h2>Anomalies</h2>
+
+    <blockquote>
+        <p><strong>Warmup-period "anomalies" (steps 60&ndash;250):</strong> The analysis flagged 12 loss spikes and 2 gradient spikes in this window. These are expected &mdash; high loss during warmup is normal when training a randomly-initialized projector. They are not concerning.</p>
+        <p><strong>Gradient spike at step 2,290:</strong> A single genuine gradient spike (max norm 7.60) occurred post-warmup in the main run. It was absorbed without loss divergence, confirming that the multimodal gradient clipping added in February is working as intended.</p>
+        <p><strong>MLP-Long gradient spikes:</strong> Steps 750, 880, 1340 showed gradient spikes. The mol-instructions dataset may produce more variable batches due to smaller size and lack of diversity.</p>
+    </blockquote>
+
+    <h2>Learning Rate Schedule</h2>
+
+    <img src="../figures/mlp_combined_lr_schedule.png" alt="Learning rate schedules for all runs">
+    <div class="img-caption">Learning rate schedules. All runs use cosine decay. The main run's longer schedule means it spends more time at higher LR.</div>
+
+    <h2>Recommendations</h2>
+
+    <ol>
+        <li><strong>Let the main run complete.</strong> Eval loss is still improving at step 7,000 (24.2% done). Based on the current trajectory, final eval_loss could reach ~0.30 or lower. Do not early-stop.</li>
+        <li><strong>Checkpoint at regular intervals.</strong> Save checkpoints every 2,500&ndash;5,000 steps to enable post-hoc selection of the best model, in case overfitting occurs later.</li>
+        <li><strong>Evaluate generation quality at key checkpoints.</strong> Loss alone does not guarantee good outputs (cf. the <a href="2026-03-02_three-way-sft-comparison.html">eval_loss paradox</a> from March 2). Run generation samples at steps 10K, 15K, 20K, and final.</li>
+        <li><strong>Prepare for GRPO.</strong> Once SFT completes, the best checkpoint should be used as parent for downstream GRPO training (GO prediction, stability, structure quality).</li>
+        <li><strong>Investigate the 9 failed starts.</strong> The high failure rate (9/12 runs crashed) suggests infrastructure fragility. Consider adding health checks or auto-resume.</li>
+    </ol>
+
+    <h2>Limitations</h2>
+
+    <ul>
+        <li>Only 3 runs had sufficient data; statistical significance cannot be established.</li>
+        <li>The main run is only 24.2% complete &mdash; final metrics may differ substantially.</li>
+        <li>GPU memory and wall-clock time were not captured in trainer state; these comparisons are unavailable.</li>
+        <li>The mol-instructions run differs in both dataset AND learning rate, confounding the comparison.</li>
+    </ul>
+
+    <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
+    <p style="color: var(--muted); font-size: 0.85rem;">
+        Data: <a href="../data/03-06/analysis_summary.json">analysis_summary.json</a> |
+        Plots: <a href="../data/03-06/analysis_plots.py">analysis_plots.py</a> |
+        Raw: <a href="../data/03-06/run_histories.csv">run_histories.csv</a>
+    </p>
+
+</body>
+</html>

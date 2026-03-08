@@ -1,0 +1,83 @@
+{
+  "generated": "2026-03-07",
+  "experiments": {
+    "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408": {
+      "label": "MLP-Combined (main run)",
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "dataset": "combined_sft_260225 (4.89M)",
+      "learning_rate": 0.0002,
+      "projector_lr": 0.001,
+      "total_steps_planned": 28941,
+      "total_steps_logged": 9750,
+      "progress_pct": 33.7,
+      "final_token_avg_loss": 0.438,
+      "min_token_avg_loss": 0.307,
+      "best_eval_loss": 0.361,
+      "best_eval_step": 9750,
+      "convergence_step": 210,
+      "anomalies": ["loss_spikes_during_warmup_60-180", "grad_spike_step_2290"]
+    },
+    "sft_text_combined_qwen3_8b_it_0307_190324": {
+      "label": "Text-Combined (baseline)",
+      "approach": "text",
+      "projector_type": null,
+      "dataset": "combined_sft_260225 (4.89M)",
+      "learning_rate": 0.0002,
+      "total_steps_planned": null,
+      "total_steps_logged": 200,
+      "progress_pct": null,
+      "final_token_avg_loss": 2.356,
+      "min_token_avg_loss": 2.356,
+      "best_eval_loss": null,
+      "best_eval_step": null,
+      "convergence_step": null,
+      "anomalies": []
+    },
+    "sft_esm3_mlp_combined_qwen3_8b_it_0305_100040": {
+      "label": "MLP-Combined (early, short)",
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "dataset": "combined_sft_260225 (4.89M)",
+      "total_steps_logged": 250,
+      "final_token_avg_loss": 0.860,
+      "best_eval_loss": 0.694,
+      "best_eval_step": 250,
+      "anomalies": ["grad_spike_step_100"]
+    },
+    "sft_esm3_mlp_long_qwen3_8b_it_0305_105828": {
+      "label": "MLP-Long (mol_instructions only)",
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "dataset": "mol_instructions (50K)",
+      "total_steps_logged": 500,
+      "final_token_avg_loss": 2.488,
+      "best_eval_loss": 2.046,
+      "best_eval_step": 500,
+      "anomalies": []
+    }
+  },
+  "comparison": {
+    "best_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+    "best_experiment_label": "MLP-Combined (main run)",
+    "metric": "best_eval_loss",
+    "value": 0.361,
+    "ranking": [
+      ["MLP-Combined (main)", 0.361],
+      ["MLP-Combined (early)", 0.694],
+      ["MLP-Long (mol_inst)", 2.046],
+      ["Text-Combined", null]
+    ]
+  },
+  "key_findings": {
+    "mlp_vs_text_at_200_steps": "MLP token_avg_loss=1.02 vs Text=2.36 (57% lower at step 200 on same dataset)",
+    "scaling_effect": "50K→4.89M dropped MLP eval from 1.942 to 0.361 (81% improvement, at 34% through epoch 1)",
+    "main_run_progress": "Step 9750/28941 (33.7%), eval_loss=0.361, still improving",
+    "generation_quality": "BLEU=0.307, ROUGE-L=0.483 at step 7000 (latest gen metrics available)"
+  },
+  "figures_generated": {
+    "blog": ["pub_approach_loss_curves.png", "pub_approach_eval_curves.png", "pub_main_run_progress.png", "pub_final_comparison.png", "pub_generation_quality.png", "pub_data_composition.png", "pub_architecture.png", "pub_gradient_norms.png", "pub_convergence_table.png", "pub_scaling_effect.png", "pub_mlp_vs_text_4m.png"],
+    "website": ["web_approach_loss_curves.png", "web_approach_eval_curves.png", "web_main_run_progress.png", "web_final_comparison.png", "web_generation_quality.png", "web_data_composition.png", "web_architecture.png", "web_scaling_effect.png", "web_mlp_vs_text_4m.png"],
+    "paper": ["loss_curves.pdf", "eval_curves.pdf", "main_run.pdf", "final_comparison.pdf", "generation_quality.pdf", "data_composition.pdf", "architecture.pdf", "gradient_norms.pdf", "convergence_table.pdf", "scaling_effect.pdf", "mlp_vs_text_4m.pdf"]
+  }
+}
