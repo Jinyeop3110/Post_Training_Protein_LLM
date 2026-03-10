@@ -2,8 +2,8 @@
 """Training entry point with Hydra configuration.
 
 Parallelization:
-  Single GPU:  python scripts/train.py experiment=sft_esm3_mlp
-  Multi-GPU:   bash scripts/launch_train.sh experiment=sft_esm3_mlp
+  Single GPU:  python scripts/train.py main_SFT=sft_esm3_mlp_combined
+  Multi-GPU:   bash scripts/launch_train.sh main_SFT=sft_esm3_mlp_combined
                (uses torchrun --nproc_per_node=NUM_GPUS)
 
 DDP layout (multi-GPU):

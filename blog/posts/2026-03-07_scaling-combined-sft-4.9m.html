@@ -143,35 +143,35 @@
 
     <p>Scaling from 50K mol-instructions to the full 4.89M combined dataset reduced eval_loss from 1.942 to 0.361&mdash;an <strong>81% improvement</strong>, and training is only 33.7% complete. This is the single largest performance gain in the project's history, outpacing model scaling (4B&rarr;8B: 31% improvement) by a factor of 2.6&times;.</p>
 
-    <img src="../figures/pub_scaling_effect.png" alt="Data scaling impact: 50K to 4.89M">
+    <img src="../figures/supple_figures/pub_scaling_effect.png" alt="Data scaling impact: 50K to 4.89M">
     <div class="img-caption">Impact of data scaling on eval_loss. Going from 50K single-source to 4.89M multi-source yields an 81% reduction.</div>
 
     <h3>2. ESM-3 MLP vs Text-Only on Same Dataset</h3>
 
     <p>A new text-only run on the same 4.89M combined dataset allows direct comparison on identical data. At step 200, MLP achieves <code>token_avg_loss</code> of 1.02 vs 2.36 for text-only&mdash;a <strong>57% advantage</strong>. This confirms that ESM-3 structural embeddings provide substantial signal even when text-only models have access to the same diverse training data.</p>
 
-    <img src="../figures/pub_mlp_vs_text_4m.png" alt="MLP vs Text-only on 4.89M combined dataset">
+    <img src="../figures/supple_figures/pub_mlp_vs_text_4m.png" alt="MLP vs Text-only on 4.89M combined dataset">
     <div class="img-caption">MLP vs Text-only training loss on the same 4.89M combined dataset. ESM-3 embeddings provide a 57% advantage at step 200.</div>
 
     <h3>3. MLP vs Perceiver: Comparable on Small Data</h3>
 
     <p>On the 50K mol-instructions dataset, MLP and Perceiver Resampler achieve nearly identical performance: eval_loss 1.942 vs 1.952 (MLP wins by 0.5%). This suggests the simpler MLP projector (30.5M params) captures the essential protein&rarr;language mapping as well as the more complex Perceiver (29.4M params) at this data scale. The combined-data comparison for Perceiver is pending.</p>
 
-    <img src="../figures/pub_approach_eval_curves.png" alt="Approach comparison: eval loss curves">
+    <img src="../figures/supple_figures/pub_approach_eval_curves.png" alt="Approach comparison: eval loss curves">
     <div class="img-caption">Eval loss curves comparing MLP, Perceiver, and Text-only approaches on 50K data. MLP and Perceiver converge to nearly identical eval_loss.</div>
 
     <h3>4. Main Run Progress: Still Improving at 33.7%</h3>
 
     <p>The main combined run is at step 9,750 / 28,941 (33.7%). Eval_loss decreased from 0.694 (step 250) to 0.361 (step 9,750) and shows no signs of plateauing. The min <code>token_avg_loss</code> reached 0.307.</p>
 
-    <img src="../figures/pub_main_run_progress.png" alt="Main run smoothed loss with eval markers">
+    <img src="../figures/supple_figures/pub_main_run_progress.png" alt="Main run smoothed loss with eval markers">
     <div class="img-caption">Main run training progress: smoothed token_avg_loss with eval checkpoints. The run is 33.7% complete with eval_loss = 0.361 and still declining.</div>
 
     <h3>5. Generation Quality by Task</h3>
 
     <p>At step 7,000 (latest generation evaluation):</p>
 
-    <img src="../figures/pub_generation_quality.png" alt="BLEU and ROUGE-L by protein task type">
+    <img src="../figures/supple_figures/pub_generation_quality.png" alt="BLEU and ROUGE-L by protein task type">
     <div class="img-caption">Generation quality metrics by task type. Function and catalytic tasks achieve the highest scores; domain/motif prediction lags due to structured output format.</div>
 
     <table>
@@ -203,14 +203,14 @@
 
     <h3>6. Training Stability</h3>
 
-    <img src="../figures/pub_gradient_norms.png" alt="Gradient norms (log scale)">
+    <img src="../figures/supple_figures/pub_gradient_norms.png" alt="Gradient norms (log scale)">
     <div class="img-caption">Gradient norms (log scale). The combined run stabilizes to mean 0.66 after initial warmup spikes, lower than both single-source (1.67) and text-only (1.48) runs.</div>
 
     <p>Despite the heterogeneous dataset, training is remarkably stable. Mean gradient norm of 0.66 is actually <em>lower</em> than single-source training (1.67), suggesting data diversity smooths the optimization landscape. Only 3 minor anomalies detected: warmup spikes (steps 60&ndash;180) and a gradient spike at step 2,290, all self-resolving.</p>
 
     <h2>Summary Results</h2>
 
-    <img src="../figures/pub_final_comparison.png" alt="Final comparison: bar chart with annotated eval loss">
+    <img src="../figures/supple_figures/pub_final_comparison.png" alt="Final comparison: bar chart with annotated eval loss">
     <div class="img-caption">Final comparison across all experiments with annotated eval_loss values.</div>
 
     <table>
@@ -258,12 +258,12 @@
         </tr>
     </table>
 
-    <img src="../figures/pub_convergence_table.png" alt="Color-coded convergence summary">
+    <img src="../figures/supple_figures/pub_convergence_table.png" alt="Color-coded convergence summary">
     <div class="img-caption">Convergence summary table across all experiments.</div>
 
     <h2>Dataset Composition</h2>
 
-    <img src="../figures/pub_data_composition.png" alt="Dataset breakdown">
+    <img src="../figures/supple_figures/pub_data_composition.png" alt="Dataset breakdown">
     <div class="img-caption">Combined training dataset composition: 4.89M samples from 6 sources with complementary annotation styles.</div>
 
     <h2>Anomalies</h2>

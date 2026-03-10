@@ -247,7 +247,7 @@
 <p>Each source was downloaded and converted to a standard JSON schema (<code>{instruction, input, output, metadata}</code>) with protein sequences wrapped in triple backticks. The combined directory uses symbolic links with source prefixes (<code>mol_</code>, <code>sp_</code>, <code>plm_</code>, <code>clap_</code>, <code>pd_</code>, <code>p2t_</code>) pointing back to processed files, so nothing is duplicated on disk.</p>
 <h2 id="sequence-length-distribution">Sequence Length Distribution</h2>
 <p>One of the first things to check with any protein dataset is the length distribution. Protein length directly controls ESM-3 encoder memory (geometric attention is O(L^2)), training sequence length, and the quality of structural representations.</p>
-<p><img alt="Protein Sequence Length Distribution" src="../figures/protein_seq_length_histogram.png" /></p>
+<p><img alt="Protein Sequence Length Distribution" src="../figures/supple_figures/protein_seq_length_histogram.png" /></p>
 <p>The distribution peaks around 150-350 amino acids — the typical range for single-domain proteins — and has a long right tail extending to 1,000 AA where our converters cap the sequences.</p>
 <table>
 <thead>

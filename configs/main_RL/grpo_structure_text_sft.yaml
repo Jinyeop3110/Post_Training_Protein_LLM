@@ -1,0 +1,60 @@
+# @package _global_
+
+# GRPO Structure Quality: Text SFT → GRPO
+# Chains from text-only SFT checkpoint. Tests RL on top of text-only SFT.
+#
+# Memory budget (FSDP/4, per GPU):
+#   Static: 7.6 GB (model + LoRA + ESMFold, no ESM-3)
+#   Peak:   ~14 GB (generation + grad)  →  32 GB headroom on L40S 46GB
+#
+# Usage:
+#   python scripts/train.py main_RL=grpo_structure_text_sft
+
+defaults:
+  - override /model: qwen3_8b
+  - override /data: structure_quality
+  - override /training: grpo
+
+approach: text
+experiment_name: grpo_structure_text_sft_${model.name}_${now:%m%d_%H%M%S}
+
+# Chain from text SFT
+parent_experiment: sft_text_combined_qwen3_8b_it_0307_190324
+
+# Data task for reward routing
+data:
+  task: esmfold
+
+training:
+  # --- Optimized for 4×L40S 46GB ---
+  lr: 5e-6
+  batch_size: 4
+  gradient_accumulation_steps: 4  # effective batch = 64
+  epochs: 1
+  warmup_steps: 20
+  max_grad_norm: 1.0
+
+  grpo:
+    group_size: 8
+    temperature: 1.0
+    use_kl_penalty: false
+    normalize_advantages: false
+
+  rollout:
+    max_tokens: 256
+    top_p: 0.95
+    do_sample: true
+
+  save_steps: 50
+  eval_steps: 25
+  logging_steps: 5
+
+  fsdp:
+    enabled: true
+
+  wandb:
+    tags:
+      - grpo
+      - structure_quality
+      - text_sft
+      - ${model.name}

@@ -188,7 +188,7 @@
     <p>We compare four approaches for integrating protein structural information into a language model. The diagram below illustrates the data flow and trainable components for each approach. All approaches support FSDP (Fully Sharded Data Parallel) for efficient multi-GPU training and scalability to larger LLM backbones.</p>
 
     <figure style="margin: 1.5rem 0; text-align: center;">
-        <img src="../figures/architecture_comparison.png" alt="Architecture comparison: Text-Only vs MLP Projector vs Perceiver Resampler vs Flamingo" style="max-width: 100%; border: 1px solid var(--border); border-radius: 4px;">
+        <img src="../figures/supple_figures/architecture_comparison.png" alt="Architecture comparison: Text-Only vs MLP Projector vs Perceiver Resampler vs Flamingo" style="max-width: 100%; border: 1px solid var(--border); border-radius: 4px;">
         <figcaption style="color: var(--muted); font-size: 0.85rem; margin-top: 0.5rem;">
             <strong>Figure 1.</strong> Four protein-LLM architecture variants. Blue (dashed border) = frozen pretrained components; Orange = trainable from scratch; Purple = LLM with LoRA; Red = gated cross-attention (Flamingo). Parameter counts indicate trainable parameters only.
         </figcaption>
@@ -323,7 +323,7 @@
 
     <p>The text-only approach processes raw amino acid sequences as tokens (<code>&lt;protein&gt;MKTL...&lt;/protein&gt;</code>), requiring the LLM to learn protein structure from scratch. The ESM-3 encoder provides pre-trained structural embeddings (1536-dim) that capture evolutionary and structural information the LLM cannot easily learn from sequence alone.</p>
 
-    <img src="../figures/text_vs_esm_eval_loss.png" alt="Evaluation Loss: Text vs ESM-3 approaches across training steps">
+    <img src="../figures/supple_figures/text_vs_esm_eval_loss.png" alt="Evaluation Loss: Text vs ESM-3 approaches across training steps">
     <p class="caption">Figure 1: Evaluation loss over training. ESM-3 approaches (MLP, Perceiver) converge to substantially lower eval_loss than the text-only baseline.</p>
 
     <h3>2. MLP and Perceiver Projectors Are Nearly Identical</h3>
@@ -332,7 +332,7 @@
 
     <p>Given the architectural simplicity of MLP (fewer hyperparameters, faster forward pass) and the negligible performance difference, MLP remains the recommended default projector.</p>
 
-    <img src="../figures/text_vs_esm_final_comparison.png" alt="Final eval_loss comparison bar chart: MLP, Perceiver, Text">
+    <img src="../figures/supple_figures/text_vs_esm_final_comparison.png" alt="Final eval_loss comparison bar chart: MLP, Perceiver, Text">
     <p class="caption">Figure 2: Final eval_loss by approach. MLP and Perceiver are within 0.01 of each other, both substantially below text-only.</p>
 
     <h3>3. Training Loss Dynamics Differ Across Approaches</h3>
@@ -341,7 +341,7 @@
 
     <p>Text-only exhibits more gradient norm spikes throughout training (5 grad spikes vs 1&ndash;2 for ESM-3 runs), suggesting less stable optimization when the LLM must learn protein representations from raw sequence tokens.</p>
 
-    <img src="../figures/loss_curves.png" alt="Training loss curves (token_avg_loss) for all approaches">
+    <img src="../figures/supple_figures/loss_curves.png" alt="Training loss curves (token_avg_loss) for all approaches">
     <p class="caption">Figure 3: Training loss (token_avg_loss) across all four runs. ESM-3 approaches converge faster and reach lower loss floors.</p>
 
     <h3>4. MLP-Long Run: Steady Progress at 10% Completion</h3>
@@ -356,20 +356,20 @@
 
     <p>The learning rate schedule shows smooth warmup and the beginning of cosine decay. With 90% of training remaining and eval_loss still on a downward trajectory, this run may ultimately match or surpass the completed MLP run's 1.942 &mdash; though the different dataset (mol_instructions-only vs combined_sft) makes this comparison speculative.</p>
 
-    <img src="../figures/long_mlp_loss_curve.png" alt="MLP-long training and eval loss over 500 steps">
+    <img src="../figures/supple_figures/long_mlp_loss_curve.png" alt="MLP-long training and eval loss over 500 steps">
     <p class="caption">Figure 4: MLP-long training loss and eval loss through step 500. Both curves show sustained improvement with no plateau.</p>
 
-    <img src="../figures/long_mlp_gradient_norms.png" alt="MLP-long gradient norms over 500 steps">
+    <img src="../figures/supple_figures/long_mlp_gradient_norms.png" alt="MLP-long gradient norms over 500 steps">
     <p class="caption">Figure 5: MLP-long gradient norms. Stable throughout training with a single spike at step 80 during warmup.</p>
 
-    <img src="../figures/long_mlp_lr_schedule.png" alt="MLP-long learning rate schedule">
+    <img src="../figures/supple_figures/long_mlp_lr_schedule.png" alt="MLP-long learning rate schedule">
     <p class="caption">Figure 6: MLP-long LR schedule showing warmup and early cosine decay (1.2e-4 peak).</p>
 
     <h3>5. Convergence Is Rapid and Consistent</h3>
 
     <p>All four runs reach convergence (defined as &lt;5% loss improvement over subsequent steps) by step 180&ndash;200. The MLP-long run converges at step 200 despite its lower learning rate (1.2e-4 vs 2e-4), suggesting that the warmup+cosine schedule provides adequate early adaptation.</p>
 
-    <img src="../figures/approach_convergence_comparison.png" alt="Convergence comparison across approaches">
+    <img src="../figures/supple_figures/approach_convergence_comparison.png" alt="Convergence comparison across approaches">
     <p class="caption">Figure 7: Convergence comparison. All approaches stabilize within the first 200 steps.</p>
 
     <h2>Summary Results</h2>
@@ -484,7 +484,7 @@
         <p>
             <a href="../index.html">Back to index</a> &nbsp;|&nbsp;
             Data: <a href="../data/03-04/">blog/data/03-04/</a> &nbsp;|&nbsp;
-            Figures: <a href="../figures/">blog/figures/</a>
+            Figures: <a href="../figures/supple_figures/">blog/figures/</a>
         </p>
         <p>Generated by the Protein LLM scientist team &mdash; 2026-03-04</p>
     </footer>

@@ -10,114 +10,51 @@ Usage:
     # Single experiment
     python scripts/analysis/plot_training.py \
         --experiments sft_esm3_mlp_combined_qwen3_8b_it_0306_010408 \
-        --output blog/figures/
+        --output blog/figures/supple_figures
 
     # Multiple experiments for comparison
     python scripts/analysis/plot_training.py \
         --experiments exp1 exp2 exp3 \
-        --output blog/figures/
+        --output blog/figures/supple_figures
 
     # With specific plots only
     python scripts/analysis/plot_training.py \
-        --experiments exp1 --output blog/figures/ \
+        --experiments exp1 --output blog/figures/supple_figures \
         --plots train_loss eval_loss generation_quality
 
-    # All three output targets
+    # Paper output (PDF + PNG)
     python scripts/analysis/plot_training.py \
-        --experiments exp1 --output blog/figures/ \
-        --paper-output paper/figures/ \
+        --experiments exp1 \
+        --output blog/figures/supple_figures \
+        --paper-output paper/figures/supplementary \
         --style blog paper
 """
 
-import matplotlib
+import os
+import sys
 
-matplotlib.use('Agg')  # Headless rendering — MUST be before pyplot import
+# Ensure this directory is on sys.path for figure_style import
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 import argparse
 import glob
 import json
-import os
-import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
-
-# ═══════════════════════════════════════════════════════════════════════
-# CONSTANTS
-# ═══════════════════════════════════════════════════════════════════════
-
-BASE_DIR = "/orcd/pool/006/yeopjin/workspace/Post_Training_Protein_LLM"
-RESULTS_DIR = f"{BASE_DIR}/results"
-DATA_DIR = f"{BASE_DIR}/blog/data"
-
-APPROACH_COLORS = {
-    "mlp": "#1f77b4",        # Blue
-    "perceiver": "#ff7f0e",  # Orange
-    "text": "#2ca02c",       # Green
-    "flamingo": "#d62728",   # Red
-    "unknown": "#7f7f7f",    # Gray
-}
-
-PAPER_COLORS = {
-    "mlp": "#2166ac",
-    "perceiver": "#b2182b",
-    "text": "#4d4d4d",
-    "flamingo": "#762a83",
-    "unknown": "#7f7f7f",
-}
-
-# NeurIPS column widths
-PAPER_COL = (3.25, 2.4)
-PAPER_WIDE = (6.75, 2.8)
-BLOG_SIZE = (10, 6)
-BLOG_WIDE = (14, 6)
-
-FIG_DPI = 150
-PAPER_DPI = 300
-
-
-# ═══════════════════════════════════════════════════════════════════════
-# STYLE SETUP
-# ═══════════════════════════════════════════════════════════════════════
-
-def setup_blog_style():
-    """Internal blog style."""
-    sns.set_theme(style="whitegrid", palette="colorblind")
-    plt.rcParams.update({
-        'figure.dpi': FIG_DPI,
-        'savefig.dpi': FIG_DPI,
-        'font.size': 11,
-        'axes.titlesize': 13,
-        'axes.labelsize': 12,
-        'legend.fontsize': 9,
-    })
-    return APPROACH_COLORS
-
-def setup_paper_style():
-    """NeurIPS paper style — LaTeX-compatible."""
-    sns.set_theme(style="whitegrid", palette="colorblind")
-    plt.rcParams.update({
-        'figure.dpi': PAPER_DPI,
-        'savefig.dpi': PAPER_DPI,
-        'font.family': 'serif',
-        'font.serif': ['DejaVu Serif', 'Times New Roman', 'Times'],
-        'font.size': 8,
-        'axes.titlesize': 9,
-        'axes.labelsize': 8,
-        'legend.fontsize': 7,
-        'xtick.labelsize': 7,
-        'ytick.labelsize': 7,
-        'axes.linewidth': 0.5,
-        'grid.linewidth': 0.3,
-        'grid.alpha': 0.4,
-        'lines.linewidth': 1.0,
-        'lines.markersize': 3,
-        'savefig.bbox': 'tight',
-        'savefig.pad_inches': 0.02,
-    })
-    return PAPER_COLORS
-
+from figure_style import (
+    DATA_DIR,
+    RESULTS_DIR,
+    SUPPLE_FIGURES_DIR,
+    annotate_bars,
+    annotate_best,
+    get_approach_label,
+    get_label,
+    smooth,
+    style,
+    to_rgba_alpha,
+)
 
 # ═══════════════════════════════════════════════════════════════════════
 # DATA LOADING
@@ -126,9 +63,11 @@ def setup_paper_style():
 class ExperimentData:
     """Loads and holds data for a single experiment from multiple sources."""
 
-    def __init__(self, name, results_dir=RESULTS_DIR, data_dir=DATA_DIR):
+    def __init__(self, name, results_dir=None, data_dir=None):
         self.name = name
-        self.results_path = os.path.join(results_dir, name)
+        self.results_path = os.path.join(
+            str(results_dir or RESULTS_DIR), name)
+        self.data_dir = str(data_dir or DATA_DIR)
         self.approach = "unknown"
         self.projector_type = None
         self.base_model = None
@@ -162,7 +101,6 @@ class ExperimentData:
         if not checkpoints:
             return False
 
-        # Use the latest checkpoint
         state_path = checkpoints[-1]
         print(f"  Loading trainer_state from: {os.path.basename(os.path.dirname(state_path))}")
 
@@ -206,8 +144,7 @@ class ExperimentData:
 
     def _try_csv(self):
         """Load from run_histories.csv in blog/data/."""
-        # Find the latest date folder
-        date_dirs = sorted(glob.glob(os.path.join(DATA_DIR, "*")))
+        date_dirs = sorted(glob.glob(os.path.join(self.data_dir, "*")))
         for date_dir in reversed(date_dirs):
             csv_path = os.path.join(date_dir, "run_histories.csv")
             if os.path.exists(csv_path):
@@ -218,7 +155,6 @@ class ExperimentData:
 
                 print(f"  Loading from CSV: {csv_path}")
 
-                # Split train vs eval
                 train_mask = exp_df["token_avg_loss"].notna()
                 eval_mask = exp_df["eval_loss"].notna()
 
@@ -248,7 +184,6 @@ class ExperimentData:
         else:
             self.approach = self._infer_approach()
 
-        # Try training_args.json for LR info
         args_path = os.path.join(self.results_path, "training_args.json")
         if os.path.exists(args_path):
             with open(args_path) as f:
@@ -256,8 +191,7 @@ class ExperimentData:
             self.learning_rate = args.get("learning_rate")
             self.projector_lr = args.get("projector_lr")
 
-        # Also check experiment_metadata.json from data-collector
-        for date_dir in sorted(glob.glob(os.path.join(DATA_DIR, "*")), reverse=True):
+        for date_dir in sorted(glob.glob(os.path.join(self.data_dir, "*")), reverse=True):
             meta_path = os.path.join(date_dir, "experiment_metadata.json")
             if os.path.exists(meta_path):
                 with open(meta_path) as f:
@@ -317,23 +251,10 @@ class ExperimentData:
     @property
     def label(self):
         """Short label for legends."""
-        parts = []
-        if self.approach == "text":
-            parts.append("Text")
-        elif self.approach == "mlp":
-            parts.append("ESM3+MLP")
-        elif self.approach == "perceiver":
-            parts.append("Perceiver")
-        elif self.approach == "flamingo":
-            parts.append("Flamingo")
-        else:
-            parts.append(self.approach)
-
-        # Add model shorthand
+        parts = [get_approach_label(self.approach)]
         if self.base_model:
             model_short = self.base_model.split("/")[-1].replace("Instruct-2507", "").replace("-", "")
             parts.append(model_short)
-
         return " ".join(parts)
 
     @property
@@ -384,22 +305,21 @@ class ExperimentData:
 # PLOT FUNCTIONS
 # ═══════════════════════════════════════════════════════════════════════
 
-def plot_train_loss(experiments, colors, figsize, save_path, fmt="png",
+def plot_train_loss(experiments, figsize=None, save_path=None, fmt="png",
                     smoothing_window=50):
     """Training loss curves (token_avg_loss) for all experiments."""
-    fig, ax = plt.subplots(figsize=figsize)
+    fig, ax = plt.subplots(figsize=figsize or style.figsize())
 
     for exp in experiments:
         if len(exp.train_df) == 0 or "token_avg_loss" not in exp.train_df:
             continue
         df = exp.train_df.dropna(subset=["token_avg_loss"])
-        color = colors.get(exp.approach, colors.get("unknown", "#333333"))
+        color = style.color(exp.approach)
 
-        # Raw (faint) if enough data for smoothing
         if len(df) > smoothing_window:
             ax.plot(df["step"], df["token_avg_loss"],
                     color=color, linewidth=0.3, alpha=0.15)
-            smoothed = df["token_avg_loss"].rolling(smoothing_window, min_periods=1).mean()
+            smoothed = smooth(df["token_avg_loss"], smoothing_window)
             ax.plot(df["step"], smoothed,
                     color=color, linewidth=1.8, alpha=0.9,
                     label=f"{exp.label} (MA-{smoothing_window})")
@@ -408,20 +328,22 @@ def plot_train_loss(experiments, colors, figsize, save_path, fmt="png",
                     color=color, linewidth=1.5, alpha=0.85,
                     marker="o", markersize=3, label=exp.label)
 
-    ax.set_xlabel("Training Step")
-    ax.set_ylabel("Token Average Loss")
+    ax.set_xlabel(get_label("step"))
+    ax.set_ylabel(get_label("token_avg_loss"))
     ax.set_title("Training Loss")
     ax.legend()
+    style.clean_axes(ax)
     fig.tight_layout()
-    fig.savefig(save_path, format=fmt, dpi=plt.rcParams.get('savefig.dpi', FIG_DPI),
-                bbox_inches="tight")
-    plt.close()
-    print(f"  OK {os.path.basename(save_path)}")
+    if save_path:
+        fig.savefig(save_path, format=fmt, dpi=style.dpi(), bbox_inches="tight")
+        plt.close()
+        print(f"  OK {os.path.basename(save_path)}")
+    return fig, ax
 
 
-def plot_eval_loss(experiments, colors, figsize, save_path, fmt="png"):
+def plot_eval_loss(experiments, figsize=None, save_path=None, fmt="png"):
     """Eval loss curves for all experiments."""
-    fig, ax = plt.subplots(figsize=figsize)
+    fig, ax = plt.subplots(figsize=figsize or style.figsize())
 
     has_data = False
     for exp in experiments:
@@ -429,40 +351,38 @@ def plot_eval_loss(experiments, colors, figsize, save_path, fmt="png"):
             continue
         has_data = True
         df = exp.eval_df.sort_values("step")
-        color = colors.get(exp.approach, colors.get("unknown", "#333333"))
+        color = style.color(exp.approach)
         ax.plot(df["step"], df["eval_loss"],
                 color=color, marker="o", markersize=4,
                 linewidth=1.8, alpha=0.85, label=exp.label)
 
-        # Annotate best
         best_idx = df["eval_loss"].idxmin()
         best_step = df.loc[best_idx, "step"]
         best_val = df.loc[best_idx, "eval_loss"]
-        ax.annotate(f"{best_val:.3f}",
-                    xy=(best_step, best_val),
-                    xytext=(10, -15), textcoords="offset points",
-                    fontsize=plt.rcParams['font.size'] - 2,
-                    color=color, fontweight="bold",
-                    arrowprops=dict(arrowstyle="->", color=color, lw=0.8))
+        annotate_best(ax, best_step, best_val, best_val, color)
 
     if not has_data:
         plt.close()
-        print(f"  SKIP {os.path.basename(save_path)} (no eval data)")
-        return
+        if save_path:
+            print(f"  SKIP {os.path.basename(save_path)} (no eval data)")
+        return None, None
 
-    ax.set_xlabel("Training Step")
-    ax.set_ylabel("Eval Loss")
+    ax.set_xlabel(get_label("step"))
+    ax.set_ylabel(get_label("eval_loss"))
     ax.set_title("Validation Loss")
     ax.legend()
+    style.clean_axes(ax)
     fig.tight_layout()
-    fig.savefig(save_path, format=fmt, bbox_inches="tight")
-    plt.close()
-    print(f"  OK {os.path.basename(save_path)}")
+    if save_path:
+        fig.savefig(save_path, format=fmt, bbox_inches="tight")
+        plt.close()
+        print(f"  OK {os.path.basename(save_path)}")
+    return fig, ax
 
 
-def plot_generation_quality(experiments, colors, figsize, save_path, fmt="png"):
+def plot_generation_quality(experiments, figsize=None, save_path=None, fmt="png"):
     """BLEU and ROUGE-L over training steps."""
-    fig, ax = plt.subplots(figsize=figsize)
+    fig, ax = plt.subplots(figsize=figsize or style.figsize())
 
     has_data = False
     for exp in experiments:
@@ -470,35 +390,39 @@ def plot_generation_quality(experiments, colors, figsize, save_path, fmt="png"):
             continue
         has_data = True
         df = exp.gen_df.sort_values("step")
-        color = colors.get(exp.approach, colors.get("unknown", "#333333"))
+        color = style.color(exp.approach)
 
         ax.plot(df["step"], df["bleu"],
                 color=color, linewidth=1.5, alpha=0.85,
-                marker="o", markersize=3, label=f"{exp.label} BLEU")
+                marker="o", markersize=3, label=f"{exp.label} {get_label('bleu')}")
         ax.plot(df["step"], df["rouge_l"],
                 color=color, linewidth=1.5, alpha=0.85,
                 linestyle="--", marker="s", markersize=3,
-                label=f"{exp.label} ROUGE-L")
+                label=f"{exp.label} {get_label('rouge_l')}")
 
     if not has_data:
         plt.close()
-        print(f"  SKIP {os.path.basename(save_path)} (no generation data)")
-        return
+        if save_path:
+            print(f"  SKIP {os.path.basename(save_path)} (no generation data)")
+        return None, None
 
-    ax.set_xlabel("Training Step")
+    ax.set_xlabel(get_label("step"))
     ax.set_ylabel("Score")
     ax.set_title("Generation Quality Over Training")
     ax.legend(loc="lower right")
     ax.set_ylim(0, min(1.0, ax.get_ylim()[1] * 1.15))
+    style.clean_axes(ax)
     fig.tight_layout()
-    fig.savefig(save_path, format=fmt, bbox_inches="tight")
-    plt.close()
-    print(f"  OK {os.path.basename(save_path)}")
+    if save_path:
+        fig.savefig(save_path, format=fmt, bbox_inches="tight")
+        plt.close()
+        print(f"  OK {os.path.basename(save_path)}")
+    return fig, ax
 
 
-def plot_lr_schedule(experiments, colors, figsize, save_path, fmt="png"):
+def plot_lr_schedule(experiments, figsize=None, save_path=None, fmt="png"):
     """Learning rate schedule over training."""
-    fig, ax = plt.subplots(figsize=figsize)
+    fig, ax = plt.subplots(figsize=figsize or style.figsize())
 
     has_data = False
     for exp in experiments:
@@ -508,29 +432,33 @@ def plot_lr_schedule(experiments, colors, figsize, save_path, fmt="png"):
         if len(df) == 0:
             continue
         has_data = True
-        color = colors.get(exp.approach, colors.get("unknown", "#333333"))
+        color = style.color(exp.approach)
         ax.plot(df["step"], df["learning_rate"],
                 color=color, linewidth=1.5, alpha=0.85, label=exp.label)
 
     if not has_data:
         plt.close()
-        print(f"  SKIP {os.path.basename(save_path)} (no LR data)")
-        return
+        if save_path:
+            print(f"  SKIP {os.path.basename(save_path)} (no LR data)")
+        return None, None
 
-    ax.set_xlabel("Training Step")
-    ax.set_ylabel("Learning Rate")
+    ax.set_xlabel(get_label("step"))
+    ax.set_ylabel(get_label("learning_rate"))
     ax.set_title("Learning Rate Schedule")
     ax.legend()
+    style.clean_axes(ax)
     fig.tight_layout()
-    fig.savefig(save_path, format=fmt, bbox_inches="tight")
-    plt.close()
-    print(f"  OK {os.path.basename(save_path)}")
+    if save_path:
+        fig.savefig(save_path, format=fmt, bbox_inches="tight")
+        plt.close()
+        print(f"  OK {os.path.basename(save_path)}")
+    return fig, ax
 
 
-def plot_grad_norms(experiments, colors, figsize, save_path, fmt="png",
+def plot_grad_norms(experiments, figsize=None, save_path=None, fmt="png",
                     smoothing_window=30):
     """Gradient norms (log scale) with anomaly detection."""
-    fig, ax = plt.subplots(figsize=figsize)
+    fig, ax = plt.subplots(figsize=figsize or style.figsize())
 
     has_data = False
     for exp in experiments:
@@ -540,63 +468,62 @@ def plot_grad_norms(experiments, colors, figsize, save_path, fmt="png",
         if len(df) == 0:
             continue
         has_data = True
-        color = colors.get(exp.approach, colors.get("unknown", "#333333"))
+        color = style.color(exp.approach)
 
-        # Raw (faint)
         ax.plot(df["step"], df["grad_norm"],
                 color=color, linewidth=0.4, alpha=0.3)
 
-        # Smoothed
         if len(df) > smoothing_window:
-            smoothed = df["grad_norm"].rolling(smoothing_window, min_periods=1).mean()
+            smoothed = smooth(df["grad_norm"], smoothing_window)
             ax.plot(df["step"], smoothed,
                     color=color, linewidth=1.5, alpha=0.9,
                     label=f"{exp.label} (MA-{smoothing_window})")
 
-        # Mean line
         mean_gn = df["grad_norm"].mean()
         ax.axhline(mean_gn, color=color, linestyle="--", alpha=0.4,
                    label=f"Mean: {mean_gn:.3f}")
 
-        # Flag spikes > 3 std
         std_gn = df["grad_norm"].std()
         spikes = df[df["grad_norm"] > mean_gn + 3 * std_gn]
         if len(spikes) > 0:
             ax.scatter(spikes["step"], spikes["grad_norm"],
-                       color="red", marker="x", s=30, zorder=5, alpha=0.7,
+                       color="#E74C3C", marker="x", s=30, zorder=5, alpha=0.7,
                        label=f"Spikes ({len(spikes)})")
 
     if not has_data:
         plt.close()
-        print(f"  SKIP {os.path.basename(save_path)} (no grad norm data)")
-        return
+        if save_path:
+            print(f"  SKIP {os.path.basename(save_path)} (no grad norm data)")
+        return None, None
 
     ax.set_yscale("log")
-    ax.set_xlabel("Training Step")
-    ax.set_ylabel("Gradient Norm (log)")
+    ax.set_xlabel(get_label("step"))
+    ax.set_ylabel(f"{get_label('grad_norm')} (log)")
     ax.set_title("Gradient Norms")
     ax.legend()
+    style.clean_axes(ax)
     fig.tight_layout()
-    fig.savefig(save_path, format=fmt, bbox_inches="tight")
-    plt.close()
-    print(f"  OK {os.path.basename(save_path)}")
+    if save_path:
+        fig.savefig(save_path, format=fmt, bbox_inches="tight")
+        plt.close()
+        print(f"  OK {os.path.basename(save_path)}")
+    return fig, ax
 
 
-def plot_train_eval_combined(experiments, colors, figsize, save_path, fmt="png",
+def plot_train_eval_combined(experiments, figsize=None, save_path=None, fmt="png",
                              smoothing_window=50):
     """Combined train + eval loss on same axes for each experiment."""
-    fig, ax = plt.subplots(figsize=figsize)
+    fig, ax = plt.subplots(figsize=figsize or style.figsize())
 
     for exp in experiments:
-        color = colors.get(exp.approach, colors.get("unknown", "#333333"))
+        color = style.color(exp.approach)
 
-        # Train loss (smoothed)
         if len(exp.train_df) > 0 and "token_avg_loss" in exp.train_df:
             df = exp.train_df.dropna(subset=["token_avg_loss"])
             if len(df) > smoothing_window:
                 ax.plot(df["step"], df["token_avg_loss"],
                         color=color, linewidth=0.3, alpha=0.12)
-                smoothed = df["token_avg_loss"].rolling(smoothing_window, min_periods=1).mean()
+                smoothed = smooth(df["token_avg_loss"], smoothing_window)
                 ax.plot(df["step"], smoothed,
                         color=color, linewidth=1.5, alpha=0.8,
                         label=f"{exp.label} Train")
@@ -605,24 +532,26 @@ def plot_train_eval_combined(experiments, colors, figsize, save_path, fmt="png",
                         color=color, linewidth=1.2, alpha=0.7,
                         label=f"{exp.label} Train")
 
-        # Eval loss (markers)
         if len(exp.eval_df) > 0:
             df = exp.eval_df.sort_values("step")
             ax.plot(df["step"], df["eval_loss"],
                     color=color, marker="D", markersize=5, linewidth=0,
                     zorder=5, alpha=0.9, label=f"{exp.label} Eval")
 
-    ax.set_xlabel("Training Step")
+    ax.set_xlabel(get_label("step"))
     ax.set_ylabel("Loss")
     ax.set_title("Training & Validation Loss")
     ax.legend()
+    style.clean_axes(ax)
     fig.tight_layout()
-    fig.savefig(save_path, format=fmt, bbox_inches="tight")
-    plt.close()
-    print(f"  OK {os.path.basename(save_path)}")
+    if save_path:
+        fig.savefig(save_path, format=fmt, bbox_inches="tight")
+        plt.close()
+        print(f"  OK {os.path.basename(save_path)}")
+    return fig, ax
 
 
-def plot_comparison_bar(experiments, colors, figsize, save_path, fmt="png"):
+def plot_comparison_bar(experiments, figsize=None, save_path=None, fmt="png"):
     """Bar chart comparing final train loss and best eval loss across experiments."""
     names = []
     train_vals = []
@@ -635,26 +564,26 @@ def plot_comparison_bar(experiments, colors, figsize, save_path, fmt="png"):
         names.append(exp.label)
         train_vals.append(exp.final_token_avg_loss or 0)
         eval_vals.append(exp.best_eval_loss or 0)
-        bar_colors.append(colors.get(exp.approach, "#333333"))
+        bar_colors.append(style.color(exp.approach))
 
     if not names:
-        print(f"  SKIP {os.path.basename(save_path)} (no metrics)")
-        return
+        if save_path:
+            print(f"  SKIP {os.path.basename(save_path)} (no metrics)")
+        return None, None
 
-    fig, ax = plt.subplots(figsize=figsize)
+    fig, ax = plt.subplots(figsize=figsize or style.figsize())
     x = np.arange(len(names))
     width = 0.35
 
-    bars1 = ax.bar(x - width/2, train_vals, width, label="Final Train Loss",
-                   color=[c + "80" for c in bar_colors], edgecolor=bar_colors, linewidth=1.2)
-    bars2 = ax.bar(x + width/2, eval_vals, width, label="Best Eval Loss",
+    bars1 = ax.bar(x - width/2, train_vals, width,
+                   label=get_label("final_train_loss"),
+                   color=[to_rgba_alpha(c, 0.5) for c in bar_colors],
+                   edgecolor=bar_colors, linewidth=1.2)
+    bars2 = ax.bar(x + width/2, eval_vals, width,
+                   label=get_label("best_eval_loss"),
                    color=bar_colors, edgecolor="white", linewidth=0.5)
 
-    for bar, val in zip(bars2, eval_vals):
-        if val > 0:
-            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.02,
-                    f"{val:.3f}", ha="center", va="bottom",
-                    fontsize=plt.rcParams['font.size'] - 1, fontweight="bold")
+    annotate_bars(ax, bars2, eval_vals)
 
     ax.set_xticks(x)
     ax.set_xticklabels(names, fontsize=plt.rcParams['font.size'] - 1)
@@ -662,16 +591,21 @@ def plot_comparison_bar(experiments, colors, figsize, save_path, fmt="png"):
     ax.set_title("Final Metrics Comparison")
     ax.legend()
     ax.set_ylim(0, max(max(train_vals), max(eval_vals)) * 1.3)
+    style.clean_axes(ax)
     fig.tight_layout()
-    fig.savefig(save_path, format=fmt, bbox_inches="tight")
-    plt.close()
-    print(f"  OK {os.path.basename(save_path)}")
+    if save_path:
+        fig.savefig(save_path, format=fmt, bbox_inches="tight")
+        plt.close()
+        print(f"  OK {os.path.basename(save_path)}")
+    return fig, ax
 
 
-def plot_convergence_table(experiments, figsize, save_path, fmt="png"):
+def plot_convergence_table(experiments, figsize=None, save_path=None, fmt="png"):
     """Summary table rendered as image."""
-    headers = ["Experiment", "Approach", "Steps", "Train Loss", "Eval Loss", "BLEU", "ROUGE-L"]
+    headers = ["Experiment", "Approach", "Steps", get_label("train_loss"),
+               get_label("eval_loss"), get_label("bleu"), get_label("rouge_l")]
     rows = []
+    approach_order = []
 
     for exp in experiments:
         step_str = str(exp.latest_step)
@@ -679,11 +613,11 @@ def plot_convergence_table(experiments, figsize, save_path, fmt="png"):
             pct = exp.latest_step / exp.max_steps * 100
             step_str += f" ({pct:.0f}%)"
 
-        train_loss = f"{exp.final_token_avg_loss:.4f}" if exp.final_token_avg_loss else "—"
-        eval_loss = f"{exp.best_eval_loss:.4f}" if exp.best_eval_loss else "—"
+        train_loss = f"{exp.final_token_avg_loss:.4f}" if exp.final_token_avg_loss else "\u2014"
+        eval_loss = f"{exp.best_eval_loss:.4f}" if exp.best_eval_loss else "\u2014"
 
-        bleu = "—"
-        rouge = "—"
+        bleu = "\u2014"
+        rouge = "\u2014"
         if len(exp.gen_df) > 0:
             latest = exp.gen_df.iloc[-1]
             bleu = f"{latest['bleu']:.3f}"
@@ -691,8 +625,9 @@ def plot_convergence_table(experiments, figsize, save_path, fmt="png"):
 
         rows.append([exp.label, exp.approach.upper(), step_str,
                      train_loss, eval_loss, bleu, rouge])
+        approach_order.append(exp.approach)
 
-    fig, ax = plt.subplots(figsize=figsize)
+    fig, ax = plt.subplots(figsize=figsize or style.figsize("wide"))
     ax.axis("off")
 
     table = ax.table(
@@ -701,32 +636,17 @@ def plot_convergence_table(experiments, figsize, save_path, fmt="png"):
         loc="center",
         cellLoc="center",
     )
-    table.auto_set_font_size(False)
-    table.set_fontsize(plt.rcParams.get('font.size', 10) - 1)
-    table.scale(1.2, 1.6)
+    style.style_table(table, approach_order=approach_order,
+                      n_rows=len(rows), n_cols=len(headers))
 
-    # Style header
-    for j in range(len(headers)):
-        table[0, j].set_facecolor("#2C3E50")
-        table[0, j].set_text_props(color="white", fontweight="bold")
-
-    # Color rows by approach
-    approach_bg = {
-        "mlp": "#D4E6F1",
-        "perceiver": "#FDE8D0",
-        "text": "#D5F5E3",
-        "flamingo": "#FADBD8",
-    }
-    for i, exp in enumerate(experiments):
-        bg = approach_bg.get(exp.approach, "#FFFFFF")
-        for j in range(len(headers)):
-            table[i + 1, j].set_facecolor(bg)
-
-    ax.set_title("Experiment Summary", fontsize=plt.rcParams.get('axes.titlesize', 13), pad=15)
+    ax.set_title("Experiment Summary",
+                 fontsize=plt.rcParams.get('axes.titlesize', 13), pad=15)
     fig.tight_layout()
-    fig.savefig(save_path, format=fmt, bbox_inches="tight")
-    plt.close()
-    print(f"  OK {os.path.basename(save_path)}")
+    if save_path:
+        fig.savefig(save_path, format=fmt, bbox_inches="tight")
+        plt.close()
+        print(f"  OK {os.path.basename(save_path)}")
+    return fig, ax
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -804,7 +724,6 @@ def generate_analysis_summary(experiments, output_path):
 
         summary["experiments"][exp.name] = exp_summary
 
-    # Find best experiment
     eval_losses = {name: s.get("best_eval_loss") for name, s in summary["experiments"].items()
                    if s.get("best_eval_loss") is not None}
     if eval_losses:
@@ -836,7 +755,7 @@ def main():
     )
     parser.add_argument("--experiments", "-e", nargs="+", required=True,
                         help="Experiment names (directories under results/)")
-    parser.add_argument("--output", "-o", default="blog/figures/",
+    parser.add_argument("--output", "-o", default=str(SUPPLE_FIGURES_DIR),
                         help="Output directory for blog-style figures")
     parser.add_argument("--paper-output", default=None,
                         help="Output directory for paper-style figures (PDF+PNG)")
@@ -847,16 +766,15 @@ def main():
                         help="Filename prefix for output figures")
     parser.add_argument("--smoothing", type=int, default=50,
                         help="Moving average window for loss smoothing")
-    parser.add_argument("--results-dir", default=RESULTS_DIR,
+    parser.add_argument("--results-dir", default=str(RESULTS_DIR),
                         help="Path to results/ directory")
-    parser.add_argument("--data-dir", default=DATA_DIR,
+    parser.add_argument("--data-dir", default=str(DATA_DIR),
                         help="Path to blog/data/ directory")
     parser.add_argument("--summary-output", default=None,
-                        help="Path for analysis_summary.json (default: <output>/analysis_summary.json)")
+                        help="Path for analysis_summary.json")
 
     args = parser.parse_args()
 
-    # Resolve paths
     output_dir = os.path.abspath(args.output)
     os.makedirs(output_dir, exist_ok=True)
 
@@ -880,85 +798,90 @@ def main():
         print("ERROR: No experiments loaded.")
         sys.exit(1)
 
-    # Prefix for filenames
     pfx = f"{args.prefix}_" if args.prefix else ""
 
-    # ── Blog figures ──
+    # Blog figures
     print("\n" + "=" * 60)
     print("GENERATING BLOG FIGURES")
     print("=" * 60)
-    colors = setup_blog_style()
+    style.apply("blog")
 
-    plot_map = {
+    blog_figsize = style.figsize()
+    blog_wide = style.figsize("wide")
+
+    plot_dispatch = {
         "train_loss": lambda: plot_train_loss(
-            experiments, colors, BLOG_SIZE,
+            experiments, blog_figsize,
             f"{output_dir}/{pfx}train_loss.png", smoothing_window=args.smoothing),
         "eval_loss": lambda: plot_eval_loss(
-            experiments, colors, BLOG_SIZE,
+            experiments, blog_figsize,
             f"{output_dir}/{pfx}eval_loss.png"),
         "train_eval_combined": lambda: plot_train_eval_combined(
-            experiments, colors, BLOG_SIZE,
+            experiments, blog_figsize,
             f"{output_dir}/{pfx}train_eval_combined.png", smoothing_window=args.smoothing),
         "generation_quality": lambda: plot_generation_quality(
-            experiments, colors, BLOG_SIZE,
+            experiments, blog_figsize,
             f"{output_dir}/{pfx}generation_quality.png"),
         "lr_schedule": lambda: plot_lr_schedule(
-            experiments, colors, BLOG_SIZE,
+            experiments, blog_figsize,
             f"{output_dir}/{pfx}lr_schedule.png"),
         "grad_norms": lambda: plot_grad_norms(
-            experiments, colors, BLOG_SIZE,
+            experiments, blog_figsize,
             f"{output_dir}/{pfx}grad_norms.png", smoothing_window=args.smoothing),
         "comparison_bar": lambda: plot_comparison_bar(
-            experiments, colors, BLOG_SIZE,
+            experiments, blog_figsize,
             f"{output_dir}/{pfx}comparison_bar.png"),
         "convergence_table": lambda: plot_convergence_table(
-            experiments, BLOG_WIDE,
+            experiments, blog_wide,
             f"{output_dir}/{pfx}convergence_table.png"),
     }
 
     for plot_name in args.plots:
-        if plot_name in plot_map:
-            plot_map[plot_name]()
+        if plot_name in plot_dispatch:
+            plot_dispatch[plot_name]()
 
-    # ── Paper figures ──
+    # Paper figures
     if paper_dir:
         print("\n" + "=" * 60)
         print("GENERATING PAPER FIGURES")
         print("=" * 60)
-        colors = setup_paper_style()
+        style.apply("paper")
 
-        paper_plot_map = {
+        paper_figsize = style.figsize()
+        paper_wide = style.figsize("wide")
+
+        paper_dispatch = {
             "train_loss": lambda: plot_train_loss(
-                experiments, colors, PAPER_COL,
+                experiments, paper_figsize,
                 f"{paper_dir}/{pfx}train_loss.pdf", fmt="pdf", smoothing_window=args.smoothing),
             "eval_loss": lambda: plot_eval_loss(
-                experiments, colors, PAPER_COL,
+                experiments, paper_figsize,
                 f"{paper_dir}/{pfx}eval_loss.pdf", fmt="pdf"),
             "train_eval_combined": lambda: plot_train_eval_combined(
-                experiments, colors, PAPER_COL,
+                experiments, paper_figsize,
                 f"{paper_dir}/{pfx}train_eval_combined.pdf", fmt="pdf", smoothing_window=args.smoothing),
             "generation_quality": lambda: plot_generation_quality(
-                experiments, colors, PAPER_WIDE,
+                experiments, paper_wide,
                 f"{paper_dir}/{pfx}generation_quality.pdf", fmt="pdf"),
             "lr_schedule": lambda: plot_lr_schedule(
-                experiments, colors, PAPER_COL,
+                experiments, paper_figsize,
                 f"{paper_dir}/{pfx}lr_schedule.pdf", fmt="pdf"),
             "grad_norms": lambda: plot_grad_norms(
-                experiments, colors, PAPER_COL,
+                experiments, paper_figsize,
                 f"{paper_dir}/{pfx}grad_norms.pdf", fmt="pdf", smoothing_window=args.smoothing),
             "comparison_bar": lambda: plot_comparison_bar(
-                experiments, colors, PAPER_WIDE,
+                experiments, paper_wide,
                 f"{paper_dir}/{pfx}comparison_bar.pdf", fmt="pdf"),
             "convergence_table": lambda: plot_convergence_table(
-                experiments, PAPER_WIDE,
+                experiments, paper_wide,
                 f"{paper_dir}/{pfx}convergence_table.pdf", fmt="pdf"),
         }
 
         for plot_name in args.plots:
-            if plot_name in paper_plot_map:
-                paper_plot_map[plot_name]()
+            if plot_name in paper_dispatch:
+                paper_dispatch[plot_name]()
 
-    # ── Analysis summary ──
+    # Analysis summary
     summary_path = args.summary_output or os.path.join(output_dir, f"{pfx}analysis_summary.json")
     print("\nGenerating analysis summary...")
     generate_analysis_summary(experiments, summary_path)

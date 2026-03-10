@@ -1,0 +1,252 @@
+{
+  "collected_at": "2026-03-09T16:42:00",
+  "mlp_combined": {
+    "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+    "approach": "esm3",
+    "projector_type": "mlp",
+    "base_model": "Qwen/Qwen3-8B",
+    "stage": "sft_lora",
+    "max_steps": 28941,
+    "training_status": "stopped_early_at_9750",
+    "local_trainer_state": {
+      "exists": true,
+      "source_file": "checkpoints/checkpoint-9750/trainer_state.json",
+      "step_range": [10, 9750],
+      "train_entries": 975,
+      "eval_entries": 39,
+      "step_increment": 10,
+      "has_token_avg_loss": true,
+      "gaps": "none - continuous every 10 steps from 10 to 9750",
+      "note": "No top-level trainer_state.json; only inside checkpoint-* dirs. save_total_limit=3 means only checkpoints 9250, 9500, 9750 remain."
+    },
+    "csv_data": {
+      "03-09": {"file": "blog/data/03-09/run_histories.csv", "step_range": [10, 9750], "n_rows": 1014},
+      "03-07": {"file": "blog/data/03-07/run_histories.csv", "step_range": [10, 9750], "n_rows": 1014},
+      "03-06": {"file": "blog/data/03-06/run_histories.csv", "step_range": [10, 7000], "n_rows": 728}
+    },
+    "wandb_runs": [
+      {
+        "run_id": "p4ojn2n0",
+        "name": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+        "state": "crashed",
+        "step_range": [0, 375],
+        "total_rows": 376,
+        "has_token_avg_loss": true,
+        "role": "Initial run, crashed at step 375"
+      },
+      {
+        "run_id": "i8rebnp7",
+        "name": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+        "state": "crashed",
+        "step_range": [0, 9525],
+        "total_rows": 656,
+        "has_token_avg_loss": true,
+        "extra_columns": ["generation/bleu", "generation/rouge_l", "generation/bleu_catalytic", "generation/bleu_domain", "generation/bleu_function", "generation/bleu_general", "generation/rouge_l_catalytic", "generation/rouge_l_domain", "generation/rouge_l_function", "generation/rouge_l_general"],
+        "role": "Resumed run, crashed at step 9525. wandb max step (9525) < local max step (9750), so local is more complete."
+      }
+    ],
+    "gaps": [
+      "Training stopped at step 9750 out of max_steps 28941 (33.7% complete). No data exists beyond step 9750.",
+      "wandb run2 crashed at 9525, so steps 9530-9750 exist ONLY in local trainer_state (checkpoint-9750).",
+      "wandb run2 has generation metrics (BLEU/ROUGE) from step 3750+ that are NOT in local trainer_state."
+    ],
+    "wandb_unique_data": [
+      "generation/bleu (per-category: catalytic, domain, function, general)",
+      "generation/rouge_l (per-category: catalytic, domain, function, general)",
+      "These are logged at eval steps starting from step 3750 in wandb run i8rebnp7"
+    ]
+  },
+  "text_combined": {
+    "experiment_name": "sft_text_combined_qwen3_8b_it_0307_190324",
+    "approach": "text",
+    "projector_type": "mlp",
+    "base_model": "Qwen/Qwen3-8B",
+    "stage": "sft_lora",
+    "max_steps": 9647,
+    "training_status": "running (step 8525, 88.4% complete)",
+    "local_trainer_state": {
+      "exists": true,
+      "source_file": "checkpoints/checkpoint-8500/trainer_state.json",
+      "step_range": [10, 8500],
+      "train_entries": 850,
+      "eval_entries": 34,
+      "step_increment": 10,
+      "has_token_avg_loss": true,
+      "gaps": "none - continuous every 10 steps from 10 to 8500",
+      "note": "No top-level trainer_state.json. save_total_limit=3: checkpoints 8000, 8250, 8500. Many resume logs (resume_train.log through resume_train8.log) indicate 8+ restarts."
+    },
+    "csv_data": {
+      "03-09": {"file": "blog/data/03-09/run_histories.csv", "step_range": [10, 8500], "n_rows": 884},
+      "03-07": {"file": "blog/data/03-07/run_histories.csv", "step_range": [10, 250], "n_rows": 26}
+    },
+    "wandb_runs": [
+      {
+        "run_id": "cre9zvww",
+        "name": "sft_text_combined_qwen3_8b_it_0307_190324",
+        "state": "crashed",
+        "step_range": [0, 5015],
+        "total_rows": 541,
+        "has_token_avg_loss": true,
+        "extra_columns": ["generation/bleu", "generation/rouge_l", "generation/bleu_catalytic", "generation/rouge_l_catalytic"],
+        "role": "First significant run, crashed at step 5015"
+      },
+      {
+        "run_id": "5t71e8zs",
+        "name": "sft_text_combined_qwen3_8b_it_0307_190324",
+        "state": "crashed",
+        "step_range": [0, 8270],
+        "total_rows": 362,
+        "has_token_avg_loss": true,
+        "extra_columns": ["generation/bleu", "generation/rouge_l", "generation/bleu_catalytic", "generation/bleu_domain", "generation/bleu_function", "generation/bleu_general", "generation/rouge_l_catalytic", "generation/rouge_l_domain", "generation/rouge_l_function", "generation/rouge_l_general"],
+        "role": "Resumed run, crashed at step 8270"
+      },
+      {
+        "run_id": "a8id33eo",
+        "name": "sft_text_combined_qwen3_8b_it_0307_190324",
+        "state": "running",
+        "step_range": [0, 8525],
+        "total_rows": 52,
+        "has_token_avg_loss": true,
+        "extra_columns": ["generation/bleu", "generation/rouge_l"],
+        "role": "Currently active run, at step 8525"
+      },
+      {
+        "run_id": "pb6u8cx2",
+        "name": "sft_text_combined_qwen3_8b_it_0307_190324",
+        "state": "failed",
+        "step_range": null,
+        "total_rows": 0,
+        "role": "Failed restart, no data"
+      },
+      {
+        "run_id": "jnaje0wd",
+        "name": "sft_text_combined_qwen3_8b_it_0307_190324",
+        "state": "crashed",
+        "step_range": null,
+        "total_rows": 0,
+        "role": "Crashed restart, no data"
+      },
+      {
+        "run_id": "fqvda4cx",
+        "name": "sft_text_combined_qwen3_8b_it_0307_190324",
+        "state": "crashed",
+        "step_range": null,
+        "total_rows": 0,
+        "role": "Crashed restart, no data"
+      },
+      {
+        "run_id": "8tvtx80u",
+        "name": "sft_text_combined_qwen3_8b_it_0307_190324",
+        "state": "failed",
+        "step_range": null,
+        "total_rows": 0,
+        "role": "Failed restart, no data"
+      },
+      {
+        "run_id": "hyjm4t87",
+        "name": "sft_text_combined_qwen3_8b_it_0307_190324",
+        "state": "crashed",
+        "step_range": null,
+        "total_rows": 0,
+        "role": "Crashed restart, no data"
+      },
+      {
+        "run_id": "rkseaiqf",
+        "name": "sft_text_combined_qwen3_8b_it_0307_190324",
+        "state": "crashed",
+        "step_range": null,
+        "total_rows": 0,
+        "role": "Crashed restart, no data"
+      },
+      {
+        "run_id": "mhowvt47",
+        "name": "sft_text_combined_qwen3_8b_it_0307_190324",
+        "state": "crashed",
+        "step_range": null,
+        "total_rows": 0,
+        "role": "Crashed restart, no data"
+      }
+    ],
+    "gaps": [
+      "Training still running at step 8525 of 9647 (88.4% complete). wandb run a8id33eo has 25 steps beyond local (8500-8525).",
+      "wandb runs have generation metrics (BLEU/ROUGE) not in local trainer_state.",
+      "10 wandb runs total for this experiment, but only 3 have actual data (the rest crashed immediately on restart)."
+    ],
+    "wandb_unique_data": [
+      "generation/bleu (per-category) from run cre9zvww (steps 250-5000) and run 5t71e8zs (steps 5250-8250)",
+      "generation/rouge_l (per-category) from same runs",
+      "Steps 8510-8525 from active run a8id33eo (not yet in local checkpoint)"
+    ]
+  },
+  "other_sft_runs": [
+    {
+      "experiment_name": "sft_esm3_perceiver_combined_qwen3_8b_it_0308_165601",
+      "approach": "esm3",
+      "projector_type": "perceiver",
+      "local_status": "No checkpoints directory, only logs/ present. Training may not have started or produced checkpoints.",
+      "wandb_runs": "No wandb runs found matching 'perceiver'",
+      "csv_data": "Not present in any run_histories.csv"
+    },
+    {
+      "experiment_name": "sft_esm3_mlp_thinking_qwen3_8b_it_0309_115011",
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "note": "MLP with thinking mode enabled",
+      "local_status": "In 03-09 CSV with 52 rows, steps 10-500",
+      "wandb_runs": [
+        {"run_id": "x0vwht2v", "state": "crashed", "step_range": [0, 512]}
+      ]
+    },
+    {
+      "experiment_name": "sft_esm3_mlp_long_qwen3_8b_it_0305_105828",
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "note": "Earlier MLP run on long dataset",
+      "csv_data": {"03-06": {"step_range": [10, 1500], "n_rows": 156}},
+      "wandb_runs": [
+        {"run_id": "63hgdksr", "state": "crashed", "step_range": [0, 1758]}
+      ]
+    },
+    {
+      "experiment_name": "sft_lora_esm3_qwen3_8b_it_0225_203237",
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "note": "Early 50K-sample MLP run",
+      "csv_data": {"03-04": {"step_range": [10, 1677], "n_rows": 176}, "03-02": {"step_range": [10, 1677], "n_rows": 176}},
+      "wandb_runs": [
+        {"run_id": "nmpuhbnk", "state": "finished", "max_step": 1677}
+      ]
+    },
+    {
+      "experiment_name": "sft_lora_esm3_qwen3_8b_it_0226_151416",
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "note": "Early 50K-sample MLP run (second)",
+      "csv_data": {"03-04": {"step_range": [10, 1677], "n_rows": 176}, "03-02": {"step_range": [10, 1677], "n_rows": 176}},
+      "wandb_runs": [
+        {"run_id": "0vx0aryw", "state": "finished", "max_step": 1677}
+      ]
+    },
+    {
+      "experiment_name": "sft_text_qwen3_8b_it_0227_145821",
+      "approach": "text",
+      "projector_type": "none",
+      "note": "Early 50K-sample text run",
+      "csv_data": {"03-04": {"step_range": [10, 2595], "n_rows": 272}, "03-02": {"step_range": [10, 2595], "n_rows": 272}},
+      "wandb_runs": [
+        {"run_id": "z9ys68kg", "state": "finished", "max_step": 2595}
+      ]
+    }
+  ],
+  "summary": {
+    "total_wandb_runs_sft": 60,
+    "total_wandb_runs_rl": 16,
+    "wandb_project_sft": "protein-llm-sft",
+    "wandb_project_rl": "protein-llm-rl",
+    "local_data_completeness": {
+      "mlp_combined": "Local trainer_state has ALL training data (steps 10-9750). wandb adds generation metrics (BLEU/ROUGE) not in local.",
+      "text_combined": "Local trainer_state covers steps 10-8500. wandb active run has 25 additional steps (8510-8525). wandb adds generation metrics."
+    },
+    "key_finding": "For loss curves (token_avg_loss, eval_loss), local trainer_state.json is the COMPLETE source. wandb adds generation quality metrics (BLEU/ROUGE per category) that are not logged to trainer_state."
+  }
+}

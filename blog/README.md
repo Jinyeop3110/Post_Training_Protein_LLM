@@ -13,9 +13,16 @@ blog/
 │   ├── 2026-03-02_mlp-vs-text-sft-comparison.html
 │   └── ...
 ├── figures/                # All plot images (PNGs)
-│   ├── three_way_loss_curves.png
-│   ├── mlp_vs_text_training_loss.png
-│   └── ...
+│   ├── figure_catalog.md   # Single source of truth for all figures
+│   ├── main_figures/       # 9 key figures (paper + website)
+│   │   ├── schematic_overview.png
+│   │   ├── pub_architecture.png
+│   │   └── ...
+│   ├── supple_figures/     # 50 supplementary figures
+│   │   ├── three_way_loss_curves.png
+│   │   ├── mlp_vs_text_training_loss.png
+│   │   └── ...
+│   └── *.png               # Legacy flat figures (pre-reorganization)
 └── data/                   # Analysis code and data by date
     ├── 03-02/
     │   ├── run_histories.csv
@@ -34,7 +41,7 @@ Open [`index.html`](index.html) in a browser. It links to all posts in `posts/`.
 ## Conventions
 
 - Post filenames: `YYYY-MM-DD_title-in-kebab-case.html` in `posts/`
-- Figures: stored in `figures/`, referenced from posts as `../figures/name.png`
+- Figures: stored in `figures/main_figures/` (key) or `figures/supple_figures/` (supplementary), referenced from posts as `../figures/main_figures/name.png` or `../figures/supple_figures/name.png`. See `figures/figure_catalog.md` for the complete inventory.
 - Data/code: stored in `data/MM-DD/`, referenced from posts as `../data/MM-DD/`
 - Index links use `posts/filename.html`; posts link back via `../index.html`
 - Tags: `kickoff`, `architecture`, `training`, `evaluation`, `data`, `rl`, `sft`, `infrastructure`, `milestone`, `debug`
@@ -43,6 +50,7 @@ Open [`index.html`](index.html) in a browser. It links to all posts in `posts/`.
 
 | Date | Title |
 |------|-------|
+| 2026-03-09 | [From 22.7 to 1.4 Perplexity: What SFT Actually Teaches a Protein LLM](posts/2026-03-09_base-model-vs-finetuned-comparison.html) |
 | 2026-03-02 | [The UniProt Convergence Problem](posts/2026-03-02_scaling-multi-source-protein-data-challenges.html) |
 | 2026-03-02 | [Lower Loss, Worse Outputs: The eval_loss Paradox](posts/2026-03-02_three-way-sft-comparison.html) |
 | 2026-03-02 | [ESM-3 Encoder Cuts Loss by 25%: MLP vs Text-Only SFT](posts/2026-03-02_mlp-vs-text-sft-comparison.html) |

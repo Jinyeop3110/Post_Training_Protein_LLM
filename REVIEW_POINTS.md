@@ -11,7 +11,7 @@
 2. [x] Proper wandb logging for all experiments
 3. [x] Test coverage for critical components (Perceiver: 19 tests)
 4. [x] Documentation stays in sync with code
-5. [ ] Run three-way comparison experiments (text vs MLP vs Perceiver)
+5. [ ] Run four-way comparison experiments (text vs MLP vs Perceiver vs Flamingo)
 6. [ ] First GRPO training run with ESMFold rewards
 7. [ ] Benchmark evaluation across all approaches
 
@@ -22,10 +22,10 @@
 > Agents will ask you about these before proceeding.
 
 ### Architecture
-- [x] Three projector approaches implemented: text, MLP, Perceiver Resampler
+- [x] Four encoding approaches implemented: text, MLP, Perceiver Resampler, Flamingo
 - [x] Attention pooling uses 32 query tokens (default)
 - [x] Projector is configurable via `encoder.projector.type` (mlp/perceiver)
-- [ ] Perceiver Resampler is ~381M params — acceptable for comparison?
+- [ ] Perceiver Resampler is ~29.4M params (2-layer default) — acceptable for comparison?
 
 ### Training
 - [ ] Default batch size for H100? (4 / 8 / 16)
@@ -52,11 +52,11 @@
 | 2026-02-18 | Use SafeTensors format | Faster loading, safer than .pt |
 | 2026-02-18 | ~~LoRA r=8, targets k/v only~~ | Superseded 2026-02-22 |
 | 2026-02-22 | LoRA r=8, all linear layers (q/k/v/o + gate/up/down) | More expressiveness, standard practice |
-| 2026-02-22 | Use Instruct model variants (e.g., Qwen3-4B-Instruct-2507) | Non-instruct base models lack chat capability |
+| 2026-02-22 | Use Instruct model variants (e.g., Qwen/Qwen3-8B, Qwen3-4B-Instruct-2507) | Non-instruct base models lack chat capability |
 | 2026-02-22 | Chat template format with system prompt for training | Alpaca format caused train/inference mismatch |
 | 2026-02-22 | Tensorboard disabled, wandb only | Single consistent logging backend |
 | 2026-02-18 | ESM encoders always frozen | Critical rule, never modify |
-| 2026-02-20 | Three-way comparison thesis | text vs MLP vs Perceiver Resampler |
+| 2026-02-20 | Four-way comparison thesis | text vs MLP vs Perceiver Resampler vs Flamingo |
 | 2026-02-20 | Focus on understanding, not generation | Generation deferred to future work |
 | 2026-02-20 | ESMFold rewards for GRPO | Structural quality as reward signal |
 | 2026-02-20 | Differential LR essential | projector_lr=2e-3 vs base lr=2e-4 |
@@ -78,7 +78,7 @@ results/{experiment_name}/
 ├── metrics.json           # Final train/eval metrics
 ├── checkpoints/
 │   └── protein_llm/       # ProteinLLM save (config, pooling, projector, adapter)
-├── logs/                  # Hydra + TensorBoard logs
+├── logs/                  # Hydra logs
 └── eval/                  # Evaluation metrics
 ```
 
@@ -104,27 +104,17 @@ GRPO chains from SFT via: `parent_experiment=<sft_experiment_name>`
 
 > Leave comments here for specific agents.
 
-### For Architect
+### For Engineer
 ```
 -
 ```
 
-### For Trainer
+### For QA
 ```
 -
 ```
 
-### For Evaluator
-```
--
-```
-
-### For QA-Engineer
-```
--
-```
-
-### For Doc-Tracker
+### For Researcher
 ```
 -
 ```

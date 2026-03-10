@@ -1,0 +1,335 @@
+{
+  "date": "2026-03-09",
+  "author": "analyst-agent",
+
+  "main_figures": {
+    "fig1": {
+      "current_status": "good",
+      "description": "4-panel schematic overview (Question, Approach, Training, Results)",
+      "uses_figure_style": true,
+      "data_source": "hardcoded diagram",
+      "issues": [
+        "Flamingo approach marked as 'PENDING' in results panel, but no flamingo experiment exists yet",
+        "GRPO Impact panel also marked 'PENDING' -- GRPO experiments started (structure task) but no completed metrics yet",
+        "Result cards show checkmarks for Text vs MLP, Scaling, and Generation but these should reflect real final numbers"
+      ],
+      "proposed_changes": [
+        "Update once Flamingo and GRPO experiments complete with real status",
+        "No immediate code change needed -- diagram accurately reflects current state"
+      ]
+    },
+    "fig2": {
+      "current_status": "needs_upgrade",
+      "description": "ESM-3 + MLP architecture diagram only",
+      "uses_figure_style": true,
+      "data_source": "hardcoded diagram",
+      "issues": [
+        "Only shows MLP approach -- does NOT show all 4 paths (text, mlp, perceiver, flamingo)",
+        "Title says 'ESM3 + MLP Approach' explicitly -- not a general architecture figure",
+        "MLP dimension shown as 1536->2560 but MEMORY.md says MLP: 1536->5120->2560 (2 layers with hidden=5120)",
+        "Param count shows 'Pooling 9.5M + MLP 21M + LoRA 2M' but MEMORY.md says total ~32.5M (math checks out but MLP is 21M with hidden=5120)",
+        "Visual layout is functional but crude -- boxes are plain rectangles, not publication quality",
+        "No differentiation between frozen (ESM-3) and trainable (projector, LoRA) components visually"
+      ],
+      "proposed_changes": [
+        "CRITICAL: Create a multi-panel or side-by-side architecture diagram showing all 4 approaches (text, MLP, perceiver, flamingo)",
+        "Fix MLP dimension to show the 2-layer structure: 1536->5120->2560",
+        "Use dashed borders for frozen components, solid for trainable",
+        "Add param counts for each approach: text (~2M LoRA), MLP (~32.5M), Perceiver (~29.4M), Flamingo (~120-150M)",
+        "The existing supple_figures/architecture_comparison.png already shows 4 approaches -- consider promoting to main"
+      ]
+    },
+    "fig3": {
+      "current_status": "acceptable",
+      "description": "Dataset composition horizontal bar chart",
+      "uses_figure_style": true,
+      "data_source": "hardcoded fallback (_DATASET_COMP_FALLBACK)",
+      "issues": [
+        "Uses hardcoded numbers (2.147M, 1.236M, 987K, 456K, 64K) that total 4.89M -- these appear accurate",
+        "Category names are high-level ('Protein Function', 'Catalytic Activity', 'General QA', 'Domain/Family', 'Other')",
+        "No breakdown by original data source (Mol-Instructions sub-datasets)",
+        "No indication of sequence length distribution per category"
+      ],
+      "proposed_changes": [
+        "Verify numbers against actual arrow dataset counts",
+        "Consider adding a secondary panel showing source-level breakdown (mol_protein_function, mol_catalytic, etc.)",
+        "Low priority -- current figure is clean and informative"
+      ]
+    },
+    "fig4": {
+      "current_status": "good",
+      "description": "MLP main run training + eval loss (9750 steps)",
+      "uses_figure_style": true,
+      "data_source": "real data from blog/data/03-07/run_histories.csv (MAIN_RUN experiment)",
+      "issues": [
+        "Uses data from 03-07 collection which has max_step=9750 -- this IS the latest MLP data available",
+        "Run is only 34% complete (9750/28941 steps) but this is clearly shown in title",
+        "Raw loss shown as faint line with MA-50 smoothing overlay -- good practice",
+        "Eval loss shown as red diamond markers -- clear and readable"
+      ],
+      "proposed_changes": [
+        "Update when MLP run progresses further (currently stopped at step 9750)",
+        "No immediate changes needed"
+      ]
+    },
+    "fig5": {
+      "current_status": "good",
+      "description": "Eval loss curve with best-point annotation (0.361 at step 9750)",
+      "uses_figure_style": true,
+      "data_source": "real data from 03-07 run_histories.csv",
+      "issues": [
+        "Shows single approach (MLP) only -- could benefit from overlaying text eval loss for comparison",
+        "Best point annotation at 0.361 is accurate",
+        "Y-axis range 0.35-0.67 gives good detail view"
+      ],
+      "proposed_changes": [
+        "Consider adding text-only eval loss overlay (now available: eval_loss=1.293 at step 8500)",
+        "Add perceiver eval loss when available",
+        "Update when MLP run progresses beyond step 9750"
+      ]
+    },
+    "fig6": {
+      "current_status": "needs_upgrade",
+      "description": "BLEU and ROUGE-L by task category",
+      "uses_figure_style": true,
+      "data_source": "HARDCODED FALLBACK (_GEN_METRICS_FALLBACK) -- NOT real data",
+      "issues": [
+        "CRITICAL: Uses hardcoded fallback values that DO NOT match actual generation_metrics.json",
+        "Fallback shows Overall BLEU=0.307, ROUGE-L=0.483",
+        "Actual generation_metrics.json shows BLEU=0.097, ROUGE-L=0.299 (VERY different)",
+        "Fallback categories: Overall/Function/Catalytic/General/Domain",
+        "Real categories: catalytic/design/domain/function/general",
+        "Title says 'Step 7000' but generation_metrics.json has no step info (latest available is step 9750 from per-step files)",
+        "Text run also has generation data (step 7000: BLEU=0.233, ROUGE-L=0.422) -- not shown",
+        "Base model generation is essentially zero (BLEU=0.003, ROUGE-L=0.057)"
+      ],
+      "proposed_changes": [
+        "CRITICAL: Replace hardcoded fallbacks with real generation_metrics.json data",
+        "Show per-step generation quality progression (data exists for steps 2750-9750 for MLP, 250-8500 for text)",
+        "Add text vs MLP generation comparison",
+        "Add base model baseline for context",
+        "Fix category names to match real data (catalytic, design, domain, function, general)"
+      ]
+    },
+    "fig7": {
+      "current_status": "acceptable",
+      "description": "50K vs 4.89M scaling effect (81% improvement)",
+      "uses_figure_style": true,
+      "data_source": "hardcoded values (1.942, 0.361) from previous analysis",
+      "issues": [
+        "Numbers are accurate: 50K 3-epoch eval_loss=1.942, 4.89M partial eval_loss=0.361",
+        "The 81% number is correct ((1.942-0.361)/1.942 = 81.4%)",
+        "However, 4.89M run is only 34% through epoch 1 -- so comparison is epoch 3 vs 0.34 epoch",
+        "Right panel with giant '81%' text is eye-catching but somewhat informal for a paper figure"
+      ],
+      "proposed_changes": [
+        "Add footnote or subtitle clarifying the training duration difference (3 ep vs 0.34 ep)",
+        "Consider log-scale y-axis or additional context for fair comparison",
+        "Low priority -- the figure makes its point clearly"
+      ]
+    },
+    "fig8": {
+      "current_status": "needs_upgrade",
+      "description": "MLP vs Text-only on 4.89M dataset",
+      "uses_figure_style": true,
+      "data_source": "real data from 03-07/run_histories.csv BUT text run was only 200 steps at that time",
+      "issues": [
+        "CRITICAL: Text run shown only to ~200 steps, but it now has 8500 steps of data",
+        "The 03-09 run_histories.csv shows text max_step=7000 (still behind latest 8500)",
+        "Even the 03-09 data is stale -- text run continued to step 8500 with eval_loss=1.293",
+        "MLP curve extends to 9750 steps, text barely visible as a tiny cluster in top-left",
+        "This makes the comparison look like text was barely tried, when in fact it ran for 8500 steps",
+        "The visual is misleading -- text loss at step 8500 is still ~1.65 token_avg_loss vs MLP ~0.37"
+      ],
+      "proposed_changes": [
+        "CRITICAL: Re-collect text run data through step 8500 and re-generate",
+        "Show both runs over their full training duration",
+        "Add eval loss comparison as secondary panel or overlay",
+        "Add annotations showing final values for each approach"
+      ]
+    },
+    "fig9": {
+      "current_status": "needs_upgrade",
+      "description": "Cross-approach bar chart (4 configs, annotated eval_loss)",
+      "uses_figure_style": true,
+      "data_source": "hardcoded fallback (_FINAL_METRICS_FALLBACK) when analysis_summary.json missing",
+      "issues": [
+        "Shows 4 configs but uses OLD data: Perceiver 50K (1.952), MLP 50K (1.942), Text 50K (2.415), MLP 4.89M (0.361)",
+        "Missing: Text 4.89M (eval_loss=1.293 at step 8500) -- significant result not shown",
+        "Missing: Perceiver combined run (started 2026-03-08 but no training data yet -- only logs dir exists)",
+        "Missing: Flamingo (no experiment exists yet)",
+        "The 50K experiments are from early February -- these are now superseded by the 4.89M runs",
+        "Should include base model perplexity as baseline (text base: 22.73 ppl, ESM3+random: 28.25 ppl)",
+        "Does not include generation quality metrics (BLEU/ROUGE-L) which are a key evaluation dimension"
+      ],
+      "proposed_changes": [
+        "CRITICAL: Add Text 4.89M result (eval_loss=1.293)",
+        "Restructure to show 4.89M results prominently, 50K as reference/inset",
+        "Add base model baseline row",
+        "Add generation quality (BLEU/ROUGE-L) as grouped bars or secondary chart",
+        "Update when Perceiver combined and Flamingo experiments complete"
+      ]
+    }
+  },
+
+  "proposed_new_figures": [
+    {
+      "name": "fig10_generation_over_training",
+      "category": "generation",
+      "description": "BLEU and ROUGE-L progression over training steps for MLP (steps 2750-9750) showing how generation quality improves during training",
+      "data_needed": "Per-step generation files in results/sft_esm3_mlp_combined_.../eval/generation_step_*.json (33 files exist)",
+      "priority": "high",
+      "rationale": "We have rich per-step generation data for both MLP and text that is currently unused"
+    },
+    {
+      "name": "fig11_base_vs_finetuned",
+      "category": "comparison",
+      "description": "Bar chart comparing base model (Qwen3-8B) vs SFT models on perplexity, BLEU, ROUGE-L. Shows that untrained model gets 0/200 actual answers.",
+      "data_needed": "blog/data/03-09/base_model_comparison.json (exists), base model eval metrics (exist)",
+      "priority": "high",
+      "rationale": "Demonstrates the value of fine-tuning. Data already collected and analyzed."
+    },
+    {
+      "name": "fig12_text_vs_mlp_eval_comparison",
+      "category": "comparison",
+      "description": "Side-by-side eval loss curves for MLP and Text approaches on 4.89M dataset, full training duration",
+      "data_needed": "Text run trainer_state through step 8500, MLP through step 9750",
+      "priority": "high",
+      "rationale": "Current fig8 only shows token_avg_loss and text is truncated at 200 steps. Eval loss comparison is more meaningful."
+    },
+    {
+      "name": "fig13_generation_quality_comparison",
+      "category": "generation",
+      "description": "MLP vs Text generation quality comparison: BLEU/ROUGE-L per category at their best steps",
+      "data_needed": "MLP generation_step_9750 + text generation_step_7000+ files",
+      "priority": "high",
+      "rationale": "base_model_comparison.json shows MLP and text have similar BLEU (~0.255) but MLP has higher ROUGE-L (0.481 vs 0.433). This is a key finding."
+    },
+    {
+      "name": "fig14_random_projector_ablation",
+      "category": "ablation",
+      "description": "ESM3+random projector (untrained) vs text-only base vs trained models. Proves projector learns real biological signal.",
+      "data_needed": "base_model_comparison.json (exists) -- random projector ppl=28.25 vs text base ppl=22.73",
+      "priority": "medium",
+      "rationale": "Random projector actually HURTS performance, proving trained projector captures genuine biological information"
+    },
+    {
+      "name": "fig15_grpo_results",
+      "category": "rl",
+      "description": "GRPO training reward curves and downstream task performance (structure prediction)",
+      "data_needed": "GRPO experiments just started (2026-03-09), no completed metrics yet",
+      "priority": "blocked",
+      "rationale": "GRPO is Stage 2 of the pipeline. Two runs exist but neither is complete."
+    },
+    {
+      "name": "fig16_perceiver_comparison",
+      "category": "comparison",
+      "description": "MLP vs Perceiver on 4.89M dataset (training loss, eval loss, generation quality)",
+      "data_needed": "Perceiver combined run (sft_esm3_perceiver_combined_...) just started, only has logs dir",
+      "priority": "blocked",
+      "rationale": "Perceiver is a key comparison approach but the 4.89M run has not produced training data yet"
+    },
+    {
+      "name": "supple_gradient_norms_text_run",
+      "category": "training_diagnostics",
+      "description": "Gradient norm trajectory for text run (8500 steps) -- check for training stability",
+      "data_needed": "Text run trainer_state.json through step 8500",
+      "priority": "low",
+      "rationale": "Supplementary diagnostic; text run appears stable from loss curve"
+    },
+    {
+      "name": "supple_lr_schedule_comparison",
+      "category": "training_diagnostics",
+      "description": "LR schedule comparison for MLP vs Text showing warmup + cosine decay",
+      "data_needed": "Both runs' trainer_state.json",
+      "priority": "low",
+      "rationale": "Supplementary; useful for reproducibility"
+    }
+  ],
+
+  "supplementary_upgrades": [
+    {
+      "figure": "three_way_*.png (6 files)",
+      "status": "outdated",
+      "issue": "Based on 50K data from 2026-03-02. Perceiver on 50K had eval_loss=1.952, but no 4.89M perceiver data yet.",
+      "action": "Keep as historical reference. Regenerate when perceiver 4.89M run completes."
+    },
+    {
+      "figure": "mlp_vs_text_*.png (5 files)",
+      "status": "outdated",
+      "issue": "Based on 50K data from 2026-03-02. Superseded by 4.89M comparison.",
+      "action": "Keep as historical reference. Mark as '50K subset' in catalog."
+    },
+    {
+      "figure": "long_mlp_*.png (3 files)",
+      "status": "outdated",
+      "issue": "From 2026-03-04, mol_instructions only (not combined dataset). Superseded by MLP combined run.",
+      "action": "Archive. No need to regenerate."
+    },
+    {
+      "figure": "mlp_combined_*.png (7 files)",
+      "status": "partially_outdated",
+      "issue": "From 2026-03-06, step 7090 snapshot. MLP run now at step 9750.",
+      "action": "Regenerate with latest step 9750 data using plot_training.py."
+    },
+    {
+      "figure": "mlp_epoch1_*.png (6 files)",
+      "status": "current",
+      "issue": "From 2026-03-07, step 9750 (current max). These are up to date.",
+      "action": "No change needed."
+    },
+    {
+      "figure": "pub_*.png (9 files)",
+      "status": "current",
+      "issue": "Generated 2026-03-09 by consolidated script. Matches main figures.",
+      "action": "These are redundant with main_figures/. Consider removing duplicates."
+    },
+    {
+      "figure": "web_*.png (9 files)",
+      "status": "current",
+      "issue": "Generated 2026-03-08 for website. Use web color palette.",
+      "action": "Regenerate when main figures are updated."
+    },
+    {
+      "figure": "architecture_comparison.png",
+      "status": "current",
+      "issue": "Shows all 4 approaches. Should be considered for promotion to main figure (replace fig2).",
+      "action": "Review for promotion to main figures."
+    }
+  ],
+
+  "priority_order": [
+    "fig8 -- TEXT DATA STALE: Text run at 200 steps in figure but has 8500 steps of real data",
+    "fig6 -- GENERATION METRICS WRONG: Hardcoded fallbacks differ 3x from actual data (BLEU 0.307 vs 0.097)",
+    "fig9 -- MISSING RESULTS: No Text 4.89M result, no base model baseline",
+    "fig2 -- INCOMPLETE: Only shows MLP approach, not all 4 paths",
+    "fig10_generation_over_training -- NEW: Rich per-step data exists but is unused",
+    "fig11_base_vs_finetuned -- NEW: Data collected in 03-09 but no figure exists",
+    "fig12_text_vs_mlp_eval -- NEW: Eval loss comparison with full text run data",
+    "fig13_generation_quality_comparison -- NEW: MLP vs Text generation side-by-side",
+    "fig5 -- ENHANCEMENT: Add text eval loss overlay",
+    "fig7 -- MINOR: Add training duration caveat",
+    "fig3 -- MINOR: Verify dataset numbers",
+    "fig1 -- OK: Pending items accurately reflect project state",
+    "fig4 -- OK: Uses latest available MLP data"
+  ],
+
+  "data_gaps": {
+    "text_run_full_history": {
+      "description": "Text run has 8500 steps but 03-09 run_histories.csv only has 7000. Checkpoint-8500 trainer_state has all 884 entries.",
+      "action": "Re-collect text run data from checkpoint-8500/trainer_state.json"
+    },
+    "generation_per_step": {
+      "description": "33 per-step generation JSONs for MLP (steps 2750-9750) and 34 for text (steps 250-8500) are not in any CSV",
+      "action": "Data-collector should aggregate generation_step_*.json into a generation_history.csv"
+    },
+    "perceiver_combined": {
+      "description": "Perceiver combined run (0308) has only logs dir, no checkpoints or trainer_state",
+      "action": "Wait for experiment to produce training data"
+    },
+    "grpo_results": {
+      "description": "Two GRPO runs started 2026-03-09, no metrics yet",
+      "action": "Wait for experiments to complete; will need new figure type for reward curves"
+    }
+  }
+}

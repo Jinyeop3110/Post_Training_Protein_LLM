@@ -1,0 +1,67 @@
+# @package _global_
+
+# GRPO Structure Quality: Base Qwen3-8B (fresh LoRA, no SFT parent)
+# Tests whether RL alone (without SFT pretraining) can learn structural quality.
+#
+# Memory budget (FSDP/4, per GPU):
+#   Static: 9.4 GB (model + LoRA + ESM-3 + projector + ESMFold)
+#   Peak:   ~16 GB (generation + grad)  →  30 GB headroom on L40S 46GB
+#
+# Usage:
+#   python scripts/train.py main_RL=grpo_structure_base
+#   python scripts/train.py main_RL=grpo_structure_base training.lr=1e-5
+
+defaults:
+  - override /model: qwen3_8b
+  - override /encoder: esm3_small
+  - override /data: structure_quality
+  - override /training: grpo
+
+approach: esm3
+experiment_name: grpo_structure_base_${model.name}_${now:%m%d_%H%M%S}
+
+# No parent — fresh LoRA init
+parent_experiment: null
+parent_checkpoint: null
+
+# Data task for reward routing
+data:
+  task: esmfold
+
+training:
+  # --- Optimized for 4×L40S 46GB ---
+  lr: 5e-6
+  projector_lr: 5e-5     # 10x base LR: random-init projector needs faster learning
+  batch_size: 4           # prompts per micro-batch per GPU
+  gradient_accumulation_steps: 4  # effective batch = 4×4×4 = 64 prompts
+  epochs: 1
+  warmup_steps: 20
+  max_grad_norm: 1.0
+
+  grpo:
+    group_size: 8         # 8 completions per prompt — more diverse reward signal
+    temperature: 1.0
+    use_kl_penalty: false  # DAPO: no KL (no reference model for base)
+    normalize_advantages: false  # Dr. GRPO
+
+  # Structural quality descriptions are short
+  rollout:
+    max_tokens: 256
+    top_p: 0.95
+    do_sample: true
+
+  # Checkpointing
+  save_steps: 50
+  eval_steps: 25
+  logging_steps: 5
+
+  # FSDP for multi-GPU (shards 8B model across 4 GPUs)
+  fsdp:
+    enabled: true
+
+  wandb:
+    tags:
+      - grpo
+      - structure_quality
+      - base_model
+      - ${model.name}

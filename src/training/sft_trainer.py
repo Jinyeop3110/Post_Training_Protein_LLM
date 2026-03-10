@@ -274,7 +274,19 @@ class ProteinLLMTrainer(Trainer):
         # enforce even batch counts across DDP ranks (requires even_batches=False).
         self.accelerator.even_batches = False
         # Let Accelerate wrap with BatchSamplerShard for DDP distribution
-        return self.accelerator.prepare(dataloader)
+        dataloader = self.accelerator.prepare(dataloader)
+
+        # Apply staged sampler state for fast resume (skip already-consumed batches)
+        pending_path = getattr(self, "_pending_sampler_state_path", None)
+        if pending_path is not None:
+            self._pending_sampler_state_path = None
+            sampler = self._get_token_budget_sampler_from_dl(dataloader)
+            if sampler is not None:
+                state = torch.load(pending_path, map_location="cpu", weights_only=True)
+                sampler.load_state_dict(state)
+                log.info(f"Applied sampler state from {pending_path}")
+
+        return dataloader
 
     def create_optimizer(self):
         """Create optimizer that includes multimodal parameters.
@@ -385,19 +397,23 @@ class ProteinLLMTrainer(Trainer):
             log.info(f"Saved multimodal optimizer state to {save_path}")
 
     def _save_checkpoint(self, model, trial):
-        """Override: also save multimodal weights in intermediate checkpoints.
+        """Override: also save multimodal weights and sampler state.
 
         The base Trainer saves adapter weights via save_model(). We add
         pooling.pt and projector.pt so intermediate checkpoints are fully
         resumable without the 14 GB pytorch_model_fsdp.bin.
+
+        Also saves token-budget sampler state so resume can skip directly
+        to the correct batch position instead of replaying the dataloader.
         """
         super()._save_checkpoint(model, trial)
 
+        ckpt_dir = os.path.join(
+            self.args.output_dir,
+            f"checkpoint-{self.state.global_step}",
+        )
+
         if self.protein_llm is not None and self.args.should_save:
-            ckpt_dir = os.path.join(
-                self.args.output_dir,
-                f"checkpoint-{self.state.global_step}",
-            )
             if self.protein_llm.pooling is not None:
                 torch.save(
                     self.protein_llm.pooling.state_dict(),
@@ -414,6 +430,45 @@ class ProteinLLMTrainer(Trainer):
                     os.path.join(ckpt_dir, "xattn.pt"),
                 )
             log.info(f"Saved multimodal weights to {ckpt_dir}")
+
+        # Save token-budget sampler state for fast resume
+        if self.args.should_save:
+            self._save_sampler_state(ckpt_dir)
+
+    def _save_sampler_state(self, ckpt_dir: str) -> None:
+        """Save token-budget sampler position to checkpoint dir."""
+        sampler = self._get_token_budget_sampler()
+        if sampler is not None and hasattr(sampler, "state_dict"):
+            torch.save(sampler.state_dict(), os.path.join(ckpt_dir, "sampler_state.pt"))
+            log.info(
+                f"Saved sampler state to {ckpt_dir}/sampler_state.pt "
+                f"(batch_idx={sampler.state_dict()['batch_idx']})"
+            )
+
+    @staticmethod
+    def _get_token_budget_sampler_from_dl(dataloader):
+        """Extract the TokenBudgetBatchSampler from a dataloader.
+
+        Walks the batch_sampler wrapper chain (Accelerate's
+        ``BatchSamplerShard`` → our ``TokenBudgetBatchSampler``).
+        """
+        from src.training.token_budget_sampler import TokenBudgetBatchSampler
+
+        bs = getattr(dataloader, "batch_sampler", None)
+        while bs is not None:
+            if isinstance(bs, TokenBudgetBatchSampler):
+                return bs
+            bs = getattr(bs, "batch_sampler", None)
+        return None
+
+    def _get_token_budget_sampler(self):
+        """Extract the TokenBudgetBatchSampler from the current train dataloader."""
+        # Try accelerator's dataloader list
+        for dl in getattr(self.accelerator, "_dataloaders", []):
+            sampler = self._get_token_budget_sampler_from_dl(dl)
+            if sampler is not None:
+                return sampler
+        return None
 
     def _load_from_checkpoint(self, resume_from_checkpoint, model=None):
         """Override: load minimal checkpoint (no pytorch_model_fsdp.bin).
@@ -1278,6 +1333,12 @@ class SFTTrainer:
                 resume_from = str(ckpts[-1])
                 log.info(f"Auto-resuming from checkpoint: {resume_from}")
 
+        # Restore token-budget sampler state so the dataloader skips to
+        # the correct position instantly (avoids the slow fast-forward
+        # that causes NCCL timeouts with FSDP).
+        if resume_from is not None:
+            self._restore_sampler_state(resume_from)
+
         # Train
         train_result = self.trainer.train(
             resume_from_checkpoint=resume_from,
@@ -1291,6 +1352,23 @@ class SFTTrainer:
         self.save_checkpoint(metrics=metrics)
 
         return metrics
+
+    def _restore_sampler_state(self, checkpoint_dir: str) -> None:
+        """Stage token-budget sampler state for fast resume.
+
+        Stores the checkpoint path on the inner trainer so that
+        ``get_train_dataloader()`` can apply it after building the
+        sampler. This avoids the slow dataloader fast-forward that
+        causes NCCL timeouts with FSDP + token-budget batching.
+        """
+        sampler_path = os.path.join(checkpoint_dir, "sampler_state.pt")
+        if not os.path.exists(sampler_path):
+            log.info("No sampler_state.pt in checkpoint; dataloader will replay from start")
+            return
+
+        # Stage the state on the trainer; get_train_dataloader() applies it
+        self.trainer._pending_sampler_state_path = sampler_path
+        log.info(f"Staged sampler state for resume from {sampler_path}")
 
     def evaluate(self) -> Dict[str, float]:
         """

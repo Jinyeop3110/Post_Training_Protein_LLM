@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESM-3 Embeddings vs Raw Text: Head-to-Head Generation Comparison at Step 5500</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #1a1a2e;
+            --accent: #2563eb;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --code-bg: #f3f4f6;
+            --table-header: #f9fafb;
+            --blockquote-bg: #fffbeb;
+            --blockquote-border: #f59e0b;
+            --success-bg: #f0fdf4;
+            --success-border: #22c55e;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--fg);
+            background: var(--bg);
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        header {
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+        header .meta {
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        header .tags {
+            margin-top: 0.5rem;
+        }
+        header .tag {
+            display: inline-block;
+            background: var(--code-bg);
+            color: var(--accent);
+            padding: 0.15rem 0.6rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            margin-right: 0.4rem;
+            font-weight: 500;
+        }
+        h1 {
+            font-size: 1.9rem;
+            line-height: 1.3;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        h2 {
+            font-size: 1.4rem;
+            margin: 2.5rem 0 1rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+        }
+        h3 {
+            font-size: 1.15rem;
+            margin: 1.8rem 0 0.8rem;
+            font-weight: 600;
+        }
+        p {
+            margin: 0.8rem 0;
+        }
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.92rem;
+        }
+        th, td {
+            padding: 0.6rem 0.8rem;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        th {
+            background: var(--table-header);
+            font-weight: 600;
+        }
+        tr:hover {
+            background: #f9fafb;
+        }
+        code {
+            font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+            background: var(--code-bg);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.88em;
+        }
+        pre {
+            background: var(--code-bg);
+            padding: 1rem 1.2rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.88em;
+            line-height: 1.5;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+        }
+        blockquote {
+            background: var(--blockquote-bg);
+            border-left: 4px solid var(--blockquote-border);
+            padding: 0.8rem 1.2rem;
+            margin: 1rem 0;
+            border-radius: 0 6px 6px 0;
+            font-style: italic;
+        }
+        blockquote p {
+            margin: 0.3rem 0;
+        }
+        .success-box {
+            background: var(--success-bg);
+            border-left: 4px solid var(--success-border);
+            padding: 0.8rem 1.2rem;
+            margin: 1rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .success-box p {
+            margin: 0.3rem 0;
+        }
+        ul, ol {
+            margin: 0.8rem 0;
+            padding-left: 1.5rem;
+        }
+        li {
+            margin: 0.3rem 0;
+        }
+        strong {
+            font-weight: 600;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 2rem 0;
+        }
+        footer {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid var(--border);
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+        nav.blog-nav {
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+        nav.blog-nav a {
+            margin-right: 1rem;
+        }
+        .caption {
+            color: var(--muted);
+            font-size: 0.85rem;
+            font-style: italic;
+            margin-top: -0.5rem;
+            margin-bottom: 1rem;
+        }
+        .example-block {
+            background: var(--code-bg);
+            border-radius: 6px;
+            padding: 1rem 1.2rem;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+        .example-block .label {
+            font-weight: 600;
+            color: var(--accent);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .example-block .score {
+            float: right;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+        .example-block p {
+            margin: 0.4rem 0;
+        }
+        .example-block .protein-seq {
+            font-family: 'SF Mono', 'Fira Code', Menlo, Consolas, monospace;
+            font-size: 0.8em;
+            word-break: break-all;
+            color: var(--muted);
+        }
+        .warning-box {
+            background: #fef2f2;
+            border-left: 4px solid #ef4444;
+            padding: 0.8rem 1.2rem;
+            margin: 1rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .warning-box p {
+            margin: 0.3rem 0;
+        }
+        .versus {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.8rem;
+            margin: 1rem 0;
+        }
+        .versus .side {
+            background: var(--code-bg);
+            border-radius: 6px;
+            padding: 0.8rem 1rem;
+            font-size: 0.88rem;
+        }
+        .versus .side.esm3 {
+            border-top: 3px solid var(--accent);
+        }
+        .versus .side.text {
+            border-top: 3px solid #8b5cf6;
+        }
+        .versus .side-label {
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.4rem;
+        }
+        .versus .side.esm3 .side-label {
+            color: var(--accent);
+        }
+        .versus .side.text .side-label {
+            color: #8b5cf6;
+        }
+        .bar-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0.2rem 0;
+        }
+        .bar-label {
+            width: 80px;
+            font-size: 0.82rem;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .bar-track {
+            flex: 1;
+            height: 20px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+        .bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+        .bar-fill.esm3 {
+            background: var(--accent);
+        }
+        .bar-fill.text {
+            background: #8b5cf6;
+        }
+        .bar-value {
+            width: 45px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+    <nav class="blog-nav">
+        <a href="../index.html">Blog Index</a>
+    </nav>
+
+    <header>
+        <h1>ESM-3 Embeddings vs Raw Text: Head-to-Head Generation Comparison at Step 5500</h1>
+        <div class="meta">
+            <strong>Date</strong>: 2026-03-08 &nbsp;|&nbsp;
+            <strong>Comparison</strong>: ESM-3+MLP vs Text-only
+        </div>
+        <div class="meta">
+            <strong>ESM-3 experiment</strong>: <code>sft_esm3_mlp_combined_qwen3_8b_it_0306_010408</code>
+        </div>
+        <div class="meta">
+            <strong>Text experiment</strong>: <code>sft_text_combined_qwen3_8b_it_0307_190324</code>
+        </div>
+        <div class="tags">
+            <span class="tag">esm3</span>
+            <span class="tag">text-baseline</span>
+            <span class="tag">generation-quality</span>
+            <span class="tag">comparison</span>
+            <span class="tag">qwen3-8b</span>
+        </div>
+    </header>
+
+    <h2>Key Finding</h2>
+
+    <div class="success-box">
+        <p><strong>ESM-3 embeddings produce measurably better generations than raw text input.</strong> At step 5500 on the same evaluation samples, ESM-3+MLP leads by +0.048 BLEU and +0.034 ROUGE-L overall. The gap is largest on function descriptions (BLEU 0.421 vs 0.235 &mdash; nearly 2x), where structural embeddings capture nuances that raw sequence tokens miss. Text-only responses are also prone to verbose hallucinations on unfamiliar proteins.</p>
+    </div>
+
+    <h2>Experimental Setup</h2>
+
+    <p>Both runs share the same backbone, dataset, and infrastructure &mdash; the <em>only</em> difference is how the protein sequence enters the model.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Parameter</th>
+                <th>ESM-3 + MLP</th>
+                <th>Text-only</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Model</td><td colspan="2">Qwen3-8B-Instruct-2507</td></tr>
+            <tr><td>LoRA</td><td colspan="2">r=8, all linear layers (q/k/v/o + gate/up/down)</td></tr>
+            <tr><td>Dataset</td><td colspan="2">combined_sft_260225 (4.89M records)</td></tr>
+            <tr><td>FSDP</td><td colspan="2">shard_grad_op, 8x H100</td></tr>
+            <tr><td>Approach</td><td><code>esm3</code></td><td><code>text</code></td></tr>
+            <tr><td>Protein input</td><td>ESM-3 (frozen, 1536-dim) &rarr; AttentionPooling (32 tokens) &rarr; MLP projector</td><td>Raw AA sequence as <code>&lt;protein&gt;MKTL...&lt;/protein&gt;</code> tokens</td></tr>
+            <tr><td>Trainable params</td><td>~32.5M (pooling + projector + LoRA)</td><td>~2M (LoRA only)</td></tr>
+            <tr><td>Eval step</td><td colspan="2">5500</td></tr>
+            <tr><td>Eval samples</td><td colspan="2">Same 40 proteins (10 per category)</td></tr>
+        </tbody>
+    </table>
+
+    <h2>Overall Scores</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Metric</th>
+                <th>ESM-3 + MLP</th>
+                <th>Text-only</th>
+                <th>Delta</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>BLEU</strong></td>
+                <td><strong>0.258</strong></td>
+                <td>0.210</td>
+                <td style="color: #16a34a;">+0.048</td>
+            </tr>
+            <tr>
+                <td><strong>ROUGE-L</strong></td>
+                <td><strong>0.454</strong></td>
+                <td>0.420</td>
+                <td style="color: #16a34a;">+0.034</td>
+            </tr>
+            <tr>
+                <td>eval_loss</td>
+                <td>~0.36</td>
+                <td>~1.31</td>
+                <td style="color: var(--muted);">not directly comparable*</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <blockquote>
+        <p><strong>*Why is loss not directly comparable?</strong> Both models predict the same response tokens, but the input representations differ. ESM-3 compresses the sequence into 32 dense embedding tokens; text expands it into hundreds of raw amino-acid tokens. The text model sees more input tokens (hence higher cross-entropy on the response portion), but this does not mean it "knows less" &mdash; the generation quality gap (+0.048 BLEU) is narrower than the 3.6x eval_loss gap suggests.</p>
+    </blockquote>
+
+    <h2>Per-Category Breakdown</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th colspan="2">ESM-3 + MLP</th>
+                <th colspan="2">Text-only</th>
+                <th>Winner</th>
+            </tr>
+            <tr>
+                <th></th>
+                <th>BLEU</th>
+                <th>ROUGE-L</th>
+                <th>BLEU</th>
+                <th>ROUGE-L</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Function</strong></td>
+                <td><strong>0.421</strong></td>
+                <td><strong>0.536</strong></td>
+                <td>0.235</td>
+                <td>0.378</td>
+                <td style="color: #2563eb;">ESM-3 (nearly 2x BLEU)</td>
+            </tr>
+            <tr>
+                <td><strong>Catalytic</strong></td>
+                <td>0.199</td>
+                <td>0.432</td>
+                <td><strong>0.215</strong></td>
+                <td><strong>0.445</strong></td>
+                <td style="color: #8b5cf6;">Text (slight edge)</td>
+            </tr>
+            <tr>
+                <td><strong>General</strong></td>
+                <td><strong>0.268</strong></td>
+                <td>0.428</td>
+                <td>0.257</td>
+                <td><strong>0.441</strong></td>
+                <td style="color: var(--muted);">Mixed (BLEU vs ROUGE split)</td>
+            </tr>
+            <tr>
+                <td><strong>Domain</strong></td>
+                <td><strong>0.143</strong></td>
+                <td><strong>0.420</strong></td>
+                <td>0.133</td>
+                <td>0.418</td>
+                <td style="color: #2563eb;">ESM-3 (marginal)</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>What the categories reveal</h3>
+
+    <p>The <strong>function</strong> category is where ESM-3 embeddings shine brightest. Describing what a protein does requires understanding its 3D fold, binding interfaces, and evolutionary context &mdash; exactly the kind of information ESM-3 was trained to capture. The nearly 2x BLEU advantage (0.421 vs 0.235) is the strongest signal in this comparison.</p>
+
+    <p>The <strong>catalytic</strong> category is the only one where text holds a slight edge. Catalytic activity descriptions often involve specific substrate names and reaction equations that appear verbatim in training data &mdash; here, memorizing the raw sequence-to-answer mapping may be more direct than decoding from compressed embeddings.</p>
+
+    <h2>Head-to-Head: Selected Examples</h2>
+
+    <p>Below are six examples chosen to illustrate the most interesting contrasts. All examples evaluate the <em>same</em> protein with both approaches.</p>
+
+    <h3>1. RF-1/RF-2 Stimulation (Function)</h3>
+
+    <div class="example-block">
+        <p><span class="label">Task:</span> Provide a functional description for the protein represented by this sequence.</p>
+        <p><span class="label">Protein:</span> <code style="font-size:0.75rem; word-break:break-all;">MSELEFEIERRRTFAIISHPDAGKTTLTEKLLLFGGAIQLAGSVKGRKATR...RWPEIRFSATREL</code> (526 AA)</p>
+        <p><span class="label">Reference:</span> Increases the formation of ribosomal termination complexes and stimulates activities of RF-1 and RF-2. It binds guanine nucleotides and has strong preference for UGA stop codons. It may interact directly with the ribosome. The stimulation of RF-1 and RF-2 is significantly reduced by GTP and GDP, but not by GMP. {ECO:0000255|HAMAP-Rule:MF_00072}.</p>
+    </div>
+    <div class="versus">
+        <div class="side esm3">
+            <div class="side-label">ESM-3 + MLP &mdash; BLEU 0.888, ROUGE-L 0.917</div>
+            <p>Increases the formation of ribosomal termination complexes and stimulates activities of RF-1 and RF-2. It binds guanine nucleotides and has strong preference for UGA stop codons. It may interact directly with the ribosome. The stimulation of RF-1 and RF-2 is significantly reduced by GTP and GDP, but not by GMP (By similarity). {ECO:0000250}.</p>
+        </div>
+        <div class="side text">
+            <div class="side-label">Text-only &mdash; BLEU 0.593, ROUGE-L 0.769</div>
+            <p>Increases the formation of ribosomal termination complexes and stimulates activities of RF-1 and RF-2. It binds guanine nucleotides and has strong preference for UGA stop codons. It may interact directly with the 5S RNA. {ECO:0000255|HAMAP-Rule:MF_00072}.</p>
+        </div>
+    </div>
+    <p class="caption">Both get the core right, but ESM-3 reproduces the full multi-sentence description including the GTP/GDP nuance. Text stops early and incorrectly says "5S RNA" instead of "the ribosome".</p>
+
+    <h3>2. Membrane Protein Insertion (Function)</h3>
+
+    <div class="example-block">
+        <p><span class="label">Task:</span> Based on the protein sequence provided, describe its biological function.</p>
+        <p><span class="label">Protein:</span> <code style="font-size:0.75rem; word-break:break-all;">MESQRNLLLIGLLFVSFLLWQQWESDKAPKPATEVTAAAQ...KIIYASLEKKGLK</code> (541 AA)</p>
+        <p><span class="label">Reference:</span> Required for the insertion and/or proper folding and/or complex formation of integral membrane proteins into the membrane. Involved in integration of membrane proteins that insert both dependently and independently of the Sec translocase complex, as well as at least some lipoproteins. Aids folding of multispanning membrane proteins.</p>
+    </div>
+    <div class="versus">
+        <div class="side esm3">
+            <div class="side-label">ESM-3 + MLP &mdash; BLEU 0.899, ROUGE-L 0.961</div>
+            <p>Required for the insertion and/or proper folding and/or complex formation of integral membrane proteins into the membrane. Involved in integration of membrane proteins that insert both dependently and independently of the Sec translocase complex, as well as at least some lipoproteins. Aids folding of multispanning membrane proteins (By similarity).</p>
+        </div>
+        <div class="side text">
+            <div class="side-label">Text-only &mdash; BLEU 0.261, ROUGE-L 0.489</div>
+            <p>Required for the insertion and/or proper folding and assembly of integral membrane proteins into the bacterial inner membrane. Involved in the targeting of lipoproteins from the cytoplasmic face to the outer leaflet of the inner membrane (By similarity).</p>
+        </div>
+    </div>
+    <p class="caption">ESM-3 produces a near-verbatim match. Text gets the general topic right but misses key details (Sec translocase, multispanning folding) and adds incorrect specifics ("bacterial inner membrane", "outer leaflet").</p>
+
+    <h3>3. RNase E Modulation (Function) &mdash; The Showcase Example</h3>
+
+    <div class="example-block">
+        <p><span class="label">Task:</span> Analyze the following protein sequence and explain its functional role.</p>
+        <p><span class="label">Protein:</span> <code style="font-size:0.75rem; word-break:break-all;">MRIDTSELCDIYLDQVDVVDPIFSSFGGVQAFYGKVTTVKCFETNGLIEEILEENGEGRVLVIDGGGSIRRALIDAELARLAADNHWEGIIVYGAIRQLSELENIEIGIHALAPIPVSADESNYGESDIPVNFGGVTFFPEDYIYADLTGIILSQEPLDLDELNAE</code> (166 AA)</p>
+        <p><span class="label">Reference:</span> Globally modulates RNA abundance by binding to RNase E (Rne) and regulating its endonucleolytic activity. Can modulate Rne action in a substrate-dependent manner by altering the composition of the degradosome. Modulates RNA-binding and helicase activities of the degradosome.</p>
+    </div>
+    <div class="versus">
+        <div class="side esm3">
+            <div class="side-label">ESM-3 + MLP &mdash; BLEU 0.924, ROUGE-L 0.909</div>
+            <p>Globally modulates RNA abundance by binding to RNase E (Rne) and regulating its endonucleolytic activity. Can modulate Rne action in a substrate-dependent manner by altering the composition of the degradosome. Modulates RNA-binding and helicase activities of the degradosome. {ECO:0000255|HAMAP-Rule:MF_01896}.</p>
+        </div>
+        <div class="side text">
+            <div class="side-label">Text-only &mdash; BLEU 0.025, ROUGE-L 0.174</div>
+            <p>Regulates RNA polymerase transcription by binding to sigma-70 factor (RpoA) at specific sites thereby altering RpoA's interaction with DNA promoters.; Involved in regulation of rRNA synthesis via direct interactions with both RNA polymerases I and III as well as ribosomal proteins S6 and D1. {ECO:0000250|UniProtKB:P38945}.</p>
+        </div>
+    </div>
+    <div class="warning-box">
+        <p><strong>Largest single-example gap (0.924 vs 0.025 BLEU).</strong> ESM-3 produces a <em>near-verbatim</em> copy of the reference &mdash; it correctly identifies the protein as an RNase E modulator that regulates degradosome composition. The text-only model generates a plausible but <strong>completely wrong</strong> description about RNA polymerase sigma factors, which has nothing to do with this protein. This 166-residue protein's function is encoded in its 3D fold, which ESM-3 captures but raw amino acid text does not convey to the LLM.</p>
+    </div>
+
+    <h3>4. dITP Hydrolysis (Catalytic) &mdash; Both Correct</h3>
+
+    <div class="example-block">
+        <p><span class="label">Task:</span> Elucidate the catalytic activity of the corresponding enzyme.</p>
+        <p><span class="label">Protein:</span> <code style="font-size:0.75rem; word-break:break-all;">MDAKTQRLVLATKNPGKVLKLKEILRHLPIEVVACSDYPGIPDVVEDGETF...LKAAIPHIKEVFRL</code> (208 AA)</p>
+        <p><span class="label">Reference:</span> An analysis of the protein sequence reveals that the enzyme's catalytic function corresponds to the chemical reaction: dITP + H2O = dIMP + diphosphate + H(+).</p>
+    </div>
+    <div class="versus">
+        <div class="side esm3">
+            <div class="side-label">ESM-3 + MLP &mdash; BLEU 0.459, ROUGE-L 0.636</div>
+            <p>Based on the provided protein sequence, the enzyme appears to facilitate the chemical reaction: dITP + H2O = dIMP + diphosphate + H(+).</p>
+        </div>
+        <div class="side text">
+            <div class="side-label">Text-only &mdash; BLEU 0.417, ROUGE-L 0.605</div>
+            <p>By examining the input protein sequence, the enzyme catalyzes the subsequent chemical reaction: dITP + H2O = dIMP + diphosphate + H(+).</p>
+        </div>
+    </div>
+    <p class="caption">Both approaches identify the exact same correct reaction. The BLEU difference is just template wording ("appears to facilitate" vs "catalyzes the subsequent"). This shows that for well-characterized enzymes with distinctive active sites, raw sequence text provides sufficient signal.</p>
+
+    <h3>5. Homodimer (General) &mdash; Worst Text Failure</h3>
+
+    <div class="example-block">
+        <p><span class="label">Task:</span> What is the quaternary structure and subunit composition of this protein?</p>
+        <p><span class="label">Protein:</span> <code style="font-size:0.75rem; word-break:break-all;">MNDFITETWLRANHTLSEGSEIHLPADARLTPS...IQQRLGEKP</code> (267 AA)</p>
+        <p><span class="label">Reference:</span> Homodimer.</p>
+    </div>
+    <div class="versus">
+        <div class="side esm3">
+            <div class="side-label">ESM-3 + MLP &mdash; BLEU 0.008, ROUGE-L 0.077</div>
+            <p>Homodimer. Interacts with PCNA. Three molecules of FEN1 bind to one PCNA trimer with each molecule binding to one PCNA monomer (By similarity).</p>
+        </div>
+        <div class="side text">
+            <div class="side-label">Text-only &mdash; BLEU 0.000, ROUGE-L 0.000</div>
+            <p>Interacts with FtsZ via their C-terminal domains (By similarity). Interacts with MinC; interaction inhibits assembly into filaments in vitro but does not induce depolymerization or inhibit polymerization activity. The complex formed by FtsZ-MinC may be involved in preventing premature septation during cell division when there is only one chromosome present per cell. Binds to DNA. Forms an antiparallel heterodimeric filamentous ring-like structure composed of 12 molecules each of FtsZ-340p and FtsZ-567r that can bind two copies of DnaB helicase at either end...</p>
+        </div>
+    </div>
+    <div class="warning-box">
+        <p><strong>Text hallucination at its worst.</strong> The reference is a single word: "Homodimer." ESM-3 gets it right then adds wrong extras about PCNA/FEN1. Text generates a massive paragraph about FtsZ cell division machinery that is entirely hallucinated &mdash; none of it relates to the actual protein. This illustrates the text model's tendency toward verbose, confident confabulation when uncertain.</p>
+    </div>
+
+    <h3>6. Protamine (Function) &mdash; Both Succeed</h3>
+
+    <div class="example-block">
+        <p><span class="label">Task:</span> Analyze the following protein sequence and explain its functional role.</p>
+        <p><span class="label">Protein:</span> <code style="font-size:0.75rem; word-break:break-all;">MARYRCCLTHSGSRCRRRRRRRCRRRRRRFGRRRRRRVCCRRYTVIRCTRQ</code> (51 AA)</p>
+        <p><span class="label">Reference:</span> Protamines substitute for histones in the chromatin of sperm during the haploid phase of spermatogenesis. They compact sperm DNA into a highly condensed, stable and inactive complex.</p>
+    </div>
+    <div class="versus">
+        <div class="side esm3">
+            <div class="side-label">ESM-3 + MLP &mdash; BLEU 0.803, ROUGE-L 0.900</div>
+            <p>Protamines substitute for histones in the chromatin of sperm during the haploid phase of spermatogenesis. They compact sperm DNA into a highly condensed, stable and inactive complex (By similarity). {ECO:0000250}.</p>
+        </div>
+        <div class="side text">
+            <div class="side-label">Text-only &mdash; BLEU 0.803, ROUGE-L 0.900</div>
+            <p>Protamines substitute for histones in the chromatin of sperm during the haploid phase of spermatogenesis. They compact sperm DNA into a highly condensed, stable and inactive complex (By similarity). {ECO:0000250}.</p>
+        </div>
+    </div>
+    <p class="caption">Identical outputs from both approaches. This 51-AA arginine-rich sequence is so distinctive that both the raw text and the ESM-3 embedding trivially identify it as protamine. Well-characterized proteins with unique sequence signatures don't benefit from structural embeddings.</p>
+
+    <h2>Summary of Patterns</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Pattern</th>
+                <th>ESM-3 + MLP</th>
+                <th>Text-only</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Well-known proteins</td>
+                <td>Correct</td>
+                <td>Correct</td>
+            </tr>
+            <tr>
+                <td>Function descriptions</td>
+                <td><strong>Strong (0.421 BLEU)</strong></td>
+                <td>Moderate (0.235 BLEU)</td>
+            </tr>
+            <tr>
+                <td>Hard/rare proteins</td>
+                <td><strong>Often correct</strong></td>
+                <td>Often wrong or hallucinated</td>
+            </tr>
+            <tr>
+                <td>Catalytic reactions</td>
+                <td>Moderate (0.199 BLEU)</td>
+                <td><strong>Slightly better (0.215 BLEU)</strong></td>
+            </tr>
+            <tr>
+                <td>Response length</td>
+                <td>Concise, focused</td>
+                <td>Verbose, sometimes rambling</td>
+            </tr>
+            <tr>
+                <td>Failure mode</td>
+                <td>Short wrong answer</td>
+                <td>Long hallucinated paragraph</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Why ESM-3 Wins on Function</h2>
+
+    <p>The function category gap (BLEU 0.421 vs 0.235) is the headline result. Three factors explain it:</p>
+
+    <ol>
+        <li><strong>Structural encoding</strong>: ESM-3 was pre-trained on protein structure and evolution. Function often follows from fold, and the embedding captures fold-level features that raw amino-acid tokens do not.</li>
+        <li><strong>Information density</strong>: 32 attention-pooled tokens distill the sequence into a compact representation focused on biologically relevant features. The text model sees hundreds of tokens (one per residue) that are locally informative but require the LLM to do its own "encoding" at training time.</li>
+        <li><strong>Generalization to rare proteins</strong>: For well-characterized proteins (protamine, ribosomal proteins), both approaches succeed because the LLM memorized the sequence-to-function mapping. For less common proteins (RNase E modulators, membrane insertases), ESM-3's structural features provide signal that the raw sequence does not.</li>
+    </ol>
+
+    <h2>Why Text Wins on Catalytic</h2>
+
+    <p>Text's slight edge on catalytic activity (0.215 vs 0.199 BLEU) likely reflects a different dynamic:</p>
+
+    <ul>
+        <li>Catalytic reactions are often described with exact chemical formulas (e.g., "dITP + H2O = dIMP + diphosphate") that appear verbatim in training data</li>
+        <li>The LLM can memorize these sequence-to-equation mappings directly when it sees the raw amino acids</li>
+        <li>ESM-3 embeddings may compress away the fine-grained active-site residue information that distinguishes one hydrolase from another</li>
+    </ul>
+
+    <p>However, the gap is small (+0.016 BLEU for text) &mdash; well within noise for 10 samples per category.</p>
+
+    <h2>The Hallucination Problem</h2>
+
+    <p>Beyond the aggregate scores, the most striking qualitative difference is in failure modes. When uncertain:</p>
+
+    <ul>
+        <li><strong>ESM-3</strong> tends to produce <strong>short, wrong</strong> answers ("Monomer" instead of "Homodimer")</li>
+        <li><strong>Text</strong> tends to produce <strong>long, hallucinated</strong> paragraphs (a paragraph about FtsZ when the protein has nothing to do with cell division)</li>
+    </ul>
+
+    <p>This matters for downstream applications. A short wrong answer is easy to flag and discard. A long, confident, detailed hallucination is dangerous &mdash; it looks authoritative and could mislead researchers.</p>
+
+    <blockquote>
+        <p>The embedding bottleneck that slightly hurts ESM-3's recall also acts as a <strong>natural regularizer</strong> against hallucination. The model cannot freely associate from raw sequence patterns to memorized but irrelevant text.</p>
+    </blockquote>
+
+    <h2>What Both Get Right</h2>
+
+    <p>Both approaches perfectly identify several well-characterized protein families:</p>
+
+    <ul>
+        <li>50S ribosomal protein L6 (uL18 family)</li>
+        <li>Fis family transcriptional regulators</li>
+        <li>Protamine function (histone replacement in spermatids)</li>
+        <li>Common enzymatic reactions (dITP hydrolysis, nucleotide metabolism)</li>
+    </ul>
+
+    <p>This shared success set represents the "easy" portion of protein understanding where sequence identity alone is sufficient for correct answers.</p>
+
+    <h2>Conclusions and Next Steps</h2>
+
+    <div class="success-box">
+        <p><strong>Verdict</strong>: ESM-3 embeddings provide a meaningful advantage over raw text input for protein understanding tasks, especially for function prediction on less common proteins. The advantage is most pronounced where structural context matters most.</p>
+    </div>
+
+    <ol>
+        <li><strong>ESM-3+MLP is the better SFT base for GRPO</strong>: The stronger function prediction and reduced hallucination make it a better starting point for RL fine-tuning</li>
+        <li><strong>Catalytic tasks may benefit from hybrid input</strong>: Consider a combined approach that feeds both embeddings and raw sequence tokens to the LLM</li>
+        <li><strong>Hallucination control</strong>: Text-only models need explicit anti-hallucination mechanisms (e.g., calibrated uncertainty, shorter max generation length)</li>
+        <li><strong>Perceiver comparison needed</strong>: Does the Perceiver Resampler (which replaces the attention pooling + MLP with learned cross-attention) close the catalytic gap while maintaining the function advantage?</li>
+    </ol>
+
+    <footer>
+        <p>
+            <a href="../index.html">Back to index</a>
+        </p>
+        <p>Generated by the Protein LLM researcher agent &mdash; 2026-03-08</p>
+    </footer>
+</body>
+</html>

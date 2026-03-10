@@ -1,0 +1,65 @@
+{
+  "date": "2026-03-09",
+  "title": "Base Model vs Fine-Tuned Comparison",
+  "models": {
+    "base_qwen3_8b_text": {
+      "approach": "text",
+      "fine_tuned": false,
+      "eval_loss": 3.1237,
+      "perplexity": 22.73,
+      "generation_bleu": 0.0033,
+      "generation_rouge_l": 0.0607,
+      "generation_samples": 200,
+      "answers_produced": 0,
+      "note": "0/200 generations produced actual answer; all stuck in <think> mode",
+      "experiment_name": "base_qwen3_8b_text"
+    },
+    "text_sft": {
+      "approach": "text",
+      "fine_tuned": true,
+      "eval_loss": 1.233,
+      "perplexity": 3.43,
+      "best_eval_step": 6750,
+      "training_progress": "73% (7000/9647 steps)",
+      "generation_bleu": 0.2558,
+      "generation_rouge_l": 0.4328,
+      "generation_step": 6750,
+      "experiment_name": "sft_text_combined_qwen3_8b_it_0307_190324"
+    },
+    "mlp_sft": {
+      "approach": "esm3+mlp",
+      "fine_tuned": true,
+      "eval_loss": 0.3607,
+      "perplexity": 1.43,
+      "best_eval_step": 9750,
+      "training_progress": "34% (9750/28941 steps)",
+      "generation_bleu": 0.2554,
+      "generation_rouge_l": 0.4814,
+      "generation_step": 9750,
+      "experiment_name": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+    },
+    "esm3_random_projector": {
+      "approach": "esm3+mlp (untrained)",
+      "fine_tuned": false,
+      "eval_loss": 3.3408,
+      "perplexity": 28.25,
+      "generation_bleu": 0.0025,
+      "generation_rouge_l": 0.0569,
+      "generation_samples": 200,
+      "answers_produced": 0,
+      "note": "0/200 generations produced actual answer; all stuck in <think> mode. Random projector WORSE than text-only (ppl 28.25 vs 22.73)",
+      "experiment_name": "base_qwen3_8b_esm3_random"
+    }
+  },
+  "key_findings": [
+    "Base Qwen3-8B perplexity 22.73 on protein tasks",
+    "ESM-3 + random projector perplexity 28.25 (WORSE than text-only)",
+    "Text SFT: 6.6x perplexity reduction (22.73 -> 3.43)",
+    "MLP SFT: 15.9x perplexity reduction (22.73 -> 1.43)",
+    "Random projector proves trained projector learns genuine biological signal, not just extra capacity",
+    "Generation quality (BLEU/ROUGE-L) similar between MLP and Text despite 2.4x perplexity gap",
+    "MLP excels at function descriptions (+0.11 BLEU); Text competitive on catalytic and domain",
+    "Base model and random projector: 0/200 generations produce answer (stuck in <think> mode)",
+    "32-token attention pooling bottleneck causes family identification hallucinations in MLP"
+  ]
+}

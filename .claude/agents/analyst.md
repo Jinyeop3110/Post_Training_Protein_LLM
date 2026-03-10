@@ -15,32 +15,23 @@ FIRST: Read these files for context:
 
 ## Plotting Setup (MANDATORY)
 
-Every script MUST start with this exact sequence:
+Every script MUST import from `figure_style.py` (the single source of truth for colors and styling):
 
 ```python
 import matplotlib
 matplotlib.use('Agg')  # Headless rendering — MUST be before pyplot import
 import matplotlib.pyplot as plt
-import seaborn as sns
 import pandas as pd
 import numpy as np
 import json
 import os
+import sys
 
-# Standard style
-sns.set_theme(style="whitegrid", palette="colorblind")
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'scripts', 'analysis'))
+from figure_style import style, save_figure, get_color, get_label, get_approach_label, smooth, annotate_best, annotate_bars, to_rgba_alpha
 
-# Approach color scheme (consistent across all plots)
-APPROACH_COLORS = {
-    "mlp": "#1f77b4",        # Blue
-    "perceiver": "#ff7f0e",  # Orange
-    "text": "#2ca02c",       # Green
-}
-
-FIG_DPI = 150
-FIG_SIZE = (10, 6)
-FIG_SIZE_WIDE = (14, 6)
-FIG_SIZE_TALL = (10, 8)
+# Apply style for target
+colors = style.apply("blog")  # or "web", "paper"
 ```
 
 ## Standard Plot Catalog
@@ -53,19 +44,19 @@ Overlaid training loss for all experiments:
 - Legend with experiment short names
 
 ```python
-fig, ax = plt.subplots(figsize=FIG_SIZE)
+fig, ax = plt.subplots(figsize=style.figsize())
 for exp_name, group in df.groupby("experiment"):
     approach = get_approach(exp_name, metadata)
-    color = APPROACH_COLORS.get(approach, "#333333")
+    color = style.color(approach)
     label = f"{approach}: {shorten(exp_name)}"
     ax.plot(group["step"], group["token_avg_loss"], color=color, label=label, alpha=0.8)
 ax.set_xlabel("Step")
 ax.set_ylabel("Token Average Loss")
 ax.set_title("Training Loss Curves")
 ax.legend(loc="upper right")
+style.clean_axes(ax)
 fig.tight_layout()
-fig.savefig(f"{fig_dir}/loss_curves.png", dpi=FIG_DPI, bbox_inches="tight")
-plt.close()
+save_figure(fig, "loss_curves")
 ```
 
 ### 2. Eval Loss Curves (`eval_loss_curves.png`)
@@ -99,7 +90,7 @@ ax.set_ylabel("Gradient Norm (log scale)")
 Render a summary table as an image using `ax.table()`:
 
 ```python
-fig, ax = plt.subplots(figsize=FIG_SIZE_WIDE)
+fig, ax = plt.subplots(figsize=style.figsize("wide"))
 ax.axis("off")
 table = ax.table(
     cellText=data,
@@ -110,7 +101,7 @@ table = ax.table(
 table.auto_set_font_size(False)
 table.set_fontsize(10)
 table.scale(1.2, 1.5)
-fig.savefig(f"{fig_dir}/convergence_table.png", dpi=FIG_DPI, bbox_inches="tight")
+save_figure(fig, "convergence_table")
 ```
 
 ### 7. GPU Memory (`gpu_memory.png`)
@@ -221,7 +212,21 @@ FIGURES_DIR = /home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/f
 DATA_DIR    = /home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/data
 ```
 
-Figures go in `blog/figures/` (e.g., `blog/figures/three_way_loss_curves.png`).
+### Figure Directory Structure
+
+Figures are organized into main (key) and supplementary:
+```
+blog/figures/
+├── figure_catalog.md       # Single source of truth — check before adding figures
+├── main_figures/           # 9 key figures for paper + website
+└── supple_figures/         # Supplementary figures (detailed views, variants)
+```
+
+- **Main figures** (`main_figures/`): Core narrative figures used in paper and website. Only add here after team lead approval.
+- **Supplementary figures** (`supple_figures/`): Detailed analysis, variant styles, intermediate results. Default destination for new plots.
+- **Paper PDFs**: `paper/figures/main/` and `paper/figures/supplementary/`
+
+New figures go to `supple_figures/` by default. After creating figures, update `figure_catalog.md`.
 Analysis JSON and scripts go in `blog/data/MM-DD/`.
 Follow conventions in `blog/README.md`.
 
@@ -240,11 +245,13 @@ Follow conventions in `blog/README.md`.
 
 - **ALWAYS use `token_avg_loss` for training loss plots, NOT `loss`**
 - **ALWAYS use `matplotlib.use('Agg')` BEFORE importing pyplot**
-- **NEVER write outside `blog/figures/` and `blog/data/`**
+- **ALWAYS import colors and styling from `scripts/analysis/figure_style.py`** -- this is the single source of truth for approach colors, DPI, figure sizes, and save helpers
+- **NEVER define inline APPROACH_COLORS, FIG_DPI, or FIG_SIZE** -- use `style.color()`, `style.dpi()`, `style.figsize()` from figure_style.py
+- **NEVER write outside `blog/figures/` and `blog/data/`** (new figures default to `blog/figures/supple_figures/`)
+- **Update `blog/figures/figure_catalog.md`** after generating new figures
 - **NEVER modify source code or experiment files**
 - **NEVER delete or alter any existing blog files**
-- Save all PNGs to `blog/figures/` at 150 DPI with `bbox_inches="tight"`
+- Use `save_figure(fig, "name")` instead of manual `fig.savefig(...)` calls
 - Include legend with experiment names and approach type on every plot
-- Use consistent approach color scheme across all figures
 - Handle missing data gracefully (skip metrics that don't exist)
 - Close all figures after saving (`plt.close()`)

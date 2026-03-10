@@ -1356,13 +1356,22 @@ class ProteinLLM(nn.Module):
         # Save LoRA adapter weights (works for both LoRA and QLoRA).
         # Skip when the model is FSDP-wrapped or torch.compiled — those
         # wrappers need all-rank collective ops that hang in single-rank
-        # save.  The caller (SFTTrainer.save_checkpoint) copies adapter
-        # files from the HF Trainer checkpoint instead.
+        # save.  The caller (SFTTrainer/GRPOTrainer.save_checkpoint)
+        # handles adapter saving separately for FSDP.
         if self.llm is not None and hasattr(self.llm, "save_pretrained"):
             llm_class = type(self.llm).__name__
             is_wrapped = llm_class in (
                 "FullyShardedDataParallel", "OptimizedModule",
             )
+            # Also detect FSDP2 (fully_shard) — params become DTensors
+            if not is_wrapped:
+                try:
+                    from torch.distributed._tensor import DTensor
+                    first_param = next(self.llm.parameters(), None)
+                    if first_param is not None and isinstance(first_param, DTensor):
+                        is_wrapped = True
+                except ImportError:
+                    pass
             if not is_wrapped:
                 adapter_path = path / "adapter"
                 self.llm.save_pretrained(adapter_path)

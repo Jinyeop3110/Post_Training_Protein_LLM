@@ -1,0 +1,805 @@
+{
+  "collection_date": "2026-03-09",
+  "main_figures": [
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/main_figures/fig1_schematic_overview.png",
+      "mtime": "2026-03-09 02:32",
+      "size_kb": 561.5,
+      "filename": "fig1_schematic_overview.png",
+      "location": "blog/figures/main_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/main_figures/fig2_architecture.png",
+      "mtime": "2026-03-09 02:32",
+      "size_kb": 208.4,
+      "filename": "fig2_architecture.png",
+      "location": "blog/figures/main_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/main_figures/fig3_data_composition.png",
+      "mtime": "2026-03-09 02:32",
+      "size_kb": 131.6,
+      "filename": "fig3_data_composition.png",
+      "location": "blog/figures/main_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/main_figures/fig4_main_run_progress.png",
+      "mtime": "2026-03-09 02:32",
+      "size_kb": 220.6,
+      "filename": "fig4_main_run_progress.png",
+      "location": "blog/figures/main_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/main_figures/fig5_eval_loss.png",
+      "mtime": "2026-03-09 02:32",
+      "size_kb": 177.4,
+      "filename": "fig5_eval_loss.png",
+      "location": "blog/figures/main_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/main_figures/fig6_generation_quality.png",
+      "mtime": "2026-03-09 02:32",
+      "size_kb": 123.1,
+      "filename": "fig6_generation_quality.png",
+      "location": "blog/figures/main_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/main_figures/fig7_scaling_effect.png",
+      "mtime": "2026-03-09 02:32",
+      "size_kb": 138.6,
+      "filename": "fig7_scaling_effect.png",
+      "location": "blog/figures/main_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/main_figures/fig8_mlp_vs_text.png",
+      "mtime": "2026-03-09 02:32",
+      "size_kb": 161.4,
+      "filename": "fig8_mlp_vs_text.png",
+      "location": "blog/figures/main_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/main_figures/fig9_final_comparison.png",
+      "mtime": "2026-03-09 02:32",
+      "size_kb": 108.6,
+      "filename": "fig9_final_comparison.png",
+      "location": "blog/figures/main_figures/"
+    }
+  ],
+  "supple_figures": [
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/approach_convergence_comparison.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 71.3,
+      "filename": "approach_convergence_comparison.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/architecture_comparison.pdf",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 62.7,
+      "filename": "architecture_comparison.pdf",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/architecture_comparison.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 607.3,
+      "filename": "architecture_comparison.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/convergence_table.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 76.1,
+      "filename": "convergence_table.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/long_mlp_gradient_norms.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 93.9,
+      "filename": "long_mlp_gradient_norms.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/long_mlp_loss_curve.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 81.4,
+      "filename": "long_mlp_loss_curve.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/long_mlp_lr_schedule.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 50.7,
+      "filename": "long_mlp_lr_schedule.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/loss_curves.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 167.2,
+      "filename": "loss_curves.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/main_run_loss_detail.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 102.7,
+      "filename": "main_run_loss_detail.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/main_run_smoothed_loss.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 95.4,
+      "filename": "main_run_smoothed_loss.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/mlp_combined_convergence_table.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 75.8,
+      "filename": "mlp_combined_convergence_table.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/mlp_combined_eval_loss.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 72.8,
+      "filename": "mlp_combined_eval_loss.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/mlp_combined_final_comparison.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 66.7,
+      "filename": "mlp_combined_final_comparison.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/mlp_combined_grad_norms.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 174.6,
+      "filename": "mlp_combined_grad_norms.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/mlp_combined_lr_schedule.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 74.1,
+      "filename": "mlp_combined_lr_schedule.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/mlp_combined_train_loss.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 114.4,
+      "filename": "mlp_combined_train_loss.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/mlp_epoch1_comparison_bar.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 32.8,
+      "filename": "mlp_epoch1_comparison_bar.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/mlp_epoch1_convergence_table.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 39.9,
+      "filename": "mlp_epoch1_convergence_table.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/mlp_epoch1_eval_loss.png",
+      "mtime": "2026-03-09 13:49",
+      "size_kb": 64.3,
+      "filename": "mlp_epoch1_eval_loss.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/mlp_epoch1_generation_quality.png",
+      "mtime": "2026-03-09 13:49",
+      "size_kb": 84.1,
+      "filename": "mlp_epoch1_generation_quality.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/mlp_epoch1_grad_norms.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 113.2,
+      "filename": "mlp_epoch1_grad_norms.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/mlp_epoch1_lr_schedule.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 62.1,
+      "filename": "mlp_epoch1_lr_schedule.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/mlp_epoch1_train_eval_combined.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 76.5,
+      "filename": "mlp_epoch1_train_eval_combined.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/mlp_epoch1_train_loss.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 71.8,
+      "filename": "mlp_epoch1_train_loss.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/mlp_vs_text_eval_loss.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 68.4,
+      "filename": "mlp_vs_text_eval_loss.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/mlp_vs_text_final_metrics.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 57.5,
+      "filename": "mlp_vs_text_final_metrics.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/mlp_vs_text_grad_norms.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 163.8,
+      "filename": "mlp_vs_text_grad_norms.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/mlp_vs_text_lr_schedule.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 93.1,
+      "filename": "mlp_vs_text_lr_schedule.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/mlp_vs_text_training_loss.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 134.0,
+      "filename": "mlp_vs_text_training_loss.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/protein_seq_length_histogram.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 227.6,
+      "filename": "protein_seq_length_histogram.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/pub_approach_eval_curves.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 71.1,
+      "filename": "pub_approach_eval_curves.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/pub_approach_loss_curves.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 151.1,
+      "filename": "pub_approach_loss_curves.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/pub_architecture.png",
+      "mtime": "2026-03-09 13:49",
+      "size_kb": 94.7,
+      "filename": "pub_architecture.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/pub_convergence_table.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 70.7,
+      "filename": "pub_convergence_table.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/pub_data_composition.png",
+      "mtime": "2026-03-09 13:49",
+      "size_kb": 58.8,
+      "filename": "pub_data_composition.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/pub_final_comparison.png",
+      "mtime": "2026-03-09 13:49",
+      "size_kb": 47.5,
+      "filename": "pub_final_comparison.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/pub_generation_quality.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 54.7,
+      "filename": "pub_generation_quality.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/pub_gradient_norms.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 150.7,
+      "filename": "pub_gradient_norms.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/pub_main_run_progress.png",
+      "mtime": "2026-03-09 13:49",
+      "size_kb": 95.6,
+      "filename": "pub_main_run_progress.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/pub_mlp_vs_text_4m.png",
+      "mtime": "2026-03-09 13:49",
+      "size_kb": 82.2,
+      "filename": "pub_mlp_vs_text_4m.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/pub_scaling_effect.png",
+      "mtime": "2026-03-09 13:49",
+      "size_kb": 62.6,
+      "filename": "pub_scaling_effect.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/schematic_overview.png",
+      "mtime": "2026-03-09 13:49",
+      "size_kb": 562.3,
+      "filename": "schematic_overview.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/text_vs_esm_eval_loss.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 89.3,
+      "filename": "text_vs_esm_eval_loss.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/text_vs_esm_final_comparison.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 87.2,
+      "filename": "text_vs_esm_final_comparison.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/three_way_convergence_table.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 69.4,
+      "filename": "three_way_convergence_table.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/three_way_eval_loss.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 79.0,
+      "filename": "three_way_eval_loss.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/three_way_final_metrics.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 51.6,
+      "filename": "three_way_final_metrics.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/three_way_grad_norms.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 186.4,
+      "filename": "three_way_grad_norms.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/three_way_loss_curves.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 150.3,
+      "filename": "three_way_loss_curves.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/three_way_lr_schedule.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 108.7,
+      "filename": "three_way_lr_schedule.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/web_approach_eval_curves.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 91.3,
+      "filename": "web_approach_eval_curves.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/web_approach_loss_curves.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 190.4,
+      "filename": "web_approach_loss_curves.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/web_architecture.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 128.5,
+      "filename": "web_architecture.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/web_data_composition.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 80.2,
+      "filename": "web_data_composition.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/web_final_comparison.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 64.8,
+      "filename": "web_final_comparison.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/web_generation_quality.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 77.1,
+      "filename": "web_generation_quality.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/web_main_run_progress.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 119.0,
+      "filename": "web_main_run_progress.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/web_mlp_vs_text_4m.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 106.5,
+      "filename": "web_mlp_vs_text_4m.png",
+      "location": "blog/figures/supple_figures/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog/figures/supple_figures/web_scaling_effect.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 88.3,
+      "filename": "web_scaling_effect.png",
+      "location": "blog/figures/supple_figures/"
+    }
+  ],
+  "paper_main_figures": [
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/main/fig1_schematic_overview.pdf",
+      "mtime": "2026-03-09 02:32",
+      "size_kb": 71.6,
+      "filename": "fig1_schematic_overview.pdf",
+      "location": "paper/figures/main/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/main/fig2_architecture.pdf",
+      "mtime": "2026-03-09 02:32",
+      "size_kb": 33.4,
+      "filename": "fig2_architecture.pdf",
+      "location": "paper/figures/main/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/main/fig3_data_composition.pdf",
+      "mtime": "2026-03-09 02:32",
+      "size_kb": 16.4,
+      "filename": "fig3_data_composition.pdf",
+      "location": "paper/figures/main/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/main/fig4_main_run_progress.pdf",
+      "mtime": "2026-03-09 02:32",
+      "size_kb": 29.7,
+      "filename": "fig4_main_run_progress.pdf",
+      "location": "paper/figures/main/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/main/fig5_eval_loss.pdf",
+      "mtime": "2026-03-09 02:32",
+      "size_kb": 18.5,
+      "filename": "fig5_eval_loss.pdf",
+      "location": "paper/figures/main/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/main/fig6_generation_quality.pdf",
+      "mtime": "2026-03-09 02:32",
+      "size_kb": 21.9,
+      "filename": "fig6_generation_quality.pdf",
+      "location": "paper/figures/main/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/main/fig7_scaling_effect.pdf",
+      "mtime": "2026-03-09 02:32",
+      "size_kb": 24.4,
+      "filename": "fig7_scaling_effect.pdf",
+      "location": "paper/figures/main/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/main/fig8_mlp_vs_text.pdf",
+      "mtime": "2026-03-09 02:32",
+      "size_kb": 22.5,
+      "filename": "fig8_mlp_vs_text.pdf",
+      "location": "paper/figures/main/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/main/fig9_final_comparison.pdf",
+      "mtime": "2026-03-09 02:32",
+      "size_kb": 20.0,
+      "filename": "fig9_final_comparison.pdf",
+      "location": "paper/figures/main/"
+    }
+  ],
+  "paper_supple_figures": [
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/architecture.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 132.6,
+      "filename": "architecture.png",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/architecture_comparison.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 607.3,
+      "filename": "architecture_comparison.png",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/convergence_table.pdf",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 27.4,
+      "filename": "convergence_table.pdf",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/convergence_table.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 103.6,
+      "filename": "convergence_table.png",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/data_composition.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 72.8,
+      "filename": "data_composition.png",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/eval_curves.pdf",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 17.1,
+      "filename": "eval_curves.pdf",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/eval_curves.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 75.2,
+      "filename": "eval_curves.png",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/final_comparison.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 66.9,
+      "filename": "final_comparison.png",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/generation_quality.pdf",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 19.0,
+      "filename": "generation_quality.pdf",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/generation_quality.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 76.2,
+      "filename": "generation_quality.png",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/gradient_norms.pdf",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 30.3,
+      "filename": "gradient_norms.pdf",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/gradient_norms.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 84.8,
+      "filename": "gradient_norms.png",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/loss_curves.pdf",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 20.0,
+      "filename": "loss_curves.pdf",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/loss_curves.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 99.9,
+      "filename": "loss_curves.png",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/main_run.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 60.7,
+      "filename": "main_run.png",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/mlp_combined_convergence_table.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 75.8,
+      "filename": "mlp_combined_convergence_table.png",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/mlp_combined_eval_loss.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 72.8,
+      "filename": "mlp_combined_eval_loss.png",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/mlp_combined_final_comparison.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 66.7,
+      "filename": "mlp_combined_final_comparison.png",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/mlp_combined_grad_norms.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 174.6,
+      "filename": "mlp_combined_grad_norms.png",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/mlp_combined_lr_schedule.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 74.1,
+      "filename": "mlp_combined_lr_schedule.png",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/mlp_combined_train_loss.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 114.4,
+      "filename": "mlp_combined_train_loss.png",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/mlp_epoch1_comparison_bar.pdf",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 15.9,
+      "filename": "mlp_epoch1_comparison_bar.pdf",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/mlp_epoch1_convergence_table.pdf",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 23.7,
+      "filename": "mlp_epoch1_convergence_table.pdf",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/mlp_epoch1_grad_norms.pdf",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 28.1,
+      "filename": "mlp_epoch1_grad_norms.pdf",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/mlp_epoch1_lr_schedule.pdf",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 14.3,
+      "filename": "mlp_epoch1_lr_schedule.pdf",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/mlp_epoch1_train_eval_combined.pdf",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 25.2,
+      "filename": "mlp_epoch1_train_eval_combined.pdf",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/mlp_epoch1_train_loss.pdf",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 24.0,
+      "filename": "mlp_epoch1_train_loss.pdf",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/mlp_vs_text_4m.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 79.5,
+      "filename": "mlp_vs_text_4m.png",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/protein_seq_length_histogram.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 227.6,
+      "filename": "protein_seq_length_histogram.png",
+      "location": "paper/figures/supplementary/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/paper/figures/supplementary/scaling_effect.png",
+      "mtime": "2026-03-08 19:21",
+      "size_kb": 91.4,
+      "filename": "scaling_effect.png",
+      "location": "paper/figures/supplementary/"
+    }
+  ],
+  "legacy_flat_figures": [],
+  "source_scripts": [
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/scripts/analysis/cross_source_overlap.py",
+      "mtime": "2026-03-02 12:49",
+      "size_kb": 11.6,
+      "filename": "cross_source_overlap.py",
+      "location": "scripts/analysis/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/scripts/analysis/figure_style.py",
+      "mtime": "2026-03-09 02:28",
+      "size_kb": 20.7,
+      "filename": "figure_style.py",
+      "location": "scripts/analysis/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/scripts/analysis/plot_pub_figures.py",
+      "mtime": "2026-03-09 02:31",
+      "size_kb": 22.3,
+      "filename": "plot_pub_figures.py",
+      "location": "scripts/analysis/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/scripts/analysis/plot_schematic_overview.py",
+      "mtime": "2026-03-09 13:44",
+      "size_kb": 22.5,
+      "filename": "plot_schematic_overview.py",
+      "location": "scripts/analysis/"
+    },
+    {
+      "path": "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/scripts/analysis/plot_training.py",
+      "mtime": "2026-03-09 13:44",
+      "size_kb": 34.1,
+      "filename": "plot_training.py",
+      "location": "scripts/analysis/"
+    }
+  ],
+  "summary": {
+    "total_main_figures": 9,
+    "total_supple_figures": 59,
+    "total_paper_main": 9,
+    "total_paper_supple": 30,
+    "total_source_scripts": 5
+  }
+}

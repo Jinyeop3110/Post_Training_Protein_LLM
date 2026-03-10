@@ -108,14 +108,14 @@
 
     <p>The combined train+eval loss curve shows continuous improvement across all 9,750 steps. After rapid convergence during warmup (steps 0&ndash;210), the model enters a steady descent phase. <code>token_avg_loss</code> dropped from 3.3 at step 1 to 0.366 at step 9,750, with a minimum of 0.306. Eval loss tracks closely at 0.361, indicating no overfitting.</p>
 
-    <img src="../figures/mlp_epoch1_train_eval_combined.png" alt="Training and validation loss over 9,750 steps">
+    <img src="../figures/supple_figures/mlp_epoch1_train_eval_combined.png" alt="Training and validation loss over 9,750 steps">
     <div class="img-caption">Training (smoothed MA-50) and validation loss over epoch 1. Both curves are still declining at step 9,750 with no sign of plateau.</div>
 
     <p>The train-eval gap is remarkably small: 0.366 vs 0.361 (eval is actually <em>lower</em> than train). This suggests the model generalizes well to held-out data and has significant capacity for further improvement in epochs 2&ndash;3.</p>
 
     <h3>2. Eval Loss Trajectory: From 0.694 to 0.361</h3>
 
-    <img src="../figures/mlp_epoch1_eval_loss.png" alt="Eval loss with best annotation at step 9750">
+    <img src="../figures/supple_figures/mlp_epoch1_eval_loss.png" alt="Eval loss with best annotation at step 9750">
     <div class="img-caption">Eval loss checkpoints across epoch 1. Best eval_loss = 0.361 at step 9,750 (latest checkpoint), annotated.</div>
 
     <p>Eval loss improved monotonically after initial convergence:</p>
@@ -134,7 +134,7 @@
 
     <h3>3. Generation Quality Improving Through Training</h3>
 
-    <img src="../figures/mlp_epoch1_generation_quality.png" alt="BLEU and ROUGE-L over training steps">
+    <img src="../figures/supple_figures/mlp_epoch1_generation_quality.png" alt="BLEU and ROUGE-L over training steps">
     <div class="img-caption">BLEU and ROUGE-L generation metrics over training. Best scores achieved at step 9,250.</div>
 
     <p>Generation quality metrics confirm that lower loss translates to better text outputs:</p>
@@ -149,7 +149,7 @@
 
     <h3>4. Training Stability: Clean Run After Warmup</h3>
 
-    <img src="../figures/mlp_epoch1_grad_norms.png" alt="Gradient norms (log scale) with spike detection">
+    <img src="../figures/supple_figures/mlp_epoch1_grad_norms.png" alt="Gradient norms (log scale) with spike detection">
     <div class="img-caption">Gradient norms on log scale. All spikes are confined to warmup (steps 10&ndash;100). Post-warmup mean: 0.627.</div>
 
     <p>The run is remarkably stable. Key stability metrics:</p>
@@ -166,12 +166,12 @@
 
     <h3>5. Learning Rate Schedule</h3>
 
-    <img src="../figures/mlp_epoch1_lr_schedule.png" alt="Learning rate warmup + cosine decay schedule">
+    <img src="../figures/supple_figures/mlp_epoch1_lr_schedule.png" alt="Learning rate warmup + cosine decay schedule">
     <div class="img-caption">Learning rate schedule: linear warmup (100 steps) followed by cosine decay. At step 9,750, LR has decayed to ~60% of peak.</div>
 
     <h2>Summary Results</h2>
 
-    <img src="../figures/mlp_epoch1_comparison_bar.png" alt="Final metrics bar chart">
+    <img src="../figures/supple_figures/mlp_epoch1_comparison_bar.png" alt="Final metrics bar chart">
     <div class="img-caption">Key metrics at the epoch 1 checkpoint.</div>
 
     <table>
@@ -188,7 +188,7 @@
         <tr><td>Anomalies</td><td>16 total, all in warmup except 1 (step 2,290)</td></tr>
     </table>
 
-    <img src="../figures/mlp_epoch1_convergence_table.png" alt="Convergence summary table">
+    <img src="../figures/supple_figures/mlp_epoch1_convergence_table.png" alt="Convergence summary table">
     <div class="img-caption">Convergence summary for the MLP-Combined run at epoch 1.</div>
 
     <h2>Historical Context</h2>

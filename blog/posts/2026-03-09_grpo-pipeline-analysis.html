@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GRPO Pipeline Deep Dive: Custom Implementation, Multi-GPU Strategy, and Known Issues</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #1a1a2e;
+            --accent: #2563eb;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --code-bg: #f3f4f6;
+            --table-header: #f9fafb;
+            --blockquote-bg: #fffbeb;
+            --blockquote-border: #f59e0b;
+            --success-bg: #f0fdf4;
+            --success-border: #22c55e;
+            --warning-bg: #fff7ed;
+            --warning-border: #f97316;
+            --danger-bg: #fef2f2;
+            --danger-border: #ef4444;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--fg);
+            background: var(--bg);
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        header { margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 2px solid var(--border); }
+        header .meta { color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem; }
+        header .tags { margin-top: 0.5rem; }
+        header .tag {
+            display: inline-block; background: var(--code-bg); color: var(--accent);
+            padding: 0.15rem 0.6rem; border-radius: 4px; font-size: 0.8rem; margin-right: 0.3rem;
+        }
+        h1 { font-size: 1.8rem; line-height: 1.3; }
+        h2 { font-size: 1.4rem; margin-top: 2.5rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+        h3 { font-size: 1.15rem; margin-top: 1.5rem; margin-bottom: 0.75rem; }
+        h4 { font-size: 1rem; margin-top: 1.2rem; margin-bottom: 0.5rem; color: var(--muted); }
+        p { margin-bottom: 1rem; }
+        code {
+            background: var(--code-bg); padding: 0.15rem 0.4rem; border-radius: 3px;
+            font-size: 0.9em; font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+        }
+        pre {
+            background: var(--code-bg); padding: 1.2rem; border-radius: 8px; overflow-x: auto;
+            margin-bottom: 1.5rem; font-size: 0.82rem; line-height: 1.55;
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+        }
+        pre .comment { color: #6b7280; font-style: italic; }
+        pre .keyword { color: #7c3aed; font-weight: 600; }
+        pre .string { color: #059669; }
+        pre .number { color: #dc2626; }
+        pre .highlight { background: #fef3c7; display: inline; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.9rem; }
+        th, td { padding: 0.6rem 0.8rem; border: 1px solid var(--border); text-align: left; }
+        th { background: var(--table-header); font-weight: 600; }
+        .callout {
+            padding: 1rem 1.2rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid;
+        }
+        .callout-info { background: #eff6ff; border-color: var(--accent); }
+        .callout-success { background: var(--success-bg); border-color: var(--success-border); }
+        .callout-warning { background: var(--warning-bg); border-color: var(--warning-border); }
+        .callout-danger { background: var(--danger-bg); border-color: var(--danger-border); }
+        .callout strong { display: block; margin-bottom: 0.3rem; }
+        ul, ol { margin-bottom: 1rem; padding-left: 1.5rem; }
+        li { margin-bottom: 0.4rem; }
+        .toc { background: var(--code-bg); padding: 1.2rem; border-radius: 8px; margin-bottom: 2rem; }
+        .toc ul { list-style: none; padding-left: 0; margin-bottom: 0; }
+        .toc li { margin-bottom: 0.3rem; }
+        .toc a { color: var(--accent); text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        .file-ref { font-size: 0.85rem; color: var(--muted); }
+        .line-ref { color: var(--accent); font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>GRPO Pipeline Deep Dive: Custom Implementation, Multi-GPU Strategy, and Known Issues</h1>
+    <div class="meta">March 9, 2026 &middot; Technical Analysis</div>
+    <div class="tags">
+        <span class="tag">GRPO</span>
+        <span class="tag">Implementation</span>
+        <span class="tag">FSDP2</span>
+        <span class="tag">Multi-GPU</span>
+        <span class="tag">Code Review</span>
+    </div>
+</header>
+
+<div class="toc">
+    <strong>Contents</strong>
+    <ul>
+        <li><a href="#custom-impl">1. Custom GRPO Implementation (No veRL)</a></li>
+        <li><a href="#multi-gpu">2. Multi-GPU Training Strategy</a></li>
+        <li><a href="#algorithm">3. GRPO Algorithm Details</a></li>
+        <li><a href="#gradient-flow">4. Gradient Flow Fix</a></li>
+        <li><a href="#wandb">5. Wandb Logging</a></li>
+        <li><a href="#config-issues">6. Config Issues</a></li>
+        <li><a href="#summary">7. Summary and Recommendations</a></li>
+    </ul>
+</div>
+
+<p>This post documents the complete GRPO training pipeline in <code>src/training/grpo_trainer.py</code> (1,980 lines).
+The implementation is a custom PyTorch GRPO trainer that handles generation, reward computation, advantage estimation,
+and policy gradient updates&mdash;all without relying on external RL frameworks.</p>
+
+
+<h2 id="custom-impl">1. Custom GRPO Implementation (No veRL)</h2>
+
+<h3>What We Actually Use</h3>
+
+<p>The entire GRPO pipeline is <strong>custom PyTorch + transformers + PEFT</strong>. Despite the config declaring
+<code>framework: verl</code>, there are zero imports from veRL in the codebase. The implementation builds on:</p>
+
+<table>
+    <tr><th>Dependency</th><th>What It Provides</th><th>Lines</th></tr>
+    <tr><td><code>torch</code></td><td>Core training loop, autograd, distributed</td><td>Throughout</td></tr>
+    <tr><td><code>transformers</code></td><td>Model loading, tokenization, <code>.generate()</code></td><td>33&ndash;44</td></tr>
+    <tr><td><code>peft</code></td><td>LoRA adapter loading and application</td><td>46&ndash;56</td></tr>
+    <tr><td><code>torch.distributed</code></td><td>NCCL process group, all-reduce</td><td>258&ndash;277</td></tr>
+    <tr><td><code>torch.distributed._composable.fsdp</code></td><td>FSDP2 composable API</td><td>72&ndash;77, 279&ndash;343</td></tr>
+</table>
+
+<h3>What veRL Would Provide (But We Don't Use)</h3>
+
+<p>veRL (Volcano Engine RL) is a distributed RL framework that would provide:</p>
+<ul>
+    <li><strong>Actor-critic separation:</strong> Runs policy and critic models on different GPU groups</li>
+    <li><strong>vLLM rollout engine:</strong> Fast generation with PagedAttention, continuous batching</li>
+    <li><strong>Ray-based orchestration:</strong> Distributed scheduling across nodes</li>
+    <li><strong>FSDP/Megatron integration:</strong> Automatic model sharding during training</li>
+</ul>
+
+<p>Instead, our implementation handles all of this in a single <code>GRPOTrainer</code> class
+(<span class="file-ref">grpo_trainer.py:<span class="line-ref">142&ndash;1838</span></span>),
+which is simpler but less optimized for large-scale distributed training.</p>
+
+<h3>TRL Import: Present But Dead</h3>
+
+<pre><span class="comment"># grpo_trainer.py:58-63</span>
+<span class="keyword">try</span>:
+    <span class="keyword">from</span> trl <span class="keyword">import</span> GRPOConfig
+    <span class="keyword">from</span> trl <span class="keyword">import</span> GRPOTrainer <span class="keyword">as</span> TRLGRPOTrainer
+    HAS_TRL_GRPO = <span class="keyword">True</span>
+<span class="keyword">except</span> ImportError:
+    HAS_TRL_GRPO = <span class="keyword">False</span></pre>
+
+<p>The <code>TRLGRPOTrainer</code> is imported but never instantiated. The only reference is in
+<code>run_grpo_with_trl()</code> (<span class="file-ref">grpo_trainer.py:<span class="line-ref">1892&ndash;1914</span></span>)
+which raises <code>NotImplementedError</code>:</p>
+
+<pre><span class="comment"># grpo_trainer.py:1892-1914</span>
+<span class="keyword">def</span> run_grpo_with_trl(cfg):
+    <span class="keyword">if not</span> HAS_TRL_GRPO:
+        <span class="keyword">return</span> run_grpo(cfg)  <span class="comment"># falls back to custom impl</span>
+    <span class="keyword">raise</span> NotImplementedError(
+        <span class="string">"TRL GRPO integration not yet implemented."</span>
+    )</pre>
+
+
+<h2 id="multi-gpu">2. Multi-GPU Training Strategy</h2>
+
+<h3>FSDP2 Composable API</h3>
+
+<p>The GRPO trainer uses <strong>FSDP2</strong> (PyTorch 2.4+ composable API), not the older FSDP1 wrapper.
+This is applied in <code>_apply_fsdp()</code>
+(<span class="file-ref">grpo_trainer.py:<span class="line-ref">279&ndash;343</span></span>):</p>
+
+<pre><span class="comment"># grpo_trainer.py:296-330 — FSDP2 sharding</span>
+mesh = DeviceMesh(<span class="string">"cuda"</span>, list(<span class="keyword">range</span>(self.world_size)))
+mp_policy = MixedPrecisionPolicy(
+    param_dtype=torch.bfloat16,
+    reduce_dtype=torch.float32,
+)
+
+<span class="comment"># Wrap each decoder layer individually</span>
+<span class="keyword">for</span> layer <span class="keyword">in</span> base_model.model.layers:
+    fully_shard(layer, mesh=mesh, mp_policy=mp_policy,
+                <span class="highlight">reshard_after_forward=False</span>)  <span class="comment"># SHARD_GRAD_OP mode</span>
+<span class="comment"># Wrap root model</span>
+fully_shard(base_model, mesh=mesh, mp_policy=mp_policy)</pre>
+
+<div class="callout callout-info">
+    <strong>reshard_after_forward=False</strong>
+    This is equivalent to FSDP1's <code>SHARD_GRAD_OP</code> strategy: parameters are gathered for forward
+    and kept unsharded until after backward. This uses more memory than full sharding but avoids
+    a second all-gather during backward.
+</div>
+
+<h3>Sharding Plan</h3>
+
+<table>
+    <tr><th>Component</th><th>Strategy</th><th>Why</th></tr>
+    <tr>
+        <td>Qwen3-8B LLM</td>
+        <td>FSDP2 (per-layer sharding)</td>
+        <td>~16 GB &rarr; ~2 GB/GPU</td>
+    </tr>
+    <tr>
+        <td>ESM-3 encoder</td>
+        <td>Replicated (excluded from FSDP)</td>
+        <td>Frozen, fp32, ~1.2 GB &mdash; small enough to replicate</td>
+    </tr>
+    <tr>
+        <td>AttentionPooling + MLPProjector</td>
+        <td>Replicated (manual gradient sync)</td>
+        <td>~30M params &mdash; too small for FSDP overhead</td>
+    </tr>
+    <tr>
+        <td>LoRA adapters</td>
+        <td>Inside FSDP-wrapped layers</td>
+        <td>~2M params, live on the base model layers</td>
+    </tr>
+</table>
+
+<h3>embed_tokens Cache</h3>
+
+<p>Before FSDP shards the model, embed_tokens weights are cloned into a cache
+(<span class="file-ref">grpo_trainer.py:<span class="line-ref">312&ndash;318</span></span>):</p>
+
+<pre><span class="comment"># Cache embed_tokens BEFORE FSDP shards the model</span>
+embed_weight = base_model.get_input_embeddings().weight.data.clone()
+self.protein_llm._fsdp_embed_cache = embed_weight</pre>
+
+<p>After FSDP sharding, calling <code>embed_tokens</code> directly on sharded parameters produces garbage.
+<code>ProteinLLM.prepare_inputs()</code> uses this cache to correctly embed text tokens alongside protein prefix embeddings.</p>
+
+<h3>Manual Gradient Sync for Multimodal Params</h3>
+
+<p>Since pooling and projector are NOT FSDP-wrapped, their gradients need explicit all-reduce
+(<span class="file-ref">grpo_trainer.py:<span class="line-ref">1248&ndash;1263</span></span>):</p>
+
+<pre><span class="comment"># grpo_trainer.py:1248-1263</span>
+<span class="keyword">def</span> _sync_multimodal_gradients(self):
+    <span class="keyword">if not</span> dist.is_initialized() <span class="keyword">or</span> dist.get_world_size() <= <span class="number">1</span>:
+        <span class="keyword">return</span>
+    <span class="keyword">if</span> self.protein_llm <span class="keyword">is None</span>:
+        <span class="keyword">return</span>
+    <span class="keyword">for</span> module <span class="keyword">in</span> [self.protein_llm.pooling, self.protein_llm.projector]:
+        <span class="keyword">if</span> module <span class="keyword">is not None</span>:
+            <span class="keyword">for</span> p <span class="keyword">in</span> module.parameters():
+                <span class="keyword">if</span> p.requires_grad <span class="keyword">and</span> p.grad <span class="keyword">is not None</span>:
+                    dist.all_reduce(p.grad, op=dist.ReduceOp.AVG)</pre>
+
+<p>This is called after gradient accumulation completes, just before the optimizer step
+(<span class="file-ref">grpo_trainer.py:<span class="line-ref">1479</span></span>).</p>
+
+<h3>Separate Gradient Clipping</h3>
+
+<p>FSDP and non-FSDP parameters require different clipping APIs
+(<span class="file-ref">grpo_trainer.py:<span class="line-ref">1482&ndash;1519</span></span>):</p>
+
+<pre><span class="keyword">if</span> self.use_fsdp:
+    <span class="comment"># FSDP-aware clip for LLM (uses FSDP's clip_grad_norm_)</span>
+    base.clip_grad_norm_(max_grad_norm)
+    <span class="comment"># Standard clip for multimodal params (NOT FSDP-wrapped)</span>
+    torch.nn.utils.clip_grad_norm_(mm_params, max_grad_norm)
+<span class="keyword">else</span>:
+    <span class="comment"># Single clip for all params</span>
+    torch.nn.utils.clip_grad_norm_(all_params, max_grad_norm)</pre>
+
+<h3>Distributed Sampling</h3>
+
+<p>Multi-GPU uses <code>DistributedSampler</code> with epoch-synced shuffling
+(<span class="file-ref">grpo_trainer.py:<span class="line-ref">1431&ndash;1457</span></span>):</p>
+
+<pre><span class="keyword">if</span> self.world_size > <span class="number">1</span>:
+    sampler = DistributedSampler(self.train_dataset, shuffle=<span class="keyword">True</span>)
+    <span class="comment"># ...</span>
+<span class="keyword">for</span> epoch <span class="keyword">in range</span>(num_epochs):
+    <span class="keyword">if</span> sampler <span class="keyword">is not None</span>:
+        sampler.set_epoch(epoch)  <span class="comment"># Ensures different shuffle per epoch</span></pre>
+
+
+<h2 id="algorithm">3. GRPO Algorithm Details</h2>
+
+<p>The algorithm follows the DeepSeekMath GRPO paper with DAPO and Dr. GRPO improvements.
+The core loop lives in <code>_training_step()</code>
+(<span class="file-ref">grpo_trainer.py:<span class="line-ref">1265&ndash;1398</span></span>).</p>
+
+<h3>Step 1: Generation Phase (no_grad)</h3>
+
+<p><code>_generate_completions()</code>
+(<span class="file-ref">grpo_trainer.py:<span class="line-ref">915&ndash;1027</span></span>)
+generates <code>group_size</code> (8) completions per prompt. All completions for a single prompt are batched
+into one <code>.generate()</code> call:</p>
+
+<pre><span class="comment"># For each prompt, generate group_size completions in one batch</span>
+batch_proteins = [protein_seq] * num_completions
+batch_prompts = [prompt] * num_completions
+
+<span class="keyword">with</span> torch.no_grad():
+    texts, token_ids, input_len = self.protein_llm.generate(
+        protein_sequences=batch_proteins,
+        prompt=batch_prompts,
+        return_token_ids=<span class="keyword">True</span>,
+        **gen_kwargs,
+    )</pre>
+
+<p>For text-only prompts, it falls back to <code>self.model.generate()</code> with repeated input_ids
+(<span class="file-ref">grpo_trainer.py:<span class="line-ref">976&ndash;1013</span></span>).</p>
+
+<h3>Step 2: Reward Computation</h3>
+
+<p><code>_compute_rewards()</code>
+(<span class="file-ref">grpo_trainer.py:<span class="line-ref">1133&ndash;1181</span></span>)
+calls the task-specific reward function. Ground truth extraction is task-aware:</p>
+
+<table>
+    <tr><th>Task</th><th>Ground Truth Source</th><th>Reward Function</th></tr>
+    <tr><td>GO prediction</td><td><code>batch["response"]</code></td><td><code>compute_go_reward</code> (F1 score)</td></tr>
+    <tr><td>Stability/ddG</td><td><code>metadata.ddG</code></td><td><code>compute_stability_reward</code> (Gaussian decay)</td></tr>
+    <tr><td>ESMFold/Structure</td><td><code>metadata.plddt</code> as JSON</td><td><code>compute_esmfold_reward</code> (3-component)</td></tr>
+    <tr><td>ProteinLM Bench</td><td><code>metadata.answer</code></td><td><code>compute_proteinlm_bench_reward</code> (binary)</td></tr>
+    <tr><td>PPI</td><td><code>batch["response"]</code></td><td><code>compute_ppi_reward</code> (binary)</td></tr>
+</table>
+
+<p>For ESMFold, the reward function checks if the ground truth is a JSON string with pre-computed metrics.
+If so, it uses those directly (instant). Otherwise, it falls through to the live ESMFold path
+(<span class="file-ref">rewards.py:<span class="line-ref">396&ndash;412</span></span>).</p>
+
+<h3>Step 3: Advantage Computation</h3>
+
+<p><code>_compute_advantages()</code>
+(<span class="file-ref">grpo_trainer.py:<span class="line-ref">1183&ndash;1206</span></span>)
+computes group-relative advantages:</p>
+
+<pre><span class="comment"># grpo_trainer.py:1196-1206</span>
+group_mean = rewards.mean(dim=<span class="number">1</span>, keepdim=<span class="keyword">True</span>)
+group_std = rewards.std(dim=<span class="number">1</span>, keepdim=<span class="keyword">True</span>)
+
+advantages = rewards - group_mean   <span class="comment"># A_i = r_i - mean(r_group)</span>
+
+<span class="comment"># Normalize if configured (NOT used — Dr. GRPO variant)</span>
+<span class="keyword">if</span> self.grpo_config[<span class="string">"normalize_advantages"</span>]:
+    advantages = advantages / (group_std + <span class="number">1e-8</span>)</pre>
+
+<div class="callout callout-info">
+    <strong>DAPO + Dr. GRPO Configuration</strong>
+    Both configs set <code>use_kl_penalty: false</code> (DAPO improvement) and
+    <code>normalize_advantages: false</code> (Dr. GRPO improvement).
+    This means: no KL constraint against a reference model, and raw (unnormalized)
+    advantages. The advantage for a completion is simply how much better or worse its
+    reward is compared to the group mean.
+</div>
+
+<h3>Step 4: Differentiable Log Prob Re-computation</h3>
+
+<p>This is the critical step. Log probs are re-computed <strong>with gradients</strong> via
+<code>_compute_policy_log_probs()</code>
+(<span class="file-ref">grpo_trainer.py:<span class="line-ref">1063&ndash;1131</span></span>).
+See <a href="#gradient-flow">Section 4</a> for details.</p>
+
+<h3>Step 5: Policy Gradient Loss</h3>
+
+<pre><span class="comment"># grpo_trainer.py:1371-1372</span>
+pg_loss = -(advantages * log_probs).mean()   <span class="comment"># REINFORCE with group baseline</span></pre>
+
+<p>This is the standard REINFORCE objective: increase log probability of completions with
+positive advantages (better than group average), decrease for negative advantages.</p>
+
+
+<h2 id="gradient-flow">4. Gradient Flow Fix</h2>
+
+<p>The GRPO pipeline has two separate log-probability computation functions. Understanding why is
+critical to understanding the gradient flow.</p>
+
+<h3>The Problem</h3>
+
+<p>In the original design, log probabilities were computed inside <code>torch.no_grad()</code> during
+generation. Using these for the policy loss would produce zero gradients&mdash;the model would
+never learn.</p>
+
+<h3>The Fix: Two Functions</h3>
+
+<table>
+    <tr>
+        <th>Function</th>
+        <th>Gradients?</th>
+        <th>Purpose</th>
+        <th>Lines</th>
+    </tr>
+    <tr>
+        <td><code>_compute_sequence_log_prob()</code></td>
+        <td>NO (<code>torch.no_grad()</code>)</td>
+        <td>Reference model log probs for KL penalty (currently dead code)</td>
+        <td>1029&ndash;1061</td>
+    </tr>
+    <tr>
+        <td><code>_compute_policy_log_probs()</code></td>
+        <td><strong>YES</strong> (with grad)</td>
+        <td>Policy log probs for REINFORCE loss &mdash; <em>this is the differentiable forward pass</em></td>
+        <td>1063&ndash;1131</td>
+    </tr>
+</table>
+
+<h3>_compute_policy_log_probs() in Detail</h3>
+
+<p>This function performs a full forward pass WITH gradients through the entire multimodal pipeline:</p>
+
+<pre><span class="comment"># grpo_trainer.py:1063-1131 — Differentiable forward pass</span>
+<span class="keyword">def</span> _compute_policy_log_probs(self, prompt_ids, generated_ids, protein_sequence=<span class="keyword">None</span>):
+    full_ids = torch.cat([prompt_ids, generated_ids], dim=<span class="number">1</span>)
+    attention_mask = torch.ones_like(full_ids)
+
+    <span class="keyword">if</span> self.protein_llm <span class="keyword">is not None and</span> protein_sequence <span class="keyword">is not None</span>:
+        <span class="comment"># Multimodal: ESM-3 encode → pooling → projector → LLM</span>
+        prepared = self.protein_llm.prepare_inputs(
+            protein_sequences=[protein_sequence],
+            text_input_ids=full_ids,
+            text_attention_mask=attention_mask,
+        )
+        outputs = self.protein_llm.llm(
+            <span class="highlight">inputs_embeds=prepared["inputs_embeds"]</span>,  <span class="comment"># gradient flows through here</span>
+            attention_mask=prepared["attention_mask"],
+            position_ids=prepared["position_ids"],
+            return_dict=<span class="keyword">True</span>,
+        )
+        <span class="comment"># Account for protein prefix tokens in logit positions</span>
+        num_prefix = self.protein_llm.num_prefix_tokens
+        logits = outputs.logits[:, num_prefix + prompt_length - <span class="number">1</span>:-<span class="number">1</span>, :]
+    <span class="keyword">else</span>:
+        outputs = self.model(full_ids, return_dict=<span class="keyword">True</span>)
+        logits = outputs.logits[:, prompt_length - <span class="number">1</span>:-<span class="number">1</span>, :]
+
+    <span class="comment"># Log softmax → gather → sum</span>
+    log_probs = F.log_softmax(logits, dim=-<span class="number">1</span>)
+    token_log_probs = torch.gather(log_probs, dim=-<span class="number">1</span>, index=target_ids.unsqueeze(-<span class="number">1</span>))
+    pad_mask = (target_ids != self.tokenizer.pad_token_id).float()
+    <span class="keyword">return</span> (token_log_probs * pad_mask).sum()</pre>
+
+<p>The key insight: by passing through <code>prepare_inputs()</code> which runs the encoder&rarr;pooling&rarr;projector
+pipeline, gradients flow through the <strong>entire multimodal stack</strong>, not just the LLM. This is what
+allows GRPO to update the projector and pooling weights.</p>
+
+<h3>_compute_sequence_log_prob() is Dead Code</h3>
+
+<p><code>_compute_sequence_log_prob()</code>
+(<span class="file-ref">grpo_trainer.py:<span class="line-ref">1029&ndash;1061</span></span>)
+runs under <code>torch.no_grad()</code> and is never called anywhere in the codebase. It was intended for
+computing reference model log probs for KL penalty, but since <code>use_kl_penalty: false</code>,
+it's unused. It could be removed without impact.</p>
+
+
+<h2 id="wandb">5. Wandb Logging</h2>
+
+<h3>What's Logged</h3>
+
+<p>Logging happens at each optimizer step (every <code>grad_accum_steps</code> micro-batches),
+controlled by <code>logging_steps</code>
+(<span class="file-ref">grpo_trainer.py:<span class="line-ref">1527&ndash;1545</span></span>):</p>
+
+<table>
+    <tr><th>Metric</th><th>Description</th></tr>
+    <tr><td><code>loss</code></td><td>Total loss (pg_loss + kl_penalty)</td></tr>
+    <tr><td><code>pg_loss</code></td><td>Policy gradient loss: <code>-(advantages * log_probs).mean()</code></td></tr>
+    <tr><td><code>kl_penalty</code></td><td>KL divergence (always 0.0 with DAPO)</td></tr>
+    <tr><td><code>mean_reward</code></td><td>Average reward across all completions in the batch</td></tr>
+    <tr><td><code>max_reward</code>, <code>min_reward</code></td><td>Reward range</td></tr>
+    <tr><td><code>reward_std</code></td><td>Reward standard deviation</td></tr>
+    <tr><td><code>lr</code></td><td>Current learning rate (from scheduler)</td></tr>
+    <tr><td><code>reward/{metric}</code></td><td>Per-task supplementary metrics (e.g., <code>reward/f1</code>, <code>reward/mae</code>)</td></tr>
+    <tr><td><code>eval_mean_reward</code></td><td>Evaluation reward (logged at <code>eval_steps</code>)</td></tr>
+</table>
+
+<h3>What's Missing</h3>
+
+<div class="callout callout-warning">
+    <strong>Logging Gaps</strong>
+    <ul>
+        <li><strong>Generated sample text:</strong> No completions are logged to wandb. Adding a few text samples per eval step would help debug reward function behavior.</li>
+        <li><strong>Gradient norms:</strong> No tracking of LLM vs multimodal gradient magnitudes. Important for detecting the NaN issues we've seen in SFT.</li>
+        <li><strong>Per-group reward distributions:</strong> Only batch-level stats are logged. Per-prompt group distributions would reveal if GRPO is exploring effectively.</li>
+        <li><strong>Advantage statistics:</strong> Mean/std of advantages not tracked. Useful for detecting collapsed advantages (all rewards equal &rarr; zero learning signal).</li>
+        <li><strong>Token counts:</strong> No logging of generated token lengths. Important for detecting degenerate outputs (empty or repeated tokens).</li>
+    </ul>
+</div>
+
+
+<h2 id="config-issues">6. Config Issues</h2>
+
+<p>The GRPO config (<code>configs/training/grpo.yaml</code>) has several vestigial or misleading fields:</p>
+
+<h3>Issue 1: <code>framework: verl</code> (Vestigial)</h3>
+
+<pre><span class="comment"># configs/training/grpo.yaml:1-2</span>
+method: grpo
+<span class="highlight">framework: verl</span>  <span class="comment"># &larr; VESTIGIAL: zero veRL imports in codebase</span></pre>
+
+<p>This field is never read by any code. It suggests veRL was initially planned but the custom
+implementation was used instead. Should be removed or changed to <code>framework: custom</code>.</p>
+
+<h3>Issue 2: <code>rollout.engine: vllm</code> (Misleading)</h3>
+
+<pre><span class="comment"># configs/training/grpo.yaml:39-43</span>
+rollout:
+  <span class="highlight">engine: vllm</span>  <span class="comment"># &larr; MISLEADING: actually uses HF .generate()</span>
+  temperature: <span class="number">1.0</span>
+  top_p: <span class="number">0.95</span>
+  max_tokens: <span class="number">512</span></pre>
+
+<p>The <code>engine</code> field is never read. Generation always uses <code>model.generate()</code> (HuggingFace)
+or <code>protein_llm.generate()</code>
+(<span class="file-ref">grpo_trainer.py:<span class="line-ref">962&ndash;968</span></span>).
+vLLM would provide significantly faster generation via PagedAttention, but it's not integrated.</p>
+
+<h3>Issue 3: <code>clip_range: 0.2</code> (Unused)</h3>
+
+<pre><span class="comment"># grpo_trainer.py:129 — read from config</span>
+<span class="string">"clip_range"</span>: grpo_cfg.get(<span class="string">"clip_range"</span>, <span class="number">0.2</span>),</pre>
+
+<p>The <code>clip_range</code> parameter is loaded into <code>grpo_config</code> and saved to <code>training_args.json</code>,
+but it's <strong>never used in any computation</strong>. In PPO, clip_range limits the policy ratio
+<code>min(ratio * A, clip(ratio, 1-e, 1+e) * A)</code>. GRPO doesn't use policy ratio clipping&mdash;it
+uses raw REINFORCE with group baselines. This parameter is a leftover from a PPO-style design.</p>
+
+<h3>Summary of Config Issues</h3>
+
+<table>
+    <tr><th>Field</th><th>Value</th><th>Status</th><th>Action</th></tr>
+    <tr><td><code>framework</code></td><td><code>verl</code></td><td>Vestigial</td><td>Remove or set to <code>custom</code></td></tr>
+    <tr><td><code>rollout.engine</code></td><td><code>vllm</code></td><td>Misleading</td><td>Remove or set to <code>hf_generate</code></td></tr>
+    <tr><td><code>grpo.clip_range</code></td><td><code>0.2</code></td><td>Unused</td><td>Remove from config and code</td></tr>
+    <tr><td><code>grpo.kl_coef</code></td><td><code>0.1</code></td><td>Loaded but never applied</td><td>Keep (needed if KL is re-enabled)</td></tr>
+</table>
+
+
+<h2 id="summary">7. Summary and Recommendations</h2>
+
+<h3>Architecture Summary</h3>
+
+<div class="callout callout-success">
+    <strong>What Works Well</strong>
+    <ul>
+        <li>Custom GRPO with verifiable rewards&mdash;no reward model overhead</li>
+        <li>FSDP2 with per-layer sharding enables 8B models on 4&times;L40S</li>
+        <li>embed_tokens cache solves FSDP sharding corruption for multimodal</li>
+        <li>Separate gradient clipping for FSDP vs multimodal params</li>
+        <li>Gradient flow through full encoder&rarr;pooling&rarr;projector&rarr;LLM pipeline</li>
+        <li>Task-aware ground truth extraction handles all five reward types</li>
+    </ul>
+</div>
+
+<div class="callout callout-danger">
+    <strong>Known Issues / Tech Debt</strong>
+    <ul>
+        <li>Vestigial config: <code>framework: verl</code>, <code>rollout.engine: vllm</code>, <code>clip_range</code></li>
+        <li><code>_compute_sequence_log_prob()</code> is dead code</li>
+        <li><code>run_grpo_with_trl()</code> is a stub (<code>NotImplementedError</code>)</li>
+        <li>Missing wandb logging: no sample text, gradient norms, or advantage stats</li>
+        <li>Generation is sequential per-prompt (no batched multi-prompt generation)</li>
+        <li>KL penalty path exists but is untested (no reference model created when disabled)</li>
+    </ul>
+</div>
+
+<h3>Potential Improvements</h3>
+
+<ol>
+    <li><strong>Clean up config:</strong> Remove vestigial fields (<code>framework</code>, <code>rollout.engine</code>, <code>clip_range</code>)</li>
+    <li><strong>Remove dead code:</strong> <code>_compute_sequence_log_prob()</code>, <code>run_grpo_with_trl()</code>, <code>create_reward_dataset()</code></li>
+    <li><strong>Add wandb sample logging:</strong> Log 3&ndash;5 generated completions per eval step with rewards</li>
+    <li><strong>Batch generation:</strong> Generate for multiple prompts simultaneously instead of per-prompt loops</li>
+    <li><strong>vLLM integration:</strong> Replace HF <code>.generate()</code> with vLLM for 2&ndash;5x faster rollouts</li>
+    <li><strong>Gradient norm tracking:</strong> Log LLM vs multimodal gradient norms for debugging</li>
+</ol>
+
+</body>
+</html>

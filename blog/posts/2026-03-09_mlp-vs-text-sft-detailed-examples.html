@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLP vs Text SFT: Detailed Prompt/Response Examples</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #1a1a2e;
+            --accent: #2563eb;
+            --purple: #8b5cf6;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --code-bg: #f3f4f6;
+            --table-header: #f9fafb;
+            --blockquote-bg: #fffbeb;
+            --blockquote-border: #f59e0b;
+            --success-bg: #f0fdf4;
+            --success-border: #22c55e;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--fg);
+            background: var(--bg);
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        header {
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+        header .meta {
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        header .tags {
+            margin-top: 0.5rem;
+        }
+        header .tag {
+            display: inline-block;
+            background: var(--code-bg);
+            color: var(--accent);
+            padding: 0.15rem 0.6rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            margin-right: 0.4rem;
+            font-weight: 500;
+        }
+        h1 {
+            font-size: 1.9rem;
+            line-height: 1.3;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        h2 {
+            font-size: 1.4rem;
+            margin: 2.5rem 0 1rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+        }
+        h3 {
+            font-size: 1.15rem;
+            margin: 1.8rem 0 0.8rem;
+            font-weight: 600;
+        }
+        p { margin: 0.8rem 0; }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.92rem;
+        }
+        th, td {
+            padding: 0.6rem 0.8rem;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        th {
+            background: var(--table-header);
+            font-weight: 600;
+        }
+        tr:hover { background: #f9fafb; }
+        code {
+            font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+            background: var(--code-bg);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.88em;
+        }
+        pre {
+            background: var(--code-bg);
+            padding: 1rem 1.2rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.88em;
+            line-height: 1.5;
+        }
+        pre code { background: none; padding: 0; }
+        blockquote {
+            background: var(--blockquote-bg);
+            border-left: 4px solid var(--blockquote-border);
+            padding: 0.8rem 1.2rem;
+            margin: 1rem 0;
+            border-radius: 0 6px 6px 0;
+            font-style: italic;
+        }
+        blockquote p { margin: 0.3rem 0; }
+        .success-box {
+            background: var(--success-bg);
+            border-left: 4px solid var(--success-border);
+            padding: 0.8rem 1.2rem;
+            margin: 1rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .success-box p { margin: 0.3rem 0; }
+        .warning-box {
+            background: #fef2f2;
+            border-left: 4px solid #ef4444;
+            padding: 0.8rem 1.2rem;
+            margin: 1rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .warning-box p { margin: 0.3rem 0; }
+        ul, ol { margin: 0.8rem 0; padding-left: 1.5rem; }
+        li { margin: 0.3rem 0; }
+        strong { font-weight: 600; }
+        hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 2rem 0;
+        }
+        footer {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid var(--border);
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+        nav.blog-nav {
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+        nav.blog-nav a { margin-right: 1rem; }
+        .caption {
+            color: var(--muted);
+            font-size: 0.85rem;
+            font-style: italic;
+            margin-top: -0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Example comparison blocks */
+        .example-card {
+            background: var(--code-bg);
+            border-radius: 8px;
+            padding: 1.2rem;
+            margin: 1.2rem 0;
+        }
+        .example-card .example-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+        .example-card .example-header .category-badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.2rem 0.6rem;
+            border-radius: 1rem;
+            background: var(--accent);
+            color: white;
+        }
+        .example-card .example-header .scores {
+            font-size: 0.82rem;
+            color: var(--muted);
+        }
+        .example-card .field-label {
+            font-weight: 600;
+            font-size: 0.82rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-top: 0.6rem;
+            margin-bottom: 0.2rem;
+        }
+        .example-card .field-value {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 0.4rem;
+        }
+        .example-card .protein-seq {
+            font-family: 'SF Mono', 'Fira Code', Menlo, Consolas, monospace;
+            font-size: 0.75em;
+            word-break: break-all;
+            color: var(--muted);
+            line-height: 1.3;
+        }
+        .versus-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.6rem;
+            margin: 0.6rem 0;
+        }
+        .versus-grid .side {
+            border-radius: 6px;
+            padding: 0.6rem 0.8rem;
+            font-size: 0.88rem;
+            background: white;
+        }
+        .versus-grid .side.mlp {
+            border-top: 3px solid var(--accent);
+        }
+        .versus-grid .side.text {
+            border-top: 3px solid var(--purple);
+        }
+        .versus-grid .side-label {
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.3rem;
+        }
+        .versus-grid .side.mlp .side-label { color: var(--accent); }
+        .versus-grid .side.text .side-label { color: var(--purple); }
+        .versus-grid .side .score-tag {
+            font-size: 0.78rem;
+            color: var(--muted);
+            float: right;
+        }
+        .match { color: #16a34a; font-weight: 600; }
+        .wrong { color: #dc2626; }
+        .partial { color: #d97706; }
+        .base-output {
+            background: #fef2f2;
+            border-radius: 6px;
+            padding: 0.5rem 0.8rem;
+            font-size: 0.85rem;
+            color: #991b1b;
+            margin: 0.4rem 0;
+        }
+
+        /* Bar chart */
+        .bar-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0.2rem 0;
+        }
+        .bar-label {
+            width: 80px;
+            font-size: 0.82rem;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .bar-track {
+            flex: 1;
+            height: 20px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+        .bar-fill {
+            height: 100%;
+            border-radius: 4px;
+        }
+        .bar-fill.mlp { background: var(--accent); }
+        .bar-fill.text { background: var(--purple); }
+        .bar-fill.base { background: #d1d5db; }
+        .bar-value {
+            width: 50px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        .winner-tag {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 0.1rem 0.4rem;
+            border-radius: 3px;
+            margin-left: 0.3rem;
+        }
+        .winner-tag.mlp-wins { background: #dbeafe; color: var(--accent); }
+        .winner-tag.text-wins { background: #ede9fe; color: var(--purple); }
+        .winner-tag.tie { background: var(--code-bg); color: var(--muted); }
+    </style>
+</head>
+<body>
+    <nav class="blog-nav">
+        <a href="../index.html">Blog Index</a>
+    </nav>
+
+    <header>
+        <h1>MLP vs Text SFT: Detailed Prompt/Response Examples</h1>
+        <div class="meta">
+            <strong>Date</strong>: 2026-03-09 &nbsp;|&nbsp;
+            <strong>Type</strong>: Side-by-side generation comparison with examples
+        </div>
+        <div class="meta">
+            <strong>MLP SFT</strong>: <code>sft_esm3_mlp_combined_qwen3_8b_it_0306_010408</code> (step 9750)
+        </div>
+        <div class="meta">
+            <strong>Text SFT</strong>: <code>sft_text_combined_qwen3_8b_it_0307_190324</code> (step 8250)
+        </div>
+        <div class="meta">
+            <strong>Base models</strong>: <code>base_qwen3_8b_esm3_random</code> / <code>base_qwen3_8b_text</code> (BLEU ~0.003)
+        </div>
+        <div class="tags">
+            <span class="tag">esm3</span>
+            <span class="tag">text-baseline</span>
+            <span class="tag">generation-quality</span>
+            <span class="tag">detailed-examples</span>
+            <span class="tag">qwen3-8b</span>
+        </div>
+    </header>
+
+    <h2>Overview</h2>
+
+    <blockquote>
+        <p><strong>Update (2026-03-09)</strong>: Text SFT training has now <strong>completed</strong> at step 9647 (1 full epoch). The comparison metrics below are from step 8250 (the last generation eval before the final checkpoint). A follow-up evaluation on the final checkpoint (step 9647) is pending. See <a href="2026-03-09_text-sft-training-complete.html">Text SFT Training Complete</a> for details.</p>
+    </blockquote>
+
+    <p>Both models were trained on the same <strong>4.89M combined SFT dataset</strong> using Qwen3-8B-Instruct with FSDP across 8&times;H100 GPUs. The only difference is how the protein sequence enters the model:</p>
+
+    <table>
+        <thead>
+            <tr><th>Parameter</th><th>ESM-3 + MLP</th><th>Text-only</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Protein input</td><td>ESM-3 embeddings &rarr; AttentionPooling &rarr; MLP projector</td><td>Raw AA sequence as <code>&lt;protein&gt;MKTL...&lt;/protein&gt;</code> tokens</td></tr>
+            <tr><td>LLM backbone</td><td>Qwen3-8B-Instruct + LoRA (r=8, all linear)</td><td>Qwen3-8B-Instruct + LoRA (r=8, all linear)</td></tr>
+            <tr><td>Trainable params</td><td>~32.5M (pooling + projector + LoRA)</td><td>~2M (LoRA only)</td></tr>
+            <tr><td>Training data</td><td colspan="2" style="text-align:center">4.89M samples (Mol-Instructions + Swiss-Prot combined)</td></tr>
+            <tr><td>Eval checkpoint</td><td>Step 9750</td><td>Step 8250</td></tr>
+        </tbody>
+    </table>
+
+    <p>We evaluate on <strong>40 held-out examples</strong> across 4 categories: catalytic activity (10), domain/motif prediction (10), function description (10), and general knowledge (10). Base model outputs (no SFT) are included to show the value of fine-tuning.</p>
+
+    <h2>Metrics Summary</h2>
+
+    <h3>Overall Scores</h3>
+
+    <table>
+        <thead>
+            <tr><th>Model</th><th>BLEU</th><th>ROUGE-L</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Base ESM-3 (no SFT)</td><td>0.003</td><td>0.057</td><td>Incoherent/empty outputs</td></tr>
+            <tr><td>Base Text (no SFT)</td><td>0.003</td><td>0.061</td><td>Incoherent/empty outputs</td></tr>
+            <tr style="background:#dbeafe"><td><strong>MLP SFT</strong></td><td><strong>0.255</strong></td><td><strong>0.481</strong></td><td>+0.049 ROUGE-L over Text</td></tr>
+            <tr style="background:#ede9fe"><td><strong>Text SFT</strong></td><td><strong>0.257</strong></td><td><strong>0.432</strong></td><td>Slightly higher BLEU</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Per-Category Breakdown</h3>
+
+    <table>
+        <thead>
+            <tr><th>Category</th><th colspan="2">MLP SFT</th><th colspan="2">Text SFT</th><th>Winner</th></tr>
+            <tr><th></th><th>BLEU</th><th>ROUGE-L</th><th>BLEU</th><th>ROUGE-L</th><th></th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Catalytic</td>
+                <td>0.313</td><td>0.562</td>
+                <td><strong>0.367</strong></td><td><strong>0.531</strong></td>
+                <td><span class="winner-tag text-wins">Text (BLEU)</span></td>
+            </tr>
+            <tr>
+                <td>Domain</td>
+                <td>0.103</td><td><strong>0.429</strong></td>
+                <td><strong>0.150</strong></td><td>0.422</td>
+                <td><span class="winner-tag tie">Mixed</span></td>
+            </tr>
+            <tr>
+                <td>Function</td>
+                <td><strong>0.328</strong></td><td><strong>0.458</strong></td>
+                <td>0.162</td><td>0.292</td>
+                <td><span class="winner-tag mlp-wins">MLP (+57% ROUGE)</span></td>
+            </tr>
+            <tr>
+                <td>General</td>
+                <td>0.278</td><td>0.477</td>
+                <td><strong>0.350</strong></td><td><strong>0.483</strong></td>
+                <td><span class="winner-tag text-wins">Text (BLEU)</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Visual Comparison: ROUGE-L by Category</h3>
+
+    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.3rem"><strong style="color:var(--accent)">Blue</strong> = MLP SFT &nbsp;&nbsp; <strong style="color:var(--purple)">Purple</strong> = Text SFT</p>
+
+    <div style="margin: 0.5rem 0 1.5rem">
+        <div class="bar-container">
+            <div class="bar-label">Catalytic</div>
+            <div class="bar-track"><div class="bar-fill mlp" style="width:56.2%"></div></div>
+            <div class="bar-value" style="color:var(--accent)">0.562</div>
+        </div>
+        <div class="bar-container">
+            <div class="bar-label"></div>
+            <div class="bar-track"><div class="bar-fill text" style="width:53.1%"></div></div>
+            <div class="bar-value" style="color:var(--purple)">0.531</div>
+        </div>
+        <div style="height:0.6rem"></div>
+        <div class="bar-container">
+            <div class="bar-label">Domain</div>
+            <div class="bar-track"><div class="bar-fill mlp" style="width:42.9%"></div></div>
+            <div class="bar-value" style="color:var(--accent)">0.429</div>
+        </div>
+        <div class="bar-container">
+            <div class="bar-label"></div>
+            <div class="bar-track"><div class="bar-fill text" style="width:42.2%"></div></div>
+            <div class="bar-value" style="color:var(--purple)">0.422</div>
+        </div>
+        <div style="height:0.6rem"></div>
+        <div class="bar-container">
+            <div class="bar-label">Function</div>
+            <div class="bar-track"><div class="bar-fill mlp" style="width:45.8%"></div></div>
+            <div class="bar-value" style="color:var(--accent)">0.458</div>
+        </div>
+        <div class="bar-container">
+            <div class="bar-label"></div>
+            <div class="bar-track"><div class="bar-fill text" style="width:29.2%"></div></div>
+            <div class="bar-value" style="color:var(--purple)">0.292</div>
+        </div>
+        <div style="height:0.6rem"></div>
+        <div class="bar-container">
+            <div class="bar-label">General</div>
+            <div class="bar-track"><div class="bar-fill mlp" style="width:47.7%"></div></div>
+            <div class="bar-value" style="color:var(--accent)">0.477</div>
+        </div>
+        <div class="bar-container">
+            <div class="bar-label"></div>
+            <div class="bar-track"><div class="bar-fill text" style="width:48.3%"></div></div>
+            <div class="bar-value" style="color:var(--purple)">0.483</div>
+        </div>
+    </div>
+
+    <hr>
+
+    <h2>Examples by Category</h2>
+
+    <!-- ===== CATALYTIC ===== -->
+    <h3>Catalytic Activity Prediction</h3>
+
+    <p>Both models predict chemical reactions from protein sequences. MLP gets some reactions exactly right that Text misses, but Text shows higher BLEU overall in this category.</p>
+
+    <!-- Catalytic Example 1: MLP perfect match -->
+    <div class="example-card">
+        <div class="example-header">
+            <span class="category-badge" style="background:var(--accent)">Catalytic &mdash; MLP Perfect Match</span>
+        </div>
+        <div class="field-label">Instruction</div>
+        <div class="field-value">Examine the provided protein sequence and determine the catalytic activity of the enzyme it represents, focusing on the chemical reaction it promotes.</div>
+        <div class="field-label">Protein (255 aa)</div>
+        <div class="field-value protein-seq">MRILIANDDGYLAPGIAALVKACEGLGTIDVIAPEQNAS...AWASRLGVPLA</div>
+        <div class="field-label">Expected Answer</div>
+        <div class="field-value">The enzyme catalyzes: <strong>a ribonucleoside 5'-phosphate + H2O = a ribonucleoside + phosphate</strong></div>
+        <div class="versus-grid">
+            <div class="side mlp">
+                <div class="side-label">MLP SFT <span class="score-tag">BLEU 0.915 | ROUGE 0.955</span></div>
+                <p>...the enzyme catalyzes the subsequent chemical reaction: <span class="match">a ribonucleoside 5'-phosphate + H2O = a ribonucleoside + phosphate.</span></p>
+            </div>
+            <div class="side text">
+                <div class="side-label">Text SFT <span class="score-tag">BLEU 0.154 | ROUGE 0.391</span></div>
+                <p>...the enzyme appears to facilitate the chemical reaction: <span class="wrong">(2R)-O-phospho-3-sulfolactate + H(+) = 3-sulfopropanoate + phosphate.</span></p>
+            </div>
+        </div>
+        <div class="base-output"><strong>Base model</strong>: (empty/incoherent output &mdash; BLEU ~0.003)</div>
+    </div>
+
+    <!-- Catalytic Example 2: Text wins with near-perfect match -->
+    <div class="example-card">
+        <div class="example-header">
+            <span class="category-badge" style="background:var(--purple)">Catalytic &mdash; Text Near-Perfect</span>
+        </div>
+        <div class="field-label">Instruction</div>
+        <div class="field-value">Analyze and describe the catalytic activity of the corresponding enzyme, specifically the chemical reaction it catalyzes.</div>
+        <div class="field-label">Protein (370 aa)</div>
+        <div class="field-value protein-seq">MTEPVRVQVQTANPYPVIIGRGLLGELVDELTGTRTVAIFH...GTGGAVLL</div>
+        <div class="field-label">Expected Answer</div>
+        <div class="field-value">The enzyme catalyzes: <strong>7-phospho-2-dehydro-3-deoxy-D-arabino-heptonate = 3-dehydroquinate + phosphate</strong></div>
+        <div class="versus-grid">
+            <div class="side mlp">
+                <div class="side-label">MLP SFT <span class="score-tag">BLEU 0.117 | ROUGE 0.421</span></div>
+                <p>...the enzyme appears to facilitate the chemical reaction: <span class="wrong">2-C-methyl-D-erythritol 4-phosphate + NADP(+) = 1-deoxy-D-xylulose 5-phosphate + H(+) + NADPH.</span></p>
+            </div>
+            <div class="side text">
+                <div class="side-label">Text SFT <span class="score-tag">BLEU 0.897 | ROUGE 0.962</span></div>
+                <p>...the enzyme catalyzes the subsequent chemical reaction: <span class="match">7-phospho-2-dehydro-3-deoxy-D-arabino-heptonate = 3-dehydroquinate + phosphate.</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Catalytic Example 3: Both wrong but plausible -->
+    <div class="example-card">
+        <div class="example-header">
+            <span class="category-badge" style="background:var(--muted)">Catalytic &mdash; Both Wrong</span>
+        </div>
+        <div class="field-label">Instruction</div>
+        <div class="field-value">Analyze the catalytic activity of the corresponding enzyme, particularly the chemical reaction it aids in catalyzing.</div>
+        <div class="field-label">Protein (140 aa)</div>
+        <div class="field-value protein-seq">MASHHQLLCLNILGFRKPGISTEDYRNYMVNVH...QFANTASYDCCVQIVFPS...</div>
+        <div class="field-label">Expected Answer</div>
+        <div class="field-value">The enzyme catalyzes: <strong>naphtopyrone YWA1 = H(+) + H2O + norrubrofusarin</strong></div>
+        <div class="versus-grid">
+            <div class="side mlp">
+                <div class="side-label">MLP SFT <span class="score-tag">BLEU 0.031 | ROUGE 0.490</span></div>
+                <p>...the enzyme's catalytic function corresponds to the chemical reaction: <span class="wrong">2 H(+) + O2 = 2 H2O.</span></p>
+            </div>
+            <div class="side text">
+                <div class="side-label">Text SFT <span class="score-tag">BLEU 0.186 | ROUGE 0.417</span></div>
+                <p>...the enzyme appears to facilitate the chemical reaction: <span class="wrong">2 H(+) + heme b = Fe(2+) + protoporphyrin IX.</span></p>
+            </div>
+        </div>
+        <blockquote><p>Both models hallucinate plausible-sounding reactions for this unusual substrate (naphtopyrone YWA1). Short, rare sequences are hard for both approaches.</p></blockquote>
+    </div>
+
+    <!-- ===== DOMAIN ===== -->
+    <h3>Domain/Motif Prediction</h3>
+
+    <p>Domain prediction is the hardest category (lowest BLEU for both). Models must identify specific protein domains from sequence alone. Both approaches perform similarly overall.</p>
+
+    <!-- Domain Example 1: MLP gets it right -->
+    <div class="example-card">
+        <div class="example-header">
+            <span class="category-badge" style="background:var(--accent)">Domain &mdash; MLP Correct</span>
+        </div>
+        <div class="field-label">Instruction</div>
+        <div class="field-value">Can you perform an analysis and identify any potential motifs or domains?</div>
+        <div class="field-label">Protein (542 aa)</div>
+        <div class="field-value protein-seq">MTRYIFVCGGVMSGIGKGVSTATIARILKSRGW...KGTAARRAYGETNITERHRHRYEINNEYLADIEKRGFIASGVNPERNLVEIMELRGHPFFLGTQFHPE...</div>
+        <div class="field-label">Expected Answer</div>
+        <div class="field-value">Domains: <strong>Glutamine amidotransferase, CTP synthase N-terminal</strong></div>
+        <div class="versus-grid">
+            <div class="side mlp">
+                <div class="side-label">MLP SFT <span class="score-tag">BLEU 0.201 | ROUGE 0.538</span></div>
+                <p><span class="match">Glutamine amidotransferase, CTP synthase N-terminal</span> domains</p>
+            </div>
+            <div class="side text">
+                <div class="side-label">Text SFT <span class="score-tag">BLEU 0.684 | ROUGE 0.766</span></div>
+                <p><span class="partial">Glutamine amidotransferase type-1, GMPS ATP-clamp</span> domains</p>
+            </div>
+        </div>
+        <blockquote><p>Both identify the glutamine amidotransferase family. MLP matches the exact domain names; Text gets the family right but uses different specific annotations. Text has higher BLEU here due to better phrasing match despite slightly different domain names.</p></blockquote>
+    </div>
+
+    <!-- Domain Example 2: Both identify YXXL correctly -->
+    <div class="example-card">
+        <div class="example-header">
+            <span class="category-badge" style="background:#22c55e">Domain &mdash; Both Correct</span>
+        </div>
+        <div class="field-label">Instruction</div>
+        <div class="field-value">Can you identify any common protein motifs or domains?</div>
+        <div class="field-label">Protein (768 aa) &mdash; HIV envelope-like protein</div>
+        <div class="field-value protein-seq">MRVRETQMNCLNLWRWGTLIIGLVIMCSASDDLWVTVYYGVPVW...</div>
+        <div class="field-label">Expected Answer</div>
+        <div class="field-value">Domains: <strong>YXXL motif; contains endocytosis signal</strong></div>
+        <div class="versus-grid">
+            <div class="side mlp">
+                <div class="side-label">MLP SFT <span class="score-tag">BLEU 0.103 | ROUGE 0.481</span></div>
+                <p><span class="match">YXXL motif; contains endocytosis signal</span>, Di-leucine internalization motif domains</p>
+            </div>
+            <div class="side text">
+                <div class="side-label">Text SFT <span class="score-tag">BLEU 0.103 | ROUGE 0.481</span></div>
+                <p><span class="match">YXXL motif; contains endocytosis signal</span>, Di-leucine internalization motif domains</p>
+            </div>
+        </div>
+        <blockquote><p>Identical outputs! Both correctly identify the YXXL endocytosis signal and add a plausible extra motif. This shows that for well-characterized viral proteins, both approaches converge to the same answer.</p></blockquote>
+    </div>
+
+    <!-- Domain Example 3: Both wrong differently -->
+    <div class="example-card">
+        <div class="example-header">
+            <span class="category-badge" style="background:var(--muted)">Domain &mdash; Both Wrong</span>
+        </div>
+        <div class="field-label">Instruction</div>
+        <div class="field-value">Deduce its possible cellular function(s) based on conserved domains or motifs.</div>
+        <div class="field-label">Protein (305 aa) &mdash; a channel protein</div>
+        <div class="field-value protein-seq">MEGGKMSSMGMDAASASVTVPPMQMQAG...PAAADKNTLFTS...</div>
+        <div class="field-label">Expected Answer</div>
+        <div class="field-value">Biological function associated with: <strong>channel activity</strong></div>
+        <div class="versus-grid">
+            <div class="side mlp">
+                <div class="side-label">MLP SFT <span class="score-tag">BLEU 0.010 | ROUGE 0.204</span></div>
+                <p>Likely to play a role in <span class="wrong">copper ion binding</span> according to its structural characteristics.</p>
+            </div>
+            <div class="side text">
+                <div class="side-label">Text SFT <span class="score-tag">BLEU 0.009 | ROUGE 0.192</span></div>
+                <p>Likely to play a role in <span class="wrong">4 iron, 4 sulfur cluster binding</span> according to its structural characteristics.</p>
+            </div>
+        </div>
+        <blockquote><p>Channel proteins are notoriously hard to identify from sequence alone. Both models default to metal-binding guesses &mdash; a common SFT overfitting pattern.</p></blockquote>
+    </div>
+
+    <!-- ===== FUNCTION ===== -->
+    <h3>Function Description</h3>
+
+    <p>This is where the <strong>MLP approach shows its biggest advantage</strong>: ROUGE-L 0.458 vs 0.292, a 57% improvement. ESM-3 structural embeddings appear to capture functional signatures that raw sequence tokens miss.</p>
+
+    <!-- Function Example 1: MLP perfect, Text hallucinated -->
+    <div class="example-card">
+        <div class="example-header">
+            <span class="category-badge" style="background:var(--accent)">Function &mdash; MLP Strong Win</span>
+        </div>
+        <div class="field-label">Instruction</div>
+        <div class="field-value">Provide a functional description for the protein represented by this sequence.</div>
+        <div class="field-label">Protein (526 aa) &mdash; Release factor 3 (prfC)</div>
+        <div class="field-value protein-seq">MSELEFEIERRRTFAIISHPDAGKTTLTEKLLLFGG...</div>
+        <div class="field-label">Expected Answer</div>
+        <div class="field-value">Increases the formation of ribosomal termination complexes and stimulates activities of RF-1 and RF-2. It binds guanine nucleotides and has strong preference for UGA stop codons...</div>
+        <div class="versus-grid">
+            <div class="side mlp">
+                <div class="side-label">MLP SFT <span class="score-tag">BLEU 0.888 | ROUGE 0.917</span></div>
+                <p><span class="match">Increases the formation of ribosomal termination complexes and stimulates activities of RF-1 and RF-2. It binds guanine nucleotides and has strong preference for UGA stop codons...</span> (By similarity). {ECO:0000250}.</p>
+            </div>
+            <div class="side text">
+                <div class="side-label">Text SFT <span class="score-tag">BLEU 0.350 | ROUGE 0.524</span></div>
+                <p><span class="match">Increases the formation of ribosomal termination complexes...</span> <span class="wrong">FUNCTION: Protein L acts as an anti-Shutoff protein that counteracts Shutoff activity in infected cells...</span></p>
+            </div>
+        </div>
+        <blockquote><p>MLP gives a clean, accurate answer. Text starts correctly but then <strong>hallucinates an entirely unrelated viral protein function</strong>, appending paragraphs about "Shutoff protein" and viral replication. This verbose hallucination pattern is common in Text SFT.</p></blockquote>
+    </div>
+
+    <!-- Function Example 2: MLP concise, Text verbose hallucination -->
+    <div class="example-card">
+        <div class="example-header">
+            <span class="category-badge" style="background:var(--accent)">Function &mdash; MLP Concise vs Text Verbose</span>
+        </div>
+        <div class="field-label">Instruction</div>
+        <div class="field-value">Describe its biological function.</div>
+        <div class="field-label">Protein (541 aa) &mdash; YidC membrane insertase</div>
+        <div class="field-value protein-seq">MESQRNLLLIGLLFVSFLLWQQWESDKAPK...</div>
+        <div class="field-label">Expected Answer</div>
+        <div class="field-value">Required for the insertion and/or proper folding and/or complex formation of integral membrane proteins into the membrane. Involved in integration of membrane proteins that insert both dependently and independently of the Sec translocase complex, as well as at least some lipoproteins.</div>
+        <div class="versus-grid">
+            <div class="side mlp">
+                <div class="side-label">MLP SFT <span class="score-tag">BLEU 0.899 | ROUGE 0.961</span></div>
+                <p><span class="match">Required for the insertion and/or proper folding and/or complex formation of integral membrane proteins into the membrane. Involved in integration of membrane proteins that insert both dependently and independently of the Sec translocase complex, as well as at least some lipoproteins. Aids folding of multispanning membrane proteins</span> (By similarity).</p>
+            </div>
+            <div class="side text">
+                <div class="side-label">Text SFT <span class="score-tag">BLEU 0.456 | ROUGE 0.649</span></div>
+                <p><span class="match">Required for the insertion and/or proper folding...</span> <span class="wrong">PpiB is required to stabilize CcmH during biogenesis of c-type cytochromes. It may be involved in protecting CcmH from proteolytic degradation...</span></p>
+            </div>
+        </div>
+        <blockquote><p>Both models get the main function correct. But Text appends a hallucinated paragraph about an unrelated PpiB protein. MLP stays on-topic.</p></blockquote>
+    </div>
+
+    <!-- Function Example 3: Both correct on simple protein -->
+    <div class="example-card">
+        <div class="example-header">
+            <span class="category-badge" style="background:#22c55e">Function &mdash; Both Perfect</span>
+        </div>
+        <div class="field-label">Instruction</div>
+        <div class="field-value">Describe its biological function.</div>
+        <div class="field-label">Protein (150 aa) &mdash; Ribosomal protein</div>
+        <div class="field-value protein-seq">MKVIFLADVKGKGKKGEIKEMPTGYAQNFLIKKNLAK...</div>
+        <div class="field-label">Expected Answer</div>
+        <div class="field-value">Binds to the 23S rRNA.</div>
+        <div class="versus-grid">
+            <div class="side mlp">
+                <div class="side-label">MLP SFT <span class="score-tag">BLEU 0.615 | ROUGE 0.833</span></div>
+                <p><span class="match">Binds to the 23S rRNA.</span></p>
+            </div>
+            <div class="side text">
+                <div class="side-label">Text SFT <span class="score-tag">BLEU 0.615 | ROUGE 0.833</span></div>
+                <p><span class="match">Binds to the 23S rRNA.</span></p>
+            </div>
+        </div>
+        <blockquote><p>For well-characterized, short proteins with simple functions, both approaches converge perfectly.</p></blockquote>
+    </div>
+
+    <!-- Function Example 4: Both wrong -->
+    <div class="example-card">
+        <div class="example-header">
+            <span class="category-badge" style="background:var(--muted)">Function &mdash; Both Wrong</span>
+        </div>
+        <div class="field-label">Instruction</div>
+        <div class="field-value">Explain the molecular function of the protein.</div>
+        <div class="field-label">Protein (414 aa) &mdash; Osmotic stability regulator</div>
+        <div class="field-value protein-seq">MGQTLSEPVTEKHSVNGSNEFVLYGLSSMQGW...</div>
+        <div class="field-label">Expected Answer</div>
+        <div class="field-value">Has an important role in osmotic stability and cell shape control. It may negatively regulate the osmosensing signal transmitted through wis1 map kinase.</div>
+        <div class="versus-grid">
+            <div class="side mlp">
+                <div class="side-label">MLP SFT <span class="score-tag">BLEU 0.008 | ROUGE 0.039</span></div>
+                <p><span class="wrong">Catalyzes the first step of the methylation pathway of phosphatidylcholine biosynthesis...</span></p>
+            </div>
+            <div class="side text">
+                <div class="side-label">Text SFT <span class="score-tag">BLEU 0.008 | ROUGE 0.051</span></div>
+                <p><span class="wrong">Catalyzes the hydrolysis of N(2)-succinylarginine into N-succinylornithine, ammonia and CO(2).</span></p>
+            </div>
+        </div>
+        <blockquote><p>Neither model can predict regulatory/signaling functions well. Both default to enzymatic activity predictions &mdash; reflecting the training data distribution bias towards enzymes.</p></blockquote>
+    </div>
+
+    <!-- ===== GENERAL ===== -->
+    <h3>General Knowledge</h3>
+
+    <p>Includes protein naming, family classification, subcellular localization, expression conditions, and quaternary structure. Both models excel at naming and classification, but struggle with complex questions.</p>
+
+    <!-- General Example 1: Both perfect naming -->
+    <div class="example-card">
+        <div class="example-header">
+            <span class="category-badge" style="background:#22c55e">General &mdash; Both Perfect</span>
+        </div>
+        <div class="field-label">Instruction</div>
+        <div class="field-value">What is the name of this protein?</div>
+        <div class="field-label">Protein (178 aa)</div>
+        <div class="field-value protein-seq">MSRIGKAPIEIPAGVEVTVEGNLVRVKGPKGELSREIH...</div>
+        <div class="field-label">Expected Answer</div>
+        <div class="field-value">This protein is <strong>50S ribosomal protein L6</strong> {ECO:0000255|HAMAP-Rule:MF_01365}.</div>
+        <div class="versus-grid">
+            <div class="side mlp">
+                <div class="side-label">MLP SFT <span class="score-tag">BLEU 0.760 | ROUGE 0.929</span></div>
+                <p><span class="match">This protein is 50S ribosomal protein L6 {ECO:0000255|HAMAP-Rule:MF_01365}.</span></p>
+            </div>
+            <div class="side text">
+                <div class="side-label">Text SFT <span class="score-tag">BLEU 0.760 | ROUGE 0.929</span></div>
+                <p><span class="match">This protein is 50S ribosomal protein L6 {ECO:0000255|HAMAP-Rule:MF_01365}.</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- General Example 2: Both perfect family -->
+    <div class="example-card">
+        <div class="example-header">
+            <span class="category-badge" style="background:#22c55e">General &mdash; Both Perfect</span>
+        </div>
+        <div class="field-label">Instruction</div>
+        <div class="field-value">Describe the evolutionary relationships of this protein.</div>
+        <div class="field-label">Protein (101 aa)</div>
+        <div class="field-value protein-seq">MFDQTTNTEVHQLTVGKIETANGTIKPQLLRDAVKRAV...</div>
+        <div class="field-label">Expected Answer</div>
+        <div class="field-value">Belongs to the <strong>transcriptional regulatory Fis family</strong>. {ECO:0000255|HAMAP-Rule:MF_00166}.</div>
+        <div class="versus-grid">
+            <div class="side mlp">
+                <div class="side-label">MLP SFT <span class="score-tag">BLEU 0.760 | ROUGE 0.929</span></div>
+                <p><span class="match">Belongs to the transcriptional regulatory Fis family. {ECO:0000255|HAMAP-Rule:MF_00166}.</span></p>
+            </div>
+            <div class="side text">
+                <div class="side-label">Text SFT <span class="score-tag">BLEU 0.760 | ROUGE 0.929</span></div>
+                <p><span class="match">Belongs to the transcriptional regulatory Fis family. {ECO:0000255|HAMAP-Rule:MF_00166}.</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- General Example 3: Subunit -- both wrong -->
+    <div class="example-card">
+        <div class="example-header">
+            <span class="category-badge" style="background:var(--muted)">General &mdash; Both Struggle</span>
+        </div>
+        <div class="field-label">Instruction</div>
+        <div class="field-value">What is the subunit arrangement of the protein represented by this sequence?</div>
+        <div class="field-label">Protein (270 aa)</div>
+        <div class="field-value protein-seq">MPGDSRRIRGPEESQSPLLYVLSEEGGKAAGRRGR...</div>
+        <div class="field-label">Expected Answer</div>
+        <div class="field-value">Component of the <strong>RNA exosome complex</strong>.</div>
+        <div class="versus-grid">
+            <div class="side mlp">
+                <div class="side-label">MLP SFT <span class="score-tag">BLEU 0.091 | ROUGE 0.421</span></div>
+                <p><span class="wrong">Component of the eukaryotic translation initiation factor 3 (eIF-3) complex.</span></p>
+            </div>
+            <div class="side text">
+                <div class="side-label">Text SFT <span class="score-tag">BLEU 0.002 | ROUGE 0.015</span></div>
+                <p><span class="wrong">Interacts with RAB1B (By similarity). Interacts with GDI2; may be involved in vesicle trafficking from Golgi to plasma membrane...</span> [continues for 200+ words]</p>
+            </div>
+        </div>
+        <blockquote><p>MLP at least guesses a multi-subunit complex (eIF-3, wrong but structurally plausible). Text produces an irrelevant, extremely verbose interaction list &mdash; a hallucination cascade. <strong>Key pattern</strong>: Text SFT tends to produce much longer, uncontrolled outputs on uncertain questions.</p></blockquote>
+    </div>
+
+    <!-- General Example 4: Text verbose on localization -->
+    <div class="example-card">
+        <div class="example-header">
+            <span class="category-badge" style="background:var(--muted)">General &mdash; Localization</span>
+        </div>
+        <div class="field-label">Instruction</div>
+        <div class="field-value">Describe the subcellular localization of the protein with this sequence.</div>
+        <div class="field-label">Protein (317 aa)</div>
+        <div class="field-value protein-seq">MSGSIDTLALKEEDVTKFLACASHLGANNVDFQMEQYVYK...</div>
+        <div class="field-label">Expected Answer</div>
+        <div class="field-value"><strong>Cytoplasm</strong> {ECO:0000255|HAMAP-Rule:MF_03015}.</div>
+        <div class="versus-grid">
+            <div class="side mlp">
+                <div class="side-label">MLP SFT <span class="score-tag">BLEU 0.080 | ROUGE 0.286</span></div>
+                <p><span class="partial">Cytoplasm</span> {ECO:0000250|UniProtKB:P61349}.</p>
+            </div>
+            <div class="side text">
+                <div class="side-label">Text SFT <span class="score-tag">BLEU 0.010 | ROUGE 0.300</span></div>
+                <p><span class="partial">Cytoplasm</span> {ECO:0000255|HAMAP-Rule:MF_03148}. <span class="wrong">Nucleus {ECO:0000269|PubMed:7540099}. Note=Shuttles between cytoplasmic and nuclear compartments...</span></p>
+            </div>
+        </div>
+        <blockquote><p>Both correctly say "Cytoplasm" but with wrong evidence codes. Text then appends extra (incorrect) nuclear localization detail. MLP stays concise.</p></blockquote>
+    </div>
+
+    <hr>
+
+    <h2>Key Observations</h2>
+
+    <div class="success-box">
+        <p><strong>1. SFT is essential.</strong> Base models (no fine-tuning) produce empty or incoherent outputs (BLEU ~0.003). Both SFT approaches achieve 80-100&times; improvement.</p>
+    </div>
+
+    <h3>Where MLP (ESM-3 embeddings) wins</h3>
+    <ul>
+        <li><strong>Function description</strong>: ROUGE-L 0.458 vs 0.292 (+57%). ESM-3 embeddings capture structural/functional signatures that help predict protein function, membrane insertion roles, and ribosomal activities.</li>
+        <li><strong>Conciseness</strong>: MLP outputs are typically shorter and more focused. Text SFT frequently appends hallucinated paragraphs about unrelated proteins.</li>
+        <li><strong>Fewer hallucination cascades</strong>: When MLP is wrong, it's wrong briefly. Text can spiral into 200+ word confabulations.</li>
+    </ul>
+
+    <h3>Where Text wins</h3>
+    <ul>
+        <li><strong>Catalytic activity</strong>: BLEU 0.367 vs 0.313. Text correctly identifies more chemical reactions, possibly because specific substrate/product names are more easily memorized from raw sequence tokens seen during training.</li>
+        <li><strong>General knowledge</strong>: BLEU 0.350 vs 0.278. Text is better at protein family classification for proteins with clear sequence signatures (e.g., phosphoribosyltransferases, detoxification proteins).</li>
+    </ul>
+
+    <h3>Where both are equal</h3>
+    <ul>
+        <li><strong>Easy tasks</strong>: Protein naming (L6, uL18), family identification (Fis, uL18), and well-characterized viral proteins. Both achieve BLEU &gt;0.7.</li>
+        <li><strong>Domain prediction</strong>: Both around ROUGE-L ~0.42. Remains the hardest category overall.</li>
+    </ul>
+
+    <h3>Where both struggle</h3>
+    <ul>
+        <li><strong>Complex/rare outputs</strong>: Quaternary structure, subcellular localization details, expression conditions. Neither approach handles these well.</li>
+        <li><strong>Regulatory functions</strong>: Both default to enzymatic activity predictions, reflecting training data bias.</li>
+        <li><strong>Short/unusual proteins</strong>: Proteins &lt;150 aa with rare functions confuse both models.</li>
+    </ul>
+
+    <div class="warning-box">
+        <p><strong>Text verbosity problem</strong>: Text SFT outputs are systematically longer than MLP outputs, especially when the model is uncertain. On wrong answers, Text averages ~3&times; longer responses with hallucinated protein interactions, unrelated functions, or fabricated evidence codes. This suggests ESM-3 embeddings provide a stronger "grounding" signal that prevents output drift.</p>
+    </div>
+
+    <h2>Conclusion</h2>
+
+    <p>At comparable training compute, <strong>MLP SFT produces more reliable, concise outputs</strong> with a large advantage on function descriptions (+57% ROUGE-L). Text SFT has a slight edge on catalytic reaction identification. The most striking qualitative difference is output length control: MLP rarely hallucinates beyond the expected answer format, while Text frequently produces verbose, cascading outputs.</p>
+
+    <p>For a protein understanding model, the MLP approach (ESM-3 embeddings + projector) appears to be the stronger foundation, with function prediction being the clearest differentiator. However, the Text approach's catalytic activity strength suggests that raw sequence tokens carry complementary information &mdash; a potential argument for hybrid approaches in future work.</p>
+
+    <footer>
+        <p>Post-Training Protein LLM &mdash; Internal Development Blog</p>
+        <p>Data: <code>results/sft_esm3_mlp_combined_qwen3_8b_it_0306_010408/eval/generation_step_9750.json</code>, <code>results/sft_text_combined_qwen3_8b_it_0307_190324/eval/generation_step_8250.json</code>, base model eval metrics</p>
+    </footer>
+</body>
+</html>

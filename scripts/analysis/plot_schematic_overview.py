@@ -5,71 +5,35 @@ Schematic overview figure for paper and blog.
 4 panels: Question → Approach → Training → Key Results
 """
 
-import matplotlib
-
-matplotlib.use('Agg')
 import os
+import sys
+
+# Ensure this directory is on sys.path for figure_style import
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import matplotlib.pyplot as plt
 import numpy as np
+from figure_style import (
+    BLOG_FIGURES_DIR,
+    SCHEMATIC_COLORS,
+    STATUS_COLORS,
+    save_main_figure,
+)
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
 
 # ═══════════════════════════════════════════════════════════════════════
-# PATHS
+# COLOR PALETTE (from figure_style.SCHEMATIC_COLORS + extras for this diagram)
 # ═══════════════════════════════════════════════════════════════════════
-BASE = "/orcd/pool/006/yeopjin/workspace/Post_Training_Protein_LLM"
-BLOG_FIG = f"{BASE}/blog/figures"
-PAPER_FIG = f"{BASE}/paper/figures"
-os.makedirs(BLOG_FIG, exist_ok=True)
-os.makedirs(PAPER_FIG, exist_ok=True)
-
-# ═══════════════════════════════════════════════════════════════════════
-# COLOR PALETTE
-# ═══════════════════════════════════════════════════════════════════════
-C = {
-    # Protein / ESM-3 (blues)
-    "protein_bg":     "#DCEEFB",
-    "protein_border": "#2C7BB6",
-    "protein_text":   "#1A5276",
-    "esm3_bg":        "#B3D4F0",
-    "esm3_border":    "#2166AC",
-
-    # LLM (greens)
-    "llm_bg":         "#D5F5E3",
-    "llm_border":     "#27AE60",
-    "llm_text":       "#196F3D",
-
-    # Projector (light purple / teal)
-    "proj_mlp_bg":    "#D6EAF8",
-    "proj_mlp_border":"#2E86C1",
-    "proj_perc_bg":   "#FDEBD0",
-    "proj_perc_border":"#E67E22",
-    "proj_flam_bg":   "#FADBD8",
-    "proj_flam_border":"#C0392B",
-    "proj_text_bg":   "#E8F8F5",
-    "proj_text_border":"#1ABC9C",
-
-    # Training (orange)
-    "train_bg":       "#FEF3E2",
-    "train_border":   "#E67E22",
-    "train_text":     "#935116",
-    "sft_bg":         "#FDE8D0",
-    "grpo_bg":        "#F9E4B7",
-
-    # Results (gray + red for pending)
+C = dict(SCHEMATIC_COLORS)
+# Extras only used in this schematic
+C.update({
     "result_bg":      "#F2F3F4",
-    "result_border":  "#C0392B",
-    "result_text":    "#C0392B",
+    "result_border":  STATUS_COLORS["pending"],
+    "result_text":    STATUS_COLORS["pending"],
     "pending_bg":     "#FDEDEC",
-
-    # Arrows and general
-    "arrow":          "#566573",
-    "arrow_flow":     "#2C3E50",
-    "panel_border":   "#AEB6BF",
-    "panel_title_bg": "#2C3E50",
     "section_num":    "#FFFFFF",
     "bg":             "#FAFAFA",
-}
+})
 
 
 def add_box(ax, xy, w, h, bg, border, text="", fontsize=8, fontweight="normal",
@@ -208,133 +172,177 @@ def draw_figure():
 
     # ─────────────────────────────────────────────────────────────
     # PANEL 2: APPROACH (x: 9.2-20.5)
+    # Forking layout: Protein Sequence → fork
+    #   Top branch (a): Text path → direct to LLM (short, simple)
+    #   Bottom branch: ESM-3 → split into (b) MLP, (c) Perceiver, (d) Flamingo → LLM
     # ─────────────────────────────────────────────────────────────
     add_panel_label(ax, 9.5, 13.3, 2, "Approach: Four Pathways")
 
-    # ESM-3 encoder block (tall, left side)
-    esm_x, esm_y, esm_w, esm_h = 9.5, 4.5, 2.6, 7.0
-    add_box(ax, (esm_x, esm_y), esm_w, esm_h,
+    # --- Protein Sequence input (left, centered vertically) ---
+    prot_cx, prot_cy = 10.2, 8.0
+    add_box(ax, (prot_cx - 1.0, prot_cy - 0.7), 2.0, 1.4,
+            C["protein_bg"], C["protein_border"],
+            lw=1.5, pad=0.2)
+    ax.text(prot_cx, prot_cy, "Protein\nSequence", ha="center", va="center",
+            fontsize=9, fontweight="bold", color=C["protein_text"], zorder=4)
+
+    # --- Fork point ---
+    fork_x = prot_cx + 1.2
+    fork_y = prot_cy
+
+    # Fork lines: vertical stem then two branches
+    ax.plot([prot_cx + 1.0, fork_x], [fork_y, fork_y],
+            color=C["arrow"], linewidth=1.5, zorder=3)
+
+    # ═══════════════════════════════════════════════════
+    # TOP BRANCH: (a) Text path — simple, direct
+    # ═══════════════════════════════════════════════════
+    text_y = 11.0  # high up, visually separate
+
+    # Vertical line up from fork
+    ax.plot([fork_x, fork_x], [fork_y, text_y],
+            color=C["proj_text_border"], linewidth=1.3, linestyle="--",
+            alpha=0.7, zorder=3)
+
+    # Text box
+    text_box_x = fork_x + 0.6
+    text_box_w = 3.2
+    add_box(ax, (text_box_x, text_y - 0.65), text_box_w, 1.3,
+            C["proj_text_bg"], C["proj_text_border"],
+            lw=1.3, pad=0.18)
+    ax.text(text_box_x + text_box_w / 2, text_y + 0.35,
+            "(a) Text Only", ha="center", va="center",
+            fontsize=9, fontweight="bold", color=C["proj_text_border"], zorder=4)
+    ax.text(text_box_x + text_box_w / 2, text_y - 0.2,
+            "Raw AA sequence as tokens\nno encoder needed", ha="center", va="center",
+            fontsize=8, color="#2C3E50", zorder=4)
+
+    # Horizontal arrow from fork to text box
+    add_arrow(ax, (fork_x, text_y), (text_box_x - 0.05, text_y),
+              color=C["proj_text_border"], lw=1.3, style="-|>")
+
+    # "no encoder" label on the branch
+    ax.text(fork_x - 0.3, (fork_y + text_y) / 2 + 0.5, "direct",
+            ha="center", va="center", fontsize=7, style="italic",
+            color=C["proj_text_border"], alpha=0.7, rotation=90, zorder=4)
+
+    # ═══════════════════════════════════════════════════
+    # BOTTOM BRANCH: ESM-3 encoder → 3 projector variants
+    # ═══════════════════════════════════════════════════
+    esm_y_center = 5.8  # lower region
+
+    # Vertical line down from fork
+    ax.plot([fork_x, fork_x], [fork_y, esm_y_center],
+            color=C["esm3_border"], linewidth=1.5, zorder=3)
+
+    # ESM-3 block (SMALLER — proportional)
+    esm_x = fork_x + 0.6
+    esm_w, esm_h = 2.2, 1.8
+    esm_box_y = esm_y_center - esm_h / 2
+    add_box(ax, (esm_x, esm_box_y), esm_w, esm_h,
             C["esm3_bg"], C["esm3_border"],
-            lw=1.8, pad=0.3)
-    ax.text(esm_x + esm_w/2, 10.7, "ESM-3", ha="center", va="center",
-            fontsize=11, fontweight="bold", color=C["esm3_border"], zorder=4)
-    ax.text(esm_x + esm_w/2, 9.8, "Protein\nEncoder", ha="center", va="center",
-            fontsize=9, color=C["protein_text"], zorder=4)
-    ax.text(esm_x + esm_w/2, 8.8, "(frozen)", ha="center", va="center",
+            lw=1.8, pad=0.22)
+    ax.text(esm_x + esm_w / 2, esm_y_center + 0.35, "ESM-3",
+            ha="center", va="center",
+            fontsize=10, fontweight="bold", color=C["esm3_border"], zorder=4)
+    ax.text(esm_x + esm_w / 2, esm_y_center - 0.35, "Encoder\n(frozen)",
+            ha="center", va="center",
             fontsize=8, color="#95A5A6", style="italic", zorder=4)
 
-    # Protein input below ESM-3
-    ax.text(esm_x + esm_w/2, 3.8, "Protein\nSequence", ha="center", va="center",
-            fontsize=8, color=C["protein_text"], zorder=4, style="italic")
-    add_arrow(ax, (esm_x + esm_w/2, 4.2), (esm_x + esm_w/2, 4.5),
-              color=C["protein_border"], lw=1.2)
+    # Arrow from fork to ESM-3
+    add_arrow(ax, (fork_x, esm_y_center), (esm_x - 0.05, esm_y_center),
+              color=C["esm3_border"], lw=1.5, style="-|>")
 
-    # Four variant rows — wider boxes, more gap
-    variants = [
-        ("(a) Text", C["proj_text_bg"], C["proj_text_border"],
-         "Raw AA sequence\nas text tokens", True),
+    # "structural\nembeddings" label on the branch
+    ax.text(fork_x - 0.3, (fork_y + esm_y_center) / 2, "encode",
+            ha="center", va="center", fontsize=7, style="italic",
+            color=C["esm3_border"], alpha=0.7, rotation=90, zorder=4)
+
+    # --- Three projector variants fanning out from ESM-3 ---
+    esm_right = esm_x + esm_w
+    proj_x = esm_right + 1.0
+    proj_w = 3.2
+
+    esm_variants = [
         ("(b) MLP", C["proj_mlp_bg"], C["proj_mlp_border"],
-         "AttnPool \u2192 MLP\n32 tokens \u00b7 30.5M params", False),
+         "AttnPool \u2192 MLP\n32 tokens \u00b7 30.5M", 7.8),
         ("(c) Perceiver", C["proj_perc_bg"], C["proj_perc_border"],
-         "Perceiver Resampler\n32 queries \u00b7 29.4M params", False),
+         "Perceiver Resampler\n32 queries \u00b7 29.4M", 5.8),
         ("(d) Flamingo", C["proj_flam_bg"], C["proj_flam_border"],
-         "Gated Cross-Attention\nat every 4th LLM layer", False),
+         "Gated Cross-Attn\nevery 4th LLM layer", 3.8),
     ]
 
-    proj_x = 13.3
-    proj_w = 3.4
-    row_h = 1.4
-    gap = 0.45
-    start_y = 12.0  # top of first row
-
-    row_centers = []
-    for i, (label, bg, border, desc, is_text) in enumerate(variants):
-        y_top = start_y - i * (row_h + gap)
-        y_center = y_top - row_h / 2
-        row_centers.append(y_center)
-
-        # Projector box
-        add_box(ax, (proj_x, y_top - row_h), proj_w, row_h,
-                bg, border, fontsize=8, text_color="#2C3E50", lw=1.3, pad=0.18)
-
-        # Label above box
-        ax.text(proj_x + proj_w / 2, y_top + 0.2, label, ha="center", va="bottom",
+    esm_row_centers = []
+    for label, bg, border, desc, row_y in esm_variants:
+        row_h = 1.35
+        add_box(ax, (proj_x, row_y - row_h / 2), proj_w, row_h,
+                bg, border, lw=1.3, pad=0.18)
+        ax.text(proj_x + proj_w / 2, row_y + 0.4, label,
+                ha="center", va="center",
                 fontsize=9, fontweight="bold", color=border, zorder=4)
-
-        # Description inside box
-        ax.text(proj_x + proj_w / 2, y_center, desc, ha="center", va="center",
+        ax.text(proj_x + proj_w / 2, row_y - 0.2, desc,
+                ha="center", va="center",
                 fontsize=8, color="#2C3E50", zorder=4)
+        esm_row_centers.append(row_y)
 
         # Arrow from ESM-3 to projector
-        esm_right = esm_x + esm_w
-        if is_text:
-            # Text path: horizontal dashed line bypassing ESM-3
-            # Route: from left of text box, straight horizontal
-            bypass_y = y_center
-            ax.plot([esm_x - 0.3, proj_x - 0.1], [bypass_y, bypass_y],
-                    color=C["proj_text_border"], linewidth=1.2,
-                    linestyle="--", alpha=0.8, zorder=3)
-            # Arrowhead at the end
-            ax.annotate("", xy=(proj_x - 0.05, bypass_y),
-                        xytext=(proj_x - 0.5, bypass_y),
-                        arrowprops=dict(arrowstyle="-|>", color=C["proj_text_border"],
-                                        lw=1.2),
-                        zorder=3)
-            # "bypass" label
-            ax.text((esm_x + proj_x) / 2, bypass_y + 0.3, "no encoder",
-                    ha="center", va="bottom", fontsize=6.5, style="italic",
-                    color=C["proj_text_border"], alpha=0.7, zorder=4)
-        else:
-            # Straight arrow from ESM-3 right edge
-            src_y = max(esm_y + 0.5, min(y_center, esm_y + esm_h - 0.5))
-            rad = 0.0 if abs(src_y - y_center) < 0.5 else (0.12 if src_y > y_center else -0.12)
-            add_arrow(ax, (esm_right + 0.1, src_y), (proj_x - 0.1, y_center),
-                      color=C["esm3_border"], lw=1.1,
-                      connectionstyle=f"arc3,rad={rad}")
+        rad = 0.0 if abs(esm_y_center - row_y) < 0.5 else (
+            0.15 if esm_y_center > row_y else -0.15)
+        add_arrow(ax, (esm_right + 0.1, esm_y_center),
+                  (proj_x - 0.1, row_y),
+                  color=C["esm3_border"], lw=1.1,
+                  connectionstyle=f"arc3,rad={rad}")
 
-    # LLM block (receiving end)
-    llm_x = 17.8
-    llm_w = 2.8
-    llm_h = 7.5
-    llm_y = 4.0
+    # ═══════════════════════════════════════════════════
+    # LLM block (receiving end, right side)
+    # ═══════════════════════════════════════════════════
+    llm_x = 18.0
+    llm_w = 2.6
+    llm_h = 8.5
+    llm_y = 3.0
     add_box(ax, (llm_x, llm_y), llm_w, llm_h,
             C["llm_bg"], C["llm_border"],
             lw=1.8, pad=0.3)
-    ax.text(llm_x + llm_w/2, 11.0, "Qwen3-8B", ha="center", va="center",
+    ax.text(llm_x + llm_w / 2, 11.0, "Qwen3-8B", ha="center", va="center",
             fontsize=11, fontweight="bold", color=C["llm_text"], zorder=4)
-    ax.text(llm_x + llm_w/2, 10.2, "(LoRA r=8)", ha="center", va="center",
+    ax.text(llm_x + llm_w / 2, 10.3, "(LoRA r=8)", ha="center", va="center",
             fontsize=8.5, color="#27AE60", zorder=4)
 
     # Stacked layer icons inside LLM
-    layer_ys = [9.4, 8.7, 8.0, 7.3, 6.6, 5.9]
+    layer_ys = [9.5, 8.8, 8.1, 7.4, 6.7, 6.0, 5.3]
     for j, yy in enumerate(layer_ys):
-        a = 0.3 + j * 0.11
-        add_box(ax, (llm_x + 0.35, yy), 2.1, 0.45,
+        a = 0.25 + j * 0.09
+        add_box(ax, (llm_x + 0.3, yy), 2.0, 0.45,
                 C["llm_bg"], C["llm_border"],
                 alpha=a, lw=0.6, pad=0.06, zorder=3)
 
-    # Flamingo cross-attention markers (every other layer) — prominent
-    xattn_ys = [9.4, 8.0, 6.6]
+    # Flamingo cross-attention markers (every other layer)
+    xattn_ys = [9.5, 8.1, 6.7, 5.3]
     for yy in xattn_ys:
-        ax.plot(llm_x + 0.18, yy + 0.22, marker="*", color=C["proj_flam_border"],
-                markersize=14, zorder=5)
-    # Connecting bracket line on left edge of LLM
+        ax.plot(llm_x + 0.15, yy + 0.22, marker="*", color=C["proj_flam_border"],
+                markersize=12, zorder=5)
     ax.plot([llm_x + 0.05, llm_x + 0.05],
             [xattn_ys[-1] + 0.22, xattn_ys[0] + 0.22],
-            color=C["proj_flam_border"], linewidth=1.0, alpha=0.5, zorder=4)
-    ax.text(llm_x + llm_w/2, 4.8, "Flamingo:\ngated \u00d7-attn", ha="center", va="center",
-            fontsize=8.5, color=C["proj_flam_border"], fontweight="bold",
+            color=C["proj_flam_border"], linewidth=1.0, alpha=0.4, zorder=4)
+    ax.text(llm_x + llm_w / 2, 4.0, "Flamingo:\ngated \u00d7-attn",
+            ha="center", va="center",
+            fontsize=8, color=C["proj_flam_border"], fontweight="bold",
             style="italic", zorder=4)
 
-    # Arrows from projectors to LLM
-    for i, yc in enumerate(row_centers):
-        target_y = max(llm_y + 0.6, min(yc, llm_y + llm_h - 0.6))
-        add_arrow(ax, (proj_x + proj_w + 0.15, yc),
+    # Arrow from Text box → LLM (top, direct — short path)
+    add_arrow(ax, (text_box_x + text_box_w + 0.1, text_y),
+              (llm_x - 0.1, text_y),
+              color=C["proj_text_border"], lw=1.5, style="-|>")
+
+    # Arrows from ESM projector variants → LLM
+    for row_y in esm_row_centers:
+        target_y = max(llm_y + 0.5, min(row_y, llm_y + llm_h - 0.5))
+        add_arrow(ax, (proj_x + proj_w + 0.15, row_y),
                   (llm_x - 0.1, target_y),
                   color=C["arrow"], lw=1.1)
 
     # Approach summary text (lighter)
-    ax.text(15.5, 3.0, "Which pathway best bridges\nprotein structure \u2192 language?",
+    ax.text(14.5, 2.5, "Which pathway best bridges\nprotein structure \u2192 language?",
             ha="center", va="center", fontsize=7.5, style="italic",
             color="#AAB7C0", zorder=4)
 
@@ -483,19 +491,17 @@ def main():
 
     fig = draw_figure()
 
-    # Blog version (PNG)
-    blog_path = f"{BLOG_FIG}/schematic_overview.png"
-    fig.savefig(blog_path, dpi=300, bbox_inches="tight",
-                facecolor="white", edgecolor="none")
+    # Save as main figure (blog PNG + paper PDF)
+    save_main_figure(fig, "fig1_schematic_overview")
+
+    # Also save to blog/figures/ root for backward compat
+    blog_path = str(BLOG_FIGURES_DIR / "schematic_overview.png")
+    fig2 = draw_figure()
+    fig2.savefig(blog_path, dpi=300, bbox_inches="tight",
+                 facecolor="white", edgecolor="none")
+    plt.close(fig2)
     print(f"  OK {blog_path}")
 
-    # Paper version (PDF)
-    paper_path = f"{PAPER_FIG}/schematic_overview.pdf"
-    fig.savefig(paper_path, format="pdf", bbox_inches="tight",
-                facecolor="white", edgecolor="none")
-    print(f"  OK {paper_path}")
-
-    plt.close()
     print("Done.")
 
 

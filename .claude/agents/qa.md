@@ -25,34 +25,60 @@ FIRST: Read these files for context:
 
 ```
 tests/
-├── conftest.py              # Shared fixtures
+├── conftest.py                       # Shared fixtures
 ├── models/
-│   ├── test_protein_encoder.py
+│   ├── test_esm3_encoder.py
+│   ├── test_multimodal_llm.py
 │   ├── test_pooling.py
 │   ├── test_projector.py
-│   └── test_multimodal_llm.py
+│   ├── test_perceiver.py
+│   ├── test_flamingo_perceiver.py
+│   └── test_gated_cross_attention.py
 ├── data/
 │   ├── test_datasets.py
-│   └── test_collators.py
+│   └── test_mol_instructions.py
 ├── training/
-│   ├── test_sft_trainer.py
-│   └── test_grpo_trainer.py
+│   ├── test_trainers.py
+│   ├── test_checkpoint_save_load.py
+│   └── test_token_budget_sampler.py
 └── evaluation/
-    └── test_benchmarks.py
+    ├── test_go_prediction.py
+    ├── test_ppi_prediction.py
+    └── test_stability.py
 
 pyproject.toml               # Test and lint configuration
 ```
 
 ## Critical Rule Checklist
 
-### Must Fix (7 items)
+### Must Fix (9 items)
 - [ ] ESM-3 encoder weights remain frozen (`requires_grad=False`)
 - [ ] LoRA applied to **all** linear layers (q/k/v/o + gate/up/down), NOT just k/v
+- [ ] Flamingo exception: NO LoRA (LLM frozen, only flamingo components trainable)
 - [ ] Attention pooling used (not mean pooling) for MLP path
-- [ ] Model configs use Instruct variants (e.g., Qwen3-4B-Instruct-2507)
+- [ ] Model configs use Instruct variants (e.g., Qwen/Qwen3-8B, Qwen3-4B-Instruct-2507)
 - [ ] Training uses chat template format with system prompt (not Alpaca `### Instruction:`)
 - [ ] No secrets or credentials in code
 - [ ] CUDA operations are safe (no silent device mismatches)
+- [ ] No zero-init or gate/tanh init for projector (causes NaN explosion)
+
+### FSDP Safety
+- [ ] Model loads WITHOUT `device_map` (FSDP handles placement)
+- [ ] `_fsdp_embed_cache` used for embed_tokens (sharded params produce garbage otherwise)
+- [ ] Multimodal optimizer state saved separately (`mm_optimizer.pt`)
+- [ ] ESM-3 encoder stays replicated (not FSDP-sharded)
+
+### Flamingo-Specific Rules
+- [ ] FlamingoPerceiverResampler uses tanh(0) gates (starts as identity)
+- [ ] Gated cross-attention blocks at every 4th LLM layer
+- [ ] No LoRA when approach=flamingo — LLM weights frozen
+- [ ] Saves both projector.pt and xattn.pt
+
+### NaN Prevention
+- [ ] `_clip_multimodal_gradients()` present in ProteinLLMTrainer.training_step
+- [ ] Multimodal params (pooling+projector) have separate gradient clipping
+- [ ] projector_lr ratio is 5x (not 10x) for 8B models
+- [ ] No zero-init for projector weights
 
 ### Type Safety
 - [ ] All public functions have type hints
@@ -99,7 +125,7 @@ with torch.no_grad():
 ### Config Hardcoding
 ```python
 # Bad
-model = AutoModel.from_pretrained("Qwen/Qwen3-4B-Instruct-2507")
+model = AutoModel.from_pretrained("Qwen/Qwen3-8B")
 
 # Good
 model = AutoModel.from_pretrained(cfg.model.path)
@@ -112,6 +138,15 @@ pooled = embeddings.mean(dim=1)
 
 # Good — attention pooling preserves structure
 pooled = self.attention_pool(embeddings)
+```
+
+### Projector Init (NaN risk)
+```python
+# Bad — causes NaN explosion
+nn.init.zeros_(self.projector.weight)
+
+# Good — default random init (Kaiming)
+# Just let PyTorch default initialization work
 ```
 
 ## Test Conventions
@@ -130,6 +165,8 @@ pooled = self.attention_pool(embeddings)
 - All public functions tested
 - Edge cases: empty sequences, max length, invalid inputs
 - Integration tests for dataloaders and training loops
+- Flamingo: test gate initialization (tanh(0)=0), cross-attention placement
+- FSDP: test embed_tokens cache, optimizer save/load
 
 ## QA Commands
 
@@ -165,11 +202,14 @@ You handle: code review, testing, linting, critical rule enforcement.
 Critical rules to enforce:
 - ESM-3 MUST be frozen (requires_grad=False)
 - LoRA targets ALL linear layers (q/k/v/o + gate/up/down)
+- Flamingo exception: NO LoRA (LLM frozen, only flamingo components trainable)
 - Attention pooling for MLP path (not mean)
-- Instruct model variants only
+- Instruct model variants only (primary: Qwen3-8B)
 - Chat template format (not Alpaca)
 - No hardcoded paths
 - No secrets in code
+- No zero-init or gate/tanh init for projector (causes NaN)
+- FSDP: no device_map, use _fsdp_embed_cache, ESM-3 replicated not sharded
 
 Testing workflow:
 1. pytest tests/ -v

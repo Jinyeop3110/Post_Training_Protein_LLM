@@ -242,7 +242,7 @@ download_structure_quality.py → structure_quality.yaml → pLDDT alignment
        ↓
 2. JSON instruction format: data/processed/{task}/
        ↓
-3. GRPO Training: experiment=grpo_{task} parent_experiment=<sft>
+3. GRPO Training: main_RL=grpo_{task} parent_experiment=<sft>
        ↓
 4. Evaluation: evaluation.name={task}
 ```

@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GRPO Reinforcement Learning: Task Examples and Reward Design</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #1a1a2e;
+            --accent: #2563eb;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --code-bg: #f3f4f6;
+            --table-header: #f9fafb;
+            --blockquote-bg: #fffbeb;
+            --blockquote-border: #f59e0b;
+            --success-bg: #f0fdf4;
+            --success-border: #22c55e;
+            --warning-bg: #fff7ed;
+            --warning-border: #f97316;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--fg);
+            background: var(--bg);
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        header {
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+        header .meta {
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        header .tags { margin-top: 0.5rem; }
+        header .tag {
+            display: inline-block;
+            background: var(--code-bg);
+            color: var(--accent);
+            padding: 0.15rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-right: 0.3rem;
+        }
+        h1 { font-size: 1.8rem; line-height: 1.3; }
+        h2 { font-size: 1.4rem; margin-top: 2.5rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+        h3 { font-size: 1.15rem; margin-top: 1.5rem; margin-bottom: 0.75rem; }
+        p { margin-bottom: 1rem; }
+        code {
+            background: var(--code-bg);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.9em;
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+        }
+        pre {
+            background: var(--code-bg);
+            padding: 1.2rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+        th, td { padding: 0.6rem 0.8rem; border: 1px solid var(--border); text-align: left; }
+        th { background: var(--table-header); font-weight: 600; }
+        .callout {
+            padding: 1rem 1.2rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid;
+        }
+        .callout-info { background: #eff6ff; border-color: var(--accent); }
+        .callout-success { background: var(--success-bg); border-color: var(--success-border); }
+        .callout-warning { background: var(--warning-bg); border-color: var(--warning-border); }
+        .callout strong { display: block; margin-bottom: 0.3rem; }
+        .flow-diagram {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            line-height: 2;
+        }
+        .flow-diagram .arrow { color: var(--accent); font-weight: bold; }
+        .example-box {
+            background: #fafafa;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.2rem;
+            margin-bottom: 1.2rem;
+        }
+        .example-box .label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+        .label-prompt { color: #7c3aed; }
+        .label-response { color: #059669; }
+        .label-reward { color: #dc2626; }
+        .label-ground-truth { color: #d97706; }
+        .reward-breakdown {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.8rem;
+            margin: 1rem 0;
+        }
+        .reward-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.8rem;
+            text-align: center;
+        }
+        .reward-card .score { font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+        .reward-card .label { font-size: 0.75rem; color: var(--muted); }
+        ul, ol { margin-bottom: 1rem; padding-left: 1.5rem; }
+        li { margin-bottom: 0.4rem; }
+        .toc { background: var(--code-bg); padding: 1.2rem; border-radius: 8px; margin-bottom: 2rem; }
+        .toc ul { list-style: none; padding-left: 0; margin-bottom: 0; }
+        .toc li { margin-bottom: 0.3rem; }
+        .toc a { color: var(--accent); text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>GRPO Reinforcement Learning: Task Examples and Reward Design</h1>
+    <div class="meta">March 9, 2026 &middot; Research Documentation</div>
+    <div class="tags">
+        <span class="tag">GRPO</span>
+        <span class="tag">RL</span>
+        <span class="tag">Structure Quality</span>
+        <span class="tag">ProteinLM Bench</span>
+        <span class="tag">Reward Design</span>
+    </div>
+</header>
+
+<div class="toc">
+    <strong>Contents</strong>
+    <ul>
+        <li><a href="#overview">1. GRPO Overview</a></li>
+        <li><a href="#pipeline">2. SFT &rarr; GRPO Pipeline</a></li>
+        <li><a href="#structure">3. Task 1: Structure Quality (ESMFold Reward)</a></li>
+        <li><a href="#proteinlm">4. Task 2: ProteinLM Bench (MC Accuracy Reward)</a></li>
+        <li><a href="#comparison">5. Configuration Comparison</a></li>
+        <li><a href="#running">6. Running the Experiments</a></li>
+    </ul>
+</div>
+
+<h2 id="overview">1. GRPO Overview</h2>
+
+<p>Group Relative Policy Optimization (GRPO) is our reinforcement learning method for post-SFT alignment.
+Unlike PPO, GRPO requires no critic/value model. Instead, it generates a <em>group</em> of completions per prompt,
+scores each with a <strong>verifiable reward function</strong>, and computes advantages <em>within the group</em>.</p>
+
+<div class="callout callout-info">
+    <strong>Why verifiable rewards?</strong>
+    Protein tasks have objectively correct answers (GO terms, ddG values, pLDDT scores, multiple-choice answers).
+    We compute rewards by comparing model output to ground truth&mdash;no reward model needed.
+</div>
+
+<p>For each prompt, GRPO:</p>
+<ol>
+    <li>Generates <code>group_size</code> (8) completions via sampling</li>
+    <li>Scores each with the task-specific reward function</li>
+    <li>Computes group-relative advantages: <code>A_i = r_i - mean(r_group)</code></li>
+    <li>Updates policy to increase probability of high-advantage completions</li>
+</ol>
+
+<h2 id="pipeline">2. SFT &rarr; GRPO Pipeline</h2>
+
+<p>Both GRPO experiments chain from the same MLP SFT checkpoint, creating a two-stage training pipeline:</p>
+
+<div class="flow-diagram">
+    <strong>Stage 1: Supervised Fine-Tuning (SFT)</strong><br>
+    Qwen3-8B + ESM-3 (frozen) + MLP Projector + LoRA<br>
+    Trained on 4.89M Mol-Instructions samples<br>
+    <span class="arrow">&darr;</span><br>
+    Checkpoint: <code>sft_esm3_mlp_combined_qwen3_8b_it_0306_010408</code><br>
+    <span class="arrow">&darr;</span><br>
+    <strong>Stage 2a: GRPO &mdash; Structure Quality</strong> &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Stage 2b: GRPO &mdash; ProteinLM Bench</strong><br>
+    ESMFold reward (10K proteins) &nbsp;&nbsp;|&nbsp;&nbsp; MC accuracy reward (944 questions)<br>
+    Config: <code>grpo_structure_mlp_sft</code> &nbsp;&nbsp;|&nbsp;&nbsp; Config: <code>grpo_proteinlm_mlp_sft</code>
+</div>
+
+<p>The <code>parent_experiment</code> field in each config points to the SFT checkpoint. The trainer
+automatically loads the SFT model (LLM + LoRA adapter + projector + pooling) and continues
+training with GRPO on the task-specific dataset.</p>
+
+
+<h2 id="structure">3. Task 1: Structure Quality (ESMFold Reward)</h2>
+
+<h3>Data Source</h3>
+<p>10,000 protein sequences with pre-computed pLDDT scores from AlphaFold DB.
+Each protein is classified as <strong>high</strong> (pLDDT &gt; 80), <strong>medium</strong> (50&ndash;80), or <strong>low</strong> (&lt; 50) quality.
+The protein sequence is the <code>input</code> field (fed through ESM-3 encoder), and the model must
+generate a natural language structural quality assessment.</p>
+
+<pre>python scripts/data/download_structure_quality.py --source alphafold --max_samples 10000</pre>
+
+<h3>Example 1: High-Quality Protein</h3>
+
+<div class="example-box">
+    <div class="label label-prompt">PROMPT (System + User)</div>
+<pre>System: You are a protein research assistant...
+
+User: Assess the structural quality of this protein. Report the predicted
+fold quality (high/medium/low), estimated pLDDT confidence score (0-100),
+and whether the protein is well-folded or likely disordered.
+
+Protein: &lt;protein&gt;MACISAIFIIDLKGKVIINRNYRGEVNVNLTEVF
+YNCVIDQEDNLIKPIFHVNGLTYCWVAHNNIYFLAVTRKNSNATLI...&lt;/protein&gt;</pre>
+</div>
+
+<div class="example-box">
+    <div class="label label-ground-truth">GROUND TRUTH</div>
+<pre>Fold quality: high. pLDDT: 88.4. This protein is well-folded with high confidence.</pre>
+</div>
+
+<div class="example-box">
+    <div class="label label-response">MODEL RESPONSE (sampled, one of 8)</div>
+<pre>This protein shows a well-folded structure with high confidence.
+The predicted pLDDT score is approximately 85, indicating reliable
+structural predictions. Fold quality: high.</pre>
+</div>
+
+<div class="example-box">
+    <div class="label label-reward">REWARD COMPUTATION</div>
+    <p>The ESMFold reward has three components (max total: 1.0):</p>
+    <div class="reward-breakdown">
+        <div class="reward-card">
+            <div class="score">0.40</div>
+            <div class="label">Quality Alignment<br>(max 0.4)</div>
+        </div>
+        <div class="reward-card">
+            <div class="score">0.29</div>
+            <div class="label">Numerical pLDDT<br>(max 0.3)</div>
+        </div>
+        <div class="reward-card">
+            <div class="score">0.30</div>
+            <div class="label">Category Match<br>(max 0.3)</div>
+        </div>
+    </div>
+    <p><strong>Total reward: 0.99</strong></p>
+    <ul>
+        <li><strong>Quality alignment (0.4/0.4):</strong> Model says "well-folded" &rarr; true pLDDT = 88.4 &gt; 70 &rarr; correct claim</li>
+        <li><strong>Numerical accuracy (0.29/0.3):</strong> Predicted pLDDT = 85, true = 88.4, error = 3.4 &rarr; <code>0.3 &times; exp(-3.4&sup2; / 200) = 0.29</code></li>
+        <li><strong>Category match (0.3/0.3):</strong> Model says "high" &rarr; true category is "high" (pLDDT &gt; 80) &rarr; exact match</li>
+    </ul>
+</div>
+
+<h3>Example 2: Low-Quality Protein</h3>
+
+<div class="example-box">
+    <div class="label label-ground-truth">GROUND TRUTH</div>
+<pre>Fold quality: low. pLDDT: 42.8. This protein is low confidence, likely disordered.</pre>
+</div>
+
+<div class="example-box">
+    <div class="label label-response">HYPOTHETICAL BAD RESPONSE</div>
+<pre>This protein appears to be well-folded and shows high structural quality
+with a predicted pLDDT of 75.</pre>
+</div>
+
+<div class="example-box">
+    <div class="label label-reward">REWARD: 0.00</div>
+    <ul>
+        <li><strong>Quality alignment (0.0/0.4):</strong> Claims "well-folded" but pLDDT = 42.8 &lt; 50 &rarr; wrong claim</li>
+        <li><strong>Numerical accuracy (0.0/0.3):</strong> Predicted 75, true 42.8, error = 32.2 &rarr; <code>0.3 &times; exp(-32.2&sup2; / 200) &asymp; 0.0</code></li>
+        <li><strong>Category match (0.0/0.3):</strong> No "low quality"/"low confidence"/"poor" terms found</li>
+    </ul>
+</div>
+
+<h3>Reward Function Details</h3>
+
+<p>The ESMFold reward (<code>compute_esmfold_reward</code> in <code>src/training/rewards.py</code>) supports two modes:</p>
+
+<table>
+    <tr><th>Mode</th><th>How pLDDT Is Obtained</th><th>Use Case</th></tr>
+    <tr>
+        <td><strong>Pre-computed</strong></td>
+        <td>JSON metadata: <code>{"plddt": 88.4, "ptm": 0.0}</code></td>
+        <td>Training with AlphaFold DB data (instant, no GPU overhead)</td>
+    </tr>
+    <tr>
+        <td><strong>Live ESMFold</strong></td>
+        <td>Folds input sequence with ESMFold model</td>
+        <td>Novel proteins without pre-computed scores</td>
+    </tr>
+</table>
+
+<p>The numerical accuracy uses a Gaussian decay: <code>reward = 0.3 &times; exp(-error&sup2; / (2 &times; 10&sup2;))</code>,
+where <code>error = |predicted_pLDDT - true_pLDDT|</code>. An error of 5 points gives ~0.30, 10 points gives ~0.28,
+and 20 points gives ~0.24.</p>
+
+
+<h2 id="proteinlm">4. Task 2: ProteinLM Bench (MC Accuracy Reward)</h2>
+
+<h3>Data Source</h3>
+<p>944 multiple-choice questions from <a href="https://huggingface.co/datasets/tsynbio/ProteinLMBench">tsynbio/ProteinLMBench</a>
+covering protein biology: enzyme catalysis, protein function, PTMs, subunit structure, disease involvement,
+and tissue specificity. Each question has 2&ndash;10 options with one correct answer.</p>
+
+<div class="callout callout-warning">
+    <strong>Note: Text-only task.</strong>
+    ProteinLMBench questions contain no protein sequences&mdash;they are pure text knowledge questions.
+    The ESM-3 encoder is present for consistency with the SFT model but receives no protein input.
+</div>
+
+<pre>python scripts/data/download_proteinlm_bench.py --max_samples 944</pre>
+
+<h3>Example 1: Enzyme Mechanism Question</h3>
+
+<div class="example-box">
+    <div class="label label-prompt">PROMPT</div>
+<pre>Which of the following best describes the catalytic mechanism
+of serine proteases?
+
+1) They use a metal ion to activate a water molecule for nucleophilic attack
+2) They use a catalytic triad (Ser-His-Asp) for nucleophilic catalysis
+3) They use a thiol group for covalent catalysis
+4) They require ATP hydrolysis for substrate cleavage
+
+Answer with just the option number (e.g., "option 1").</pre>
+</div>
+
+<div class="example-box">
+    <div class="label label-ground-truth">GROUND TRUTH</div>
+<pre>option 2</pre>
+</div>
+
+<div class="example-box">
+    <div class="label label-response">MODEL RESPONSE (sampled)</div>
+<pre>option 2</pre>
+</div>
+
+<div class="example-box">
+    <div class="label label-reward">REWARD: 1.0</div>
+    <p>Binary reward: predicted index (1) matches correct index (1) &rarr; <strong>1.0</strong></p>
+</div>
+
+<h3>Example 2: Post-Translational Modification Question</h3>
+
+<div class="example-box">
+    <div class="label label-prompt">PROMPT</div>
+<pre>What is the primary function of ubiquitination in protein regulation?
+
+1) Protein folding assistance
+2) Signal for proteasomal degradation
+3) Membrane anchoring
+4) Disulfide bond formation
+5) Glycosylation
+
+Answer with just the option number (e.g., "option 1").</pre>
+</div>
+
+<div class="example-box">
+    <div class="label label-ground-truth">GROUND TRUTH</div>
+<pre>option 2</pre>
+</div>
+
+<div class="example-box">
+    <div class="label label-response">HYPOTHETICAL WRONG RESPONSE</div>
+<pre>I think the answer is option 1, as ubiquitin acts as a chaperone.</pre>
+</div>
+
+<div class="example-box">
+    <div class="label label-reward">REWARD: 0.0</div>
+    <p>Binary reward: predicted index (0) &ne; correct index (1) &rarr; <strong>0.0</strong></p>
+</div>
+
+<h3>Reward Function Details</h3>
+
+<p>The ProteinLM Bench reward (<code>compute_proteinlm_bench_reward</code>) is simple binary accuracy:</p>
+
+<pre>def compute_proteinlm_bench_reward(generated_text, ground_truth):
+    # Parse "option N" from ground truth
+    correct_idx = parse_option_number(ground_truth)  # e.g., 1 (0-based)
+
+    # Parse predicted answer from model output
+    _, pred_idx = parse_mc_answer(generated_text, num_options=10)
+
+    return 1.0 if (pred_idx >= 0 and pred_idx == correct_idx) else 0.0</pre>
+
+<p>The parser (<code>parse_mc_answer</code> in <code>src/evaluation/proteinlm_bench.py</code>) looks for patterns like
+"option 2", "2)", "(B)", "answer is 2", etc. If no answer can be parsed, reward is 0.0.</p>
+
+
+<h2 id="comparison">5. Configuration Comparison</h2>
+
+<table>
+    <tr>
+        <th>Parameter</th>
+        <th>Structure Quality</th>
+        <th>ProteinLM Bench</th>
+    </tr>
+    <tr><td>Config file</td><td><code>grpo_structure_mlp_sft.yaml</code></td><td><code>grpo_proteinlm_mlp_sft.yaml</code></td></tr>
+    <tr><td>Parent SFT</td><td colspan="2"><code>sft_esm3_mlp_combined_qwen3_8b_it_0306_010408</code></td></tr>
+    <tr><td>Model</td><td colspan="2">Qwen3-8B + ESM-3 small + MLP projector + LoRA</td></tr>
+    <tr><td>Data task</td><td><code>esmfold</code></td><td><code>proteinlm_bench</code></td></tr>
+    <tr><td>Dataset size</td><td>10,000 proteins</td><td>944 MC questions</td></tr>
+    <tr><td>Has protein input?</td><td>Yes (ESM-3 encodes sequence)</td><td>No (text-only questions)</td></tr>
+    <tr><td>Learning rate</td><td>5e-6</td><td>2e-6</td></tr>
+    <tr><td>Projector LR</td><td>2.5e-5 (5x)</td><td>1e-5 (5x)</td></tr>
+    <tr><td>Batch size</td><td>4</td><td>4</td></tr>
+    <tr><td>Grad accum</td><td>4 (eff. 64)</td><td>2 (eff. 32)</td></tr>
+    <tr><td>Epochs</td><td>1</td><td>3</td></tr>
+    <tr><td>Group size</td><td>8</td><td>8</td></tr>
+    <tr><td>Temperature</td><td>1.0</td><td>0.8</td></tr>
+    <tr><td>Max gen tokens</td><td>256</td><td>64</td></tr>
+    <tr><td>Reward type</td><td>3-component (0&ndash;1.0)</td><td>Binary (0 or 1)</td></tr>
+    <tr><td>KL penalty</td><td>None (DAPO-style)</td><td>None (DAPO-style)</td></tr>
+    <tr><td>FSDP</td><td>Yes (8&times;H100 or 4&times;L40S)</td><td>Yes</td></tr>
+    <tr><td>Memory (per GPU)</td><td>~16 GB peak</td><td>~12 GB peak</td></tr>
+</table>
+
+<div class="callout callout-info">
+    <strong>Why the differences?</strong>
+    <ul>
+        <li><strong>Lower LR for ProteinLM Bench:</strong> The 944-question dataset is small; higher LR risks overfitting.</li>
+        <li><strong>More epochs for ProteinLM Bench:</strong> Compensates for fewer samples&mdash;3 epochs &times; 944 &asymp; 2,832 samples vs 1 epoch &times; 10,000.</li>
+        <li><strong>Shorter max tokens for MC:</strong> Answers are just "option N"&mdash;no need for 256 tokens.</li>
+        <li><strong>Lower temperature for MC:</strong> 0.8 produces more focused answers for a task with one correct option.</li>
+    </ul>
+</div>
+
+
+<h2 id="running">6. Running the Experiments</h2>
+
+<h3>Step 1: Download Data</h3>
+<pre># Structure quality (AlphaFold DB, no GPU needed)
+python scripts/data/download_structure_quality.py --source alphafold --max_samples 10000
+
+# ProteinLM Bench (HuggingFace)
+python scripts/data/download_proteinlm_bench.py</pre>
+
+<h3>Step 2: Ensure SFT Checkpoint Exists</h3>
+<pre># The parent experiment must exist in results/
+ls results/sft_esm3_mlp_combined_qwen3_8b_it_0306_010408/checkpoints/protein_llm/</pre>
+
+<h3>Step 3: Launch GRPO</h3>
+<pre># Structure Quality GRPO
+python scripts/train.py main_RL=grpo_structure_mlp_sft
+
+# ProteinLM Bench GRPO
+python scripts/train.py main_RL=grpo_proteinlm_mlp_sft</pre>
+
+<h3>Step 4: Monitor &amp; Evaluate</h3>
+<pre># Watch on wandb (tags: grpo, structure_quality or proteinlm_bench)
+# Key metrics: mean_reward, reward_std, policy_loss
+
+# Evaluate after training
+python scripts/evaluate.py experiment_name=grpo_structure_mlp_sft_... evaluation.name=all</pre>
+
+<div class="callout callout-success">
+    <strong>GRPO Advantage</strong>
+    Both tasks use verifiable rewards&mdash;no reward model to train or maintain.
+    The structure quality task tests whether RL can improve numerical precision (pLDDT estimates)
+    and factual consistency (quality claims). The ProteinLM Bench task tests whether RL can
+    improve protein knowledge accuracy on established benchmarks.
+</div>
+
+</body>
+</html>

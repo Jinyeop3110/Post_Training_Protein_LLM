@@ -1,0 +1,170 @@
+{
+  "review_date": "2026-03-09",
+  "module_reviewed": "scripts/analysis/figure_style.py",
+
+  "figure_style_coverage": {
+    "colors": true,
+    "dpi": true,
+    "sizes": true,
+    "fonts": true,
+    "save_helpers": true,
+    "line_marker_styles": true,
+    "metric_labels": true,
+    "approach_labels": true,
+    "approach_aliases": true,
+    "schematic_colors": true,
+    "table_styling": true,
+    "smoothing_helper": true,
+    "rgba_alpha_helper": true,
+    "watermark_helper": true,
+    "annotate_helpers": true
+  },
+
+  "inconsistencies": [
+    {
+      "file": ".claude/agents/analyst.md",
+      "line": 35,
+      "issue": "Text approach color is #2ca02c (green) but figure_style.py uses #808080 (gray). Analyst spec defines its own APPROACH_COLORS that conflict with the canonical palette.",
+      "fix": "Update analyst.md to reference figure_style.py instead of defining inline colors. Remove the inline APPROACH_COLORS block and replace with: 'from figure_style import style, save_figure'"
+    },
+    {
+      "file": ".claude/agents/analyst.md",
+      "line": 31,
+      "issue": "Agent spec calls sns.set_theme() directly instead of using style.apply(). The entire 'Plotting Setup (MANDATORY)' section defines inline constants (FIG_DPI, FIG_SIZE, APPROACH_COLORS) that duplicate and conflict with figure_style.py.",
+      "fix": "Replace the mandatory plotting setup section with instructions to import and use figure_style.py"
+    },
+    {
+      "file": ".claude/agents/analyst.md",
+      "line": 67,
+      "issue": "Code examples use hardcoded fig.savefig(..., dpi=FIG_DPI) instead of save_figure() or style.dpi()",
+      "fix": "Update code examples to use save_figure(fig, name) from figure_style"
+    },
+    {
+      "file": "blog/data/03-07/pub_figures.py",
+      "line": 57,
+      "issue": "ARCHIVED script defines its own APPROACH_COLORS with text=#2ca02c (green), conflicting with figure_style.py text=#808080 (gray). Also WEB_COLORS text=#7ED321 differs from figure_style text=#95a5a6.",
+      "fix": "Script is archived. No fix needed, but ensure it is never run for new figures."
+    },
+    {
+      "file": "blog/data/03-07/pub_figures.py",
+      "line": 81,
+      "issue": "ARCHIVED script defines its own blog_style(), web_style(), paper_style() functions that duplicate figure_style.py FigureStyle.apply()",
+      "fix": "Script is archived. No fix needed."
+    },
+    {
+      "file": "blog/data/03-06/analysis_plots.py",
+      "line": 22,
+      "issue": "ARCHIVED script defines inline APPROACH_COLORS with text=#2ca02c (green), conflicting with canonical #808080. Also uses inline FIG_DPI=150, FIG_SIZE, and calls sns.set_theme() directly.",
+      "fix": "Script is archived. No fix needed."
+    },
+    {
+      "file": "blog/data/03-06/analysis_plots.py",
+      "line": 371,
+      "issue": "ARCHIVED script uses hardcoded table header color #4472C4 instead of canonical TABLE_HEADER_BG=#2C3E50. Row colors use #D9E2F3 and #D5F5E3 which differ from TABLE_ROW_COLORS.",
+      "fix": "Script is archived. No fix needed."
+    },
+    {
+      "file": "blog/data/03-04/analysis_plots.py",
+      "line": 22,
+      "issue": "ARCHIVED script defines inline APPROACH_COLORS with text=#2ca02c (green), conflicting with canonical #808080. Same inline constants issue as 03-06.",
+      "fix": "Script is archived. No fix needed."
+    },
+    {
+      "file": "blog/data/03-04/analysis_plots.py",
+      "line": 381,
+      "issue": "ARCHIVED script uses hardcoded table header color #4472C4 instead of canonical TABLE_HEADER_BG=#2C3E50.",
+      "fix": "Script is archived. No fix needed."
+    },
+    {
+      "file": "scripts/analysis/plot_pub_figures.py",
+      "line": 305,
+      "issue": "fig4_main_run_progress uses hardcoded color '#d62728' for eval loss markers instead of style.color('flamingo') or a named constant from figure_style.",
+      "fix": "Consider defining an EVAL_MARKER_COLOR constant in figure_style.py, or use a semantic color key."
+    },
+    {
+      "file": "scripts/analysis/plot_pub_figures.py",
+      "line": 579,
+      "issue": "plot_comparison_bar uses string concatenation (c + '80') for alpha instead of to_rgba_alpha() helper from figure_style.",
+      "fix": "Replace `color=[c + '80' for c in bar_colors]` with `color=[to_rgba_alpha(c, 0.5) for c in bar_colors]`"
+    },
+    {
+      "file": "scripts/analysis/plot_training.py",
+      "line": 579,
+      "issue": "plot_comparison_bar uses string concatenation (c + '80') for alpha instead of to_rgba_alpha() from figure_style.",
+      "fix": "Import to_rgba_alpha and replace the string concatenation."
+    },
+    {
+      "file": "scripts/analysis/plot_schematic_overview.py",
+      "line": 105,
+      "issue": "draw_figure() uses hardcoded figsize=(20, 10) instead of style.figsize() or a constant from figure_style.",
+      "fix": "This is acceptable since schematic diagrams have unique sizing requirements not covered by standard figsize presets. Could add a SCHEMATIC_SIZE constant to figure_style.py."
+    },
+    {
+      "file": "scripts/analysis/plot_schematic_overview.py",
+      "line": 498,
+      "issue": "main() saves backward-compat copy with hardcoded dpi=300 instead of using save_figure() or style.dpi().",
+      "fix": "Use save_figure() for the backward-compat copy, or use DPI['blog'] from figure_style."
+    },
+    {
+      "file": "scripts/analysis/plot_schematic_overview.py",
+      "line": 19,
+      "issue": "Does not import save_main_figure from figure_style (used at line 493), but it does import SCHEMATIC_COLORS and STATUS_COLORS.",
+      "fix": "Add save_main_figure to the imports. Currently it works because it is called via plot_pub_figures.py which does the import, but direct execution would fail at line 493."
+    }
+  ],
+
+  "scripts_fully_converted": [
+    "scripts/analysis/plot_pub_figures.py",
+    "scripts/analysis/plot_training.py"
+  ],
+
+  "scripts_partially_converted": [
+    "scripts/analysis/plot_schematic_overview.py"
+  ],
+
+  "scripts_not_converted": [
+    "blog/data/03-07/pub_figures.py (ARCHIVED)",
+    "blog/data/03-06/analysis_plots.py (ARCHIVED)",
+    "blog/data/03-04/analysis_plots.py (ARCHIVED)"
+  ],
+
+  "agent_spec_status": "outdated",
+  "agent_spec_details": "The .claude/agents/analyst.md agent spec still defines its own inline APPROACH_COLORS, FIG_DPI, FIG_SIZE constants and calls sns.set_theme() directly. It does not reference figure_style.py at all. The text approach color (#2ca02c green) conflicts with the canonical color (#808080 gray). The entire 'Plotting Setup (MANDATORY)' section and code examples need updating to use figure_style.py imports.",
+
+  "figure_catalog_status": {
+    "aligned": true,
+    "notes": "figure_catalog.md correctly lists scripts/analysis/plot_pub_figures.py as the source for fig1-fig9, and marks the blog/data/03-* scripts as ARCHIVED. The 'Generation Scripts' table at the bottom accurately references figure_style.py as the style module."
+  },
+
+  "color_discrepancies_summary": {
+    "text_approach": {
+      "figure_style_canonical": "#808080 (gray)",
+      "analyst_agent_spec": "#2ca02c (green)",
+      "archived_03-07": "#2ca02c (green)",
+      "archived_03-06": "#2ca02c (green)",
+      "archived_03-04": "#2ca02c (green)",
+      "note": "The canonical color was changed from green to gray when figure_style.py was created. All active scripts now use the canonical gray. Only the agent spec and archived scripts have the old green."
+    },
+    "web_text_color": {
+      "figure_style_canonical": "#95a5a6 (soft gray)",
+      "archived_03-07": "#7ED321 (lime green)",
+      "note": "Web palette also diverged for text approach."
+    },
+    "table_header_bg": {
+      "figure_style_canonical": "#2C3E50 (dark navy)",
+      "archived_03-06": "#4472C4 (medium blue)",
+      "archived_03-04": "#4472C4 (medium blue)",
+      "note": "Table styling was unified to dark navy in figure_style.py."
+    }
+  },
+
+  "recommendations": [
+    "HIGH: Update .claude/agents/analyst.md to reference figure_style.py instead of defining inline style constants. Replace the 'Plotting Setup (MANDATORY)' section with instructions to import from figure_style. Fix the text color from #2ca02c to match canonical #808080.",
+    "MEDIUM: Add to_rgba_alpha to the import list in scripts/analysis/plot_training.py and replace the string concatenation alpha hack (c + '80') in plot_comparison_bar.",
+    "MEDIUM: Fix scripts/analysis/plot_schematic_overview.py missing import of save_main_figure (line 493 uses it but it is not imported).",
+    "LOW: Define a SCHEMATIC_SIZE = (20, 10) constant in figure_style.py for the schematic overview diagram.",
+    "LOW: Define an EVAL_MARKER_COLOR constant in figure_style.py for the hardcoded '#d62728' used in several plot functions for eval loss markers.",
+    "LOW: Add 'flamingo' to the APPROACH_ALIASES mapping if 'esm3_flamingo' is ever used in lineage.json.",
+    "INFO: The three archived scripts (03-04, 03-06, 03-07) have divergent styles but are correctly marked ARCHIVED and should not be used for new figures. No action needed."
+  ]
+}

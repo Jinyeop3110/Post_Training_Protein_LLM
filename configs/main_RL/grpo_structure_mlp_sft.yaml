@@ -1,0 +1,71 @@
+# @package _global_
+
+# GRPO Structure Quality: ESM3+MLP SFT → GRPO
+# Chains from ESM3+MLP SFT checkpoint. Tests RL on top of multimodal SFT.
+#
+# Memory budget (DDP, per GPU on 8×H100 80GB):
+#   LLM (full replica): ~16 GB
+#   ESM-3 (replicated): ~1.2 GB, KV cache (2 seqs * 256 tokens): ~3 GB
+#   ESMFold (lazy): ~2 GB, activations+grad: ~15 GB
+#   Total peak: ~40 GB → 40 GB headroom on H100 80GB
+#
+# Usage:
+#   python scripts/train.py main_RL=grpo_structure_mlp_sft
+
+defaults:
+  - override /model: qwen3_8b
+  - override /encoder: esm3_small
+  - override /data: structure_quality
+  - override /training: grpo
+
+approach: esm3
+experiment_name: grpo_structure_mlp_sft_${model.name}_${now:%m%d_%H%M%S}
+
+# Smaller encoder sub-batch to reduce peak memory during GRPO generation
+encoder:
+  encoder_batch_size: 2
+
+# Chain from ESM3+MLP SFT
+parent_experiment: sft_esm3_mlp_combined_qwen3_8b_it_0306_010408
+
+# Data task for reward routing
+data:
+  task: esmfold
+  processing:
+    max_protein_length: 512  # ESM-3 geom_attention is O(L^2), OOMs on long seqs
+
+training:
+  # --- DDP on 8×H100 80GB (no FSDP) ---
+  lr: 5e-6
+  projector_lr: 2.5e-5   # 5x base LR: trained projector, conservative update
+  batch_size: 2
+  gradient_accumulation_steps: 4  # effective batch = 2 * 2 * 8 GPUs * 4 = 128
+  gradient_checkpointing: true
+  epochs: 1
+  warmup_steps: 20
+  max_grad_norm: 1.0
+
+  grpo:
+    group_size: 2
+    temperature: 1.0
+    use_kl_penalty: false
+    normalize_advantages: false
+
+  rollout:
+    max_tokens: 256
+    top_p: 0.95
+    do_sample: true
+
+  save_steps: 50
+  eval_steps: 25
+  logging_steps: 5
+
+  fsdp:
+    enabled: false  # DDP: full model on each GPU, KV cache works with grad ckpt toggle
+
+  wandb:
+    tags:
+      - grpo
+      - structure_quality
+      - mlp_sft
+      - ${model.name}

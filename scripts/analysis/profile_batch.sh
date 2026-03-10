@@ -76,7 +76,7 @@ run_profile() {
 
 # Common args for all ESM-3+MLP runs
 MLP_BASE=(
-    "experiment=sft_esm3_mlp_combined"
+    "main_SFT=sft_esm3_mlp_combined"
     "training.max_steps=5"
     "training.eval_steps=999"
     "training.save_steps=999"
@@ -87,7 +87,7 @@ MLP_BASE=(
 
 # Common args for text-only runs
 TEXT_BASE=(
-    "experiment=sft_text_combined"
+    "main_SFT=sft_text_combined"
     "training.max_steps=5"
     "training.eval_steps=999"
     "training.save_steps=999"

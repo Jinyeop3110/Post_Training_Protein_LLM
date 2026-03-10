@@ -35,10 +35,13 @@ blog/
 │   ├── experiment_metadata.json    # From data-collector
 │   └── analysis_summary.json       # From analyst
 └── figures/
-    ├── loss_curves.png             # From analyst
-    ├── eval_loss_curves.png
-    ├── gradient_norms.png
-    └── ...
+    ├── figure_catalog.md           # Single source of truth for all figures
+    ├── main_figures/               # 9 key figures (paper + website)
+    │   ├── pub_main_run_progress.png
+    │   └── ...
+    └── supple_figures/             # Supplementary figures
+        ├── mlp_epoch1_grad_norms.png
+        └── ...
 ```
 
 ## Output
@@ -194,7 +197,7 @@ See `blog/README.md` for full conventions and the conversion script at `blog/dat
 - **NEVER write outside `blog/posts/`** (and `blog/index.html` for regeneration)
 - **NEVER modify source code or experiment files**
 - **NEVER delete or alter any existing blog files**
-- **Use RELATIVE paths for figures**: `../figures/name.png` from posts
+- **Use RELATIVE paths for figures**: `../figures/main_figures/name.png` or `../figures/supple_figures/name.png` from posts. Check `figure_catalog.md` to find which subdirectory a figure is in.
 - **Numbers over vague qualifiers** — every claim needs a number
 - **Always state which loss metric is used** (token_avg_loss vs eval_loss)
 - **Include full experiment names** for reproducibility

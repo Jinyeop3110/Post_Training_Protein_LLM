@@ -118,8 +118,11 @@ def resolve_parent_checkpoint(
 ) -> Optional[Path]:
     """Resolve checkpoint path from parent experiment name.
 
-    Looks for the checkpoint at:
-        results/{parent_experiment}/checkpoints/protein_llm
+    Search order:
+        1. ``checkpoints/protein_llm`` (ProteinLLM.save_pretrained format)
+        2. ``checkpoints/checkpoint-*/protein_llm`` (HF Trainer with protein_llm)
+        3. ``checkpoints/checkpoint-*`` with ``adapter_config.json`` (HF Trainer
+           intermediate checkpoint — highest step number wins)
 
     Args:
         results_dir: Root results directory.
@@ -136,16 +139,29 @@ def resolve_parent_checkpoint(
         log.info(f"Resolved parent checkpoint: {checkpoint_path}")
         return checkpoint_path
 
-    # Fallback: check if there's a checkpoint dir with any content
+    # Fallback: check numbered checkpoint directories
     checkpoints_dir = parent_dir / "checkpoints"
     if checkpoints_dir.exists():
-        # Look for protein_llm subdirectory in any checkpoint
-        for item in sorted(checkpoints_dir.iterdir()):
-            if item.is_dir():
-                protein_llm_path = item / "protein_llm"
-                if protein_llm_path.exists():
-                    log.info(f"Resolved parent checkpoint (fallback): {protein_llm_path}")
-                    return protein_llm_path
+        # Collect valid checkpoint dirs, sorted by step number (descending)
+        ckpt_dirs = []
+        for item in checkpoints_dir.iterdir():
+            if item.is_dir() and item.name.startswith("checkpoint-"):
+                ckpt_dirs.append(item)
+        ckpt_dirs.sort(key=lambda p: int(p.name.split("-")[-1]), reverse=True)
+
+        for ckpt_dir in ckpt_dirs:
+            # Prefer protein_llm subdir if present
+            protein_llm_path = ckpt_dir / "protein_llm"
+            if protein_llm_path.exists():
+                log.info(f"Resolved parent checkpoint (protein_llm): {protein_llm_path}")
+                return protein_llm_path
+
+            # HF Trainer checkpoint with adapter_config.json at root
+            if (ckpt_dir / "adapter_config.json").exists():
+                log.info(
+                    f"Resolved parent checkpoint (HF Trainer): {ckpt_dir}"
+                )
+                return ckpt_dir
 
     log.warning(
         f"Could not resolve parent checkpoint for '{parent_experiment}' "

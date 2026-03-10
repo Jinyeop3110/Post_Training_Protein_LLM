@@ -1,0 +1,126 @@
+{
+  "audit_date": "2026-03-09",
+  "figure_style_module": "scripts/analysis/figure_style.py",
+  "scripts_using_figure_style": [
+    "scripts/analysis/plot_training.py",
+    "scripts/analysis/plot_pub_figures.py",
+    "scripts/analysis/plot_schematic_overview.py"
+  ],
+  "scripts_NOT_using_figure_style": [
+    "blog/data/03-07/pub_figures.py",
+    "blog/data/03-06/analysis_plots.py",
+    "blog/data/03-04/analysis_plots.py",
+    "blog/data/03-04/draw_architecture.py",
+    "blog/data/03-02/mlp_vs_text_analysis.py",
+    "blog/data/03-02/three_way_analysis.py"
+  ],
+  "agent_specs_aligned": false,
+  "agent_specs_issue": "SCIENTIST_TEAM.md analyst section (lines 165-176) defines inline APPROACH_COLORS with text='#2ca02c' (green), not figure_style.py's text='#808080' (gray). Does not reference figure_style.py at all.",
+  "details": {
+    "scripts/analysis/plot_training.py": {
+      "uses_figure_style": true,
+      "style_method": "Imports style, apply_style, save_figure, get_color, APPROACH_COLORS, etc. from figure_style",
+      "issues": []
+    },
+    "scripts/analysis/plot_pub_figures.py": {
+      "uses_figure_style": true,
+      "style_method": "Imports style, apply_style, save_figure, save_main_figure, etc. from figure_style. Described as consolidated from blog/data/03-07/pub_figures.py",
+      "issues": []
+    },
+    "scripts/analysis/plot_schematic_overview.py": {
+      "uses_figure_style": true,
+      "style_method": "Imports SCHEMATIC_COLORS and other constants from figure_style. Uses some custom colors on top for diagram-specific needs",
+      "issues": []
+    },
+    "blog/data/03-07/pub_figures.py": {
+      "uses_figure_style": false,
+      "style_method": "Inline APPROACH_COLORS dict with 3 palettes (blog/web/paper). Has own apply_style() function. Own save_figure() helper. DPI: 150/200/300 by target.",
+      "issues": [
+        "Defines own APPROACH_COLORS: text='#2ca02c' (green) vs figure_style text='#808080' (gray)",
+        "Has own apply_style() function duplicating figure_style logic",
+        "Has own save_figure() function duplicating figure_style logic",
+        "Web palette: text='#7ED321' vs figure_style text='#95a5a6'",
+        "Paper palette: text='#4d4d4d' matches figure_style",
+        "Blog mlp='#1f77b4' and perceiver='#ff7f0e' match figure_style",
+        "Predecessor of scripts/analysis/plot_pub_figures.py — should be considered legacy"
+      ]
+    },
+    "blog/data/03-06/analysis_plots.py": {
+      "uses_figure_style": false,
+      "style_method": "Inline style: sns.set_theme(style='whitegrid', palette='colorblind'), hardcoded APPROACH_COLORS dict, FIG_DPI=150",
+      "issues": [
+        "Inline APPROACH_COLORS: text='#2ca02c' (green) vs figure_style text='#808080' (gray)",
+        "Hardcoded FIG_DPI=150",
+        "No flamingo color defined",
+        "Missing approach aliases (e.g., esm3 -> mlp)"
+      ]
+    },
+    "blog/data/03-04/analysis_plots.py": {
+      "uses_figure_style": false,
+      "style_method": "Inline style: sns.set_theme(style='whitegrid', palette='colorblind'), hardcoded APPROACH_COLORS dict, FIG_DPI=150",
+      "issues": [
+        "Inline APPROACH_COLORS: text='#2ca02c' (green) vs figure_style text='#808080' (gray)",
+        "Hardcoded FIG_DPI=150",
+        "No flamingo color defined"
+      ]
+    },
+    "blog/data/03-04/draw_architecture.py": {
+      "uses_figure_style": false,
+      "style_method": "Fully custom inline color dict (C) with architecture-diagram-specific colors. DPI=300 hardcoded. No seaborn.",
+      "issues": [
+        "Custom color palette for architecture diagrams — not overlapping with approach colors",
+        "Hardcoded DPI=300",
+        "This is a specialized diagram script, so not using figure_style is partially justified",
+        "Could use SCHEMATIC_COLORS from figure_style instead of custom C dict"
+      ]
+    },
+    "blog/data/03-02/mlp_vs_text_analysis.py": {
+      "uses_figure_style": false,
+      "style_method": "Inline style: sns.set_theme(style='whitegrid', palette='colorblind'), hardcoded APPROACH_COLORS={'mlp':'#1f77b4','perceiver':'#ff7f0e','text':'#2ca02c'}, FIG_DPI=150",
+      "issues": [
+        "Inline APPROACH_COLORS: text='#2ca02c' (green) vs figure_style text='#808080' (gray)",
+        "Hardcoded FIG_DPI=150",
+        "No flamingo color defined",
+        "Earliest analysis script — predates figure_style.py"
+      ]
+    },
+    "blog/data/03-02/three_way_analysis.py": {
+      "uses_figure_style": false,
+      "style_method": "Inline style: sns.set_theme(style='whitegrid', palette='colorblind'), hardcoded APPROACH_COLORS={'mlp':'#1f77b4','perceiver':'#ff7f0e','text':'#2ca02c'}, FIG_DPI=150",
+      "issues": [
+        "Inline APPROACH_COLORS: text='#2ca02c' (green) vs figure_style text='#808080' (gray)",
+        "Hardcoded FIG_DPI=150",
+        "No flamingo color defined"
+      ]
+    }
+  },
+  "color_mismatch_summary": {
+    "text_color": {
+      "figure_style_blog": "#808080 (gray)",
+      "inline_scripts": "#2ca02c (green)",
+      "figure_style_paper": "#4d4d4d (dark gray)",
+      "figure_style_web": "#95a5a6 (soft gray)"
+    },
+    "mlp_color": {
+      "figure_style_blog": "#1f77b4 (blue)",
+      "inline_scripts": "#1f77b4 (blue)",
+      "status": "CONSISTENT"
+    },
+    "perceiver_color": {
+      "figure_style_blog": "#ff7f0e (orange)",
+      "inline_scripts": "#ff7f0e (orange)",
+      "status": "CONSISTENT"
+    },
+    "flamingo_color": {
+      "figure_style_blog": "#d62728 (red)",
+      "inline_scripts": "NOT DEFINED in any inline script",
+      "status": "MISSING in legacy scripts"
+    }
+  },
+  "summary_counts": {
+    "total_plotting_scripts": 9,
+    "using_figure_style": 3,
+    "not_using_figure_style": 6,
+    "percentage_aligned": 33.3
+  }
+}

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Figure Style Audit: 3 of 6 Scripts Converted to Unified Module</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #1a1a2e;
+            --accent: #2563eb;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --code-bg: #f3f4f6;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--fg);
+            background: var(--bg);
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .back-link { display: inline-block; margin-bottom: 1.5rem; font-size: 0.9rem; }
+        h1 { font-size: 1.8rem; margin-bottom: 0.3rem; font-weight: 700; line-height: 1.3; }
+        .meta { color: var(--muted); margin-bottom: 1.8rem; font-size: 0.9rem; }
+        h2 { font-size: 1.35rem; margin: 2rem 0 0.8rem; padding-bottom: 0.3rem; border-bottom: 2px solid var(--border); }
+        h3 { font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
+        p { margin-bottom: 1rem; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: 0.88rem; }
+        th, td { padding: 0.55rem 0.7rem; border: 1px solid var(--border); text-align: left; }
+        th { background: #f8fafc; font-weight: 600; }
+        code { background: var(--code-bg); padding: 0.15rem 0.4rem; border-radius: 0.25rem; font-size: 0.85rem; font-family: 'SF Mono', 'Fira Code', monospace; }
+        pre { background: var(--code-bg); padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 1rem 0; font-size: 0.82rem; line-height: 1.5; }
+        pre code { background: none; padding: 0; }
+        .tag { display: inline-block; background: var(--code-bg); color: var(--accent); padding: 0.1rem 0.5rem; border-radius: 1rem; font-size: 0.75rem; margin-right: 0.3rem; font-weight: 500; }
+        .status-converted { color: var(--success); font-weight: 600; }
+        .status-archived { color: var(--warning); font-weight: 600; }
+        .status-not-converted { color: var(--danger); font-weight: 600; }
+        .status-na { color: var(--muted); font-weight: 600; }
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin-bottom: 0.3rem; }
+        .finding-box { background: #f0f9ff; border-left: 4px solid var(--accent); padding: 1rem 1.2rem; margin: 1rem 0 1.5rem; border-radius: 0 0.4rem 0.4rem 0; }
+        .warning-box { background: #fffbeb; border-left: 4px solid var(--warning); padding: 1rem 1.2rem; margin: 1rem 0 1.5rem; border-radius: 0 0.4rem 0.4rem 0; }
+        hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+    </style>
+</head>
+<body>
+
+<a href="../index.html" class="back-link">Back to index</a>
+
+<h1>Figure Style Audit: 3 of 6 Scripts Converted to Unified Module</h1>
+
+<div class="meta">
+    <strong>Date</strong>: 2026-03-09 &nbsp;|&nbsp;
+    <strong>Question</strong>: How consistently do plotting scripts use the figure_style.py module? &nbsp;|&nbsp;
+    <span class="tag">infrastructure</span><span class="tag">architecture</span>
+</div>
+
+<hr>
+
+<h2>Executive Summary</h2>
+
+<p>Of the 6 plotting scripts in the project, 3 have been fully converted to use the centralized
+<code>figure_style.py</code> module (<code>plot_pub_figures.py</code>, <code>plot_training.py</code>,
+<code>plot_schematic_overview.py</code>). The remaining 3 are archived legacy scripts
+(<code>blog/data/03-04/analysis_plots.py</code>, <code>blog/data/03-06/analysis_plots.py</code>,
+<code>blog/data/03-07/pub_figures.py</code>) that still contain 100+ lines of hardcoded style
+definitions. The analyst agent spec (<code>.claude/agents/analyst.md</code>) has <strong>not</strong>
+been updated to reference <code>figure_style.py</code> and still prescribes the old inline
+approach with <code>APPROACH_COLORS["text"] = "#2ca02c"</code> (green), which conflicts with
+the canonical <code>#808080</code> (gray) defined in the module.</p>
+
+<h2>Style Module Overview</h2>
+
+<h3>What <code>figure_style.py</code> Provides</h3>
+
+<p>The module at <code>scripts/analysis/figure_style.py</code> (615 lines) is the single source of
+truth for all visual styling. It provides:</p>
+
+<table>
+<tr><th>Capability</th><th>API</th><th>Details</th></tr>
+<tr><td>Style presets</td><td><code>style.apply("blog")</code></td><td>3 targets: blog (150 DPI), web (200 DPI), paper (300 DPI)</td></tr>
+<tr><td>Approach colors</td><td><code>style.color("mlp")</code></td><td>Blog: text=#808080, mlp=#1f77b4, perceiver=#ff7f0e, flamingo=#d62728</td></tr>
+<tr><td>Figure sizes</td><td><code>style.figsize("wide")</code></td><td>Blog: (10,6) default, (14,6) wide; Paper: (3.25,2.4) col, (6.75,2.8) wide</td></tr>
+<tr><td>Font presets</td><td>via <code>rcParams</code></td><td>Blog: sans-serif 11pt; Paper: serif 8pt (NeurIPS)</td></tr>
+<tr><td>Save helpers</td><td><code>save_figure(fig, name)</code></td><td>Auto-routes to correct dir with correct DPI and format</td></tr>
+<tr><td>Main fig save</td><td><code>save_main_figure(fig, name)</code></td><td>Saves PNG to main_figures/ + PDF to paper/figures/main/</td></tr>
+<tr><td>Metric labels</td><td><code>get_label("eval_loss")</code></td><td>Pretty names for axis labels (26 metrics defined)</td></tr>
+<tr><td>Approach labels</td><td><code>get_approach_label("mlp")</code></td><td>Legend names with alias resolution (esm3 -> mlp)</td></tr>
+<tr><td>Table styling</td><td><code>style.style_table(table, ...)</code></td><td>Header bg #2C3E50, approach-colored rows</td></tr>
+<tr><td>Annotations</td><td><code>annotate_best()</code>, <code>annotate_bars()</code></td><td>Consistent annotation formatting</td></tr>
+<tr><td>Smoothing</td><td><code>smooth(series, window=50)</code></td><td>Rolling mean with min_periods=1</td></tr>
+<tr><td>Color utilities</td><td><code>to_rgba_alpha(hex, 0.6)</code></td><td>Alpha channel conversion</td></tr>
+<tr><td>Schematic colors</td><td><code>SCHEMATIC_COLORS</code></td><td>23 colors for architecture diagrams</td></tr>
+</table>
+
+<h2>Script-by-Script Audit</h2>
+
+<table>
+<tr>
+    <th>Script</th>
+    <th>Uses figure_style?</th>
+    <th>Hardcoded Values</th>
+    <th>Status</th>
+</tr>
+<tr>
+    <td><code>scripts/analysis/plot_pub_figures.py</code></td>
+    <td>Yes (12 imports)</td>
+    <td>None</td>
+    <td><span class="status-converted">Converted</span></td>
+</tr>
+<tr>
+    <td><code>scripts/analysis/plot_training.py</code></td>
+    <td>Yes (9 imports)</td>
+    <td>None</td>
+    <td><span class="status-converted">Converted</span></td>
+</tr>
+<tr>
+    <td><code>scripts/analysis/plot_schematic_overview.py</code></td>
+    <td>Yes (2 imports: <code>SCHEMATIC_COLORS</code>, <code>STATUS_COLORS</code>)</td>
+    <td>Extra colors in local dict (6 entries, diagram-specific)</td>
+    <td><span class="status-converted">Converted</span></td>
+</tr>
+<tr>
+    <td><code>blog/data/03-04/analysis_plots.py</code></td>
+    <td>No</td>
+    <td>27 hardcoded values (see below)</td>
+    <td><span class="status-archived">Archived, not converted</span></td>
+</tr>
+<tr>
+    <td><code>blog/data/03-06/analysis_plots.py</code></td>
+    <td>No</td>
+    <td>35 hardcoded values (see below)</td>
+    <td><span class="status-archived">Archived, not converted</span></td>
+</tr>
+<tr>
+    <td><code>blog/data/03-07/pub_figures.py</code></td>
+    <td>No</td>
+    <td>53 hardcoded values (see below)</td>
+    <td><span class="status-archived">Archived, not converted</span></td>
+</tr>
+</table>
+
+<h2>Agent Spec Alignment</h2>
+
+<div class="warning-box">
+<strong>Gap identified:</strong> The analyst agent spec (<code>.claude/agents/analyst.md</code>)
+prescribes an inline style approach that conflicts with the centralized module. New analyst
+invocations will generate code that does <strong>not</strong> use <code>figure_style.py</code>.
+</div>
+
+<h3>Specific conflicts in <code>.claude/agents/analyst.md</code></h3>
+
+<table>
+<tr><th>Issue</th><th>Agent Spec Value</th><th>figure_style.py Value</th><th>Location in Spec</th></tr>
+<tr>
+    <td>Text color</td>
+    <td><code>#2ca02c</code> (green)</td>
+    <td><code>#808080</code> (gray)</td>
+    <td>Line 35</td>
+</tr>
+<tr>
+    <td>Style setup</td>
+    <td>Inline <code>sns.set_theme()</code> + manual <code>APPROACH_COLORS</code></td>
+    <td><code>from figure_style import style; style.apply("blog")</code></td>
+    <td>Lines 17-43</td>
+</tr>
+<tr>
+    <td>Save convention</td>
+    <td>Manual <code>fig.savefig(..., dpi=FIG_DPI)</code></td>
+    <td><code>save_figure(fig, "name")</code> with auto-routing</td>
+    <td>Lines 67, 113</td>
+</tr>
+<tr>
+    <td>Figure dir</td>
+    <td>Saves to flat <code>blog/figures/</code></td>
+    <td>Saves to <code>blog/figures/supple_figures/</code> or <code>main_figures/</code></td>
+    <td>Line 67</td>
+</tr>
+<tr>
+    <td>Table styling</td>
+    <td>Manual header color <code>#4472C4</code>, alternating rows</td>
+    <td><code>style.style_table()</code> with header <code>#2C3E50</code>, approach-colored rows</td>
+    <td>Lines 104-113</td>
+</tr>
+<tr>
+    <td>Helper functions</td>
+    <td>Inline <code>shorten()</code>, <code>get_approach()</code></td>
+    <td>Module-level <code>shorten()</code>, <code>get_approach_label()</code>, <code>get_color()</code></td>
+    <td>Lines 163-213</td>
+</tr>
+</table>
+
+<p>The <code>figure_catalog.md</code> correctly states "All scripts use <code>scripts/analysis/figure_style.py</code>"
+and marks the three blog/data scripts as ARCHIVED. This is accurate for the current active
+scripts but does not address the agent spec.</p>
+
+<h2>Inconsistencies Found</h2>
+
+<h3>1. Archived Scripts: Hardcoded Colors</h3>
+
+<p>All 3 archived scripts define their own <code>APPROACH_COLORS</code> dict with text as green
+(<code>#2ca02c</code>) instead of the canonical gray (<code>#808080</code>). If re-run, they
+would produce figures visually inconsistent with the current main figures.</p>
+
+<table>
+<tr><th>Script</th><th>Hardcoded Color Dicts</th><th>Lines</th></tr>
+<tr>
+    <td><code>03-04/analysis_plots.py</code></td>
+    <td><code>APPROACH_COLORS</code> (3 entries, text=#2ca02c)</td>
+    <td>22-26</td>
+</tr>
+<tr>
+    <td><code>03-06/analysis_plots.py</code></td>
+    <td><code>APPROACH_COLORS</code> (3 entries) + <code>EXP_COLORS</code> (4 entries)</td>
+    <td>22-34</td>
+</tr>
+<tr>
+    <td><code>03-07/pub_figures.py</code></td>
+    <td><code>APPROACH_COLORS</code> (3 entries) + <code>WEB_COLORS</code> (3 entries) + <code>PAPER_COLORS</code> (3 entries)</td>
+    <td>57-75</td>
+</tr>
+</table>
+
+<h3>2. Archived Scripts: Hardcoded DPI and Figure Sizes</h3>
+
+<table>
+<tr><th>Script</th><th>Hardcoded Constants</th><th>Lines</th></tr>
+<tr>
+    <td><code>03-04/analysis_plots.py</code></td>
+    <td><code>FIG_DPI=150</code>, <code>FIG_SIZE=(10,6)</code>, <code>FIG_SIZE_WIDE=(14,6)</code>, <code>FIG_SIZE_TALL=(10,8)</code></td>
+    <td>28-30</td>
+</tr>
+<tr>
+    <td><code>03-06/analysis_plots.py</code></td>
+    <td><code>FIG_DPI=150</code>, <code>FIG_SIZE=(10,6)</code>, <code>FIG_SIZE_WIDE=(14,6)</code>, <code>FIG_SIZE_TALL=(10,8)</code></td>
+    <td>43-46</td>
+</tr>
+<tr>
+    <td><code>03-07/pub_figures.py</code></td>
+    <td><code>PAPER_COL=(3.25,2.4)</code>, <code>PAPER_WIDE=(6.75,2.8)</code>, <code>PAPER_TALL=(3.25,3.2)</code>, <code>BLOG_SIZE=(10,6)</code>, <code>WEB_SIZE=(9,5.5)</code></td>
+    <td>139-145</td>
+</tr>
+</table>
+
+<h3>3. Archived Scripts: Inline Style Functions</h3>
+
+<p><code>03-07/pub_figures.py</code> defines 3 complete style functions (<code>blog_style()</code>,
+<code>web_style()</code>, <code>paper_style()</code>) totaling 55 lines (lines 81-136).
+These were the prototype for the centralized <code>FigureStyle</code> class. The web text color
+differs: <code>#7ED321</code> in the archived script vs <code>#95a5a6</code> in
+<code>figure_style.py</code>.</p>
+
+<h3>4. Hardcoded Absolute Paths</h3>
+
+<table>
+<tr><th>Script</th><th>Path</th><th>Line</th></tr>
+<tr>
+    <td><code>03-04/analysis_plots.py</code></td>
+    <td><code>BASE = "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM"</code></td>
+    <td>34</td>
+</tr>
+<tr>
+    <td><code>03-06/analysis_plots.py</code></td>
+    <td><code>BASE = "/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM"</code></td>
+    <td>49</td>
+</tr>
+<tr>
+    <td><code>03-07/pub_figures.py</code></td>
+    <td><code>BASE = "/orcd/pool/006/yeopjin/workspace/Post_Training_Protein_LLM"</code> (note: different path form)</td>
+    <td>29</td>
+</tr>
+</table>
+
+<p>The centralized module uses <code>Path(__file__).resolve().parents[2]</code> for portable
+path resolution.</p>
+
+<h3>5. Table Header Color Inconsistency</h3>
+
+<p>Archived scripts use <code>#4472C4</code> (Office blue) for table headers. The canonical
+module uses <code>#2C3E50</code> (dark navy). This creates a visible mismatch between old and new
+figures side-by-side.</p>
+
+<h3>6. Font Size Hardcoding</h3>
+
+<p>Archived scripts set axis label sizes inline (e.g., <code>fontsize=12</code>,
+<code>fontsize=13</code>) rather than relying on rcParams set by the style module. The converted
+scripts use <code>plt.rcParams['font.size']</code> arithmetic or let matplotlib defaults apply.</p>
+
+<h2>Summary Statistics</h2>
+
+<table>
+<tr><th>Metric</th><th>Value</th></tr>
+<tr><td>Total plotting scripts</td><td>6</td></tr>
+<tr><td>Fully converted to figure_style.py</td><td>3 (50%)</td></tr>
+<tr><td>Archived (not converted)</td><td>3 (50%)</td></tr>
+<tr><td>Hardcoded color definitions across archived scripts</td><td>9 dicts (27 entries)</td></tr>
+<tr><td>Hardcoded DPI constants</td><td>3 (one per archived script)</td></tr>
+<tr><td>Hardcoded figure size constants</td><td>12 across 3 scripts</td></tr>
+<tr><td>Hardcoded absolute paths</td><td>3 (with 2 different path forms)</td></tr>
+<tr><td>Inline style functions (now redundant)</td><td>3 in 03-07/pub_figures.py</td></tr>
+<tr><td>Agent spec references figure_style.py</td><td>No</td></tr>
+<tr><td>figure_catalog.md marks archived scripts</td><td>Yes</td></tr>
+</table>
+
+<h2>Recommendations</h2>
+
+<ol>
+    <li><strong>Update <code>.claude/agents/analyst.md</code> to prescribe <code>figure_style.py</code>.</strong>
+    Replace the inline Plotting Setup section (lines 17-43) with:
+    <pre><code>import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../scripts/analysis"))
+from figure_style import style, save_figure, get_color, get_label
+style.apply("blog")</code></pre>
+    Remove the hardcoded <code>APPROACH_COLORS</code>, <code>FIG_DPI</code>, <code>FIG_SIZE</code>
+    constants and the <code>shorten()</code> / <code>get_approach()</code> helper functions
+    (these exist in the module). This is the highest-priority fix because every future analyst
+    invocation will produce style-inconsistent code until corrected.</li>
+
+    <li><strong>Add ARCHIVED headers to legacy scripts.</strong> The 03-04 and 03-06 scripts
+    already have ARCHIVED docstrings (added during the 03-09 consolidation). Verify these are
+    clear enough that no automated pipeline would re-run them.</li>
+
+    <li><strong>Reconcile the text approach color.</strong> The agent spec and archived scripts
+    use green (<code>#2ca02c</code>) for text-only. The module uses gray (<code>#808080</code>).
+    The module's choice is correct (gray for baseline, reserving chromatic colors for structural
+    approaches), but the SCIENTIST_TEAM.md also still shows the old green. Update both.</li>
+
+    <li><strong>No need to convert archived scripts.</strong> Since they are already marked
+    ARCHIVED and superseded by <code>plot_training.py</code> and <code>plot_pub_figures.py</code>,
+    converting them would be wasted effort. Their outputs are historical artifacts.</li>
+
+    <li><strong>Update SCIENTIST_TEAM.md style section.</strong> Lines 166-176 still prescribe
+    <code>APPROACH_COLORS = {"text": "#2ca02c"}</code>. Replace with a reference to
+    <code>scripts/analysis/figure_style.py</code> and <code>scripts/analysis/STYLE_GUIDE.md</code>.</li>
+</ol>
+
+<hr>
+<p style="color: var(--muted); font-size: 0.85rem;">
+    Report generated 2026-03-09 by the reporter agent.
+    Source data: direct script inspection of 6 plotting scripts, figure_style.py (615 lines),
+    STYLE_GUIDE.md, analyst.md, and figure_catalog.md.
+</p>
+
+</body>
+</html>

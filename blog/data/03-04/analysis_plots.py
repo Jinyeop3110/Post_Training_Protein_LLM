@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Analyst: Create diagnostic plots and analysis_summary.json for 03-04 report."""
+"""ARCHIVED: Consolidated into scripts/analysis/plot_training.py (2026-03-09).
+Use plot_training.py with --experiments flag for equivalent output.
+
+Original: Diagnostic plots and analysis_summary.json for 03-04 report."""
 
 import matplotlib
 

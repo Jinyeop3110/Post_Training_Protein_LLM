@@ -244,4 +244,5 @@ def get_training_arguments(cfg: DictConfig) -> TrainingArguments:
         dataloader_drop_last=True,  # Prevent DDP hang on uneven last batch
         torch_compile=training_cfg.get("torch_compile", False),
         bf16_full_eval=True,  # Run eval in bf16 for speed
+        ignore_data_skip=training_cfg.get("ignore_data_skip", False),
     )

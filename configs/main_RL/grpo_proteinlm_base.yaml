@@ -1,0 +1,63 @@
+# @package _global_
+
+# GRPO ProteinLM Bench: Base Qwen3-8B (fresh LoRA, no SFT parent)
+# Tests whether RL alone can learn MC protein knowledge.
+# Small dataset (944 questions) — needs more epochs and careful tuning.
+#
+# Memory budget (FSDP/4, per GPU):
+#   Static: 4.6 GB (model + LoRA, no encoder)
+#   Peak:   ~10 GB (generation + grad)  →  36 GB headroom on L40S 46GB
+#
+# Usage:
+#   python scripts/train.py main_RL=grpo_proteinlm_base
+
+defaults:
+  - override /model: qwen3_8b
+  - override /data: proteinlm_bench
+  - override /training: grpo
+
+approach: text
+experiment_name: grpo_proteinlm_base_${model.name}_${now:%m%d_%H%M%S}
+
+# No parent — fresh LoRA init
+parent_experiment: null
+parent_checkpoint: null
+
+# Data task for reward routing
+data:
+  task: proteinlm_bench
+
+training:
+  # --- Optimized for 4×L40S 46GB ---
+  lr: 5e-6
+  batch_size: 4
+  gradient_accumulation_steps: 2  # effective batch = 32 (small dataset, less accum)
+  epochs: 5               # small dataset (944 Qs), need more passes
+  warmup_steps: 10
+  max_grad_norm: 1.0
+
+  grpo:
+    group_size: 8         # 8 completions for diverse MC attempts
+    temperature: 0.8      # slightly lower temp for MC (more focused)
+    use_kl_penalty: false
+    normalize_advantages: false
+
+  # MC answers are short
+  rollout:
+    max_tokens: 64        # MC answers very short ("option N" + brief reasoning)
+    top_p: 0.95
+    do_sample: true
+
+  save_steps: 25
+  eval_steps: 10
+  logging_steps: 5
+
+  fsdp:
+    enabled: true
+
+  wandb:
+    tags:
+      - grpo
+      - proteinlm_bench
+      - base_model
+      - ${model.name}

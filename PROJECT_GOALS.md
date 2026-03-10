@@ -22,7 +22,7 @@ Build a **modular, extensible multimodal LLM system** for protein understanding 
 
 | Component | Model | Notes |
 |-----------|-------|-------|
-| **LLM** | `Qwen/Qwen3-4B-Instruct-2507` | Smaller model for fast iteration |
+| **LLM** | `Qwen/Qwen3-8B` (primary) | 8B for experiments; 4B for fast iteration |
 | **Protein Encoder** | ESM-3 small | Start with small, scale up later |
 
 ### Encoding Approaches
@@ -34,6 +34,7 @@ Build a **modular, extensible multimodal LLM system** for protein understanding 
 | 1. Text-based | `approach: text` | src/models/protein_encoder.py | ✅ Implemented | Raw sequence as `<protein>MKTL...</protein>` |
 | 2. ESM-3 + MLP | `approach: esm3` + `projector.type: mlp` | src/models/multimodal_llm.py | ✅ Implemented | ESM-3 → AttentionPooling → MLP → LLM |
 | 3. ESM-3 + Perceiver | `approach: esm3` + `projector.type: perceiver` | src/models/perceiver.py | ✅ Implemented | ESM-3 → PerceiverResampler → LLM |
+| 4. Flamingo | `approach: flamingo` + `projector.type: flamingo` | src/models/flamingo_perceiver.py, gated_cross_attention.py | ✅ Implemented | ESM-3 → FlamingoPerceiver → GatedCrossAttn at LLM layers |
 
 **Config structure needed**:
 ```yaml
@@ -162,7 +163,7 @@ SFT Checkpoint ──► GRPO Training ──► Final Model
 - [x] Approach-specific model architectures (text / MLP / Perceiver)
 - [x] Easy to add new approaches (projector factory + config override)
 
-**Status**: ✅ Complete (three approaches: text, esm3+mlp, esm3+perceiver)
+**Status**: ✅ Complete (four approaches: text, esm3+mlp, esm3+perceiver, flamingo)
 
 ### Goal 3: Multi-Task Training/Testing Split
 - [x] Define training tasks vs testing tasks (90/5/5 random split per task)
@@ -191,7 +192,7 @@ SFT Checkpoint ──► GRPO Training ──► Final Model
 ### Goal 6: Quality & Testing
 - [x] Unit tests for Perceiver Resampler (19 tests)
 - [ ] Integration tests for full pipelines
-- [x] Critical rule enforcement (ESM frozen, LoRA k/v only)
+- [x] Critical rule enforcement (ESM frozen, LoRA all linear layers)
 
 **Status**: 🟡 In Progress
 
@@ -206,25 +207,29 @@ SFT Checkpoint ──► GRPO Training ──► Final Model
 
 ## Current Sprint
 
-> **Sprint Focus**: Three-way comparison (text vs MLP vs Perceiver) + GRPO with ESMFold rewards
+> **Sprint Focus**: Four-way comparison (text vs MLP vs Perceiver vs Flamingo) + GRPO with ESMFold rewards
 
 ### Sprint Goals
 1. ✅ ESM-3 + Qwen3-4B SFT working (50K run, eval_loss 3.64)
 2. ✅ Three encoding approaches implemented (text, MLP, Perceiver)
 3. ✅ GRPO trainer with 4 reward functions (GO, PPI, Stability, ESMFold)
-4. ⬜ Run SFT with Perceiver Resampler (compare to MLP baseline)
-5. ⬜ Run text-only SFT baseline for comparison
-6. ⬜ Run first GRPO training (SFT checkpoint → GRPO)
-7. ⬜ Evaluate all three approaches on GO/PPI/Stability benchmarks
+4. ✅ Run MLP SFT on combined dataset (Qwen3-8B, FSDP)
+5. ✅ Run text-only SFT on combined dataset (Qwen3-8B, FSDP)
+6. ⬜ Run Perceiver SFT on combined dataset
+7. ⬜ Run Flamingo SFT
+8. ⬜ Run first GRPO training (SFT checkpoint → GRPO)
+9. ⬜ Evaluate all four approaches on GO/PPI/Stability benchmarks
 
 ### Active Tasks
 
 | Task | Status | Notes |
 |------|--------|-------|
-| Perceiver SFT run | ⬜ Pending | `encoder.projector.type=perceiver` |
-| Text-only SFT baseline | ⬜ Pending | `approach=text` |
-| GRPO with ESMFold reward | ⬜ Pending | Needs SFT checkpoint first |
-| Three-way evaluation comparison | ⬜ Pending | GO, PPI, Stability metrics |
+| MLP SFT (combined dataset) | ✅ Running | `main_SFT=sft_esm3_mlp_combined` on Qwen3-8B |
+| Text SFT (combined dataset) | ✅ Running | `main_SFT=sft_text_combined` on Qwen3-8B |
+| Perceiver SFT run | ⬜ Pending | `main_SFT=sft_esm3_perceiver_combined` |
+| Flamingo SFT run | ⬜ Pending | `main_SFT=sft_flamingo` |
+| GRPO with downstream tasks | ⬜ Pending | Needs SFT checkpoint first |
+| Four-way evaluation comparison | ⬜ Pending | GO, PPI, Stability metrics |
 
 ### Sprint Blockers
 - None — all implementation complete, ready for experiments
@@ -239,7 +244,7 @@ SFT Checkpoint ──► GRPO Training ──► Final Model
 
 | Item | Description | Estimated Effort |
 |------|-------------|------------------|
-| Three-way comparison experiments | Run text/MLP/Perceiver SFT, evaluate all | Large |
+| Four-way comparison experiments | Run text/MLP/Perceiver/Flamingo SFT, evaluate all | Large |
 | First GRPO run | SFT→GRPO with ESMFold rewards | Large |
 | Checkpoint resume | `--resume` flag for training (training_state.pt exists) | Medium |
 | wandb artifact logging | Save checkpoints as artifacts | Small |
@@ -250,7 +255,7 @@ SFT Checkpoint ──► GRPO Training ──► Final Model
 |------|-------------|------------------|
 | DPO trainer | Alternative to GRPO | Medium |
 | Hyperparameter sweeps | Hydra multirun configs | Small |
-| Scale to larger LLM | Qwen3-8B or 14B | Medium |
+| Scale to larger LLM | Qwen3-14B or Qwen3.5-27B | Medium |
 | IPD-PDB data conversion | Convert to SFT format | Medium |
 
 ### Low Priority / Future
@@ -278,7 +283,8 @@ SFT Checkpoint ──► GRPO Training ──► Final Model
 - [x] Text-based approach implemented
 - [x] MLP projector approach implemented
 - [x] Perceiver Resampler approach implemented
-- [ ] Run all three and compare on benchmarks
+- [x] Flamingo approach implemented (gated cross-attention)
+- [ ] Run all four and compare on benchmarks
 
 **Target**: Current sprint
 
@@ -292,7 +298,7 @@ SFT Checkpoint ──► GRPO Training ──► Final Model
 
 ### Milestone 4: Publication Ready ⬜
 - [ ] All evaluations working with statistical significance
-- [ ] Three-way comparison results table
+- [ ] Four-way comparison results table (text vs MLP vs Perceiver vs Flamingo)
 - [ ] GRPO improvement results
 - [ ] Reproducible experiments
 
@@ -318,7 +324,7 @@ SFT Checkpoint ──► GRPO Training ──► Final Model
 
 ### Technical Notes
 - **ESM-3 small** for initial development
-- **Qwen3-4B-Instruct-2507** for faster iteration (all Qwen configs use Instruct variants)
+- **Qwen3-8B** (Qwen/Qwen3-8B) as primary experiment model; 4B for fast iteration
 - Attention pooling with 32 tokens is a good default
 - LoRA r=8 on all linear layers (q/k/v/o + gate/up/down) for expressiveness
 - Training uses model's native chat template with protein-expert system prompt
@@ -351,8 +357,8 @@ SFT Checkpoint ──► GRPO Training ──► Final Model
 | | Checkpoint/eval pipeline standardized across SFT and GRPO |
 | 2026-02-20 | Perceiver Resampler implemented (src/models/perceiver.py) |
 | | ESMFold GRPO reward implemented (src/models/esmfold_wrapper.py) |
-| | Three-way comparison thesis defined (text vs MLP vs Perceiver) |
-| | Perceiver 2-layer default (130M params, +1GB, 12% slower than MLP) |
+| | Four-way comparison thesis defined (text vs MLP vs Perceiver vs Flamingo) |
+| | Perceiver 2-layer default (~29.4M params, +1GB, 12% slower than MLP) |
 | | Unified experiment directory: all artifacts under results/{experiment_name}/ |
 | | Lineage tracking (lineage.json) for base→SFT→GRPO pipeline |
 | | Updated goals to reflect current completion status |

@@ -265,15 +265,15 @@
 <h2 id="training-metrics">Training Metrics</h2>
 <h3 id="loss-curves">Loss Curves</h3>
 <p>Both ESM-3 approaches converge to substantially lower token_avg_loss than text-only. MLP reaches a minimum of 1.620 and Perceiver 1.627, while text-only bottoms out at 2.359 -- a 31% gap. The two encoder curves are nearly indistinguishable from each other throughout training.</p>
-<p><img alt="Training Loss: MLP vs Perceiver vs Text-Only" src="../figures/three_way_loss_curves.png" /></p>
+<p><img alt="Training Loss: MLP vs Perceiver vs Text-Only" src="../figures/supple_figures/three_way_loss_curves.png" /></p>
 <p>All three runs converge rapidly in the first 180 steps during the warmup phase. After that, the encoder approaches continue a gradual descent while text-only settles at a higher floor. The gap between ESM-3 variants and text-only is visible from step 50 onward and never closes.</p>
 <h3 id="validation-loss">Validation Loss</h3>
 <p>Eval loss confirms the training pattern: MLP reaches best eval_loss of 1.942 at step 1,677, Perceiver reaches 1.952 at step 1,677, and text-only reaches 2.415 at step 2,595. The MLP vs text-only gap is 19.6%; Perceiver vs text-only is 19.2%. MLP edges out Perceiver by only 0.48%.</p>
-<p><img alt="Evaluation Loss: Three-Way Comparison" src="../figures/three_way_eval_loss.png" /></p>
+<p><img alt="Evaluation Loss: Three-Way Comparison" src="../figures/supple_figures/three_way_eval_loss.png" /></p>
 <p>All three curves are still decreasing at their final steps, suggesting further training could improve each. The encoder approaches level off faster, with diminishing returns after step ~1,000.</p>
 <h3 id="gradient-dynamics">Gradient Dynamics</h3>
 <p>The Perceiver shows the largest early gradient spikes (max 11.98 at step 40), followed by MLP (max 6.92), and text-only (max 4.12). This reflects the challenge of training randomly-initialized multimodal projectors -- the Perceiver's cross-attention mechanism produces particularly large error signals before it learns useful attention patterns.</p>
-<p><img alt="Gradient Norms (log scale): Three-Way Comparison" src="../figures/three_way_grad_norms.png" /></p>
+<p><img alt="Gradient Norms (log scale): Three-Way Comparison" src="../figures/supple_figures/three_way_grad_norms.png" /></p>
 <p>After step ~200, MLP and Perceiver settle into a mean gradient norm of 1.23-1.26, while text-only runs higher at 1.93. Text-only also shows periodic gradient spikes around steps 800--1,200 that the encoder approaches do not exhibit.</p>
 <h2 id="generation-quality-analysis">Generation Quality Analysis</h2>
 <p>This is the key finding. Despite 20% lower eval_loss, the ESM-3 encoder approaches produce worse generation quality across nearly every task category.</p>
@@ -482,8 +482,8 @@
 </table>
 <p><em>*Baseline = Qwen3-8B with no fine-tuning, no training metrics.</em></p>
 <p>The baseline column makes the SFT gains clear: all three approaches transform a model with near-zero protein task performance (0.033 word overlap) into one that produces task-relevant outputs. The paradox remains within SFT: MLP wins eval_loss by 19.6% but text-only wins generation quality by 28% (word overlap 0.443 vs 0.346).</p>
-<p><img alt="Final Metrics Comparison" src="../figures/three_way_final_metrics.png" /></p>
-<p><img alt="Convergence Details" src="../figures/three_way_convergence_table.png" /></p>
+<p><img alt="Final Metrics Comparison" src="../figures/supple_figures/three_way_final_metrics.png" /></p>
+<p><img alt="Convergence Details" src="../figures/supple_figures/three_way_convergence_table.png" /></p>
 <h2 id="anomalies">Anomalies</h2>
 <ul>
 <li><strong>Perceiver</strong>: Early gradient spike of 11.98 at step 40 (1.7x higher than MLP's peak). Recovered cleanly by step 80.</li>

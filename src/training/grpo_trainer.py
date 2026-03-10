@@ -196,6 +196,7 @@ class GRPOTrainer:
         self.world_size = 1
         self.is_main_process = True
         self.use_fsdp = False
+        self._grad_ckpt_available = False  # toggled gradient checkpointing
 
         # Validate dependencies
         if not HAS_TRANSFORMERS:
@@ -237,8 +238,17 @@ class GRPOTrainer:
         self._load_model()
 
         # Apply FSDP2 for multi-GPU training
-        if self.world_size > 1:
+        fsdp_enabled = self.cfg.training.get("fsdp", {}).get("enabled", True)
+        if self.world_size > 1 and fsdp_enabled:
             self._apply_fsdp()
+        elif self.world_size > 1:
+            log.info("FSDP disabled — using DDP-style gradient sync")
+            # Enable gradient checkpointing (saves ~40% memory during training fwd)
+            # It's only active when model.training=True (HF checks both flags).
+            # Generation switches to eval mode → grad ckpt off → KV cache works.
+            if self.cfg.training.get("gradient_checkpointing", False):
+                self._ensure_grad_ckpt_on()
+                log.info("Gradient checkpointing enabled on LLM")
 
         # Create reference model for KL penalty (if enabled)
         if self.grpo_config["use_kl_penalty"]:
@@ -306,17 +316,46 @@ class GRPOTrainer:
             llm.get_base_model() if hasattr(llm, "get_base_model") else llm
         )
 
-        # Wrap each decoder layer individually
+        # Ensure all LLM parameters are uniform bfloat16 before FSDP2.
+        # resize_token_embeddings() or LoRA adapter loading can introduce
+        # float32 params, which causes FSDP2 AssertionError on lazy_init.
+        dtypes = {p.dtype for p in base_model.parameters()}
+        if len(dtypes) > 1:
+            log.info(
+                f"Mixed dtypes in LLM before FSDP: {dtypes}. "
+                f"Casting all to bfloat16."
+            )
+            base_model.to(torch.bfloat16)
+
+        # Cache embed_tokens weights BEFORE FSDP shards the model.
+        # After sharding, calling embed_tokens directly on sharded params
+        # produces garbage. ProteinLLM.prepare_inputs() uses this cache.
+        if self.protein_llm is not None:
+            embed_weight = base_model.get_input_embeddings().weight.data.clone()
+            self.protein_llm._fsdp_embed_cache = embed_weight
+            log.info(
+                f"Cached embed_tokens for FSDP: {embed_weight.shape} "
+                f"({embed_weight.nbytes / 1024**2:.1f} MB)"
+            )
+
+        # Wrap each decoder layer individually.
+        # Use reshard_after_forward=True (FULL_SHARD) for GRPO because
+        # generation + ESM-3 encoding + ESMFold rewards all compete for
+        # GPU memory. FULL_SHARD reshards params after each layer's
+        # forward pass, trading speed for ~14 GB less memory per GPU.
         if hasattr(base_model, "model") and hasattr(base_model.model, "layers"):
             for layer in base_model.model.layers:
                 fully_shard(
                     layer,
                     mesh=mesh,
                     mp_policy=mp_policy,
-                    reshard_after_forward=False,
+                    reshard_after_forward=True,
                 )
             # Wrap root model
-            fully_shard(base_model, mesh=mesh, mp_policy=mp_policy)
+            fully_shard(
+                base_model, mesh=mesh, mp_policy=mp_policy,
+                reshard_after_forward=True,
+            )
             self.use_fsdp = True
             log.info(
                 f"FSDP2 applied to {len(base_model.model.layers)} decoder layers"
@@ -324,7 +363,10 @@ class GRPOTrainer:
         else:
             log.warning("Could not find decoder layers for FSDP2 wrapping")
 
-        # Enable gradient checkpointing on LLM
+        # Enable gradient checkpointing for the differentiable training forward.
+        # This disables KV cache during generation (making it O(T²) instead of
+        # O(T)), but without it the training forward OOMs. Generation speed is
+        # the bottleneck — reduce group_size to compensate.
         if hasattr(base_model, "gradient_checkpointing_enable"):
             base_model.gradient_checkpointing_enable(
                 gradient_checkpointing_kwargs={"use_reentrant": False}
@@ -406,16 +448,205 @@ class GRPOTrainer:
     def _load_model(self) -> None:
         """Load the model with optional quantization, LoRA, and ProteinLLM.
 
+        Supports two modes:
+        1. **From SFT checkpoint** (parent_checkpoint set): Loads the full
+           ProteinLLM (encoder + pooling + projector + LoRA adapter) from a
+           trained SFT checkpoint via ProteinLLM.from_pretrained().
+        2. **Fresh base model** (no parent_checkpoint): Loads base LLM,
+           applies fresh LoRA, and builds new ProteinLLM components.
+
         For the esm3 approach, creates a full ProteinLLM with encoder,
         pooling, and projector, reusing the already-loaded LoRA model
         (same pattern as sft_trainer._load_protein_llm).
         """
+        parent_checkpoint = self.cfg.get("parent_checkpoint", None)
+
+        # Auto-resolve parent checkpoint from parent_experiment
+        if not parent_checkpoint:
+            parent_experiment = self.cfg.get("parent_experiment", None)
+            if parent_experiment:
+                from src.utils.experiment import resolve_parent_checkpoint
+                results_dir = Path(self.cfg.paths.results_dir)
+                resolved = resolve_parent_checkpoint(results_dir, parent_experiment)
+                if resolved:
+                    parent_checkpoint = str(resolved)
+                    log.info(
+                        f"Resolved parent_experiment '{parent_experiment}' "
+                        f"-> checkpoint: {parent_checkpoint}"
+                    )
+                else:
+                    log.warning(
+                        f"Could not resolve checkpoint for parent_experiment "
+                        f"'{parent_experiment}'. Loading fresh base model."
+                    )
+
+        if parent_checkpoint:
+            self._load_model_from_checkpoint(parent_checkpoint)
+        else:
+            self._load_model_fresh()
+
+        self.model.train()
+
+    def _load_model_from_checkpoint(self, checkpoint_path: str) -> None:
+        """Load model from an SFT checkpoint (LoRA adapter + multimodal components).
+
+        Supports two checkpoint formats:
+        1. **ProteinLLM format** (has config.json, no adapter_config.json at root):
+           Uses ProteinLLM.from_pretrained().
+        2. **HF Trainer format** (has adapter_config.json at root, optional
+           pooling.pt/projector.pt): Loads base LLM, applies LoRA adapter,
+           and loads multimodal weights if present.
+
+        Args:
+            checkpoint_path: Path to the saved checkpoint directory.
+        """
+        checkpoint_dir = Path(checkpoint_path)
+        approach = self.cfg.get("approach", "text")
+        log.info(f"Loading model from SFT checkpoint: {checkpoint_path}")
+
+        # Detect format: ProteinLLM (config.json without adapter_config.json)
+        # vs HF Trainer (adapter_config.json at root)
+        is_protein_llm_format = (
+            (checkpoint_dir / "config.json").exists()
+            and not (checkpoint_dir / "adapter_config.json").exists()
+        )
+
+        if is_protein_llm_format:
+            self._load_from_protein_llm_checkpoint(checkpoint_dir, approach)
+        else:
+            self._load_from_hf_trainer_checkpoint(checkpoint_dir, approach)
+
+    def _load_from_protein_llm_checkpoint(
+        self, checkpoint_dir: Path, approach: str
+    ) -> None:
+        """Load from ProteinLLM.save_pretrained() format."""
+        from src.models.multimodal_llm import EMBEDDING_APPROACHES, ProteinLLM
+
+        if approach in EMBEDDING_APPROACHES:
+            self.protein_llm = ProteinLLM.from_pretrained(
+                checkpoint_dir,
+                device=str(self.device),
+                load_llm=True,
+                load_encoder=True,
+            )
+            self.model = self.protein_llm.llm
+            self.tokenizer = self.protein_llm.tokenizer
+
+            if len(self.tokenizer) != self.model.config.vocab_size:
+                base = (
+                    self.model.get_base_model()
+                    if hasattr(self.model, "get_base_model")
+                    else self.model
+                )
+                base.resize_token_embeddings(len(self.tokenizer))
+
+            log.info("ProteinLLM loaded from checkpoint")
+            if self.is_main_process:
+                self.protein_llm.print_trainable_parameters()
+        else:
+            # Text-only: adapter is in adapter/ subdir
+            self._load_base_llm_with_adapter(checkpoint_dir / "adapter")
+
+    def _load_from_hf_trainer_checkpoint(
+        self, checkpoint_dir: Path, approach: str
+    ) -> None:
+        """Load from HF Trainer intermediate checkpoint format.
+
+        HF Trainer saves adapter_config.json + adapter_model.safetensors at
+        the checkpoint root, alongside optional pooling.pt and projector.pt.
+        """
+        from src.models.multimodal_llm import EMBEDDING_APPROACHES
+
+        # Load base LLM + LoRA adapter (adapter_config.json at root)
+        self._load_base_llm_with_adapter(checkpoint_dir)
+
+        # For esm3 approach: build ProteinLLM and load pooling/projector weights
+        if approach in EMBEDDING_APPROACHES:
+            self._load_protein_llm()
+
+            # Load trained pooling weights from checkpoint
+            pooling_path = checkpoint_dir / "pooling.pt"
+            if pooling_path.exists() and self.protein_llm.pooling is not None:
+                self.protein_llm.pooling.load_state_dict(
+                    torch.load(
+                        pooling_path, map_location=self.device, weights_only=True
+                    )
+                )
+                log.info(f"Loaded pooling weights from: {pooling_path}")
+
+            # Load trained projector weights from checkpoint
+            projector_path = checkpoint_dir / "projector.pt"
+            if projector_path.exists() and self.protein_llm.projector is not None:
+                self.protein_llm.projector.load_state_dict(
+                    torch.load(
+                        projector_path, map_location=self.device, weights_only=True
+                    )
+                )
+                log.info(f"Loaded projector weights from: {projector_path}")
+
+            if self.is_main_process:
+                self.protein_llm.print_trainable_parameters()
+
+    def _load_base_llm_with_adapter(self, adapter_path: Path) -> None:
+        """Load base LLM and apply LoRA adapter from a checkpoint path.
+
+        Args:
+            adapter_path: Directory containing adapter_config.json.
+        """
+        model_path = self.cfg.model.path
+
+        # Load base LLM (no device_map for FSDP2 compat)
+        if self.world_size > 1 and HAS_FSDP2:
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model_path, trust_remote_code=True, torch_dtype=torch.bfloat16,
+            )
+            self.model = self.model.to(self.device)
+        else:
+            device_map = (
+                {"": self.local_rank} if torch.cuda.is_available() else "auto"
+            )
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model_path,
+                device_map=device_map,
+                trust_remote_code=True,
+                torch_dtype=torch.bfloat16,
+            )
+
+        # Resize embeddings if protein special tokens were added
+        if len(self.tokenizer) != self.model.config.vocab_size:
+            self.model.resize_token_embeddings(len(self.tokenizer))
+            log.info(
+                f"Resized model embeddings: "
+                f"{self.model.config.vocab_size} -> {len(self.tokenizer)}"
+            )
+
+        # Apply LoRA adapter from checkpoint
+        if (adapter_path / "adapter_config.json").exists() and HAS_PEFT:
+            self.model = PeftModel.from_pretrained(
+                self.model, str(adapter_path), is_trainable=True,
+            )
+            log.info(f"Loaded SFT LoRA adapter from: {adapter_path}")
+        else:
+            log.warning(
+                f"No adapter found at {adapter_path}. "
+                f"Applying fresh LoRA instead."
+            )
+            from .config_utils import get_qlora_config
+
+            lora_config = get_qlora_config(self.cfg)
+            self.model = get_peft_model(self.model, lora_config)
+
+        if self.is_main_process:
+            self.model.print_trainable_parameters()
+
+    def _load_model_fresh(self) -> None:
+        """Load fresh base model with new LoRA adapters (no parent checkpoint)."""
         from .config_utils import get_qlora_config, get_quantization_config
 
         model_path = self.cfg.model.path
         use_quantization = self.cfg.training.get("quantization", {}).get("enabled", False)
 
-        log.info(f"Loading model from: {model_path}")
+        log.info(f"Loading fresh model from: {model_path}")
         log.info(f"Using quantization: {use_quantization}")
 
         # Get quantization config
@@ -463,8 +694,9 @@ class GRPOTrainer:
                 f"{self.model.config.vocab_size} -> {len(self.tokenizer)}"
             )
 
-        # Apply LoRA if configured
-        if self.cfg.training.get("lora", {}) and HAS_PEFT:
+        # Apply LoRA if configured and enabled (default: true)
+        lora_enabled = self.cfg.training.get("lora", {}).get("enabled", True)
+        if lora_enabled and self.cfg.training.get("lora", {}) and HAS_PEFT:
             lora_config = get_qlora_config(self.cfg)
             self.model = get_peft_model(self.model, lora_config)
             log.info("LoRA configuration applied")
@@ -475,8 +707,6 @@ class GRPOTrainer:
         approach = self.cfg.get("approach", "text")
         if approach == "esm3":
             self._load_protein_llm()
-
-        self.model.train()
 
     def _load_protein_llm(self) -> None:
         """Load ProteinLLM for multimodal GRPO training.
@@ -596,11 +826,15 @@ class GRPOTrainer:
         approach = self.cfg.get("approach", "text")
         placeholder = PROTEIN_PLACEHOLDER if approach in ("esm3",) else ""
 
+        max_protein_length = data_cfg.get("processing", {}).get(
+            "max_protein_length", None
+        )
         common_kwargs = dict(
             dataset_name=data_cfg.get("source", "zjunlp/Mol-Instructions"),
             subset=data_cfg.get("subset", "Protein-oriented Instructions"),
             cache_dir=cache_dir,
             max_seq_length=self.cfg.training.get("max_seq_length", 2048),
+            max_protein_length=max_protein_length,
             tokenizer=self.tokenizer,
             protein_placeholder=placeholder,
             limit=data_cfg.get("limit"),
@@ -635,7 +869,7 @@ class GRPOTrainer:
         """
         lr = self.cfg.training.get("lr", 5e-6)
         weight_decay = self.cfg.training.get("weight_decay", 0.01)
-        projector_lr = self.cfg.training.get("projector_lr", lr * 10)
+        projector_lr = self.cfg.training.get("projector_lr", lr * 5)
 
         # LLM trainable parameters (LoRA adapters)
         lora_params = [p for p in self.model.parameters() if p.requires_grad]
@@ -815,16 +1049,44 @@ class GRPOTrainer:
                 all_completions.append(completions)
                 all_generated_ids.append(gen_ids_list)
 
-            # Store prompt token IDs for log prob re-computation
-            prompt_inputs = self.tokenizer(
-                prompt,
-                return_tensors="pt",
-                truncation=True,
-                max_length=(
-                    self.cfg.training.get("max_seq_length", 2048)
-                    - self.grpo_config["max_new_tokens"]
-                ),
-            )
+            # Store prompt token IDs for log prob re-computation.
+            # For multimodal, must include chat template + protein placeholder
+            # so prepare_inputs() finds the placeholder during log prob forward.
+            if (
+                self.protein_llm is not None
+                and protein_sequences is not None
+                and protein_sequences[i]
+            ):
+                from src.data.mol_instructions import DEFAULT_SYSTEM_PROMPT
+                from src.models.multimodal_llm import PROTEIN_PLACEHOLDER
+
+                user_content = f"{prompt}\n\n{PROTEIN_PLACEHOLDER}"
+                messages = [
+                    {"role": "system", "content": DEFAULT_SYSTEM_PROMPT},
+                    {"role": "user", "content": user_content},
+                ]
+                wrapped_prompt = self.tokenizer.apply_chat_template(
+                    messages, tokenize=False, add_generation_prompt=True,
+                )
+                prompt_inputs = self.tokenizer(
+                    wrapped_prompt,
+                    return_tensors="pt",
+                    truncation=True,
+                    max_length=(
+                        self.cfg.training.get("max_seq_length", 2048)
+                        - self.grpo_config["max_new_tokens"]
+                    ),
+                )
+            else:
+                prompt_inputs = self.tokenizer(
+                    prompt,
+                    return_tensors="pt",
+                    truncation=True,
+                    max_length=(
+                        self.cfg.training.get("max_seq_length", 2048)
+                        - self.grpo_config["max_new_tokens"]
+                    ),
+                )
             all_prompt_ids.append(prompt_inputs["input_ids"].to(self.device))
 
         return all_completions, all_generated_ids, all_prompt_ids
@@ -911,9 +1173,14 @@ class GRPOTrainer:
                 position_ids=prepared["position_ids"],
                 return_dict=True,
             )
-            # Account for protein prefix tokens in logit positions
+            # Account for protein prefix tokens in logit positions.
+            # prepare_inputs replaces 1 placeholder with N protein embeddings,
+            # shifting all subsequent positions by N-1.  Logit at position j
+            # predicts token at position j+1, so to predict the first generated
+            # token (at transformed position prompt_length + N - 1) we need
+            # logit at prompt_length + N - 2.
             num_prefix = self.protein_llm.num_prefix_tokens
-            logits = outputs.logits[:, num_prefix + prompt_length - 1:-1, :]
+            logits = outputs.logits[:, num_prefix + prompt_length - 2:-1, :]
         else:
             # Text-only: standard forward pass
             outputs = self.model(full_ids, return_dict=True)
@@ -1048,6 +1315,30 @@ class GRPOTrainer:
 
         return kl_div
 
+    def _get_base_model(self):
+        """Return unwrapped base model (past PeftModel wrapper)."""
+        m = self.model
+        if hasattr(m, "get_base_model"):
+            m = m.get_base_model()
+        return m
+
+    def _ensure_grad_ckpt_off(self) -> None:
+        """Force-disable gradient checkpointing so generation uses KV cache."""
+        base = self._get_base_model()
+        if hasattr(base, "gradient_checkpointing_disable"):
+            base.gradient_checkpointing_disable()
+        # Also clear the flag on model config
+        if hasattr(base, "config"):
+            base.config.gradient_checkpointing = False
+
+    def _ensure_grad_ckpt_on(self) -> None:
+        """Enable gradient checkpointing for training forward pass."""
+        base = self._get_base_model()
+        if hasattr(base, "gradient_checkpointing_enable"):
+            base.gradient_checkpointing_enable(
+                gradient_checkpointing_kwargs={"use_reentrant": False}
+            )
+
     def _sync_multimodal_gradients(self) -> None:
         """All-reduce pooling+projector gradients across DDP ranks.
 
@@ -1064,6 +1355,25 @@ class GRPOTrainer:
                 for p in module.parameters():
                     if p.requires_grad and p.grad is not None:
                         dist.all_reduce(p.grad, op=dist.ReduceOp.AVG)
+
+    def _sync_all_gradients(self) -> None:
+        """All-reduce ALL trainable gradients across ranks (non-FSDP mode).
+
+        When FSDP is disabled, no automatic gradient sync happens.
+        This manually all-reduces gradients for all trainable params
+        (LoRA + pooling + projector).
+        """
+        if not dist.is_initialized() or dist.get_world_size() <= 1:
+            return
+        for p in self.model.parameters():
+            if p.requires_grad and p.grad is not None:
+                dist.all_reduce(p.grad, op=dist.ReduceOp.AVG)
+        if self.protein_llm is not None:
+            for module in [self.protein_llm.pooling, self.protein_llm.projector]:
+                if module is not None:
+                    for p in module.parameters():
+                        if p.requires_grad and p.grad is not None:
+                            dist.all_reduce(p.grad, op=dist.ReduceOp.AVG)
 
     def _training_step(
         self,
@@ -1140,9 +1450,17 @@ class GRPOTrainer:
         group_size = self.grpo_config["group_size"]
 
         # Step 1: Generate completions (no grad)
+        # Switch to eval mode so gradient checkpointing deactivates
+        # (HF check: self.gradient_checkpointing AND self.training).
+        # This allows generation to use KV cache.
+        self.model.eval()
+
         completions, all_generated_ids, all_prompt_ids = (
             self._generate_completions(prompts, protein_sequences, group_size)
         )
+
+        # Switch back to train mode for differentiable forward pass
+        self.model.train()
 
         # Step 2: Compute rewards
         rewards, reward_metrics = self._compute_rewards(
@@ -1278,8 +1596,13 @@ class GRPOTrainer:
 
                 # Optimizer step after accumulation
                 if accum_count % grad_accum_steps == 0:
-                    # Sync multimodal gradients across ranks
-                    self._sync_multimodal_gradients()
+                    # Sync gradients across ranks
+                    if self.use_fsdp:
+                        # FSDP handles LLM grads; only sync multimodal
+                        self._sync_multimodal_gradients()
+                    else:
+                        # No FSDP: manually sync ALL trainable grads
+                        self._sync_all_gradients()
 
                     # Gradient clipping
                     if self.use_fsdp:
@@ -1289,12 +1612,14 @@ class GRPOTrainer:
                             if self.protein_llm is not None
                             else self.model
                         )
-                        base = (
-                            llm.get_base_model()
-                            if hasattr(llm, "get_base_model")
-                            else llm
-                        )
-                        base.clip_grad_norm_(max_grad_norm)
+                        # FSDP2-wrapped models don't have clip_grad_norm_.
+                        # Use torch.nn.utils instead, which handles DTensors.
+                        llm_params = [
+                            p for p in llm.parameters()
+                            if p.requires_grad and p.grad is not None
+                        ]
+                        if llm_params:
+                            torch.nn.utils.clip_grad_norm_(llm_params, max_grad_norm)
                         # Clip multimodal params separately
                         if self.protein_llm is not None:
                             mm_params = []
@@ -1408,6 +1733,7 @@ class GRPOTrainer:
         if self.eval_dataset is None:
             return {}
 
+        # eval mode deactivates gradient checkpointing → KV cache works
         self.model.eval()
 
         num_samples = min(num_samples, len(self.eval_dataset))
@@ -1488,6 +1814,7 @@ class GRPOTrainer:
                     reward = self.reward_fn(completion, ground_truth)
                 eval_rewards.append(reward)
 
+        # train() re-activates gradient checkpointing (checked via self.training)
         self.model.train()
 
         return {
@@ -1495,6 +1822,80 @@ class GRPOTrainer:
             "max_reward": max(eval_rewards),
             "min_reward": min(eval_rewards),
         }
+
+    def _save_model_inner(self, path: Path) -> None:
+        """Save model weights, handling FSDP2 sharded params if needed.
+
+        For FSDP2 (``fully_shard``), parameters are DTensor-sharded.  PEFT's
+        ``save_pretrained`` can't access ``.data_ptr()`` on sharded tensors.
+        We gather full state dict via ``get_model_state_dict()`` and manually
+        save the LoRA adapter weights.
+        """
+        if self.use_fsdp:
+            self._save_model_fsdp2(path)
+        elif self.protein_llm is not None:
+            self.protein_llm.save_pretrained(path / "protein_llm")
+        elif HAS_PEFT and isinstance(self.model, PeftModel):
+            self.model.save_pretrained(path)
+        else:
+            self.model.save_pretrained(path)
+
+    def _save_model_fsdp2(self, path: Path) -> None:
+        """Save model under FSDP2.
+
+        FSDP2 (``fully_shard``) uses DTensor for sharded params. PEFT's
+        ``save_pretrained`` calls ``storage_ptr()`` which fails on DTensors.
+
+        Current approach: save multimodal components (pooling/projector)
+        directly on rank 0 (not FSDP-sharded), and log a warning that
+        LoRA adapter save under FSDP2 is not yet supported.
+
+        TODO(engineer): Implement proper FSDP2 adapter save. Options:
+        1. Disable FSDP before final save (reshard → unshard)
+        2. Use torch.distributed.checkpoint with proper process group
+        3. Save during training via intermediate HF Trainer checkpoints
+        """
+        # Save multimodal components (pooling + projector + config) on rank 0.
+        # These are NOT FSDP-sharded, so direct save works.
+        if self.protein_llm is not None and self.is_main_process:
+            plm_path = path / "protein_llm"
+            plm_path.mkdir(parents=True, exist_ok=True)
+
+            import json as _json
+            config = {
+                "approach": self.protein_llm.approach,
+                "llm_name": self.protein_llm.llm_name,
+                "encoder_name": self.protein_llm.encoder_name,
+                "num_prefix_tokens": self.protein_llm.num_prefix_tokens,
+                "pooling_type": self.protein_llm.pooling_type,
+                "projector_type": self.protein_llm.projector_type,
+                "encoder_embed_dim": self.protein_llm.encoder_embed_dim,
+                "llm_hidden_size": self.protein_llm.llm_hidden_size,
+            }
+            with open(plm_path / "config.json", "w") as f:
+                _json.dump(config, f, indent=2)
+
+            if self.protein_llm.pooling is not None:
+                torch.save(
+                    self.protein_llm.pooling.state_dict(), plm_path / "pooling.pt"
+                )
+            if self.protein_llm.projector is not None:
+                torch.save(
+                    self.protein_llm.projector.state_dict(), plm_path / "projector.pt"
+                )
+            if self.protein_llm.tokenizer is not None:
+                self.protein_llm.tokenizer.save_pretrained(plm_path / "tokenizer")
+
+        if self.is_main_process:
+            log.warning(
+                "FSDP2 checkpoint: saved pooling/projector but LoRA adapter "
+                "save is not yet supported with FSDP2. The LoRA weights from "
+                "the training run are NOT persisted. Disable FSDP for the "
+                "final checkpoint save, or use intermediate checkpoints."
+            )
+
+        if dist.is_initialized():
+            dist.barrier()
 
     def save_checkpoint(
         self,
@@ -1528,13 +1929,14 @@ class GRPOTrainer:
         log.info(f"Saving checkpoint to: {path}")
 
         # Save model: ProteinLLM (pooling + projector + adapter + config)
-        # or bare LoRA adapter for text-only approach
-        if self.protein_llm is not None:
-            self.protein_llm.save_pretrained(path / "protein_llm")
-        elif HAS_PEFT and isinstance(self.model, PeftModel):
-            self.model.save_pretrained(path)
-        else:
-            self.model.save_pretrained(path)
+        # or bare LoRA adapter for text-only approach.
+        # _save_model_inner handles FSDP2 internally via get_model_state_dict.
+        # NOTE: all ranks must call this (FSDP2 gather is collective).
+        self._save_model_inner(path)
+
+        # Only rank 0 writes remaining artifacts
+        if not self.is_main_process:
+            return path
 
         # Save tokenizer
         self.tokenizer.save_pretrained(path / "tokenizer")

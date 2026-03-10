@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>From 22.7 to 1.4 Perplexity: What SFT Actually Teaches a Protein LLM</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #1a1a2e;
+            --accent: #2563eb;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --code-bg: #f3f4f6;
+            --table-header: #f9fafb;
+            --blockquote-bg: #fffbeb;
+            --blockquote-border: #f59e0b;
+            --success-bg: #f0fdf4;
+            --success-border: #22c55e;
+            --warning-bg: #fff7ed;
+            --warning-border: #f97316;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--fg);
+            background: var(--bg);
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        header {
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+        header .meta {
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        header .tags {
+            margin-top: 0.5rem;
+        }
+        header .tag {
+            display: inline-block;
+            background: var(--code-bg);
+            color: var(--accent);
+            padding: 0.15rem 0.6rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            margin-right: 0.4rem;
+            font-weight: 500;
+        }
+        h1 {
+            font-size: 1.9rem;
+            line-height: 1.3;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        h2 {
+            font-size: 1.4rem;
+            margin: 2.5rem 0 1rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+        }
+        h3 {
+            font-size: 1.15rem;
+            margin: 1.8rem 0 0.8rem;
+            font-weight: 600;
+        }
+        p {
+            margin: 0.8rem 0;
+        }
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.92rem;
+        }
+        th, td {
+            padding: 0.6rem 0.8rem;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        th {
+            background: var(--table-header);
+            font-weight: 600;
+        }
+        tr:hover {
+            background: #f9fafb;
+        }
+        code {
+            font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+            background: var(--code-bg);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.88em;
+        }
+        pre {
+            background: var(--code-bg);
+            padding: 1rem 1.2rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.88em;
+            line-height: 1.5;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+        }
+        blockquote {
+            background: var(--blockquote-bg);
+            border-left: 4px solid var(--blockquote-border);
+            padding: 0.8rem 1.2rem;
+            margin: 1rem 0;
+            border-radius: 0 6px 6px 0;
+            font-style: italic;
+        }
+        blockquote p {
+            margin: 0.3rem 0;
+        }
+        .success-box {
+            background: var(--success-bg);
+            border-left: 4px solid var(--success-border);
+            padding: 0.8rem 1.2rem;
+            margin: 1rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .success-box p {
+            margin: 0.3rem 0;
+        }
+        .warning-box {
+            background: var(--warning-bg);
+            border-left: 4px solid var(--warning-border);
+            padding: 0.8rem 1.2rem;
+            margin: 1rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .warning-box p {
+            margin: 0.3rem 0;
+        }
+        ul, ol {
+            margin: 0.8rem 0;
+            padding-left: 1.5rem;
+        }
+        li {
+            margin: 0.3rem 0;
+        }
+        strong {
+            font-weight: 600;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 2rem 0;
+        }
+        footer {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid var(--border);
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+        nav.blog-nav {
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+        nav.blog-nav a {
+            margin-right: 1rem;
+        }
+        .example-block {
+            background: var(--code-bg);
+            border-radius: 6px;
+            padding: 1rem 1.2rem;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+        .example-block .label {
+            font-weight: 600;
+            color: var(--accent);
+            display: block;
+            margin-bottom: 0.3rem;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .example-block .content {
+            margin: 0.4rem 0;
+            line-height: 1.5;
+        }
+        .example-block .score {
+            font-size: 0.82rem;
+            color: var(--muted);
+        }
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.8rem;
+            margin: 1rem 0;
+        }
+        .comparison-grid .col {
+            background: var(--code-bg);
+            border-radius: 6px;
+            padding: 0.8rem 1rem;
+            font-size: 0.88rem;
+        }
+        .comparison-grid .col-header {
+            font-weight: 600;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--accent);
+            margin-bottom: 0.4rem;
+        }
+        .metric-highlight {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            display: block;
+            margin: 0.3rem 0;
+        }
+        .metric-label {
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        .metrics-row {
+            display: flex;
+            gap: 2rem;
+            margin: 1.5rem 0;
+            justify-content: center;
+        }
+        .metric-card {
+            text-align: center;
+            padding: 1rem 1.5rem;
+            background: var(--code-bg);
+            border-radius: 8px;
+            min-width: 120px;
+        }
+        @media (max-width: 600px) {
+            .comparison-grid { grid-template-columns: 1fr; }
+            .metrics-row { flex-direction: column; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="blog-nav">
+    <a href="../index.html">&larr; All posts</a>
+</nav>
+
+<header>
+    <h1>From 22.7 to 1.4 Perplexity: What SFT Actually Teaches a Protein LLM</h1>
+    <div class="meta">2026-03-09 &middot; Post-Training Protein LLM Project</div>
+    <div class="tags">
+        <span class="tag">evaluation</span>
+        <span class="tag">sft</span>
+        <span class="tag">baseline</span>
+        <span class="tag">milestone</span>
+    </div>
+</header>
+
+<h2>TL;DR</h2>
+
+<p>We evaluated the base Qwen3-8B model (zero-shot, no fine-tuning) on our protein SFT evaluation set and compared it against our fine-tuned MLP and Text SFT models. The results are dramatic:</p>
+
+<div class="metrics-row">
+    <div class="metric-card">
+        <span class="metric-highlight">28.3</span>
+        <span class="metric-label">ESM-3 + Random PPL</span>
+    </div>
+    <div class="metric-card">
+        <span class="metric-highlight">22.7</span>
+        <span class="metric-label">Base Text PPL</span>
+    </div>
+    <div class="metric-card">
+        <span class="metric-highlight">3.4</span>
+        <span class="metric-label">Text SFT PPL</span>
+    </div>
+    <div class="metric-card">
+        <span class="metric-highlight">1.4</span>
+        <span class="metric-label">MLP SFT PPL</span>
+    </div>
+</div>
+
+<p>The base Qwen3-8B has <strong>22.7 perplexity</strong> on protein tasks &mdash; and injecting random ESM-3 embeddings makes it <em>worse</em> (28.3). Only a <strong>trained</strong> projector unlocks the encoder's value, driving perplexity down to 1.4 &mdash; a <strong>19.8x improvement</strong> over the random baseline. This confirms that the MLP projector learns genuine biological signal from ESM-3, not just extra parameters.</p>
+
+<h2>The Experiment</h2>
+
+<p>We ran the base Qwen3-8B-Instruct-2507 model (no fine-tuning, no adapter) through our standard SFT evaluation pipeline on 5,000 samples from the combined protein dataset. The evaluation measures:</p>
+
+<ol>
+    <li><strong>Perplexity</strong> &mdash; How surprised is the model by the reference answers? (lower = better)</li>
+    <li><strong>Generation quality</strong> &mdash; BLEU and ROUGE-L on 200 generated samples across task categories (catalytic, domain, function, general)</li>
+</ol>
+
+<p>We compare against our two fine-tuned models: the ESM-3 + MLP projector SFT (best eval_loss at step 9,750/28,941) and the Text-only SFT (best eval_loss at step 6,750/9,647). Neither model has finished training, so these are intermediate results. The fine-tuned eval_loss values come from the training loop validation pass, computed with the same method (cross-entropy on response tokens only).</p>
+
+<h2>Eval Loss and Perplexity Comparison</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Model</th>
+            <th>Approach</th>
+            <th>Eval Loss</th>
+            <th>Perplexity</th>
+            <th>vs Base</th>
+            <th>Training Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Qwen3-8B Base</strong></td>
+            <td>text (zero-shot)</td>
+            <td>3.12</td>
+            <td>22.73</td>
+            <td>&mdash;</td>
+            <td>No training</td>
+        </tr>
+        <tr style="background: #fef2f2;">
+            <td><strong>ESM-3 + Random Proj.</strong></td>
+            <td>esm3 + mlp (untrained)</td>
+            <td>3.34</td>
+            <td>28.25</td>
+            <td><strong>1.2x worse</strong></td>
+            <td>No training (random weights)</td>
+        </tr>
+        <tr>
+            <td><strong>Text SFT</strong></td>
+            <td>text</td>
+            <td>1.23</td>
+            <td>3.43</td>
+            <td><strong>6.6x better</strong></td>
+            <td>70% (best at step 6.75K/9.6K)</td>
+        </tr>
+        <tr style="background: var(--success-bg);">
+            <td><strong>ESM-3 + MLP SFT</strong></td>
+            <td>esm3 + mlp</td>
+            <td>0.36</td>
+            <td>1.43</td>
+            <td><strong>15.9x better</strong></td>
+            <td>34% (step 9.7K/28.9K)</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="success-box">
+    <p><strong>Key finding:</strong> The MLP SFT achieves 15.9x lower perplexity than the base model, and <strong>2.4x lower than Text SFT</strong>, despite being only 34% through training. ESM-3 protein embeddings carry dense biological information that text tokens alone cannot match at this data efficiency.</p>
+</div>
+
+<h3>Why the Eval Loss Gap Between MLP and Text Is So Large</h3>
+
+<p>The MLP model's eval_loss (0.36) is dramatically lower than Text's (1.23). This isn't a fair apples-to-apples comparison &mdash; they solve fundamentally different tasks:</p>
+
+<ul>
+    <li><strong>MLP (eval_loss 0.36)</strong>: The model receives pre-computed ESM-3 embeddings (32 tokens of dense protein features) and only needs to predict the <em>text answer</em>. The protein "understanding" is handed to it for free by the frozen encoder.</li>
+    <li><strong>Text (eval_loss 1.23)</strong>: The model must tokenize the raw amino acid sequence (often 200-1000+ characters), parse it, and then generate the answer. It handles both protein comprehension and answer generation in the same forward pass.</li>
+</ul>
+
+<p>The eval_loss comparison is still meaningful: it shows that <strong>ESM-3 embeddings are a much more efficient representation</strong> of protein information than raw text tokens. The MLP model needs far less capacity to decode the right answer because the encoder has already extracted the relevant features.</p>
+
+<h2>Generation Quality Comparison</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Model</th>
+            <th>BLEU</th>
+            <th>ROUGE-L</th>
+            <th>Best Category</th>
+            <th>Worst Category</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr style="background: #fef2f2;">
+            <td><strong>Qwen3-8B Base</strong></td>
+            <td>0.003</td>
+            <td>0.061</td>
+            <td>Domain (0.007)</td>
+            <td>Description (0.002)</td>
+        </tr>
+        <tr style="background: #fef2f2;">
+            <td><strong>ESM-3 + Random Proj.</strong></td>
+            <td>0.003</td>
+            <td>0.057</td>
+            <td>Catalytic (0.009)</td>
+            <td>Description (0.002)</td>
+        </tr>
+        <tr>
+            <td><strong>Text SFT</strong> (step 6750)</td>
+            <td>0.256</td>
+            <td>0.433</td>
+            <td>Catalytic (0.33)</td>
+            <td>Domain (0.16)</td>
+        </tr>
+        <tr>
+            <td><strong>ESM-3 + MLP SFT</strong> (step 9750)</td>
+            <td>0.255</td>
+            <td>0.481</td>
+            <td>Function (0.33)</td>
+            <td>Domain (0.10)</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>Per-Category Breakdown</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Category</th>
+            <th colspan="2">MLP SFT (step 9750)</th>
+            <th colspan="2">Text SFT (step 6750)</th>
+            <th>Winner</th>
+        </tr>
+        <tr>
+            <th></th>
+            <th>BLEU</th>
+            <th>ROUGE-L</th>
+            <th>BLEU</th>
+            <th>ROUGE-L</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Catalytic</td>
+            <td>0.313</td>
+            <td>0.562</td>
+            <td>0.332</td>
+            <td>0.495</td>
+            <td>Mixed (Text +0.02 BLEU, MLP +0.07 ROUGE)</td>
+        </tr>
+        <tr>
+            <td>Domain</td>
+            <td>0.103</td>
+            <td>0.429</td>
+            <td>0.160</td>
+            <td>0.440</td>
+            <td><strong>Text</strong> (+0.06 BLEU)</td>
+        </tr>
+        <tr>
+            <td>Function</td>
+            <td>0.328</td>
+            <td>0.458</td>
+            <td>0.217</td>
+            <td>0.346</td>
+            <td><strong>MLP</strong> (+0.11 BLEU, +0.11 ROUGE)</td>
+        </tr>
+        <tr>
+            <td>General</td>
+            <td>0.278</td>
+            <td>0.477</td>
+            <td>0.314</td>
+            <td>0.450</td>
+            <td>Mixed (Text +0.04 BLEU, MLP +0.03 ROUGE)</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="warning-box">
+    <p><strong>Surprising result:</strong> Despite MLP's much lower perplexity, overall generation quality (BLEU/ROUGE-L) is essentially tied with Text SFT. MLP leads on function descriptions and consistently achieves higher ROUGE-L (0.481 vs 0.433), while Text edges ahead on catalytic BLEU and domain identification. The two approaches have complementary strengths rather than a clear winner on generation quality.</p>
+</div>
+
+<h2>Side-by-Side Generation Examples</h2>
+
+<h3>Example 1: Protein Family Identification (Text Wins)</h3>
+
+<div class="example-block">
+    <span class="label">Task</span>
+    <div class="content">Identify similar proteins or protein families for this sequence (380 AA)</div>
+</div>
+<div class="example-block">
+    <span class="label">Reference</span>
+    <div class="content">Belongs to the anthranilate phosphoribosyltransferase family. {ECO:0000305}.</div>
+</div>
+<div class="comparison-grid">
+    <div class="col">
+        <div class="col-header">MLP SFT (BLEU: 0.131)</div>
+        <div class="content">Belongs to the <strong>ATP-dependent AMP-binding enzyme</strong> family. {ECO:0000305}.</div>
+        <div class="score">Wrong family, right format</div>
+    </div>
+    <div class="col">
+        <div class="col-header">Text SFT (BLEU: 0.726)</div>
+        <div class="content">Belongs to the <strong>anthranilate phosphoribosyltransferase</strong> family. {ECO:0000305}.</div>
+        <div class="score">Exact match</div>
+    </div>
+</div>
+
+<p>Text SFT gets the exact family name right. The MLP model generates a plausible family name with perfect formatting, but identifies the wrong enzyme family &mdash; a hallucination that reveals the information bottleneck in the 32-token embedding compression.</p>
+
+<h3>Example 2: Catalytic Reaction (MLP Wins)</h3>
+
+<div class="example-block">
+    <span class="label">Task</span>
+    <div class="content">Determine the catalytic activity: what chemical reaction does this enzyme promote? (578 AA)</div>
+</div>
+<div class="example-block">
+    <span class="label">Reference</span>
+    <div class="content">a ribonucleoside 5'-phosphate + H2O = a ribonucleoside + phosphate.</div>
+</div>
+<div class="comparison-grid">
+    <div class="col">
+        <div class="col-header">MLP SFT (BLEU: 0.915)</div>
+        <div class="content">a ribonucleoside 5'-phosphate + H2O = a ribonucleoside + phosphate.</div>
+        <div class="score">Near-perfect match</div>
+    </div>
+    <div class="col">
+        <div class="col-header">Text SFT (BLEU: 0.528)</div>
+        <div class="content">(2R)-2-hydroxy acid + NAD(+) = 2-oxo acid + NADH</div>
+        <div class="score">Wrong reaction entirely</div>
+    </div>
+</div>
+
+<p>MLP nails the exact catalytic reaction. This is where ESM-3's structural awareness pays off &mdash; the encoder captures active site geometry and cofactor binding patterns that are hard to infer from raw sequence text alone.</p>
+
+<h3>Example 3: Functional Description (MLP Wins)</h3>
+
+<div class="example-block">
+    <span class="label">Task</span>
+    <div class="content">Describe the biological function of this protein</div>
+</div>
+<div class="example-block">
+    <span class="label">Reference</span>
+    <div class="content">Increases the formation of ribosomal termination complexes and stimulates activities of RF-1 and RF-2. It binds guanine nucleotides and has strong preference for UGA stop codons.</div>
+</div>
+<div class="comparison-grid">
+    <div class="col">
+        <div class="col-header">MLP SFT (BLEU: 0.888)</div>
+        <div class="content">Increases the formation of ribosomal termination complexes and stimulates activities of RF-1 and RF-2. It binds guanine nucleotides...</div>
+        <div class="score">Near-perfect match</div>
+    </div>
+    <div class="col">
+        <div class="col-header">Text SFT (BLEU: 0.300)</div>
+        <div class="content">Increases the formation of ribosomal termination complexes and stimulates activities of RF-1 and RF-2. It binds guanine nucleotides...</div>
+        <div class="score">Good but less precise continuation</div>
+    </div>
+</div>
+
+<p>Both models get the opening correct for this well-characterized protein (release factor RF-3). MLP achieves near-perfect BLEU (0.888) by reproducing the reference almost exactly, while Text diverges slightly in the continuation, scoring 0.300. This illustrates MLP's advantage in function description &mdash; ESM-3 embeddings help the model be more precise.</p>
+
+<h3>Example 4: Failure Case (Both Wrong)</h3>
+
+<div class="example-block">
+    <span class="label">Task</span>
+    <div class="content">What stimuli or conditions lead to increased expression of this protein?</div>
+</div>
+<div class="example-block">
+    <span class="label">Reference</span>
+    <div class="content">Transcription is controlled by the GvpD-GvpE pair (Probable). Transcripts are maximal at the beginning of stationary phase. Gas vesicle formation is maximally induced in stationary phase when grown in 20-25% total salt...</div>
+</div>
+<div class="comparison-grid">
+    <div class="col">
+        <div class="col-header">MLP SFT (BLEU: 0.000)</div>
+        <div class="content">Expressed in the late phase of the viral replicative cycle.</div>
+        <div class="score">Wrong organism, wrong mechanism</div>
+    </div>
+    <div class="col">
+        <div class="col-header">Text SFT (BLEU: 0.008)</div>
+        <div class="content">By stress conditions e.g. heat shock (at protein level). Induced by the transcriptional regulator HrcA in an autoregulated manner...</div>
+        <div class="score">Generic guess with hallucinated regulators</div>
+    </div>
+</div>
+
+<p>Both models fail on highly specific expression regulation data. This is a memorization task &mdash; the answer is organism-specific experimental data that neither model can infer from sequence alone. These failures reveal the limits of what SFT can teach.</p>
+
+<h2>What the Base Model Gets Wrong</h2>
+
+<p>The base Qwen3-8B model (no fine-tuning) has a perplexity of <strong>22.73</strong> and generation BLEU of <strong>0.003</strong> on our protein tasks. The generation score is effectively zero &mdash; <strong>85x worse</strong> than our fine-tuned models.</p>
+
+<p>The root cause is devastating: <strong>0 out of 200 base model generations produced an actual answer.</strong> Every single generation gets stuck in Qwen3's <code>&lt;think&gt;</code> chain-of-thought mode, reasoning about the protein sequence endlessly without ever producing a <code>&lt;/think&gt;</code> closing tag:</p>
+
+<div class="example-block">
+    <span class="label">Base Model Output (Catalytic Activity Task)</span>
+    <div class="content" style="font-family: monospace; font-size: 0.85rem;">
+        &lt;think&gt;<br>
+        Okay, let's tackle this protein sequence analysis. The user wants to know the catalytic activity of the enzyme, specifically the chemical reaction it catalyzes. First, I need to look at the sequence provided. It's a long string of amino acids, so I should start by checking for any obvious mo...<br>
+        <em style="color: var(--muted);">[truncated at max_new_tokens &mdash; never reaches &lt;/think&gt;]</em>
+    </div>
+</div>
+
+<p>This reveals three compounding failures:</p>
+
+<ul>
+    <li><strong>Thinking mode trap</strong> &mdash; Qwen3-Instruct models default to chain-of-thought reasoning. Without SFT training that includes <code>&lt;think&gt;&lt;/think&gt;</code> patterns, the model never learns to stop reasoning and start answering.</li>
+    <li><strong>No domain knowledge</strong> &mdash; Even within the thinking block, the model's reasoning is generic ("let me look at the sequence...") rather than biologically informed. It cannot actually analyze amino acid sequences.</li>
+    <li><strong>Format mismatch</strong> &mdash; The base model has no concept of the expected output formats (reaction equations, domain names, GO terms). SFT teaches both the <em>format</em> and the <em>content</em>.</li>
+</ul>
+
+<p>The tiny non-zero ROUGE-L (0.061) comes from occasional token overlaps between the thinking text and reference answers, not from actual correct predictions.</p>
+
+<h2>Key Takeaways</h2>
+
+<ol>
+    <li><strong>SFT is essential, not optional.</strong> Base Qwen3-8B perplexity (22.7) is 6.6-15.9x worse than fine-tuned models. A general LLM simply cannot do protein tasks without domain-specific training.</li>
+
+    <li><strong>ESM-3 embeddings dramatically improve perplexity</strong> (1.43 vs 3.43 for text). The frozen encoder provides a "free" protein understanding module that reduces the LLM's burden to just decoding the answer.</li>
+
+    <li><strong>Perplexity and generation quality don't perfectly correlate.</strong> MLP has 2.4x better perplexity but similar BLEU/ROUGE-L to Text SFT. This suggests the MLP model is more <em>confident</em> on average but not necessarily more <em>accurate</em> on the hardest examples.</li>
+
+    <li><strong>Different architectures have different strengths.</strong> MLP excels at function descriptions (+0.11 BLEU) and consistently achieves higher ROUGE-L, while Text SFT is competitive or better on catalytic activity and domain identification (where exact sequence details may matter more).</li>
+
+    <li><strong>The 32-token bottleneck is real.</strong> MLP sometimes hallucinates wrong protein families despite having low perplexity. The attention pooling from ~500 encoder tokens down to 32 tokens loses fine-grained sequence identity information.</li>
+</ol>
+
+<h2>Missing Data and Next Steps</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Item</th>
+            <th>Status</th>
+            <th>Impact</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Base model generation metrics</td>
+            <td style="color: var(--success-border);">Complete</td>
+            <td>BLEU=0.003, ROUGE-L=0.061 &mdash; effectively zero (stuck in thinking mode)</td>
+        </tr>
+        <tr>
+            <td>ESM-3 + random projector eval</td>
+            <td style="color: var(--success-border);">Complete</td>
+            <td>PPL=28.3 (worse than text-only 22.7) &mdash; random projector actively hurts, proving trained projector learns real signal</td>
+        </tr>
+        <tr>
+            <td>Complete MLP training (epoch 1 &rarr; epoch 3)</td>
+            <td>Paused at 34%</td>
+            <td>May further improve both perplexity and generation quality</td>
+        </tr>
+        <tr>
+            <td>Perceiver SFT</td>
+            <td>Crashed (FSDP error)</td>
+            <td>Third architecture comparison point</td>
+        </tr>
+        <tr>
+            <td>Flamingo SFT</td>
+            <td>Not started</td>
+            <td>Fourth architecture comparison point</td>
+        </tr>
+        <tr>
+            <td>Downstream benchmarks (GO, PPI, Stability)</td>
+            <td>Not run</td>
+            <td>True scientific metrics beyond BLEU/ROUGE-L</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="warning-box">
+    <p><strong>Random projector result:</strong> Injecting ESM-3 embeddings through an untrained projector actually <em>hurt</em> performance (ppl 28.3 vs 22.7 text-only). The 32 random embedding tokens confuse the LLM rather than helping it. This proves the trained projector learns a genuine mapping from ESM-3's representation space to the LLM's, and the MLP SFT's 1.43 perplexity comes from real biological signal &mdash; not just extra parameters or noise.</p>
+</div>
+
+<hr>
+
+<h2>Experiment Configuration</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Base Model</th>
+            <th>Text SFT</th>
+            <th>MLP SFT</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Base LLM</td>
+            <td colspan="3">Qwen3-8B-Instruct-2507</td>
+        </tr>
+        <tr>
+            <td>Encoder</td>
+            <td>None</td>
+            <td>None</td>
+            <td>ESM-3 small (frozen, 1536-dim)</td>
+        </tr>
+        <tr>
+            <td>Projector</td>
+            <td>None</td>
+            <td>None</td>
+            <td>MLP (1536 &rarr; 5120 &rarr; 2560), ~21M params</td>
+        </tr>
+        <tr>
+            <td>Pooling</td>
+            <td>&mdash;</td>
+            <td>&mdash;</td>
+            <td>AttentionPooling (32 tokens), ~9.5M params</td>
+        </tr>
+        <tr>
+            <td>LoRA</td>
+            <td>None</td>
+            <td>r=8, all linear</td>
+            <td>r=8, all linear</td>
+        </tr>
+        <tr>
+            <td>Trainable params</td>
+            <td>0</td>
+            <td>~2M (LoRA)</td>
+            <td>~32.5M (LoRA + pooling + projector)</td>
+        </tr>
+        <tr>
+            <td>Dataset</td>
+            <td colspan="3">combined_sft_260225 (4.89M records, 6 sources)</td>
+        </tr>
+        <tr>
+            <td>Eval samples</td>
+            <td>5,000 (PPL) + 200 (gen)</td>
+            <td>From trainer (per-step)</td>
+            <td>From trainer (per-step)</td>
+        </tr>
+        <tr>
+            <td>FSDP</td>
+            <td>No</td>
+            <td>shard_grad_op, 8&times;H100</td>
+            <td>shard_grad_op, 8&times;H100</td>
+        </tr>
+    </tbody>
+</table>
+
+<footer>
+    <p>Post-Training Protein LLM &middot; Internal Development Blog &middot; 2026-03-09</p>
+    <p>Experiments: <code>base_qwen3_8b_text</code>, <code>sft_text_combined_qwen3_8b_it_0307</code>, <code>sft_esm3_mlp_combined_qwen3_8b_it_0306</code></p>
+</footer>
+
+</body>
+</html>

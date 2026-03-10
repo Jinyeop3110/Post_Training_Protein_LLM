@@ -36,11 +36,16 @@ docs/
 
 src/evaluation/
 ├── __init__.py
+├── benchmarks.py            # Combined benchmark runner
+├── generation.py            # Unified generation evaluator (text + metrics)
 ├── go_prediction.py         # GO term evaluation
-├── ppi_prediction.py        # Protein-protein interaction
-├── stability.py             # Stability prediction (ddG)
 ├── metrics.py               # Shared metrics utilities
-└── benchmarks.py            # Combined benchmark runner
+├── ppi_prediction.py        # Protein-protein interaction
+├── proteinlm_bench.py       # ProteinLM benchmark suite
+├── sft_eval.py              # SFT generation quality evaluation
+├── sft_eval_combined.py     # Multi-task SFT evaluation
+├── stability.py             # Stability prediction (ddG)
+└── utils.py                 # Evaluation utilities
 
 scripts/evaluate.py          # Evaluation entry point
 
@@ -48,7 +53,7 @@ configs/evaluation/
 ├── go_prediction.yaml
 ├── ppi.yaml
 ├── stability.yaml
-└── all.yaml                 # Run all benchmarks
+└── default.yaml             # Default evaluation config
 ```
 
 ## Evaluation Metrics
@@ -59,6 +64,8 @@ configs/evaluation/
 | PPI Prediction | Accuracy, F1, precision, recall, AUPR | Binary output (Yes/No) |
 | Stability | MAE, Pearson correlation, classification accuracy | Thresholds: stabilizing <-0.5, neutral, destabilizing >0.5 |
 | Structure Quality | pLDDT, quality alignment | Via ESMFold reward |
+| SFT Generation | BLEU, ROUGE, exact match | Per-task quality metrics |
+| ProteinLM Bench | Task-specific accuracy | Multi-task benchmark |
 
 ### Evaluation Workflow
 ```bash
@@ -68,9 +75,20 @@ python scripts/evaluate.py experiment_name=my_sft_run evaluation.name=go_predict
 # Run all benchmarks
 python scripts/evaluate.py experiment_name=my_sft_run evaluation.name=all
 
+# SFT generation quality
+python scripts/evaluate.py experiment_name=my_sft_run evaluation.name=sft
+
+# Multi-task SFT evaluation
+python scripts/evaluate.py experiment_name=my_sft_run evaluation.name=sft_combined
+
+# ProteinLM benchmark
+python scripts/evaluate.py experiment_name=my_sft_run evaluation.name=proteinlm_bench
+
 # Direct checkpoint path
 python scripts/evaluate.py checkpoint_path=results/.../checkpoints/protein_llm
 ```
+
+Available `evaluation.name` values: `go_prediction | ppi | stability | sft | sft_combined | proteinlm_bench | all`
 
 Results saved to: `results/{experiment_name}/eval/{task}_metrics.json`
 
@@ -85,10 +103,11 @@ Add entries to `docs/research/agents_research_log.md`:
 Brief description of what was done.
 
 ### Configuration
-- Model: Qwen3-4B-Instruct-2507
-- Training: SFT with LoRA
-- Dataset: Mol-Instructions (50K)
-- Hyperparameters: lr=2e-4, epochs=3
+- Model: Qwen3-8B (Qwen/Qwen3-8B)
+- Approach: esm3 + mlp | esm3 + perceiver | text | flamingo
+- Training: SFT with LoRA (FSDP, 8×H100)
+- Dataset: combined_sft_260225 (Arrow format)
+- Hyperparameters: lr=1e-4, projector_lr=5e-4, epochs=3
 
 ### Results
 | Metric | Value |
@@ -114,10 +133,11 @@ Brief description of what was done.
 
 ## Current Focus Areas
 
-1. Three-way comparison: text vs MLP vs Perceiver Resampler
-2. GRPO alignment with downstream task rewards
-3. Structure-aware encoding methods
+1. **Four-way comparison**: text vs MLP vs Perceiver Resampler vs Flamingo
+2. GRPO alignment with downstream task rewards (GO, stability, structure)
+3. Flamingo gated cross-attention as alternative to prefix injection
 4. Optimal pooling strategies for proteins
+5. Combined dataset training results analysis
 
 ## Documentation Maintenance
 
@@ -141,12 +161,18 @@ You handle: literature search, evaluation, documentation, research logging.
 
 Evaluation commands:
 - python scripts/evaluate.py experiment_name=<name> evaluation.name=all
+- Available: go_prediction | ppi | stability | sft | sft_combined | proteinlm_bench | all
 - Results: results/{experiment_name}/eval/{task}_metrics.json
 
 Key metrics:
 - GO: F1 (micro/macro), AUPR by category (MF, BP, CC)
 - PPI: Accuracy, F1, AUPR
 - Stability: MAE, Pearson correlation
+- SFT Generation: BLEU, ROUGE, exact match
+- ProteinLM Bench: Task-specific accuracy
+
+Current focus: Four-way comparison (text vs MLP vs Perceiver vs Flamingo)
+Primary model: Qwen3-8B | Encoder: ESM-3 small | FSDP across 8×H100
 
 Research log: docs/research/agents_research_log.md
 Always record experiment configs, results, decisions, and next steps.

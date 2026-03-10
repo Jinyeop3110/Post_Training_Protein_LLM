@@ -9,7 +9,7 @@ Compatible with DDP via HF Accelerate's ``BatchSamplerShard``.
 """
 
 import logging
-from typing import Iterator, List, Sequence
+from typing import Any, Dict, Iterator, List, Sequence
 
 from torch.utils.data import BatchSampler, Sampler
 
@@ -56,6 +56,8 @@ class TokenBudgetBatchSampler(BatchSampler):
 
         # Pre-compute batches so __len__ is accurate
         self._batches: List[List[int]] = []
+        self._batch_idx: int = 0  # absolute index of next unprocessed batch
+        self._batch_offset: int = 0  # offset from load_state_dict
         self._build_batches()
 
     def _build_batches(self) -> None:
@@ -122,7 +124,50 @@ class TokenBudgetBatchSampler(BatchSampler):
             )
 
     def __iter__(self) -> Iterator[List[int]]:
-        yield from self._batches
+        for i, batch in enumerate(self._batches):
+            self._batch_idx = self._batch_offset + i + 1
+            yield batch
 
     def __len__(self) -> int:
         return len(self._batches)
+
+    # ------------------------------------------------------------------
+    # Checkpoint save / restore
+    # ------------------------------------------------------------------
+
+    def state_dict(self) -> Dict[str, Any]:
+        """Save sampler position for checkpoint resume.
+
+        Returns dict with the batch index so the sampler can skip
+        already-consumed batches on resume instead of replaying from
+        the start.
+        """
+        return {
+            "batch_idx": getattr(self, "_batch_idx", 0),
+            "total_batches": len(self._batches),
+        }
+
+    def load_state_dict(self, state: Dict[str, Any]) -> None:
+        """Restore sampler position from checkpoint.
+
+        Slices ``_batches`` so the next ``__iter__`` yields only the
+        remaining batches.  Safe to call before the training loop starts.
+        """
+        batch_idx = state.get("batch_idx", 0)
+        total = len(self._batches) + self._batch_offset  # original total
+        if batch_idx > 0 and batch_idx <= total:
+            # Slice off consumed batches; adjust offset for __iter__ tracking
+            skip_from_current = batch_idx - self._batch_offset
+            if skip_from_current > 0:
+                self._batches = self._batches[skip_from_current:]
+            self._batch_offset = batch_idx
+            self._batch_idx = batch_idx
+            log.info(
+                f"TokenBudgetBatchSampler: resuming from batch {batch_idx}/{total} "
+                f"(skipped {batch_idx}, {len(self._batches)} remaining)"
+            )
+        elif batch_idx > total:
+            log.warning(
+                f"TokenBudgetBatchSampler: saved batch_idx {batch_idx} > "
+                f"total {total}; starting from beginning"
+            )

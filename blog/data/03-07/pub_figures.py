@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""
+"""ARCHIVED: Consolidated into scripts/analysis/plot_pub_figures.py (2026-03-09).
+Use plot_pub_figures.py for equivalent output.
+
+Original:
 Publication-quality figures for three targets:
   1. Internal blog (blog/figures/)
   2. Personal website blog (blog/figures/web_*)

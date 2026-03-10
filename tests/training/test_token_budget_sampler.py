@@ -119,3 +119,125 @@ class TestTokenBudgetBatchSampler:
         )
         assert len(bs) == 0
         assert list(bs) == []
+
+    # ------------------------------------------------------------------
+    # state_dict / load_state_dict tests
+    # ------------------------------------------------------------------
+
+    def test_state_dict_initial(self):
+        """Initial state_dict has batch_idx=0."""
+        lengths = [100, 100, 100]
+        bs = TokenBudgetBatchSampler(
+            ListSampler([0, 1, 2]), lengths, max_tokens=150
+        )
+        state = bs.state_dict()
+        assert state["batch_idx"] == 0
+        assert state["total_batches"] == 3
+
+    def test_state_dict_after_partial_iteration(self):
+        """state_dict tracks batch index during iteration."""
+        lengths = [100] * 8
+        bs = TokenBudgetBatchSampler(
+            ListSampler(list(range(8))), lengths, max_tokens=150
+        )
+        it = iter(bs)
+        next(it)  # consume batch 0
+        next(it)  # consume batch 1
+        state = bs.state_dict()
+        assert state["batch_idx"] == 2
+
+    def test_state_dict_after_full_iteration(self):
+        """state_dict returns total batch count after full iteration."""
+        lengths = [100] * 4
+        bs = TokenBudgetBatchSampler(
+            ListSampler(list(range(4))), lengths, max_tokens=150
+        )
+        list(bs)  # consume all
+        state = bs.state_dict()
+        assert state["batch_idx"] == len(list(TokenBudgetBatchSampler(
+            ListSampler(list(range(4))), lengths, max_tokens=150
+        )))
+
+    def test_load_state_dict_skips_batches(self):
+        """load_state_dict slices off already-consumed batches."""
+        lengths = [100] * 10
+        bs = TokenBudgetBatchSampler(
+            ListSampler(list(range(10))), lengths, max_tokens=150
+        )
+        original_batches = list(bs)
+        total = len(original_batches)
+
+        # Create a fresh sampler and restore from batch 3
+        bs2 = TokenBudgetBatchSampler(
+            ListSampler(list(range(10))), lengths, max_tokens=150
+        )
+        bs2.load_state_dict({"batch_idx": 3, "total_batches": total})
+        remaining = list(bs2)
+        assert remaining == original_batches[3:]
+
+    def test_load_state_dict_preserves_tracking(self):
+        """After load_state_dict, subsequent state_dict returns correct absolute position."""
+        lengths = [100] * 10
+        bs = TokenBudgetBatchSampler(
+            ListSampler(list(range(10))), lengths, max_tokens=150
+        )
+        total_batches = len(bs)
+
+        # Restore from batch 5, then consume 2 more
+        bs.load_state_dict({"batch_idx": 5, "total_batches": total_batches})
+        it = iter(bs)
+        next(it)  # batch 5
+        next(it)  # batch 6
+        state = bs.state_dict()
+        assert state["batch_idx"] == 7  # absolute: 5 + 2
+
+    def test_load_state_dict_zero_is_noop(self):
+        """load_state_dict with batch_idx=0 doesn't change anything."""
+        lengths = [100] * 4
+        bs = TokenBudgetBatchSampler(
+            ListSampler(list(range(4))), lengths, max_tokens=150
+        )
+        original_len = len(bs)
+        bs.load_state_dict({"batch_idx": 0, "total_batches": original_len})
+        assert len(bs) == original_len
+
+    def test_load_state_dict_exceeding_warns(self):
+        """load_state_dict with batch_idx > total logs warning, doesn't crash."""
+        lengths = [100] * 4
+        bs = TokenBudgetBatchSampler(
+            ListSampler(list(range(4))), lengths, max_tokens=150
+        )
+        original_len = len(bs)
+        bs.load_state_dict({"batch_idx": 999, "total_batches": 999})
+        # Should not crash; batches unchanged
+        assert len(bs) == original_len
+
+    def test_save_restore_roundtrip(self):
+        """Full save→restore roundtrip produces correct remaining batches."""
+        lengths = [50, 200, 150, 300, 100, 80, 120, 250]
+        indices = list(range(8))
+
+        # First pass: iterate halfway, save state
+        bs1 = TokenBudgetBatchSampler(
+            ListSampler(indices), lengths, max_tokens=400
+        )
+        all_batches = list(bs1)
+        midpoint = len(all_batches) // 2
+
+        # Simulate partial iteration
+        bs1_partial = TokenBudgetBatchSampler(
+            ListSampler(indices), lengths, max_tokens=400
+        )
+        it = iter(bs1_partial)
+        for _ in range(midpoint):
+            next(it)
+        state = bs1_partial.state_dict()
+        assert state["batch_idx"] == midpoint
+
+        # Second pass: restore and get remaining
+        bs2 = TokenBudgetBatchSampler(
+            ListSampler(indices), lengths, max_tokens=400
+        )
+        bs2.load_state_dict(state)
+        remaining = list(bs2)
+        assert remaining == all_batches[midpoint:]

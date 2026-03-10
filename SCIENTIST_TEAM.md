@@ -56,7 +56,10 @@ claude
                                  │
                   blog/
                   ├── data/MM-DD/  (CSVs, JSONs)
-                  ├── figures/     (PNGs)
+                  ├── figures/
+                  │   ├── figure_catalog.md   (single source of truth)
+                  │   ├── main_figures/       (9 key figures)
+                  │   └── supple_figures/     (supplementary)
                   └── posts/       (HTML reports)
 ```
 
@@ -145,7 +148,7 @@ CRITICAL: NEVER write outside blog/. NEVER modify experiment files.
 - Standard plot catalog: loss curves, gradient norms, LR schedule, convergence comparison
 - Compute summary statistics: min/max/final loss, convergence step, gradient stats
 - Detect anomalies: NaN occurrences, loss spikes, gradient explosions
-- Output PNGs to `blog/figures/`
+- Output PNGs to `blog/figures/supple_figures/` (default) or `blog/figures/main_figures/` (key figures, with team lead approval)
 - Output `analysis_summary.json` to `blog/data/MM-DD/`
 
 **Standard Plot Catalog**:
@@ -164,23 +167,26 @@ CRITICAL: NEVER write outside blog/. NEVER modify experiment files.
 import matplotlib
 matplotlib.use('Agg')  # Headless — MUST be before pyplot import
 import matplotlib.pyplot as plt
-import seaborn as sns
+import sys, os
 
-sns.set_theme(style="whitegrid", palette="colorblind")
-APPROACH_COLORS = {"mlp": "#1f77b4", "perceiver": "#ff7f0e", "text": "#2ca02c"}
-FIG_DPI = 150
-FIG_SIZE = (10, 6)  # Default
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'scripts', 'analysis'))
+from figure_style import style, save_figure, get_color, get_label, get_approach_label, smooth, annotate_best, annotate_bars, to_rgba_alpha
+
+colors = style.apply("blog")  # or "web", "paper"
+# Use style.color("mlp"), style.dpi(), style.figsize(), save_figure(fig, "name")
 ```
 
 **Output Format**:
 ```
 blog/figures/
-├── loss_curves.png
-├── eval_loss_curves.png
-├── gradient_norms.png
-├── lr_schedule.png
-├── loss_comparison_bar.png
-└── convergence_table.png
+├── figure_catalog.md          # Single source of truth — update after adding figures
+├── main_figures/              # Key figures (paper + website, team lead approval)
+│   └── {name}.png
+├── supple_figures/            # Supplementary figures (default destination)
+│   ├── loss_curves.png
+│   ├── eval_loss_curves.png
+│   ├── gradient_norms.png
+│   └── ...
 
 blog/data/MM-DD/
 └── analysis_summary.json     # Per-experiment stats + anomalies
@@ -228,13 +234,14 @@ CRITICAL setup (MUST be first lines of any plotting code):
   import matplotlib
   matplotlib.use('Agg')
   import matplotlib.pyplot as plt
-  import seaborn as sns
-  sns.set_theme(style="whitegrid", palette="colorblind")
+  import sys, os
+  sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'scripts', 'analysis'))
+  from figure_style import style, save_figure, get_color, get_label, get_approach_label, smooth, annotate_best, annotate_bars, to_rgba_alpha
+  colors = style.apply("blog")
 
-Approach color scheme:
-  MLP = "#1f77b4" (blue), Perceiver = "#ff7f0e" (orange), Text = "#2ca02c" (green)
-
-Standard DPI: 150. Default figure size: (10, 6).
+figure_style.py is the SINGLE SOURCE OF TRUTH for colors and styling.
+Use style.color("mlp"), style.dpi(), style.figsize(), save_figure(fig, "name").
+NEVER define inline APPROACH_COLORS, FIG_DPI, or FIG_SIZE.
 
 CRITICAL: Use 'token_avg_loss' for loss plots, NOT 'loss' (which is HF running average
 and is heavily inflated by early high losses). 'eval_loss' is always reliable.
@@ -245,9 +252,9 @@ Output: PNGs to blog/figures/
 
 Every plot must have:
 - Title, axis labels, legend
-- Consistent color scheme by approach type
+- Consistent color scheme by approach type (from figure_style.py)
 - Grid lines (via seaborn whitegrid)
-- Saved as PNG at 150 DPI
+- Saved via save_figure(fig, "name")
 
 Also produce analysis_summary.json with per-experiment stats and anomaly flags.
 
@@ -508,8 +515,11 @@ blog/
 ├── README.md                            # Conventions and reading order
 ├── posts/                               # HTML blog posts
 │   └── YYYY-MM-DD_title-in-kebab-case.html
-├── figures/                             # All plot images (PNGs)
-│   └── descriptive_figure_name.png
+├── figures/                             # All plot images
+│   ├── figure_catalog.md               # Single source of truth for all figures
+│   ├── main_figures/                   # 9 key figures (paper + website)
+│   ├── supple_figures/                 # Supplementary figures
+│   └── *.png                           # Legacy flat figures (pre-reorganization)
 └── data/                                # Analysis code + data by date
     └── MM-DD/
         ├── analysis_script.py
@@ -518,10 +528,17 @@ blog/
         └── analysis_summary.json
 ```
 
+**Paper figures**:
+```
+paper/figures/
+├── main/                               # 9 PDFs (NeurIPS-compatible)
+└── supplementary/                      # 30 PDFs + PNGs
+```
+
 **Blog post conventions**:
 - Posts are HTML files in `blog/posts/`
 - Filename: `YYYY-MM-DD_title-in-kebab-case.html`
-- Figures in `blog/figures/`, referenced from posts as `../figures/name.png`
+- Figures in `blog/figures/main_figures/` or `blog/figures/supple_figures/`, referenced from posts as `../figures/main_figures/name.png` or `../figures/supple_figures/name.png`
 - Data in `blog/data/MM-DD/`, referenced from posts as `../data/MM-DD/`
 - Index at `blog/index.html` links to all posts via `posts/filename.html`
 - Tags: kickoff, architecture, training, evaluation, data, rl, sft, infrastructure, milestone, debug
@@ -635,7 +652,7 @@ import seaborn as sns
 import pandas as pd
 
 sns.set_theme(style="whitegrid", palette="colorblind")
-COLORS = {"mlp": "#1f77b4", "text": "#2ca02c"}
+COLORS = {"mlp": "#1f77b4", "text": "#808080"}
 
 df = pd.read_csv("blog/data/MM-DD/run_histories.csv")
 

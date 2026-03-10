@@ -24,10 +24,10 @@ source /home/yeopjin/orcd/pool/init_protein_llm.sh
 python src/data/download.py --dataset mol_instructions
 
 # Train (single GPU)
-python scripts/train.py experiment=sft_esm3_mlp
+python scripts/train.py main_SFT=sft_esm3_mlp_combined
 
 # Train (8 GPU DDP)
-bash scripts/launch_train.sh experiment=sft_esm3_mlp
+bash scripts/launch_train.sh main_SFT=sft_esm3_mlp_combined
 
 # Evaluate
 python scripts/evaluate.py experiment_name=<experiment> evaluation.name=all
@@ -55,23 +55,23 @@ SFT (Mol-Instructions, 445K samples)  →  GRPO (GO/Stability/ESMFold rewards)
 
 ```bash
 # MLP projector (default)
-python scripts/train.py experiment=sft_esm3_mlp
+python scripts/train.py main_SFT=sft_esm3_mlp_combined
 
 # Perceiver Resampler
-python scripts/train.py experiment=sft_esm3_perceiver
+python scripts/train.py main_SFT=sft_esm3_perceiver_combined
 
 # Text-only baseline
-python scripts/train.py experiment=sft_text
+python scripts/train.py main_SFT=sft_text_combined
 
 # Custom overrides
-python scripts/train.py experiment=sft_esm3_mlp training.lr=1e-4 model=qwen3_4b
+python scripts/train.py main_SFT=sft_esm3_mlp_combined training.lr=1e-4 model=qwen3_4b
 ```
 
 ### GRPO (chains from SFT checkpoint)
 
 ```bash
-python scripts/train.py experiment=grpo_go_prediction parent_experiment=<sft_experiment>
-python scripts/train.py experiment=grpo_stability parent_experiment=<sft_experiment>
+python scripts/train.py main_RL=grpo_go_prediction parent_experiment=<sft_experiment>
+python scripts/train.py main_RL=grpo_stability parent_experiment=<sft_experiment>
 ```
 
 ### Downstream Task Data
@@ -101,9 +101,10 @@ Tasks: GO prediction (F1), PPI prediction (accuracy), Stability (MAE), SFT gener
 
 ```
 ├── configs/                  # Hydra configurations
-│   ├── experiment/           #   Experiment presets (sft_esm3_mlp, etc.)
-│   ├── model/                #   LLM configs (qwen3_4b/8b/14b, llama3_8b)
-│   ├── training/             #   Training configs (sft_lora, grpo, dpo)
+│   ├── main_SFT/             #   SFT experiment presets
+│   ├── main_RL/              #   RL/GRPO experiment presets
+│   ├── model/                #   LLM configs (qwen3_4b/8b)
+│   ├── training/             #   Training configs (sft_lora, grpo)
 │   ├── data/                 #   Dataset configs
 │   └── encoder/              #   ESM-3 encoder config
 ├── src/

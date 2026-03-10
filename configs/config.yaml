@@ -2,9 +2,10 @@ defaults:
   - model: qwen3_4b
   - encoder: esm3_small
   - data: mol_instructions
-  - training: sft_qlora
+  - training: sft_lora
   - _self_
-  - optional experiment: null
+  - optional main_SFT: null
+  - optional main_RL: null
 
 # Approach selection: text | esm3
 # - text: No encoder, raw protein sequence fed as text tokens to LLM

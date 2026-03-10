@@ -1,0 +1,636 @@
+{
+  "collection_date": "2026-03-09",
+  "total_experiments": 8,
+  "experiments": [
+    {
+      "name": "base_qwen3_8b_esm3_random",
+      "data_source": "local",
+      "learning_rate": 0.0002,
+      "projector_lr": 0.002,
+      "num_epochs": null,
+      "weight_decay": 0.01,
+      "max_tokens_per_batch": null,
+      "warmup_steps": null,
+      "lr_scheduler_type": null,
+      "approach": "esm3",
+      "data_name": "combined_sft_260225",
+      "has_trainer_state": false,
+      "has_sft_eval": true,
+      "sft_eval_metrics": {
+        "num_samples": 5000,
+        "perplexity": 28.252113927103984,
+        "gen_samples": 200,
+        "bleu": 0.002514810588359226,
+        "bleu_other": 0.0023004640348104994,
+        "bleu_domain_motif": 0.002737424574074321,
+        "bleu_protein_function": 0.003473912502422081,
+        "bleu_description": 0.0016171567253301605,
+        "bleu_catalytic_activity": 0.009151697442997587,
+        "rouge_l": 0.056895751423211856,
+        "rouge_l_other": 0.05140179253824809,
+        "rouge_l_domain_motif": 0.055420609371443434,
+        "rouge_l_protein_function": 0.08390268313853978,
+        "rouge_l_description": 0.0382539977980011,
+        "rouge_l_catalytic_activity": 0.12060606060606063
+      }
+    },
+    {
+      "name": "base_qwen3_8b_text",
+      "data_source": "local",
+      "learning_rate": 0.0002,
+      "projector_lr": 0.002,
+      "num_epochs": null,
+      "weight_decay": 0.01,
+      "max_tokens_per_batch": null,
+      "warmup_steps": null,
+      "lr_scheduler_type": null,
+      "approach": "text",
+      "data_name": "combined_sft_260225",
+      "has_trainer_state": false,
+      "has_sft_eval": true,
+      "sft_eval_metrics": {
+        "num_samples": 5000,
+        "perplexity": 22.731641715733417,
+        "gen_samples": 200,
+        "bleu": 0.0032513491556622302,
+        "bleu_other": 0.0025322383056237594,
+        "bleu_domain_motif": 0.0068184711971136566,
+        "bleu_protein_function": 0.0060225362170824685,
+        "bleu_description": 0.0018331611239869098,
+        "bleu_catalytic_activity": 0.003759836292047402,
+        "rouge_l": 0.060654574589192614,
+        "rouge_l_other": 0.05635448697966804,
+        "rouge_l_domain_motif": 0.10373551200799791,
+        "rouge_l_protein_function": 0.08051772110522304,
+        "rouge_l_description": 0.04229436599340444,
+        "rouge_l_catalytic_activity": 0.10913521701903445
+      }
+    },
+    {
+      "name": "grpo_structure_mlp_sft_qwen3_8b_it_0309_154144",
+      "data_source": "local",
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "base_model": "Qwen/Qwen3-8B",
+      "stage": "grpo",
+      "encoder": "esm3-sm-open-v1",
+      "parent_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "parent_checkpoint": "results/sft_esm3_mlp_combined_qwen3_8b_it_0306_010408/checkpoints/checkpoint-9750",
+      "created_at": "2026-03-09T15:41:52.551112",
+      "completed_at": null,
+      "learning_rate": 5e-06,
+      "projector_lr": 2.5e-05,
+      "num_epochs": null,
+      "weight_decay": null,
+      "max_tokens_per_batch": null,
+      "warmup_steps": 20,
+      "lr_scheduler_type": null,
+      "grpo_config": {
+        "group_size": 8,
+        "temperature": 1.0,
+        "use_kl_penalty": false,
+        "normalize_advantages": false
+      },
+      "grpo_parent": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "data_name": "structure_quality",
+      "has_trainer_state": false,
+      "has_generation_eval": false
+    },
+    {
+      "name": "grpo_structure_mlp_sft_qwen3_8b_it_0309_154545",
+      "data_source": "local",
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "base_model": "Qwen/Qwen3-8B",
+      "stage": "grpo",
+      "encoder": "esm3-sm-open-v1",
+      "parent_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "parent_checkpoint": "results/sft_esm3_mlp_combined_qwen3_8b_it_0306_010408/checkpoints/checkpoint-9750",
+      "created_at": "2026-03-09T15:45:53.293170",
+      "completed_at": null,
+      "learning_rate": 5e-06,
+      "projector_lr": 2.5e-05,
+      "num_epochs": null,
+      "weight_decay": null,
+      "max_tokens_per_batch": null,
+      "warmup_steps": 20,
+      "lr_scheduler_type": null,
+      "grpo_config": {
+        "group_size": 8,
+        "temperature": 1.0,
+        "use_kl_penalty": false,
+        "normalize_advantages": false
+      },
+      "grpo_parent": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "data_name": "structure_quality",
+      "has_trainer_state": false,
+      "has_generation_eval": false
+    },
+    {
+      "name": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "data_source": "local",
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "base_model": "Qwen/Qwen3-8B",
+      "stage": "sft_lora",
+      "encoder": "esm3-sm-open-v1",
+      "parent_experiment": null,
+      "parent_checkpoint": null,
+      "created_at": "2026-03-06T10:56:57.626122",
+      "completed_at": "2026-03-08T16:53:33.671279",
+      "learning_rate": 0.0002,
+      "projector_lr": 0.001,
+      "num_epochs": null,
+      "weight_decay": 0.01,
+      "max_tokens_per_batch": 8192,
+      "warmup_steps": null,
+      "lr_scheduler_type": null,
+      "data_name": "combined_sft_260225",
+      "total_steps": 9750,
+      "num_train_log_entries": 975,
+      "num_eval_log_entries": 39,
+      "final_token_avg_loss": 0.3659,
+      "first_token_avg_loss": 3.2968,
+      "best_eval_loss": 0.360674113035202,
+      "best_eval_step": 9750,
+      "final_eval_loss": 0.360674113035202,
+      "has_trainer_state": true,
+      "has_generation_eval": true,
+      "num_generation_eval_steps": 28,
+      "best_bleu": 0.31470982521071206,
+      "best_bleu_step": 9250,
+      "best_rouge_l": 0.5145342658161157,
+      "best_rouge_l_step": 9250
+    },
+    {
+      "name": "sft_esm3_mlp_thinking_qwen3_8b_it_0309_115011",
+      "data_source": "local",
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "base_model": "Qwen/Qwen3-8B",
+      "stage": "sft_lora",
+      "encoder": "esm3-sm-open-v1",
+      "parent_experiment": null,
+      "parent_checkpoint": null,
+      "created_at": "2026-03-09T11:50:18.840620",
+      "completed_at": null,
+      "learning_rate": 0.0002,
+      "projector_lr": 0.001,
+      "num_epochs": null,
+      "weight_decay": 0.01,
+      "max_tokens_per_batch": 8192,
+      "warmup_steps": null,
+      "lr_scheduler_type": null,
+      "data_name": "combined_sft_260225",
+      "total_steps": 500,
+      "num_train_log_entries": 50,
+      "num_eval_log_entries": 2,
+      "final_token_avg_loss": 0.6338,
+      "first_token_avg_loss": 2.6295,
+      "best_eval_loss": 0.6131405234336853,
+      "best_eval_step": 500,
+      "final_eval_loss": 0.6131405234336853,
+      "has_trainer_state": true,
+      "has_generation_eval": true,
+      "num_generation_eval_steps": 2,
+      "best_bleu": 0.010197285435058885,
+      "best_bleu_step": 500,
+      "best_rouge_l": 0.07342767907766491,
+      "best_rouge_l_step": 500
+    },
+    {
+      "name": "sft_esm3_perceiver_combined_qwen3_8b_it_0308_165601",
+      "data_source": "local",
+      "has_trainer_state": false,
+      "has_generation_eval": false
+    },
+    {
+      "name": "sft_text_combined_qwen3_8b_it_0307_190324",
+      "data_source": "local",
+      "approach": "text",
+      "projector_type": "mlp",
+      "base_model": "Qwen/Qwen3-8B",
+      "stage": "sft_lora",
+      "encoder": "esm3-sm-open-v1",
+      "parent_experiment": null,
+      "parent_checkpoint": null,
+      "created_at": "2026-03-09T14:39:59.864128",
+      "completed_at": "2026-03-09T15:00:00",
+      "learning_rate": 0.0002,
+      "projector_lr": null,
+      "num_epochs": null,
+      "weight_decay": 0.01,
+      "max_tokens_per_batch": 8192,
+      "warmup_steps": null,
+      "lr_scheduler_type": null,
+      "data_name": "combined_sft_260225",
+      "total_steps": 9647,
+      "num_train_log_entries": 1002,
+      "num_eval_log_entries": 38,
+      "final_token_avg_loss": 1.6432,
+      "first_token_avg_loss": 4.0729,
+      "best_eval_loss": 1.2072135210037231,
+      "best_eval_step": 8000,
+      "final_eval_loss": 1.2656197547912598,
+      "has_trainer_state": true,
+      "has_generation_eval": true,
+      "num_generation_eval_steps": 34,
+      "best_bleu": 0.27562353542398,
+      "best_bleu_step": 6250,
+      "best_rouge_l": 0.46643191866733247,
+      "best_rouge_l_step": 6250
+    }
+  ],
+  "generation_metrics": {
+    "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408": [
+      {
+        "step": 3000,
+        "bleu": 0.17874995900267648,
+        "rouge_l": 0.416860015399822,
+        "num_samples": 40
+      },
+      {
+        "step": 3250,
+        "bleu": 0.20056349497840048,
+        "rouge_l": 0.4352607727468791,
+        "num_samples": 40
+      },
+      {
+        "step": 3500,
+        "bleu": 0.19666047263705805,
+        "rouge_l": 0.4339246959933688,
+        "num_samples": 40
+      },
+      {
+        "step": 3750,
+        "bleu": 0.27375385395448715,
+        "rouge_l": 0.43957066275553663,
+        "num_samples": 40
+      },
+      {
+        "step": 4000,
+        "bleu": 0.2666732467070535,
+        "rouge_l": 0.45326445079609295,
+        "num_samples": 40
+      },
+      {
+        "step": 4250,
+        "bleu": 0.2743922862832341,
+        "rouge_l": 0.48696578910051513,
+        "num_samples": 40
+      },
+      {
+        "step": 4500,
+        "bleu": 0.21300173783915652,
+        "rouge_l": 0.413727631382356,
+        "num_samples": 40
+      },
+      {
+        "step": 4750,
+        "bleu": 0.24098871070755384,
+        "rouge_l": 0.4577846554727912,
+        "num_samples": 40
+      },
+      {
+        "step": 5000,
+        "bleu": 0.2291481804079154,
+        "rouge_l": 0.4330566812903349,
+        "num_samples": 40
+      },
+      {
+        "step": 5250,
+        "bleu": 0.259338340821103,
+        "rouge_l": 0.4597710004846591,
+        "num_samples": 40
+      },
+      {
+        "step": 5500,
+        "bleu": 0.2577085059073566,
+        "rouge_l": 0.45421401362552694,
+        "num_samples": 40
+      },
+      {
+        "step": 5750,
+        "bleu": 0.2723755592542444,
+        "rouge_l": 0.46209430123044104,
+        "num_samples": 40
+      },
+      {
+        "step": 6000,
+        "bleu": 0.26786800455583043,
+        "rouge_l": 0.4543939603777865,
+        "num_samples": 40
+      },
+      {
+        "step": 6250,
+        "bleu": 0.22389133066848538,
+        "rouge_l": 0.43812079769401163,
+        "num_samples": 40
+      },
+      {
+        "step": 6500,
+        "bleu": 0.2472375679177361,
+        "rouge_l": 0.4614069372598008,
+        "num_samples": 40
+      },
+      {
+        "step": 6750,
+        "bleu": 0.29733043038267715,
+        "rouge_l": 0.4879224531709053,
+        "num_samples": 40
+      },
+      {
+        "step": 7000,
+        "bleu": 0.30695361180817293,
+        "rouge_l": 0.48310541876779406,
+        "num_samples": 40
+      },
+      {
+        "step": 7250,
+        "bleu": 0.2580604081585518,
+        "rouge_l": 0.48053676655891603,
+        "num_samples": 40
+      },
+      {
+        "step": 7500,
+        "bleu": 0.25113630539083565,
+        "rouge_l": 0.4658537283168118,
+        "num_samples": 40
+      },
+      {
+        "step": 7750,
+        "bleu": 0.26226621212879225,
+        "rouge_l": 0.4653773328240062,
+        "num_samples": 40
+      },
+      {
+        "step": 8000,
+        "bleu": 0.2462869654190055,
+        "rouge_l": 0.4692899654771939,
+        "num_samples": 40
+      },
+      {
+        "step": 8250,
+        "bleu": 0.2585360497861692,
+        "rouge_l": 0.4650247124192452,
+        "num_samples": 40
+      },
+      {
+        "step": 8500,
+        "bleu": 0.2590712233925666,
+        "rouge_l": 0.45974213976162337,
+        "num_samples": 40
+      },
+      {
+        "step": 8750,
+        "bleu": 0.3123882787075979,
+        "rouge_l": 0.5058080467852746,
+        "num_samples": 40
+      },
+      {
+        "step": 9000,
+        "bleu": 0.2965159047846285,
+        "rouge_l": 0.48528476647324403,
+        "num_samples": 40
+      },
+      {
+        "step": 9250,
+        "bleu": 0.31470982521071206,
+        "rouge_l": 0.5145342658161157,
+        "num_samples": 40
+      },
+      {
+        "step": 9500,
+        "bleu": 0.262320627874645,
+        "rouge_l": 0.46577758359764865,
+        "num_samples": 40
+      },
+      {
+        "step": 9750,
+        "bleu": 0.25536475140139897,
+        "rouge_l": 0.4813674071985893,
+        "num_samples": 40
+      }
+    ],
+    "sft_esm3_mlp_thinking_qwen3_8b_it_0309_115011": [
+      {
+        "step": 250,
+        "bleu": 0.0030706101047720336,
+        "rouge_l": 0.06528989922263213,
+        "num_samples": 40
+      },
+      {
+        "step": 500,
+        "bleu": 0.010197285435058885,
+        "rouge_l": 0.07342767907766491,
+        "num_samples": 40
+      }
+    ],
+    "sft_text_combined_qwen3_8b_it_0307_190324": [
+      {
+        "step": 1000,
+        "bleu": 0.0,
+        "rouge_l": 0.014814814814814815,
+        "num_samples": 3
+      },
+      {
+        "step": 1250,
+        "bleu": 0.0,
+        "rouge_l": 0.014814814814814815,
+        "num_samples": 3
+      },
+      {
+        "step": 1500,
+        "bleu": 0.0,
+        "rouge_l": 0.014814814814814815,
+        "num_samples": 3
+      },
+      {
+        "step": 1750,
+        "bleu": 0.0,
+        "rouge_l": 0.014814814814814815,
+        "num_samples": 3
+      },
+      {
+        "step": 2000,
+        "bleu": 0.0,
+        "rouge_l": 0.014814814814814815,
+        "num_samples": 3
+      },
+      {
+        "step": 2250,
+        "bleu": 0.0,
+        "rouge_l": 0.014814814814814815,
+        "num_samples": 3
+      },
+      {
+        "step": 250,
+        "bleu": 0.0,
+        "rouge_l": 0.014814814814814815,
+        "num_samples": 3
+      },
+      {
+        "step": 2500,
+        "bleu": 0.0,
+        "rouge_l": 0.014814814814814815,
+        "num_samples": 3
+      },
+      {
+        "step": 2750,
+        "bleu": 0.0,
+        "rouge_l": 0.014814814814814815,
+        "num_samples": 3
+      },
+      {
+        "step": 3000,
+        "bleu": 0.0,
+        "rouge_l": 0.014814814814814815,
+        "num_samples": 3
+      },
+      {
+        "step": 3250,
+        "bleu": 0.0,
+        "rouge_l": 0.014814814814814815,
+        "num_samples": 3
+      },
+      {
+        "step": 3500,
+        "bleu": 0.0,
+        "rouge_l": 0.014814814814814815,
+        "num_samples": 3
+      },
+      {
+        "step": 3750,
+        "bleu": 0.0,
+        "rouge_l": 0.014814814814814815,
+        "num_samples": 3
+      },
+      {
+        "step": 4000,
+        "bleu": 0.0,
+        "rouge_l": 0.014814814814814815,
+        "num_samples": 3
+      },
+      {
+        "step": 4250,
+        "bleu": 0.0,
+        "rouge_l": 0.014814814814814815,
+        "num_samples": 3
+      },
+      {
+        "step": 4500,
+        "bleu": 0.0,
+        "rouge_l": 0.014814814814814815,
+        "num_samples": 3
+      },
+      {
+        "step": 4750,
+        "bleu": 0.0,
+        "rouge_l": 0.014814814814814815,
+        "num_samples": 3
+      },
+      {
+        "step": 500,
+        "bleu": 0.0,
+        "rouge_l": 0.014814814814814815,
+        "num_samples": 3
+      },
+      {
+        "step": 5000,
+        "bleu": 0.0,
+        "rouge_l": 0.014814814814814815,
+        "num_samples": 3
+      },
+      {
+        "step": 5250,
+        "bleu": 0.20054676987502668,
+        "rouge_l": 0.418121013112299,
+        "num_samples": 40
+      },
+      {
+        "step": 5500,
+        "bleu": 0.2099289575889891,
+        "rouge_l": 0.4204293335643953,
+        "num_samples": 40
+      },
+      {
+        "step": 5750,
+        "bleu": 0.22157535328230246,
+        "rouge_l": 0.423522597990432,
+        "num_samples": 40
+      },
+      {
+        "step": 6000,
+        "bleu": 0.22655422774296413,
+        "rouge_l": 0.41360010826511706,
+        "num_samples": 40
+      },
+      {
+        "step": 6250,
+        "bleu": 0.27562353542398,
+        "rouge_l": 0.46643191866733247,
+        "num_samples": 40
+      },
+      {
+        "step": 6500,
+        "bleu": 0.23961981622855855,
+        "rouge_l": 0.43094256530241626,
+        "num_samples": 40
+      },
+      {
+        "step": 6750,
+        "bleu": 0.2558123070780664,
+        "rouge_l": 0.4328391185639623,
+        "num_samples": 40
+      },
+      {
+        "step": 7000,
+        "bleu": 0.23252804674100863,
+        "rouge_l": 0.4224634700650829,
+        "num_samples": 40
+      },
+      {
+        "step": 7250,
+        "bleu": 0.2153969600521088,
+        "rouge_l": 0.41563887405199973,
+        "num_samples": 40
+      },
+      {
+        "step": 750,
+        "bleu": 0.0,
+        "rouge_l": 0.014814814814814815,
+        "num_samples": 3
+      },
+      {
+        "step": 7500,
+        "bleu": 0.2625258552009401,
+        "rouge_l": 0.4336821161125045,
+        "num_samples": 40
+      },
+      {
+        "step": 7750,
+        "bleu": 0.2292931855095596,
+        "rouge_l": 0.42203817609402783,
+        "num_samples": 40
+      },
+      {
+        "step": 8000,
+        "bleu": 0.23751817675153233,
+        "rouge_l": 0.4339671358488131,
+        "num_samples": 40
+      },
+      {
+        "step": 8250,
+        "bleu": 0.2571557887323802,
+        "rouge_l": 0.43217539690121276,
+        "num_samples": 40
+      },
+      {
+        "step": 8500,
+        "bleu": 0.265198090185331,
+        "rouge_l": 0.44783710701344265,
+        "num_samples": 40
+      }
+    ]
+  }
+}

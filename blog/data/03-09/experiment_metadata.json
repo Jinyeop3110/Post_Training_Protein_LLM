@@ -1,0 +1,44 @@
+{
+  "experiments": [
+    {
+      "name": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "base_model": "Qwen/Qwen3-8B",
+      "stage": "sft_lora",
+      "encoder": "esm3-sm-open-v1",
+      "learning_rate": "",
+      "projector_lr": "",
+      "num_epochs": "",
+      "total_steps_logged": 975,
+      "max_step": 9750,
+      "created_at": "2026-03-06T10:56:57.626122",
+      "completed_at": "2026-03-08T16:53:33.671279",
+      "final_token_avg_loss": 0.3659,
+      "final_eval_loss": 0.360674113035202,
+      "final_eval_step": 9750,
+      "gpu_memory_max_gb": "",
+      "data_source": "local"
+    },
+    {
+      "name": "sft_text_combined_qwen3_8b_it_0307_190324",
+      "approach": "text",
+      "projector_type": "mlp",
+      "base_model": "Qwen/Qwen3-8B",
+      "stage": "sft_lora",
+      "encoder": "esm3-sm-open-v1",
+      "learning_rate": "",
+      "projector_lr": "",
+      "num_epochs": "",
+      "total_steps_logged": 700,
+      "max_step": 7000,
+      "created_at": "2026-03-08T15:26:59.331006",
+      "completed_at": "2026-03-08T16:53:33.672108",
+      "final_token_avg_loss": 1.7751,
+      "final_eval_loss": 1.2338368892669678,
+      "final_eval_step": 7000,
+      "gpu_memory_max_gb": "",
+      "data_source": "local"
+    }
+  ]
+}

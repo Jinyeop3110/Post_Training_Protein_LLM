@@ -30,9 +30,9 @@ python scripts/data/download_megascale.py --max_samples 10000     # Stability/dd
 python scripts/data/download_structure_quality.py --max_samples 10000  # Structure quality
 
 # GRPO with downstream tasks
-python scripts/train.py experiment=grpo_go_prediction parent_experiment=my_sft
-python scripts/train.py experiment=grpo_stability parent_experiment=my_sft
-python scripts/train.py experiment=grpo_structure parent_experiment=my_sft
+python scripts/train.py main_RL=grpo_go_prediction parent_experiment=my_sft
+python scripts/train.py main_RL=grpo_stability parent_experiment=my_sft
+python scripts/train.py main_RL=grpo_structure parent_experiment=my_sft
 
 # Evaluate (auto-detects checkpoint from experiment)
 python scripts/evaluate.py experiment_name=my_sft_run evaluation.name=all
@@ -106,6 +106,9 @@ python scripts/train.py --cfg job  # Print config
 | src/utils/experiment.py | Lineage tracking utilities |
 | docs/ | Detailed documentation |
 | .claude/ | Skills, commands, agents |
+| blog/ | **Internal dev blog** (posts, figures, analysis data) |
+| blog/figures/figure_catalog.md | **Figure catalog** — single source of truth |
+| paper/ | **LaTeX paper** (main.tex, figures/main/, figures/supplementary/) |
 
 ## Documentation
 - [docs/research/agents_research_log.md](docs/research/agents_research_log.md) - **Project Log** (progress, results, decisions)

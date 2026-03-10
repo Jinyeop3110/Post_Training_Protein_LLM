@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Figure Upgrade Proposal: Closing the Gap to a Publication-Ready Figure Set</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #1a1a2e;
+            --accent: #2563eb;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --code-bg: #f3f4f6;
+            --warn-bg: #fef3c7;
+            --warn-border: #f59e0b;
+            --good-bg: #d1fae5;
+            --good-border: #10b981;
+            --bad-bg: #fee2e2;
+            --bad-border: #ef4444;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--fg);
+            background: var(--bg);
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        h1 { font-size: 1.8rem; margin-bottom: 0.3rem; font-weight: 700; }
+        h2 { font-size: 1.4rem; margin: 2rem 0 0.8rem; border-bottom: 2px solid var(--accent); padding-bottom: 0.3rem; }
+        h3 { font-size: 1.15rem; margin: 1.4rem 0 0.5rem; color: #374151; }
+        .meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+        .meta strong { color: var(--fg); }
+        table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.88rem; }
+        th, td { border: 1px solid var(--border); padding: 0.45rem 0.6rem; text-align: left; }
+        th { background: #f9fafb; font-weight: 600; }
+        code { background: var(--code-bg); padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85em; }
+        .tag { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 600; margin-right: 0.3rem; }
+        .tag-current { background: var(--good-bg); color: #065f46; }
+        .tag-outdated { background: var(--bad-bg); color: #991b1b; }
+        .tag-needs-update { background: var(--warn-bg); color: #92400e; }
+        .tag-missing { background: #e0e7ff; color: #3730a3; }
+        .tag-p1 { background: #fee2e2; color: #991b1b; }
+        .tag-p2 { background: #fef3c7; color: #92400e; }
+        .tag-p3 { background: #dbeafe; color: #1e40af; }
+        .callout { border-left: 4px solid var(--accent); padding: 0.8rem 1rem; margin: 1rem 0; background: #f0f4ff; border-radius: 0 4px 4px 0; }
+        .callout-warn { border-left-color: var(--warn-border); background: var(--warn-bg); }
+        .callout-good { border-left-color: var(--good-border); background: var(--good-bg); }
+        .callout-bad { border-left-color: var(--bad-border); background: var(--bad-bg); }
+        img { max-width: 100%; border: 1px solid var(--border); border-radius: 4px; margin: 0.5rem 0; }
+        .fig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin: 1rem 0; }
+        .fig-grid img { width: 100%; }
+        ol, ul { margin-left: 1.5rem; margin-bottom: 1rem; }
+        li { margin-bottom: 0.3rem; }
+        .priority-table td:first-child { font-weight: 600; white-space: nowrap; }
+        hr { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+    </style>
+</head>
+<body>
+
+<h1>Figure Upgrade Proposal: Closing the Gap to a Publication-Ready Figure Set</h1>
+
+<div class="meta">
+    <strong>Date</strong>: 2026-03-09 &nbsp;|&nbsp;
+    <strong>Question</strong>: What figures need to be created, updated, or replaced for a complete paper? &nbsp;|&nbsp;
+    <strong>Scope</strong>: 9 main figures, 50 supplementary blog figures, 30 paper supplementary figures
+</div>
+
+<h2>1. Executive Summary</h2>
+
+<p>The project has 9 main figures (<code>fig1</code>&ndash;<code>fig9</code>) and ~50 supplementary blog figures, all generated through a unified style system (<code>figure_style.py</code>). However, <strong>several critical gaps prevent the current set from being paper-ready</strong>:</p>
+
+<ul>
+    <li><strong>Missing approaches</strong>: Figures 8 and 9 only cover 2 of 4 approaches (MLP and Text-only). Perceiver SFT on 4.89M (<code>sft_esm3_perceiver_combined_qwen3_8b_it_0308_165601</code>) has no checkpoints or metrics yet, and Flamingo has not been run. The four-way comparison thesis remains incomplete.</li>
+    <li><strong>Stale data in Fig 8</strong>: The Text-only curve in <code>fig8_mlp_vs_text.png</code> shows only ~200 steps of data (the run was still early at snapshot time), making the comparison visually misleading&mdash;the text line terminates prematurely while MLP extends to 9,750 steps.</li>
+    <li><strong>No downstream evaluation figures</strong>: Base model evaluation exists (BLEU 0.003, ROUGE-L 0.057 for ESM3; BLEU 0.003, ROUGE-L 0.061 for Text) but no figures visualize the SFT vs base model improvement or per-task breakdown.</li>
+    <li><strong>No GRPO figures</strong>: Two GRPO runs launched 2026-03-09 (<code>grpo_structure_mlp_sft_*</code>) but produced no checkpoints or metrics yet.</li>
+    <li><strong>Generation quality uses hardcoded fallbacks</strong>: <code>fig6_generation_quality.png</code> displays Step 7000 data from fallback constants, not from the actual <code>generation_step_9750.json</code> which shows BLEU 0.256 / ROUGE-L 0.481 (lower than fallback 0.307 / 0.483).</li>
+</ul>
+
+<h2>2. Main Figure Review (Fig 1&ndash;Fig 9)</h2>
+
+<h3>Fig 1: Schematic Overview <span class="tag tag-needs-update">needs-update</span></h3>
+<p><strong>Content</strong>: 4-panel project overview (Question, Approach, Training Pipeline, Key Results). <strong>Source</strong>: <code>plot_schematic_overview.py</code>.</p>
+<p><strong>Issues</strong>:</p>
+<ul>
+    <li>The "Key Results" panel shows "GRPO Impact: PENDING" with a red star. Since GRPO runs have launched (even if incomplete), this is accurate but will need updating once GRPO data arrives.</li>
+    <li>The "Perceiver" and "Flamingo" boxes have red stars indicating incomplete status&mdash;correct for now, but the figure must be regenerated once those experiments complete.</li>
+    <li>Resolution is adequate (300 DPI) but the 4-panel layout appears crowded at single-column paper width (3.25"). Recommend generating a full-width (6.75") variant for the paper.</li>
+</ul>
+
+<h3>Fig 2: Architecture Diagram <span class="tag tag-current">current</span></h3>
+<p><strong>Content</strong>: ESM-3 + MLP projector architecture flow. <strong>Source</strong>: <code>plot_pub_figures.py::fig2_architecture()</code>.</p>
+<p><strong>Issues</strong>: Minor&mdash;shows only the MLP pathway. For a four-way comparison paper, a multi-panel architecture figure showing all four approaches side-by-side would be more appropriate. The existing supplementary <code>architecture_comparison.png</code> partially addresses this but is not in the main figure set.</p>
+
+<h3>Fig 3: Data Composition <span class="tag tag-current">current</span></h3>
+<p><strong>Content</strong>: Horizontal bar chart of 4.89M training samples by category. <strong>Source</strong>: hardcoded <code>_DATASET_COMP_FALLBACK</code>.</p>
+<p><strong>Issues</strong>: Data values are hardcoded fallbacks (Protein Function 2.147M, Catalytic Activity 1.236M, etc.). These should be loaded from the actual dataset metadata to ensure accuracy. Visual quality is good.</p>
+
+<h3>Fig 4: Main Run Progress <span class="tag tag-current">current</span></h3>
+<p><strong>Content</strong>: Train + eval loss for MLP on 4.89M (experiment <code>sft_esm3_mlp_combined_qwen3_8b_it_0306_010408</code>, 9,750 steps).</p>
+<p><strong>Issues</strong>: Visually clean. Shows MA-50 smoothed training loss with eval diamonds. The rapid initial drop from 3.3 to 0.5 makes the later plateau hard to read. A zoomed inset for steps 2000&ndash;9750 would improve readability. Loss stabilizes at token_avg_loss ~0.366 and eval_loss 0.361 by step 9,750.</p>
+
+<h3>Fig 5: Eval Loss <span class="tag tag-current">current</span></h3>
+<p><strong>Content</strong>: Eval loss curve with best-point annotation (0.361 at step 9,750).</p>
+<p><strong>Issues</strong>: Clean and accurate. Single-approach only (MLP). For the paper, overlaying Text-only eval loss on the same axes would strengthen the narrative. Text-only final eval_loss is 1.234 at step 7,000&mdash;a 70.8% gap from MLP's 0.361.</p>
+
+<h3>Fig 6: Generation Quality <span class="tag tag-outdated">outdated</span></h3>
+<p><strong>Content</strong>: BLEU and ROUGE-L by task category. <strong>Source</strong>: hardcoded <code>_GEN_METRICS_FALLBACK</code>.</p>
+
+<div class="callout callout-warn">
+    <strong>Key issue</strong>: Title says "Step 7000" but actual latest generation eval is at step 9,750 with BLEU=0.256 and ROUGE-L=0.481. The fallback shows BLEU=0.307&mdash;19.9% higher than reality. The per-category breakdown in the fallback does not match the actual <code>generation_step_9750.json</code>. This figure must be regenerated from real data.
+</div>
+
+<h3>Fig 7: Scaling Effect <span class="tag tag-current">current</span></h3>
+<p><strong>Content</strong>: 50K vs 4.89M eval_loss bar chart showing 81% improvement (1.942 to 0.361). Two-panel layout with percentage callout.</p>
+<p><strong>Issues</strong>: Accurate and visually impactful. The 50K baseline (eval_loss 1.942) comes from the early 3-epoch run <code>sft_lora_esm3_qwen3_8b_it_0226_151416</code>. The comparison is valid but compares 3 full epochs (50K) to 0.34 epochs (4.89M), which inflates the scaling effect. A footnote or annotation acknowledging this would strengthen credibility.</p>
+
+<h3>Fig 8: MLP vs Text <span class="tag tag-outdated">outdated</span></h3>
+<p><strong>Content</strong>: ESM3+MLP vs Text-only on 4.89M combined dataset.</p>
+
+<div class="callout callout-bad">
+    <strong>Critical issue</strong>: The Text-only curve (<code>sft_text_combined_qwen3_8b_it_0307_190324</code>) only shows ~200 steps because the data snapshot was taken before the run completed. The text run actually completed 7,000 steps with final token_avg_loss 1.775 and eval_loss 1.234. The figure currently makes it appear that only 200 steps of text data exist, visually exaggerating the MLP advantage. This is the <strong>highest-priority figure to regenerate</strong>.
+</div>
+
+<h3>Fig 9: Final Comparison <span class="tag tag-needs-update">needs-update</span></h3>
+<p><strong>Content</strong>: Cross-approach bar chart with 4 configs (Perceiver 50K, MLP 50K, Text 50K, MLP 4.89M).</p>
+<p><strong>Issues</strong>:</p>
+<ul>
+    <li>Mixes 50K small-scale experiments with the 4.89M large-scale run. A cleaner comparison would separate these into two panels: (a) 50K three-way, (b) 4.89M two-way.</li>
+    <li>Does not include the completed 4.89M Text-only run (eval_loss 1.234). Adding this would give 5 bars total and show the MLP advantage at scale.</li>
+    <li>Uses hardcoded fallback metrics, not <code>analysis_summary.json</code>.</li>
+</ul>
+
+<h2>3. Proposed New Figures</h2>
+
+<table>
+    <tr>
+        <th>Figure Name</th>
+        <th>Category</th>
+        <th>Priority</th>
+        <th>Description</th>
+        <th>Data Available?</th>
+    </tr>
+    <tr>
+        <td><code>fig_mlp_vs_text_full</code></td>
+        <td>comparison</td>
+        <td><span class="tag tag-p1">P1</span></td>
+        <td>MLP vs Text-only loss curves with <strong>complete</strong> text run data (7,000 steps). Replace current fig8.</td>
+        <td>Yes: both <code>sft_esm3_mlp_combined</code> (9,750 steps) and <code>sft_text_combined</code> (7,000 steps) have full trainer_state.json</td>
+    </tr>
+    <tr>
+        <td><code>fig_gen_quality_real</code></td>
+        <td>generation</td>
+        <td><span class="tag tag-p1">P1</span></td>
+        <td>Generation quality from actual eval JSONs (not fallbacks). Include both MLP and Text-only per-category BLEU/ROUGE-L. Text-only has 34 generation eval checkpoints.</td>
+        <td>Yes: <code>eval/generation_step_*.json</code> for both runs</td>
+    </tr>
+    <tr>
+        <td><code>fig_base_vs_sft</code></td>
+        <td>evaluation</td>
+        <td><span class="tag tag-p1">P1</span></td>
+        <td>Bar chart: Base model vs SFT performance. Base ESM3: perplexity 28.25, BLEU 0.003, ROUGE-L 0.057. SFT MLP: BLEU 0.256, ROUGE-L 0.481. This is a 102x BLEU improvement.</td>
+        <td>Yes: <code>base_qwen3_8b_esm3_random/eval/sft_metrics.json</code> and <code>generation_step_9750.json</code></td>
+    </tr>
+    <tr>
+        <td><code>fig_gen_quality_over_steps</code></td>
+        <td>generation</td>
+        <td><span class="tag tag-p2">P2</span></td>
+        <td>BLEU and ROUGE-L over training steps for MLP and Text-only, showing how generation quality evolves. MLP has evals from step 2,750&ndash;9,750; Text-only from step 250&ndash;8,500.</td>
+        <td>Yes: 28+ generation checkpoints for MLP, 34 for Text-only</td>
+    </tr>
+    <tr>
+        <td><code>fig_eval_loss_overlay</code></td>
+        <td>evaluation</td>
+        <td><span class="tag tag-p2">P2</span></td>
+        <td>MLP and Text-only eval_loss on same axes (complete data). MLP: 0.361 at step 9,750. Text: 1.234 at step 7,000. Delta: 70.8%.</td>
+        <td>Yes: both experiments have eval checkpoints</td>
+    </tr>
+    <tr>
+        <td><code>fig_four_way_architecture</code></td>
+        <td>architecture</td>
+        <td><span class="tag tag-p2">P2</span></td>
+        <td>Promote the existing supplementary <code>architecture_comparison.png</code> to a main figure, or create a 4-panel version showing Text, MLP, Perceiver, Flamingo pathways.</td>
+        <td>Yes: existing diagram in supple_figures</td>
+    </tr>
+    <tr>
+        <td><code>fig_per_task_breakdown</code></td>
+        <td>evaluation</td>
+        <td><span class="tag tag-p2">P2</span></td>
+        <td>Per-task BLEU/ROUGE-L radar or grouped bar chart. Base ESM3 shows catalytic_activity ROUGE-L 0.121 vs SFT MLP 0.481 overall. Break down by: catalytic, function, domain_motif, description, other.</td>
+        <td>Partial: per-category metrics in base model eval and generation_step JSONs</td>
+    </tr>
+    <tr>
+        <td><code>fig_perceiver_comparison</code></td>
+        <td>comparison</td>
+        <td><span class="tag tag-p3">P3</span></td>
+        <td>Three-way comparison: MLP vs Perceiver vs Text on 4.89M. Blocked by Perceiver run (<code>sft_esm3_perceiver_combined</code>) which has only logs/ so far.</td>
+        <td>No: Perceiver run has no checkpoints yet</td>
+    </tr>
+    <tr>
+        <td><code>fig_grpo_reward_curves</code></td>
+        <td>rl</td>
+        <td><span class="tag tag-p3">P3</span></td>
+        <td>GRPO reward over training steps, policy loss. Blocked by GRPO runs completing.</td>
+        <td>No: two GRPO runs launched 2026-03-09 but no metrics yet</td>
+    </tr>
+    <tr>
+        <td><code>fig_sft_vs_grpo</code></td>
+        <td>comparison</td>
+        <td><span class="tag tag-p3">P3</span></td>
+        <td>Before/after GRPO: eval_loss, generation quality, and downstream task metrics. This is the key result for the RL alignment story.</td>
+        <td>No: GRPO not complete</td>
+    </tr>
+</table>
+
+<h2>4. Data Availability Assessment</h2>
+
+<table>
+    <tr>
+        <th>Experiment</th>
+        <th>Approach</th>
+        <th>Status</th>
+        <th>Steps</th>
+        <th>trainer_state</th>
+        <th>Gen Evals</th>
+        <th>Base Eval</th>
+    </tr>
+    <tr>
+        <td><code>sft_esm3_mlp_combined_...0306</code></td>
+        <td>ESM3+MLP</td>
+        <td>Complete</td>
+        <td>9,750 / 9,750</td>
+        <td>Yes (975 log entries)</td>
+        <td>28 checkpoints (step 2,750&ndash;9,750)</td>
+        <td>Yes</td>
+    </tr>
+    <tr>
+        <td><code>sft_text_combined_...0307</code></td>
+        <td>Text-only</td>
+        <td>Complete</td>
+        <td>7,000 / 7,000</td>
+        <td>Yes (700 log entries)</td>
+        <td>34 checkpoints (step 250&ndash;8,500)</td>
+        <td>Yes</td>
+    </tr>
+    <tr>
+        <td><code>sft_esm3_perceiver_combined_...0308</code></td>
+        <td>Perceiver</td>
+        <td>Started</td>
+        <td>0 / ?</td>
+        <td>No (logs/ only)</td>
+        <td>None</td>
+        <td>N/A</td>
+    </tr>
+    <tr>
+        <td><code>sft_esm3_mlp_thinking_...0309</code></td>
+        <td>ESM3+MLP (thinking)</td>
+        <td>In progress</td>
+        <td>500+</td>
+        <td>Yes (2 checkpoints: 250, 500)</td>
+        <td>None</td>
+        <td>N/A</td>
+    </tr>
+    <tr>
+        <td><code>grpo_structure_mlp_sft_...0309_154545</code></td>
+        <td>GRPO (structure)</td>
+        <td>Started</td>
+        <td>0 / ?</td>
+        <td>No</td>
+        <td>None</td>
+        <td>N/A</td>
+    </tr>
+    <tr>
+        <td><code>base_qwen3_8b_esm3_random</code></td>
+        <td>ESM3 (base)</td>
+        <td>Eval only</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td>perplexity 28.25, BLEU 0.003</td>
+    </tr>
+    <tr>
+        <td><code>base_qwen3_8b_text</code></td>
+        <td>Text (base)</td>
+        <td>Eval only</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td>perplexity 22.73, BLEU 0.003</td>
+    </tr>
+</table>
+
+<div class="callout callout-good">
+    <strong>Key finding</strong>: The two completed SFT experiments (MLP and Text-only) plus two base model evaluations provide sufficient data for 6 of the 7 P1/P2 proposed figures. The Perceiver and Flamingo comparisons, plus GRPO results, are blocked by experiment completion.
+</div>
+
+<h2>5. Upgrade Priority List</h2>
+
+<table class="priority-table">
+    <tr>
+        <th>#</th>
+        <th>Action</th>
+        <th>Priority</th>
+        <th>Effort</th>
+        <th>Blocked By</th>
+        <th>Impact</th>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td><strong>Regenerate Fig 8</strong>: MLP vs Text with complete 7,000-step text data</td>
+        <td><span class="tag tag-p1">P1</span></td>
+        <td>Small</td>
+        <td>Nothing</td>
+        <td>Fixes misleading visual (200 vs 9,750 steps)</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td><strong>Regenerate Fig 6</strong>: Use actual generation_step_9750.json data (BLEU 0.256, not fallback 0.307)</td>
+        <td><span class="tag tag-p1">P1</span></td>
+        <td>Small</td>
+        <td>Nothing</td>
+        <td>Fixes inaccurate metric values</td>
+    </tr>
+    <tr>
+        <td>3</td>
+        <td><strong>Create Base vs SFT figure</strong>: 102x BLEU improvement (0.003 to 0.256)</td>
+        <td><span class="tag tag-p1">P1</span></td>
+        <td>Small</td>
+        <td>Nothing</td>
+        <td>Demonstrates SFT value; missing from current set</td>
+    </tr>
+    <tr>
+        <td>4</td>
+        <td><strong>Update Fig 9</strong>: Add 4.89M Text-only bar (eval_loss 1.234) and update from real data</td>
+        <td><span class="tag tag-p1">P1</span></td>
+        <td>Small</td>
+        <td>Nothing</td>
+        <td>Gives complete 4.89M comparison (MLP 0.361 vs Text 1.234)</td>
+    </tr>
+    <tr>
+        <td>5</td>
+        <td><strong>Create generation quality over steps</strong>: MLP vs Text BLEU/ROUGE-L trajectories</td>
+        <td><span class="tag tag-p2">P2</span></td>
+        <td>Medium</td>
+        <td>Nothing</td>
+        <td>Shows training dynamics for generation, not just loss</td>
+    </tr>
+    <tr>
+        <td>6</td>
+        <td><strong>Create eval_loss overlay</strong>: MLP vs Text eval_loss on same axes</td>
+        <td><span class="tag tag-p2">P2</span></td>
+        <td>Small</td>
+        <td>Nothing</td>
+        <td>Stronger visual for the ESM-3 advantage narrative</td>
+    </tr>
+    <tr>
+        <td>7</td>
+        <td><strong>Create per-task breakdown</strong>: BLEU/ROUGE-L by task category for MLP vs Text</td>
+        <td><span class="tag tag-p2">P2</span></td>
+        <td>Medium</td>
+        <td>Nothing</td>
+        <td>Shows where ESM-3 helps most (catalytic vs domain)</td>
+    </tr>
+    <tr>
+        <td>8</td>
+        <td><strong>Update Fig 1</strong>: Once Perceiver/Flamingo/GRPO complete, remove PENDING markers</td>
+        <td><span class="tag tag-p3">P3</span></td>
+        <td>Small</td>
+        <td>Perceiver + GRPO runs</td>
+        <td>Cosmetic; current version is honest about status</td>
+    </tr>
+    <tr>
+        <td>9</td>
+        <td><strong>Four-way architecture diagram</strong>: Promote to main figure once all 4 approaches are validated</td>
+        <td><span class="tag tag-p3">P3</span></td>
+        <td>Medium</td>
+        <td>Flamingo run</td>
+        <td>Paper narrative requires all 4 approaches</td>
+    </tr>
+    <tr>
+        <td>10</td>
+        <td><strong>GRPO reward curves + SFT vs GRPO comparison</strong></td>
+        <td><span class="tag tag-p3">P3</span></td>
+        <td>Medium</td>
+        <td>GRPO completion</td>
+        <td>Essential for RL alignment story</td>
+    </tr>
+</table>
+
+<h2>6. Supplementary Figure Status</h2>
+
+<h3>Current (no action needed): 38 figures</h3>
+<p>The early experiment figures (50K three-way comparison, MLP epoch 1 deep-dive, publication-quality variants) are internally consistent and serve as historical record. The <code>pub_*</code> prefix figures from 03-07 are valid for their respective experiments.</p>
+
+<h3>Outdated or superseded: 12 figures</h3>
+
+<table>
+    <tr><th>Figure</th><th>Issue</th><th>Action</th></tr>
+    <tr>
+        <td><code>mlp_vs_text_training_loss.png</code></td>
+        <td>Uses 50K data only (03-02 vintage)</td>
+        <td>Superseded by fig8 (once regenerated); keep as historical</td>
+    </tr>
+    <tr>
+        <td><code>pub_mlp_vs_text_4m.png</code></td>
+        <td>Same truncated text data as fig8</td>
+        <td>Regenerate alongside fig8</td>
+    </tr>
+    <tr>
+        <td><code>pub_final_comparison.png</code></td>
+        <td>Same fallback data as fig9</td>
+        <td>Regenerate alongside fig9</td>
+    </tr>
+    <tr>
+        <td><code>web_mlp_vs_text_4m.png</code></td>
+        <td>Web variant of truncated fig8</td>
+        <td>Regenerate alongside fig8</td>
+    </tr>
+    <tr>
+        <td><code>web_final_comparison.png</code></td>
+        <td>Web variant of fig9 with fallback data</td>
+        <td>Regenerate alongside fig9</td>
+    </tr>
+    <tr>
+        <td><code>pub_generation_quality.png</code></td>
+        <td>Uses fallback metrics, not real eval data</td>
+        <td>Regenerate with actual generation_step JSONs</td>
+    </tr>
+    <tr>
+        <td><code>web_generation_quality.png</code></td>
+        <td>Web variant of above</td>
+        <td>Regenerate with actual data</td>
+    </tr>
+    <tr>
+        <td><code>text_vs_esm_eval_loss.png</code></td>
+        <td>03-04 vintage, uses early text run (50K)</td>
+        <td>Replace with 4.89M eval_loss overlay</td>
+    </tr>
+    <tr>
+        <td><code>text_vs_esm_final_comparison.png</code></td>
+        <td>03-04 vintage, 50K only</td>
+        <td>Superseded by updated fig9</td>
+    </tr>
+    <tr>
+        <td><code>mlp_combined_*.png</code> (6 files)</td>
+        <td>03-06 vintage, step 7,090 snapshot (run completed at 9,750)</td>
+        <td>Keep as historical; new fig4/fig5 reflect final state</td>
+    </tr>
+</table>
+
+<h2>7. Technical Debt in Figure Generation</h2>
+
+<h3>Hardcoded fallbacks in <code>plot_pub_figures.py</code></h3>
+<p>Three sets of fallback data are defined at module level:</p>
+<ul>
+    <li><code>_FINAL_METRICS_FALLBACK</code>: Used by fig9 when <code>analysis_summary.json</code> is missing or incomplete</li>
+    <li><code>_GEN_METRICS_FALLBACK</code>: Used by fig6 always (no loader for generation eval JSONs)</li>
+    <li><code>_DATASET_COMP_FALLBACK</code>: Used by fig3 always (no dataset metadata loader)</li>
+</ul>
+<p>The <code>load_metrics()</code> function tries to read from <code>analysis_summary.json</code> for final metrics but <strong>always falls through to fallbacks for generation and dataset composition</strong>. This is the root cause of fig6 showing wrong numbers.</p>
+
+<h3>Text run data not in CSV snapshots</h3>
+<p>The <code>run_histories.csv</code> in <code>blog/data/03-07/</code> only contains partial text run data because the data snapshot was taken before <code>sft_text_combined_qwen3_8b_it_0307_190324</code> completed. The 03-09 metadata file confirms 700 log entries (10 steps per entry = 7,000 total steps), but the CSV was not refreshed.</p>
+
+<h2>8. Recommendations</h2>
+
+<ol>
+    <li><strong>Immediate (P1, no blockers)</strong>: Re-run the data-collector to refresh <code>blog/data/03-09/run_histories.csv</code> with complete data from both <code>sft_esm3_mlp_combined</code> and <code>sft_text_combined</code> experiments. Then regenerate figures 6, 8, and 9 via <code>python scripts/analysis/plot_pub_figures.py --figures 6 8 9</code>. This requires fixing the generation metrics loader in <code>plot_pub_figures.py</code> to read from <code>eval/generation_step_*.json</code> rather than using fallbacks.</li>
+    <li><strong>Immediate (P1)</strong>: Create a new Base vs SFT comparison figure. The data exists in <code>results/base_qwen3_8b_esm3_random/eval/sft_metrics.json</code> (BLEU 0.003, perplexity 28.25) and <code>results/sft_esm3_mlp_combined/eval/generation_step_9750.json</code> (BLEU 0.256). This 102x BLEU improvement is a compelling result that belongs in the main figure set.</li>
+    <li><strong>Short-term (P2)</strong>: Add a generation-quality-over-steps figure to <code>plot_pub_figures.py</code> or <code>plot_training.py</code>. Both MLP (28 checkpoints) and Text-only (34 checkpoints) have rich generation eval data that is currently unused in any figure. The <code>plot_training.py::plot_generation_quality()</code> function already supports this but has not been run with both experiments.</li>
+    <li><strong>Short-term (P2)</strong>: Modify <code>plot_pub_figures.py::load_metrics()</code> to load generation metrics from the actual <code>eval/generation_step_*.json</code> files instead of relying on <code>_GEN_METRICS_FALLBACK</code>. Similarly, load dataset composition from the actual Arrow dataset metadata rather than hardcoded values.</li>
+    <li><strong>Blocked (P3)</strong>: Monitor the Perceiver SFT run (<code>sft_esm3_perceiver_combined_qwen3_8b_it_0308_165601</code>) and both GRPO runs. Once these produce metrics, regenerate fig1 (remove PENDING), create the four-way comparison figure, and create the SFT vs GRPO comparison. The Perceiver run appears stalled (only <code>logs/</code> directory exists since 03-08)&mdash;investigate whether it needs to be relaunched.</li>
+    <li><strong>Style consistency</strong>: All new figures should be generated through <code>figure_style.py</code> to ensure consistent colors (MLP=#1f77b4, Text=#808080, Perceiver=#ff7f0e, Flamingo=#d62728), DPI (blog 150, paper 300), and font settings. The <code>save_main_figure()</code> helper automatically saves to both <code>blog/figures/main_figures/</code> (PNG) and <code>paper/figures/main/</code> (PDF).</li>
+</ol>
+
+<hr>
+
+<p><em>Report generated 2026-03-09. Figures reviewed: 9 main, 50 supplementary (blog), 30 supplementary (paper). Experiments analyzed: 7 (2 complete SFT, 2 base model evals, 1 in-progress SFT, 2 launched GRPO). Analysis scripts: <code>plot_pub_figures.py</code>, <code>plot_training.py</code>, <code>figure_style.py</code>.</em></p>
+
+</body>
+</html>

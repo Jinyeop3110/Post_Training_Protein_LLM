@@ -1,0 +1,64 @@
+# @package _global_
+
+# GRPO ProteinLM Bench: ESM3+MLP SFT → GRPO
+# Chains from ESM3+MLP SFT checkpoint. Tests multimodal RL on MC questions.
+# Note: ProteinLMBench questions are text-only (no protein sequences),
+# but the ESM3 approach is tested for consistency with the SFT model form.
+#
+# Memory budget (FSDP/4, per GPU):
+#   Static: 6.5 GB (model + LoRA + ESM-3 + projector)
+#   Peak:   ~12 GB (generation + grad)  →  34 GB headroom on L40S 46GB
+#
+# Usage:
+#   python scripts/train.py main_RL=grpo_proteinlm_mlp_sft
+
+defaults:
+  - override /model: qwen3_8b
+  - override /encoder: esm3_small
+  - override /data: proteinlm_bench
+  - override /training: grpo
+
+approach: esm3
+experiment_name: grpo_proteinlm_mlp_sft_${model.name}_${now:%m%d_%H%M%S}
+
+# Chain from ESM3+MLP SFT
+parent_experiment: sft_esm3_mlp_combined_qwen3_8b_it_0306_010408
+
+# Data task for reward routing
+data:
+  task: proteinlm_bench
+
+training:
+  # --- Optimized for 4×L40S 46GB ---
+  lr: 2e-6               # lower LR for fine-tuning already-trained model
+  projector_lr: 1e-5     # 5x base LR, conservative for trained projector
+  batch_size: 4
+  gradient_accumulation_steps: 2  # effective batch = 32
+  epochs: 3
+  warmup_steps: 10
+  max_grad_norm: 1.0
+
+  grpo:
+    group_size: 8
+    temperature: 0.8
+    use_kl_penalty: false
+    normalize_advantages: false
+
+  rollout:
+    max_tokens: 64
+    top_p: 0.95
+    do_sample: true
+
+  save_steps: 25
+  eval_steps: 10
+  logging_steps: 5
+
+  fsdp:
+    enabled: true
+
+  wandb:
+    tags:
+      - grpo
+      - proteinlm_bench
+      - mlp_sft
+      - ${model.name}

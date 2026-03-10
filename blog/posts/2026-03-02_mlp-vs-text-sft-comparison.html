@@ -243,7 +243,7 @@
 <p>The MLP run (<code>sft_lora_esm3_qwen3_8b_it_0226_151416</code>) trained for fewer steps because it processes protein sequences through the encoder in a separate sub-batch rather than expanding them into long token sequences. The text-only run (<code>sft_text_qwen3_8b_it_0227_145821</code>) converts each protein into 200–800 text tokens that occupy space in the LLM's context window.</p>
 <h2 id="training-loss">Training Loss</h2>
 <p>The loss metric plotted here is <code>token_avg_loss</code> — the true per-token cross-entropy averaged over each logging step. This is distinct from HuggingFace Trainer's <code>loss</code> field, which reports a running average that is heavily inflated by the high initial losses and takes thousands of steps to wash out. (We learned this the hard way — see the <a href="2026-02-24_boundary-tokens-and-instruct-fix.html">02-24 post</a> for the full story.)</p>
-<p><img alt="Training Loss: MLP vs Text-Only" src="../figures/mlp_vs_text_training_loss.png" /></p>
+<p><img alt="Training Loss: MLP vs Text-Only" src="../figures/supple_figures/mlp_vs_text_training_loss.png" /></p>
 <p>Both approaches start high and drop steeply in the first ~200 steps as the warmup phase completes and the model locks onto the training distribution. After that initial plunge:</p>
 <ul>
 <li><strong>MLP</strong> continues a gradual descent from ~2.5 at step 200 to 1.87 at step 1,677, with steady improvement throughout.</li>
@@ -252,21 +252,21 @@
 <p>The gap between the two curves is visible from step 50 onward and never closes. At every comparable point in training, MLP runs ~0.5–0.6 loss units lower.</p>
 <h2 id="validation-loss">Validation Loss</h2>
 <p>Eval loss was computed every 250 steps on a held-out subset:</p>
-<p><img alt="Validation Loss: MLP vs Text-Only" src="../figures/mlp_vs_text_eval_loss.png" /></p>
+<p><img alt="Validation Loss: MLP vs Text-Only" src="../figures/supple_figures/mlp_vs_text_eval_loss.png" /></p>
 <p>The MLP curve reaches its best eval_loss of 1.952 at step 1,500 (the final eval checkpoint). It's still trending downward — we likely left performance on the table by not training longer. The text-only run hits 2.421 at step 2,500, also still decreasing at the end.</p>
 <p>The 19% gap in eval loss (1.95 vs 2.42) is slightly smaller than the 25% gap in training loss, which is expected: the encoder's advantage is partly in memorizing training-set protein structures, with some of that advantage being less transferable to unseen proteins. Still, 19% is substantial.</p>
 <h2 id="gradient-dynamics">Gradient Dynamics</h2>
 <p>Gradient norms reveal a notable difference in early training behavior:</p>
-<p><img alt="Gradient Norms (log scale)" src="../figures/mlp_vs_text_grad_norms.png" /></p>
+<p><img alt="Gradient Norms (log scale)" src="../figures/supple_figures/mlp_vs_text_grad_norms.png" /></p>
 <p><strong>MLP shows larger early gradients</strong> — peaking at 6.9 in the first 40 steps vs 4.1 for text-only. This makes sense: the randomly-initialized attention pooling and MLP projector layers start far from a useful projection, producing large error signals as they learn to map ESM-3's 1536-dim embedding space into the LLM's 2560-dim input. By step ~200, both approaches settle into comparable gradient ranges (0.5–2.0).</p>
 <p><strong>Text-only has periodic gradient spikes</strong> around steps 800–1,200. These coincide with regions where the learning rate schedule is decaying — possibly reflecting harder training examples that produce outsized gradients when the effective step size is smaller. The spikes are mild (within 3σ of the mean) and don't disrupt convergence.</p>
 <p>Both runs use the multimodal gradient clipping fix introduced after the NaN incident on 02-23, which clips pooling and projector gradients independently from the LLM.</p>
 <h2 id="learning-rate-schedule">Learning Rate Schedule</h2>
 <p>Both experiments use the same base LR of 2e-4 with warmup:</p>
-<p><img alt="Learning Rate Schedule" src="../figures/mlp_vs_text_lr_schedule.png" /></p>
+<p><img alt="Learning Rate Schedule" src="../figures/supple_figures/mlp_vs_text_lr_schedule.png" /></p>
 <p>The MLP run uses a differential projector LR of 1e-3 (5x base), applied to the attention pooling and MLP projector parameters. This doesn't appear on the logged LR — Trainer logs only the base group — but it's visible in its effect: the projector converges quickly (gradient norms drop by 3x in 100 steps).</p>
 <h2 id="final-metrics">Final Metrics</h2>
-<p><img alt="Final Metrics Comparison" src="../figures/mlp_vs_text_final_metrics.png" /></p>
+<p><img alt="Final Metrics Comparison" src="../figures/supple_figures/mlp_vs_text_final_metrics.png" /></p>
 <table>
 <thead>
 <tr>

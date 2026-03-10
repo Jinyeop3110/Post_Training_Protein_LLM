@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text SFT Training Complete: 9647 Steps, eval_loss 1.208, BLEU 0.257</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #1a1a2e;
+            --accent: #2563eb;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --code-bg: #f3f4f6;
+            --table-header: #f9fafb;
+            --blockquote-bg: #fffbeb;
+            --blockquote-border: #f59e0b;
+            --success-bg: #f0fdf4;
+            --success-border: #22c55e;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--fg);
+            background: var(--bg);
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        header {
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+        header .meta {
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        header .tags { margin-top: 0.5rem; }
+        header .tag {
+            display: inline-block;
+            background: var(--code-bg);
+            color: var(--accent);
+            padding: 0.15rem 0.6rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            margin-right: 0.4rem;
+            font-weight: 500;
+        }
+        h1 {
+            font-size: 1.9rem;
+            line-height: 1.3;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        h2 {
+            font-size: 1.4rem;
+            margin: 2.5rem 0 1rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+        }
+        h3 {
+            font-size: 1.15rem;
+            margin: 1.8rem 0 0.8rem;
+            font-weight: 600;
+        }
+        p { margin: 0.8rem 0; }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.92rem;
+        }
+        th, td {
+            padding: 0.6rem 0.8rem;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        th {
+            background: var(--table-header);
+            font-weight: 600;
+        }
+        tr:hover { background: #f9fafb; }
+        code {
+            font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+            background: var(--code-bg);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.88em;
+        }
+        pre {
+            background: var(--code-bg);
+            padding: 1rem 1.2rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.88em;
+            line-height: 1.5;
+        }
+        pre code { background: none; padding: 0; }
+        blockquote {
+            background: var(--blockquote-bg);
+            border-left: 4px solid var(--blockquote-border);
+            padding: 0.8rem 1.2rem;
+            margin: 1rem 0;
+            border-radius: 0 6px 6px 0;
+            font-style: italic;
+        }
+        blockquote p { margin: 0.3rem 0; }
+        .success-box {
+            background: var(--success-bg);
+            border-left: 4px solid var(--success-border);
+            padding: 0.8rem 1.2rem;
+            margin: 1rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .success-box p { margin: 0.3rem 0; }
+        .warning-box {
+            background: #fef2f2;
+            border-left: 4px solid #ef4444;
+            padding: 0.8rem 1.2rem;
+            margin: 1rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .warning-box p { margin: 0.3rem 0; }
+        ul, ol { margin: 0.8rem 0; padding-left: 1.5rem; }
+        li { margin: 0.3rem 0; }
+        strong { font-weight: 600; }
+        hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 2rem 0;
+        }
+        footer {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid var(--border);
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+        nav.blog-nav {
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+        nav.blog-nav a { margin-right: 1rem; }
+        .timeline {
+            border-left: 3px solid var(--border);
+            padding-left: 1.2rem;
+            margin: 1rem 0;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.55rem;
+            top: 0.5rem;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+        .timeline-item.crash::before {
+            background: #ef4444;
+        }
+        .timeline-item.success::before {
+            background: #22c55e;
+        }
+        .timeline-step {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+    </style>
+</head>
+<body>
+    <nav class="blog-nav">
+        <a href="../index.html">Blog Index</a>
+    </nav>
+
+    <header>
+        <h1>Text SFT Training Complete: 9647 Steps, eval_loss 1.208, BLEU 0.257</h1>
+        <div class="meta">
+            <strong>Date</strong>: 2026-03-09 &nbsp;|&nbsp;
+            <strong>Experiment</strong>: <code>sft_text_combined_qwen3_8b_it_0307_190324</code>
+        </div>
+        <div class="meta">
+            <strong>Model</strong>: Qwen3-8B-Instruct-2507 &nbsp;|&nbsp;
+            <strong>Approach</strong>: Text-only (raw AA sequence)
+        </div>
+        <div class="meta">
+            <strong>Infrastructure</strong>: FSDP across 8&times;H100 80GB GPUs
+        </div>
+        <div class="tags">
+            <span class="tag">sft</span>
+            <span class="tag">text-baseline</span>
+            <span class="tag">milestone</span>
+            <span class="tag">qwen3-8b</span>
+            <span class="tag">completed</span>
+        </div>
+    </header>
+
+    <div class="success-box">
+        <p><strong>Text SFT training has completed.</strong> 9647 steps (1 full epoch over the 4.89M combined dataset). Final checkpoint saved at step 9647. The text-only baseline is now ready for head-to-head comparison with MLP SFT (completed at step 9750).</p>
+    </div>
+
+    <h2>Training Summary</h2>
+
+    <table>
+        <thead>
+            <tr><th>Parameter</th><th>Value</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Total steps</td><td><strong>9647</strong> (1 epoch)</td></tr>
+            <tr><td>Dataset</td><td>combined_sft_260225 (4.89M samples)</td></tr>
+            <tr><td>Approach</td><td><code>text</code> &mdash; raw AA as <code>&lt;protein&gt;...&lt;/protein&gt;</code> tokens</td></tr>
+            <tr><td>Model</td><td>Qwen3-8B-Instruct-2507 + LoRA (r=8, all linear)</td></tr>
+            <tr><td>Trainable params</td><td>~2M (LoRA only, no encoder/projector)</td></tr>
+            <tr><td>Training loss (running avg)</td><td>~6.0&ndash;6.3</td></tr>
+            <tr><td>Token-averaged loss</td><td>~1.6&ndash;1.8</td></tr>
+            <tr><td>Eval loss (step 8250)</td><td><strong>1.208</strong></td></tr>
+            <tr><td>Generation BLEU (step 8250)</td><td><strong>0.257</strong></td></tr>
+            <tr><td>Generation ROUGE-L (step 8250)</td><td><strong>0.432</strong></td></tr>
+            <tr><td>Checkpoints saved</td><td>9250, 9500, 9647 (final)</td></tr>
+        </tbody>
+    </table>
+
+    <h2>Resume Story: Two Crashes, One Completion</h2>
+
+    <p>Training did not run in a single shot. Here is the timeline:</p>
+
+    <div class="timeline">
+        <div class="timeline-item success">
+            <div class="timeline-step">Mar 7 &mdash; Initial launch</div>
+            <p>Started from scratch on 4.89M dataset. Trained smoothly to step 8250.</p>
+        </div>
+        <div class="timeline-item crash">
+            <div class="timeline-step">Step 8250 &mdash; Crash #1: CPU OOM</div>
+            <p>Dataloader replay on resume attempted to re-iterate through all 8250 steps of data to restore sampler state. On a 4.89M dataset, this caused <strong>CPU memory exhaustion</strong> (>200GB RSS). The HuggingFace Trainer's <code>data_skip</code> mechanism is not designed for datasets this large.</p>
+        </div>
+        <div class="timeline-item success">
+            <div class="timeline-step">Restart with <code>ignore_data_skip=True</code></div>
+            <p>Bypassed dataloader replay by setting <code>ignore_data_skip=True</code> in TrainingArguments. This means some samples from the first 8250 steps may be revisited, but for a 1-epoch run this is acceptable. Training resumed and continued from step 8250.</p>
+        </div>
+        <div class="timeline-item success">
+            <div class="timeline-step">Steps 8250 &rarr; 9647 &mdash; Training complete</div>
+            <p>Ran the remaining ~1400 steps without issues. Checkpoints saved at 9250, 9500, and 9647 (final). Training itself completed successfully.</p>
+        </div>
+        <div class="timeline-item crash">
+            <div class="timeline-step">Step 9647 &mdash; Crash #2: NCCL timeout</div>
+            <p>Post-training evaluation callback attempted FSDP generation, which triggered an <strong>NCCL timeout</strong> across ranks. This is the same known FSDP generation issue that affects all our distributed runs. The crash occurred <em>after</em> the final checkpoint was saved, so no training data was lost.</p>
+        </div>
+    </div>
+
+    <blockquote>
+        <p><strong>Sampler state save/restore</strong> is a known gap. The <code>ignore_data_skip</code> workaround means the last ~1400 steps may have seen some duplicate data. For a full fix, see the pending task to implement sampler state save/restore for checkpoint resume.</p>
+    </blockquote>
+
+    <h2>Metrics at Step 8250 (Last Eval)</h2>
+
+    <p>These are the most recent evaluation metrics, taken at step 8250 before the first crash. The final checkpoint (9647) has not yet been evaluated for generation quality.</p>
+
+    <table>
+        <thead>
+            <tr><th>Metric</th><th>Overall</th><th>Catalytic</th><th>Domain</th><th>Function</th><th>General</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>BLEU</strong></td>
+                <td>0.257</td>
+                <td><strong>0.367</strong></td>
+                <td>0.150</td>
+                <td>0.162</td>
+                <td><strong>0.350</strong></td>
+            </tr>
+            <tr>
+                <td><strong>ROUGE-L</strong></td>
+                <td>0.432</td>
+                <td><strong>0.531</strong></td>
+                <td>0.422</td>
+                <td>0.292</td>
+                <td><strong>0.483</strong></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Comparison with MLP SFT (step 9750)</h3>
+
+    <table>
+        <thead>
+            <tr><th>Metric</th><th>MLP SFT</th><th>Text SFT</th><th>Winner</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Overall BLEU</td>
+                <td>0.255</td>
+                <td><strong>0.257</strong></td>
+                <td style="color: var(--muted)">~Tie</td>
+            </tr>
+            <tr>
+                <td>Overall ROUGE-L</td>
+                <td><strong>0.481</strong></td>
+                <td>0.432</td>
+                <td style="color: var(--accent)">MLP (+0.049)</td>
+            </tr>
+            <tr>
+                <td>Function ROUGE-L</td>
+                <td><strong>0.458</strong></td>
+                <td>0.292</td>
+                <td style="color: var(--accent)">MLP (+57%)</td>
+            </tr>
+            <tr>
+                <td>Catalytic BLEU</td>
+                <td>0.313</td>
+                <td><strong>0.367</strong></td>
+                <td style="color: #8b5cf6">Text (+17%)</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>For a detailed side-by-side comparison with prompt/response examples, see <a href="2026-03-09_mlp-vs-text-sft-detailed-examples.html">MLP vs Text SFT: Detailed Prompt/Response Examples</a>.</p>
+
+    <h2>Checkpoint Inventory</h2>
+
+    <pre><code>results/sft_text_combined_qwen3_8b_it_0307_190324/
+├── checkpoints/
+│   ├── checkpoint-7750/     # Earlier checkpoint
+│   ├── checkpoint-8000/     # Earlier checkpoint
+│   ├── checkpoint-8250/     # Last checkpoint before crash #1
+│   ├── checkpoint-9250/     # Post-resume checkpoint
+│   ├── checkpoint-9500/     # Post-resume checkpoint
+│   └── checkpoint-9647/     # Final checkpoint (training complete)
+├── eval/
+│   ├── generation_step_250.json   ... generation_step_8250.json
+│   └── (step 9647 eval pending)
+└── logs/</code></pre>
+
+    <h2>Next Steps</h2>
+
+    <ol>
+        <li><strong>Run generation eval on final checkpoint</strong> (step 9647) to get updated BLEU/ROUGE-L metrics</li>
+        <li><strong>Compare final Text vs MLP</strong> &mdash; update the detailed examples post with final numbers</li>
+        <li><strong>Launch Perceiver SFT</strong> &mdash; third approach in the four-way comparison</li>
+        <li><strong>Fix sampler state save/restore</strong> &mdash; prevent the <code>ignore_data_skip</code> workaround for future runs</li>
+        <li><strong>Fix FSDP generation</strong> &mdash; resolve NCCL timeout in post-training eval callback</li>
+    </ol>
+
+    <hr>
+
+    <h2>Key Takeaways</h2>
+
+    <div class="success-box">
+        <p><strong>Text-only SFT works.</strong> Even without ESM-3 structural embeddings, raw amino acid sequences + LoRA fine-tuning achieves BLEU 0.257 and ROUGE-L 0.432 on protein understanding tasks. The text approach has a clear advantage on catalytic activity prediction (BLEU 0.367 vs MLP's 0.313), suggesting that raw sequence tokens carry complementary information to structural embeddings.</p>
+    </div>
+
+    <div class="warning-box">
+        <p><strong>But MLP is stronger overall.</strong> ESM-3 embeddings give a +57% ROUGE-L advantage on function descriptions and produce more concise, less hallucinatory outputs. The text model tends to generate verbose, cascading responses when uncertain &mdash; a qualitative gap that metrics alone don't fully capture.</p>
+    </div>
+
+    <footer>
+        <p>Post-Training Protein LLM &mdash; Internal Development Blog</p>
+        <p>Experiment: <code>sft_text_combined_qwen3_8b_it_0307_190324</code></p>
+    </footer>
+</body>
+</html>

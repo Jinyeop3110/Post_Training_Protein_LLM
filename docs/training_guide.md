@@ -110,15 +110,19 @@ configs/
 │   ├── cafa5_go.yaml           # GO prediction (GRPO)
 │   ├── megascale_stability.yaml # Stability/ddG (GRPO)
 │   └── structure_quality.yaml  # Structure quality (GRPO)
-├── experiment/          # Experiment presets
+├── main_SFT/            # SFT experiment presets
+│   ├── sft_esm3_mlp_combined.yaml
+│   ├── sft_esm3_mlp_thinking.yaml
+│   ├── sft_esm3_perceiver_combined.yaml
+│   ├── sft_text_combined.yaml
+│   └── sft_flamingo.yaml
+├── main_RL/             # GRPO/RL experiment presets
 │   ├── grpo_go_prediction.yaml
 │   ├── grpo_stability.yaml
 │   └── grpo_structure.yaml
 └── training/            # Training method configs
-    ├── sft_qlora.yaml   # Default — SFT with 4-bit quantization
-    ├── sft_lora.yaml    # SFT without quantization
-    ├── grpo.yaml        # GRPO alignment
-    └── dpo.yaml         # DPO alignment
+    ├── sft_lora.yaml    # Default — SFT without quantization
+    └── grpo.yaml        # GRPO alignment
 ```
 
 ### Key Overrides
@@ -260,15 +264,15 @@ Chain from a trained SFT checkpoint:
 
 ```bash
 # GO term prediction
-python scripts/train.py experiment=grpo_go_prediction \
+python scripts/train.py main_RL=grpo_go_prediction \
     parent_experiment=my_sft_run
 
 # Stability prediction (ddG)
-python scripts/train.py experiment=grpo_stability \
+python scripts/train.py main_RL=grpo_stability \
     parent_experiment=my_sft_run
 
 # Structure quality (pLDDT)
-python scripts/train.py experiment=grpo_structure \
+python scripts/train.py main_RL=grpo_structure \
     parent_experiment=my_sft_run
 ```
 
