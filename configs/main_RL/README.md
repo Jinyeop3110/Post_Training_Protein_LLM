@@ -73,7 +73,7 @@ FSDP gives massive headroom on L40S 46GB. The bottleneck is generation throughpu
 ### Generation
 - Structure Quality: `max_tokens=256` (descriptions are 1-2 sentences)
 - ProteinLM Bench: `max_tokens=64` (MC answers: "option N" + brief reasoning)
-- `temperature=1.0` for structure (diverse descriptions), `0.8` for MC (more focused)
+- `temperature=0.9` standardized across all configs
 
 ### Training Duration
 - Structure Quality: **1 epoch** (10K samples is enough for RL signal)

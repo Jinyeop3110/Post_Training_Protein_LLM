@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
 """
-Schematic overview figure for paper and blog.
+Schematic overview figure for paper and blog (v2).
 
-4 panels: Question → Approach → Training → Key Results
+Generates panels separately then composes:
+  - fig1a_pathways.png        (Panel A: Four Pathways)
+  - fig1b_training_pipeline.png (Panel B: Training Pipeline with SFT+GRPO detail)
+  - fig1_schematic_overview.png (Composed with research question banner)
+
+Publication-quality design with soft pastel fills, frozen/trainable markers,
+clean arrows, and generous whitespace.
 """
 
 import os
@@ -11,54 +17,129 @@ import sys
 # Ensure this directory is on sys.path for figure_style import
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import matplotlib
+
+matplotlib.use("Agg")
+
 import matplotlib.pyplot as plt
-import numpy as np
 from figure_style import (
     BLOG_FIGURES_DIR,
-    SCHEMATIC_COLORS,
-    STATUS_COLORS,
+    MAIN_FIGURES_DIR,
+    PAPER_MAIN_DIR,
     save_main_figure,
 )
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
 
-# ═══════════════════════════════════════════════════════════════════════
-# COLOR PALETTE (from figure_style.SCHEMATIC_COLORS + extras for this diagram)
-# ═══════════════════════════════════════════════════════════════════════
-C = dict(SCHEMATIC_COLORS)
-# Extras only used in this schematic
-C.update({
-    "result_bg":      "#F2F3F4",
-    "result_border":  STATUS_COLORS["pending"],
-    "result_text":    STATUS_COLORS["pending"],
-    "pending_bg":     "#FDEDEC",
-    "section_num":    "#FFFFFF",
-    "bg":             "#FAFAFA",
-})
+# ===================================================================
+# SOFT PASTEL PALETTE
+# ===================================================================
+PAL = {
+    # Frozen components (cool blues)
+    "frozen_bg":       "#DCEEFB",
+    "frozen_border":   "#5B9BD5",
+    "frozen_text":     "#2B5C8A",
+
+    # Trainable components (warm corals/oranges)
+    "train_bg":        "#FDE8D0",
+    "train_border":    "#E8875B",
+    "train_text":      "#8B4513",
+
+    # LLM (soft greens)
+    "llm_bg":          "#D5F5E3",
+    "llm_border":      "#5BAD7C",
+    "llm_text":        "#2D6A4F",
+
+    # Protein input (light lavender)
+    "protein_bg":      "#E8E0F0",
+    "protein_border":  "#7B68AE",
+    "protein_text":    "#4A3878",
+
+    # Text-only path (neutral gray)
+    "text_bg":         "#EDEDED",
+    "text_border":     "#999999",
+    "text_text":       "#555555",
+
+    # Flamingo (soft red/pink)
+    "flam_bg":         "#FADBD8",
+    "flam_border":     "#C0392B",
+    "flam_text":       "#922B21",
+
+    # Perceiver (soft orange)
+    "perc_bg":         "#FFF3E0",
+    "perc_border":     "#E67E22",
+    "perc_text":       "#935116",
+
+    # MLP (soft blue)
+    "mlp_bg":          "#D6EAF8",
+    "mlp_border":      "#2E86C1",
+    "mlp_text":        "#1A5276",
+
+    # SFT / GRPO stages
+    "sft_bg":          "#EBF5FB",
+    "sft_border":      "#5DADE2",
+    "grpo_bg":         "#FEF9E7",
+    "grpo_border":     "#D4AC0D",
+
+    # Research question banner
+    "rq_bg":           "#F0F4F8",
+    "rq_border":       "#B0BEC5",
+    "rq_text":         "#2C3E50",
+
+    # Structural
+    "arrow":           "#4A4A4A",
+    "arrow_light":     "#AAAAAA",
+    "separator":       "#C0C0C0",
+    "title_color":     "#2C3E50",
+    "subtitle":        "#7B8D9E",
+}
+
+# Unicode icons that render in DejaVu Sans
+ICON_FROZEN = "\u2744"    # snowflake
+ICON_TRAIN  = "\u2731"    # heavy asterisk (trainable marker)
 
 
-def add_box(ax, xy, w, h, bg, border, text="", fontsize=8, fontweight="normal",
-            text_color="#2C3E50", pad=0.3, lw=1.5, alpha=1.0, zorder=2,
-            va="center", ha="center", linestyle="-"):
-    """Add a rounded box with centered text."""
+def _box(ax, x, y, w, h, bg, border, text="", fontsize=9,
+         fontweight="normal", text_color="#2C3E50", lw=1.5,
+         pad=0.2, alpha=1.0, zorder=2, sub_text=None,
+         sub_fontsize=7.5, icon=None):
+    """Draw a rounded rectangle with text, optional sub-text, and optional icon."""
     box = FancyBboxPatch(
-        xy, w, h,
+        (x, y), w, h,
         boxstyle=f"round,pad={pad}",
         facecolor=bg, edgecolor=border,
         linewidth=lw, alpha=alpha, zorder=zorder,
-        linestyle=linestyle,
     )
     ax.add_patch(box)
-    if text:
-        cx = xy[0] + w / 2
-        cy = xy[1] + h / 2
-        ax.text(cx, cy, text, ha=ha, va=va, fontsize=fontsize,
-                fontweight=fontweight, color=text_color, zorder=zorder + 1)
+    cx = x + w / 2
+    cy = y + h / 2
+
+    if text and sub_text:
+        ax.text(cx, cy + h * 0.15, text, ha="center", va="center",
+                fontsize=fontsize, fontweight=fontweight,
+                color=text_color, zorder=zorder + 1)
+        ax.text(cx, cy - h * 0.2, sub_text, ha="center", va="center",
+                fontsize=sub_fontsize, color=PAL["subtitle"],
+                style="italic", zorder=zorder + 1)
+    elif text:
+        ax.text(cx, cy, text, ha="center", va="center",
+                fontsize=fontsize, fontweight=fontweight,
+                color=text_color, zorder=zorder + 1)
+
+    # Frozen/trainable icon in top-right
+    if icon:
+        ix = x + w - 0.35
+        iy = y + h - 0.35
+        icon_color = PAL["frozen_text"] if icon == ICON_FROZEN else PAL["train_text"]
+        ax.text(ix, iy, icon, ha="center", va="center",
+                fontsize=max(fontsize, 8), color=icon_color,
+                fontweight="bold", zorder=zorder + 2)
+
     return box
 
 
-def add_arrow(ax, start, end, color="#566573", style="-|>", lw=1.2,
-              connectionstyle="arc3,rad=0", zorder=3):
-    """Add a fancy arrow."""
+def _arrow(ax, start, end, color="#4A4A4A", lw=1.3, style="-|>",
+           connectionstyle="arc3,rad=0", zorder=3):
+    """Draw a clean arrow."""
     arrow = FancyArrowPatch(
         start, end,
         arrowstyle=style,
@@ -66,435 +147,722 @@ def add_arrow(ax, start, end, color="#566573", style="-|>", lw=1.2,
         linewidth=lw,
         connectionstyle=connectionstyle,
         zorder=zorder,
-        mutation_scale=12,
+        mutation_scale=11,
     )
     ax.add_patch(arrow)
     return arrow
 
 
-def add_panel_label(ax, x, y, num, title, fontsize=10):
-    """Add a circled number + panel title."""
-    circle = plt.Circle((x, y), 0.28, facecolor=C["panel_title_bg"],
-                         edgecolor="none", zorder=5)
-    ax.add_patch(circle)
-    ax.text(x, y, str(num), ha="center", va="center",
-            fontsize=fontsize - 1, fontweight="bold", color="white", zorder=6)
-    ax.text(x + 0.45, y, title, ha="left", va="center",
-            fontsize=fontsize, fontweight="bold", color=C["panel_title_bg"], zorder=6)
+def _section_label(ax, x, y, label, fontsize=12, color=None):
+    """Draw a section label."""
+    c = color or PAL["title_color"]
+    ax.text(x, y, label, ha="left", va="center",
+            fontsize=fontsize, fontweight="bold", color=c, zorder=6)
 
 
-def draw_helix(ax, cx, cy, w=0.8, h=0.6, color="#2C7BB6", n_turns=3):
-    """Draw a simplified protein helix icon."""
-    t = np.linspace(0, n_turns * 2 * np.pi, 100)
-    x = cx + (w / 2) * np.sin(t) * np.linspace(0.3, 1, 100)
-    y = cy + np.linspace(-h / 2, h / 2, 100)
-    # Draw ribbon effect
-    for i in range(len(t) - 1):
-        alpha = 0.4 + 0.4 * (0.5 + 0.5 * np.sin(t[i]))
-        ax.plot([x[i], x[i + 1]], [y[i], y[i + 1]],
-                color=color, linewidth=2.5, alpha=alpha, zorder=3,
-                solid_capstyle='round')
+# ===================================================================
+# PANEL A: Four Pathways
+# ===================================================================
+def draw_panel_a():
+    """Create Panel A: Four Pathways (architecture overview).
 
-
-def draw_panel_separator(ax, x, y_bot, y_top):
-    """Draw a subtle vertical separator between panels."""
-    ax.plot([x, x], [y_bot, y_top], color="#D5D8DC", linewidth=1.0,
-            linestyle=":", alpha=0.45, zorder=1)
-
-
-def draw_figure():
-    """Create the 4-panel schematic overview."""
-    fig, ax = plt.subplots(figsize=(20, 10))
-    ax.set_xlim(-0.5, 39)
-    ax.set_ylim(-0.5, 14)
-    ax.set_aspect('equal')
-    ax.axis('off')
+    Returns a matplotlib Figure.
+    """
+    fig, ax = plt.subplots(figsize=(12, 9.5))
+    ax.set_xlim(-0.5, 21)
+    ax.set_ylim(-0.5, 14.5)
+    ax.set_aspect("equal")
+    ax.axis("off")
     fig.patch.set_facecolor("white")
 
-    # Y baseline for vertical centering
-    BOTTOM = 2.5
-    TOP = 13.0
-    MID = (BOTTOM + TOP) / 2
+    _section_label(ax, 0.3, 13.8, "(A) Four Pathways")
 
-    # Panel separators
-    draw_panel_separator(ax, 8.8, 2.0, 13.0)
-    draw_panel_separator(ax, 21.0, 2.0, 13.0)
-    draw_panel_separator(ax, 28.8, 2.0, 13.0)
-
-    # ─────────────────────────────────────────────────────────────
-    # PANEL 1: QUESTION (x: 0-8.5)
-    # ─────────────────────────────────────────────────────────────
-    add_panel_label(ax, 0.3, 13.3, 1, "Question")
-
-    # Protein world (left)
-    add_box(ax, (0.2, 4.5), 3.4, 7.8,
-            C["protein_bg"], C["protein_border"],
-            lw=1.8, pad=0.35)
-    ax.text(1.9, 11.5, "Protein\nWorld", ha="center", va="center",
-            fontsize=11, fontweight="bold", color=C["protein_text"], zorder=4)
-
-    # Helix icon (bigger, centered better)
-    draw_helix(ax, 1.9, 9.0, w=1.5, h=1.8, color=C["protein_border"])
-
-    # Sequence text (shifted up slightly for better centering)
-    ax.text(1.9, 7.0, "MKTLIF...", ha="center", va="center",
-            fontsize=9, fontfamily="monospace", color=C["protein_text"],
-            zorder=4, style="italic")
-    ax.text(1.9, 5.8, "structure\nfunction\ncatalysis", ha="center", va="center",
-            fontsize=8, color="#7B8D9E", zorder=4)
-
-    # Question mark / gap
-    ax.text(4.6, 8.5, "?", ha="center", va="center",
-            fontsize=42, fontweight="bold", color="#E74C3C", zorder=4, alpha=0.55)
-
-    # LLM world (right of gap)
-    add_box(ax, (5.6, 4.5), 3.0, 7.8,
-            C["llm_bg"], C["llm_border"],
-            lw=1.8, pad=0.35)
-    ax.text(7.1, 11.5, "Language\nWorld", ha="center", va="center",
-            fontsize=11, fontweight="bold", color=C["llm_text"], zorder=4)
-
-    # LLM icon (stacked layers)
-    for i, (yy, a) in enumerate([(10.0, 0.45), (9.4, 0.6), (8.8, 0.75), (8.2, 0.9)]):
-        add_box(ax, (6.1, yy), 2.0, 0.4,
-                C["llm_bg"], C["llm_border"],
-                alpha=a, lw=0.8, pad=0.08, zorder=3)
-    ax.text(7.1, 9.0, "LLM", ha="center", va="center",
-            fontsize=9, fontweight="bold", color=C["llm_text"], zorder=5)
-
-    ax.text(7.1, 6.8, "reasoning\ngeneration\nknowledge", ha="center", va="center",
-            fontsize=8, color="#7B8D9E", zorder=4)
-
-    # Panel question text (lighter to reduce competition)
-    ax.text(4.5, 3.5, "Can LLMs understand proteins\nvia structural embeddings?",
-            ha="center", va="center", fontsize=8, style="italic",
-            color="#AAB7C0", zorder=4)
-
-    # ─────────────────────────────────────────────────────────────
-    # PANEL 2: APPROACH (x: 9.2-20.5)
-    # Forking layout: Protein Sequence → fork
-    #   Top branch (a): Text path → direct to LLM (short, simple)
-    #   Bottom branch: ESM-3 → split into (b) MLP, (c) Perceiver, (d) Flamingo → LLM
-    # ─────────────────────────────────────────────────────────────
-    add_panel_label(ax, 9.5, 13.3, 2, "Approach: Four Pathways")
-
-    # --- Protein Sequence input (left, centered vertically) ---
-    prot_cx, prot_cy = 10.2, 8.0
-    add_box(ax, (prot_cx - 1.0, prot_cy - 0.7), 2.0, 1.4,
-            C["protein_bg"], C["protein_border"],
-            lw=1.5, pad=0.2)
-    ax.text(prot_cx, prot_cy, "Protein\nSequence", ha="center", va="center",
-            fontsize=9, fontweight="bold", color=C["protein_text"], zorder=4)
-
-    # --- Fork point ---
-    fork_x = prot_cx + 1.2
-    fork_y = prot_cy
-
-    # Fork lines: vertical stem then two branches
-    ax.plot([prot_cx + 1.0, fork_x], [fork_y, fork_y],
-            color=C["arrow"], linewidth=1.5, zorder=3)
-
-    # ═══════════════════════════════════════════════════
-    # TOP BRANCH: (a) Text path — simple, direct
-    # ═══════════════════════════════════════════════════
-    text_y = 11.0  # high up, visually separate
-
-    # Vertical line up from fork
-    ax.plot([fork_x, fork_x], [fork_y, text_y],
-            color=C["proj_text_border"], linewidth=1.3, linestyle="--",
-            alpha=0.7, zorder=3)
-
-    # Text box
-    text_box_x = fork_x + 0.6
-    text_box_w = 3.2
-    add_box(ax, (text_box_x, text_y - 0.65), text_box_w, 1.3,
-            C["proj_text_bg"], C["proj_text_border"],
-            lw=1.3, pad=0.18)
-    ax.text(text_box_x + text_box_w / 2, text_y + 0.35,
-            "(a) Text Only", ha="center", va="center",
-            fontsize=9, fontweight="bold", color=C["proj_text_border"], zorder=4)
-    ax.text(text_box_x + text_box_w / 2, text_y - 0.2,
-            "Raw AA sequence as tokens\nno encoder needed", ha="center", va="center",
-            fontsize=8, color="#2C3E50", zorder=4)
-
-    # Horizontal arrow from fork to text box
-    add_arrow(ax, (fork_x, text_y), (text_box_x - 0.05, text_y),
-              color=C["proj_text_border"], lw=1.3, style="-|>")
-
-    # "no encoder" label on the branch
-    ax.text(fork_x - 0.3, (fork_y + text_y) / 2 + 0.5, "direct",
-            ha="center", va="center", fontsize=7, style="italic",
-            color=C["proj_text_border"], alpha=0.7, rotation=90, zorder=4)
-
-    # ═══════════════════════════════════════════════════
-    # BOTTOM BRANCH: ESM-3 encoder → 3 projector variants
-    # ═══════════════════════════════════════════════════
-    esm_y_center = 5.8  # lower region
-
-    # Vertical line down from fork
-    ax.plot([fork_x, fork_x], [fork_y, esm_y_center],
-            color=C["esm3_border"], linewidth=1.5, zorder=3)
-
-    # ESM-3 block (SMALLER — proportional)
-    esm_x = fork_x + 0.6
-    esm_w, esm_h = 2.2, 1.8
-    esm_box_y = esm_y_center - esm_h / 2
-    add_box(ax, (esm_x, esm_box_y), esm_w, esm_h,
-            C["esm3_bg"], C["esm3_border"],
-            lw=1.8, pad=0.22)
-    ax.text(esm_x + esm_w / 2, esm_y_center + 0.35, "ESM-3",
-            ha="center", va="center",
-            fontsize=10, fontweight="bold", color=C["esm3_border"], zorder=4)
-    ax.text(esm_x + esm_w / 2, esm_y_center - 0.35, "Encoder\n(frozen)",
-            ha="center", va="center",
-            fontsize=8, color="#95A5A6", style="italic", zorder=4)
-
-    # Arrow from fork to ESM-3
-    add_arrow(ax, (fork_x, esm_y_center), (esm_x - 0.05, esm_y_center),
-              color=C["esm3_border"], lw=1.5, style="-|>")
-
-    # "structural\nembeddings" label on the branch
-    ax.text(fork_x - 0.3, (fork_y + esm_y_center) / 2, "encode",
-            ha="center", va="center", fontsize=7, style="italic",
-            color=C["esm3_border"], alpha=0.7, rotation=90, zorder=4)
-
-    # --- Three projector variants fanning out from ESM-3 ---
-    esm_right = esm_x + esm_w
-    proj_x = esm_right + 1.0
-    proj_w = 3.2
-
-    esm_variants = [
-        ("(b) MLP", C["proj_mlp_bg"], C["proj_mlp_border"],
-         "AttnPool \u2192 MLP\n32 tokens \u00b7 30.5M", 7.8),
-        ("(c) Perceiver", C["proj_perc_bg"], C["proj_perc_border"],
-         "Perceiver Resampler\n32 queries \u00b7 29.4M", 5.8),
-        ("(d) Flamingo", C["proj_flam_bg"], C["proj_flam_border"],
-         "Gated Cross-Attn\nevery 4th LLM layer", 3.8),
-    ]
-
-    esm_row_centers = []
-    for label, bg, border, desc, row_y in esm_variants:
-        row_h = 1.35
-        add_box(ax, (proj_x, row_y - row_h / 2), proj_w, row_h,
-                bg, border, lw=1.3, pad=0.18)
-        ax.text(proj_x + proj_w / 2, row_y + 0.4, label,
-                ha="center", va="center",
-                fontsize=9, fontweight="bold", color=border, zorder=4)
-        ax.text(proj_x + proj_w / 2, row_y - 0.2, desc,
-                ha="center", va="center",
-                fontsize=8, color="#2C3E50", zorder=4)
-        esm_row_centers.append(row_y)
-
-        # Arrow from ESM-3 to projector
-        rad = 0.0 if abs(esm_y_center - row_y) < 0.5 else (
-            0.15 if esm_y_center > row_y else -0.15)
-        add_arrow(ax, (esm_right + 0.1, esm_y_center),
-                  (proj_x - 0.1, row_y),
-                  color=C["esm3_border"], lw=1.1,
-                  connectionstyle=f"arc3,rad={rad}")
-
-    # ═══════════════════════════════════════════════════
-    # LLM block (receiving end, right side)
-    # ═══════════════════════════════════════════════════
-    llm_x = 18.0
-    llm_w = 2.6
-    llm_h = 8.5
-    llm_y = 3.0
-    add_box(ax, (llm_x, llm_y), llm_w, llm_h,
-            C["llm_bg"], C["llm_border"],
-            lw=1.8, pad=0.3)
-    ax.text(llm_x + llm_w / 2, 11.0, "Qwen3-8B", ha="center", va="center",
-            fontsize=11, fontweight="bold", color=C["llm_text"], zorder=4)
-    ax.text(llm_x + llm_w / 2, 10.3, "(LoRA r=8)", ha="center", va="center",
-            fontsize=8.5, color="#27AE60", zorder=4)
-
-    # Stacked layer icons inside LLM
-    layer_ys = [9.5, 8.8, 8.1, 7.4, 6.7, 6.0, 5.3]
-    for j, yy in enumerate(layer_ys):
-        a = 0.25 + j * 0.09
-        add_box(ax, (llm_x + 0.3, yy), 2.0, 0.45,
-                C["llm_bg"], C["llm_border"],
-                alpha=a, lw=0.6, pad=0.06, zorder=3)
-
-    # Flamingo cross-attention markers (every other layer)
-    xattn_ys = [9.5, 8.1, 6.7, 5.3]
-    for yy in xattn_ys:
-        ax.plot(llm_x + 0.15, yy + 0.22, marker="*", color=C["proj_flam_border"],
-                markersize=12, zorder=5)
-    ax.plot([llm_x + 0.05, llm_x + 0.05],
-            [xattn_ys[-1] + 0.22, xattn_ys[0] + 0.22],
-            color=C["proj_flam_border"], linewidth=1.0, alpha=0.4, zorder=4)
-    ax.text(llm_x + llm_w / 2, 4.0, "Flamingo:\ngated \u00d7-attn",
-            ha="center", va="center",
-            fontsize=8, color=C["proj_flam_border"], fontweight="bold",
+    # --- Protein Input (far left) ---
+    prot_x, prot_y = 0.3, 5.5
+    prot_w, prot_h = 2.8, 2.8
+    _box(ax, prot_x, prot_y, prot_w, prot_h,
+         PAL["protein_bg"], PAL["protein_border"],
+         text="Protein\nSequence", fontsize=11, fontweight="bold",
+         text_color=PAL["protein_text"], lw=2.0, pad=0.25)
+    ax.text(prot_x + prot_w / 2, prot_y + 0.4,
+            "MKTL...AVFG", ha="center", va="center",
+            fontsize=8, fontfamily="monospace", color=PAL["protein_text"],
             style="italic", zorder=4)
 
-    # Arrow from Text box → LLM (top, direct — short path)
-    add_arrow(ax, (text_box_x + text_box_w + 0.1, text_y),
-              (llm_x - 0.1, text_y),
-              color=C["proj_text_border"], lw=1.5, style="-|>")
+    # --- Fork point ---
+    fork_x = prot_x + prot_w + 0.8
+    fork_y = prot_y + prot_h / 2
 
-    # Arrows from ESM projector variants → LLM
-    for row_y in esm_row_centers:
-        target_y = max(llm_y + 0.5, min(row_y, llm_y + llm_h - 0.5))
-        add_arrow(ax, (proj_x + proj_w + 0.15, row_y),
-                  (llm_x - 0.1, target_y),
-                  color=C["arrow"], lw=1.1)
+    # Horizontal stem from protein
+    ax.plot([prot_x + prot_w + 0.1, fork_x], [fork_y, fork_y],
+            color=PAL["arrow"], linewidth=1.8, zorder=3)
+    # Fork dot
+    ax.plot(fork_x, fork_y, "o", color=PAL["arrow"], markersize=6, zorder=4)
 
-    # Approach summary text (lighter)
-    ax.text(14.5, 2.5, "Which pathway best bridges\nprotein structure \u2192 language?",
-            ha="center", va="center", fontsize=7.5, style="italic",
-            color="#AAB7C0", zorder=4)
+    # -- (a) Text-Only: top path --
+    text_y = 12.0
+    ax.plot([fork_x, fork_x], [fork_y + 0.2, text_y - 0.7],
+            color=PAL["text_border"], linewidth=1.5, linestyle=(0, (4, 3)),
+            alpha=0.6, zorder=2)
 
-    # ─────────────────────────────────────────────────────────────
-    # PANEL 3: TRAINING (x: 21.5-28.5)
-    # ─────────────────────────────────────────────────────────────
-    add_panel_label(ax, 21.8, 13.3, 3, "Training Pipeline")
+    tb_x = fork_x + 0.6
+    tb_w, tb_h = 4.8, 1.4
+    _box(ax, tb_x, text_y - tb_h / 2, tb_w, tb_h,
+         PAL["text_bg"], PAL["text_border"],
+         text="(a) Text-Only", fontsize=10, fontweight="bold",
+         text_color=PAL["text_text"], lw=1.5,
+         sub_text="Tokenize AA sequence directly")
+    _arrow(ax, (fork_x, text_y), (tb_x - 0.05, text_y),
+           color=PAL["text_border"], lw=1.3)
 
-    # SFT block
-    sft_x, sft_y, sft_w, sft_h = 21.8, 8.0, 6.2, 3.8
-    add_box(ax, (sft_x, sft_y), sft_w, sft_h,
-            C["sft_bg"], C["train_border"],
-            lw=1.8, pad=0.3)
-    ax.text(sft_x + sft_w/2, 11.3, "Stage 1: SFT", ha="center", va="center",
-            fontsize=11, fontweight="bold", color=C["train_text"], zorder=4)
+    ax.text(fork_x + 0.35, (fork_y + text_y) / 2 + 1.2, "direct",
+            ha="center", va="center", fontsize=8, style="italic",
+            color=PAL["text_text"], alpha=0.7, zorder=4)
 
-    # Dataset pills — spaced evenly across the width
-    pill_w = 1.3
-    pill_gap = 0.15
-    total_pills_w = 4 * pill_w + 3 * pill_gap
-    pill_start_x = sft_x + (sft_w - total_pills_w) / 2
-    datasets = ["Function\n2.15M", "Catalytic\n1.24M", "General\n0.99M", "Domain\n0.46M"]
-    for idx, label in enumerate(datasets):
-        dx = pill_start_x + idx * (pill_w + pill_gap)
-        add_box(ax, (dx, 9.6), pill_w, 0.95,
-                "#FFF8E7", C["train_border"],
-                label, fontsize=7, lw=0.8, pad=0.1,
-                text_color=C["train_text"])
+    # -- ESM-3 Encoder: shared for (b)(c)(d) --
+    esm_cy = 5.5
+    ax.plot([fork_x, fork_x], [fork_y - 0.2, esm_cy + 1.1],
+            color=PAL["frozen_border"], linewidth=1.8, zorder=2)
 
-    ax.text(sft_x + sft_w/2, 8.6, "4.89M samples \u00b7 chat template \u00b7 LoRA r=8",
-            ha="center", va="center", fontsize=8,
-            color="#7B8D9E", zorder=4)
+    esm_x = fork_x + 0.6
+    esm_w, esm_h = 3.0, 2.2
+    esm_y = esm_cy - esm_h / 2
+    _box(ax, esm_x, esm_y, esm_w, esm_h,
+         PAL["frozen_bg"], PAL["frozen_border"],
+         text="ESM-3", fontsize=12, fontweight="bold",
+         text_color=PAL["frozen_text"], lw=2.0,
+         sub_text="Protein Encoder", icon=ICON_FROZEN)
+    _arrow(ax, (fork_x, esm_cy), (esm_x - 0.05, esm_cy),
+           color=PAL["frozen_border"], lw=1.5)
 
-    # Arrow SFT → GRPO
-    add_arrow(ax, (sft_x + sft_w/2, 7.8), (sft_x + sft_w/2, 7.2),
-              color=C["train_border"], lw=2.0, style="-|>")
+    ax.text(fork_x + 0.35, (fork_y + esm_cy) / 2 - 0.5, "encode",
+            ha="center", va="center", fontsize=8, style="italic",
+            color=PAL["frozen_text"], alpha=0.7, zorder=4)
 
-    # GRPO block
-    grpo_x, grpo_y, grpo_w, grpo_h = 21.8, 4.0, 6.2, 3.0
-    add_box(ax, (grpo_x, grpo_y), grpo_w, grpo_h,
-            C["grpo_bg"], C["train_border"],
-            lw=1.8, pad=0.3)
-    ax.text(grpo_x + grpo_w/2, 6.6, "Stage 2: GRPO", ha="center", va="center",
-            fontsize=11, fontweight="bold", color=C["train_text"], zorder=4)
+    # -- Three projector variants from ESM-3 --
+    proj_x = esm_x + esm_w + 1.4
+    proj_w = 4.2
 
-    # Reward pills — spaced evenly
-    rpill_w = 1.5
-    rpill_gap = 0.25
-    total_rpills_w = 3 * rpill_w + 2 * rpill_gap
-    rpill_start_x = grpo_x + (grpo_w - total_rpills_w) / 2
-    rewards = ["GO F1\nscore", "Stability\n\u0394\u0394G", "Structure\npLDDT"]
-    for idx, label in enumerate(rewards):
-        dx = rpill_start_x + idx * (rpill_w + rpill_gap)
-        add_box(ax, (dx, 4.8), rpill_w, 1.0,
-                "#FEF9E7", "#D4AC0D",
-                label, fontsize=7, lw=0.8, pad=0.1,
-                text_color="#7D6608")
-
-    ax.text(grpo_x + grpo_w/2, 4.4, "Verifiable rewards \u00b7 no human labels",
-            ha="center", va="center", fontsize=8,
-            color="#7B8D9E", zorder=4)
-
-    # ─────────────────────────────────────────────────────────────
-    # PANEL 4: KEY RESULTS (x: 29.2-38.5)
-    # ─────────────────────────────────────────────────────────────
-    add_panel_label(ax, 29.5, 13.3, 4, "Key Results")
-
-    # Solid outer border (not dashed — only GRPO card is pending)
-    res_x, res_y, res_w, res_h = 29.5, 4.0, 8.5, 7.8
-    add_box(ax, (res_x, res_y), res_w, res_h,
-            "#F8F9FA", "#BDC3C7",
-            lw=1.5, pad=0.35, linestyle="-")
-
-    # Four result cards in 2×2 grid
-    card_w, card_h = 3.7, 1.7
-    col_gap = 0.6
-    row_gap = 0.6
-
-    result_items = [
-        ("Text vs MLP", "Structural embeddings\n\u2192 faster convergence",
-         res_x + 0.3, res_y + res_h - card_h - 0.5, True),
-        ("GRPO Impact", "Verifiable rewards\nimprove task accuracy",
-         res_x + card_w + col_gap + 0.3, res_y + res_h - card_h - 0.5, False),
-        ("Scaling Effect", "50K \u2192 4.89M:\n81% eval improvement",
-         res_x + 0.3, res_y + 0.5, True),
-        ("Generation", "BLEU=0.31, ROUGE-L=0.51\nprotein-aware output",
-         res_x + card_w + col_gap + 0.3, res_y + 0.5, True),
+    variants = [
+        ("(b) MLP Projector", PAL["mlp_bg"], PAL["mlp_border"], PAL["mlp_text"],
+         "AttnPool + MLP", 9.2, ICON_TRAIN),
+        ("(c) Perceiver", PAL["perc_bg"], PAL["perc_border"], PAL["perc_text"],
+         "Perceiver Resampler", 5.8, ICON_TRAIN),
+        ("(d) Flamingo", PAL["flam_bg"], PAL["flam_border"], PAL["flam_text"],
+         "Gated Cross-Attn", 2.4, ICON_TRAIN),
     ]
 
-    for title, desc, rx, ry, confirmed in result_items:
-        if confirmed:
-            add_box(ax, (rx, ry), card_w, card_h,
-                    "#FFFFFF", "#27AE60",
-                    lw=1.3, pad=0.18, linestyle="-")
-            ax.text(rx + card_w / 2, ry + card_h - 0.35, title, ha="center", va="center",
-                    fontsize=9, fontweight="bold", color="#2C3E50", zorder=4)
-            ax.text(rx + card_w / 2, ry + 0.5, desc, ha="center", va="center",
-                    fontsize=7.5, color="#5D6D7E", zorder=4)
-            ax.text(rx + card_w - 0.25, ry + card_h - 0.25, "\u2713", ha="center", va="center",
-                    fontsize=11, color="#27AE60", fontweight="bold", zorder=5)
-        else:
-            # GRPO pending — red dashed border
-            add_box(ax, (rx, ry), card_w, card_h,
-                    "#FFF5F5", C["result_border"],
-                    lw=1.8, pad=0.18, linestyle="--")
-            ax.text(rx + card_w / 2, ry + card_h - 0.35, title, ha="center", va="center",
-                    fontsize=9, fontweight="bold", color=C["result_border"], zorder=4)
-            ax.text(rx + card_w / 2, ry + 0.45, desc, ha="center", va="center",
-                    fontsize=7.5, color="#999999", zorder=4)
-            # PENDING watermark — centered in card, less rotation for readability
-            ax.text(rx + card_w / 2, ry + card_h / 2 + 0.05, "PENDING",
-                    ha="center", va="center",
-                    fontsize=14, fontweight="bold", color=C["result_border"],
-                    alpha=0.28, rotation=8, zorder=5)
+    esm_right = esm_x + esm_w
+    proj_row_ys = []
 
-    # ─────────────────────────────────────────────────────────────
-    # FLOW ARROWS between panels (in separator gaps)
-    # ─────────────────────────────────────────────────────────────
-    flow_y = MID + 0.3
+    for label, bg, border, tc, desc, row_y, icon in variants:
+        row_h = 1.8
+        _box(ax, proj_x, row_y - row_h / 2, proj_w, row_h,
+             bg, border, text=label, fontsize=10, fontweight="bold",
+             text_color=tc, lw=1.5, sub_text=desc, icon=icon)
+        proj_row_ys.append(row_y)
 
-    # Panel 1 → Panel 2
-    add_arrow(ax, (8.9, flow_y), (9.3, flow_y),
-              color=C["arrow_flow"], lw=2.8, style="-|>")
+        rad = 0.0 if abs(esm_cy - row_y) < 0.5 else (
+            -0.25 if esm_cy > row_y else 0.25)
+        _arrow(ax, (esm_right + 0.15, esm_cy),
+               (proj_x - 0.15, row_y),
+               color=PAL["frozen_border"], lw=1.2,
+               connectionstyle=f"arc3,rad={rad}")
 
-    # Panel 2 → Panel 3
-    add_arrow(ax, (20.8, flow_y), (21.5, flow_y),
-              color=C["arrow_flow"], lw=2.8, style="-|>")
+    # -- LLM block (right side) --
+    llm_x = proj_x + proj_w + 1.2
+    llm_w, llm_h = 3.4, 10.0
+    llm_y = 1.5
+    _box(ax, llm_x, llm_y, llm_w, llm_h,
+         PAL["llm_bg"], PAL["llm_border"],
+         lw=2.0, pad=0.3)
 
-    # Panel 3 → Panel 4
-    add_arrow(ax, (28.2, flow_y), (29.2, flow_y),
-              color=C["arrow_flow"], lw=2.8, style="-|>")
+    ax.text(llm_x + llm_w / 2, llm_y + llm_h - 0.8,
+            "Qwen3", ha="center", va="center",
+            fontsize=13, fontweight="bold", color=PAL["llm_text"], zorder=4)
+    ax.text(llm_x + llm_w / 2, llm_y + llm_h - 1.5,
+            "LLM", ha="center", va="center",
+            fontsize=10, color=PAL["llm_text"], zorder=4)
 
-    # ─────────────────────────────────────────────────────────────
-    # TITLE
-    # ─────────────────────────────────────────────────────────────
-    ax.text(19.5, 1.2,
-            "Post-Training Protein LLM: Bridging Structural Biology and Language Models",
-            ha="center", va="center", fontsize=14, fontweight="bold",
-            color=C["panel_title_bg"], zorder=6)
+    n_layers = 8
+    layer_w = llm_w - 0.8
+    layer_h = 0.5
+    layer_gap = 0.15
+    layer_start_y = llm_y + 0.5
+    for i in range(n_layers):
+        ly = layer_start_y + i * (layer_h + layer_gap)
+        alpha_val = 0.35 + i * 0.07
+        _box(ax, llm_x + 0.4, ly, layer_w, layer_h,
+             "#C8E6C9", PAL["llm_border"],
+             lw=0.8, pad=0.05, alpha=alpha_val)
+
+    for i in [0, 2, 4, 6]:
+        ly = layer_start_y + i * (layer_h + layer_gap) + layer_h / 2
+        ax.text(llm_x + 0.2, ly, "\u2726",
+                ha="center", va="center",
+                fontsize=9, color=PAL["flam_border"],
+                fontweight="bold", zorder=5)
+
+    ax.text(llm_x + llm_w / 2, llm_y + 0.35,
+            "LoRA", ha="center", va="center",
+            fontsize=9, color="#27AE60", fontweight="bold",
+            style="italic", zorder=4)
+
+    # Arrow: Text-only -> LLM
+    _arrow(ax, (tb_x + tb_w + 0.1, text_y),
+           (llm_x - 0.1, llm_y + llm_h - 1.0),
+           color=PAL["text_border"], lw=1.5)
+
+    # Arrows: projectors -> LLM
+    for row_y in proj_row_ys:
+        target_y = max(llm_y + 1.0, min(row_y, llm_y + llm_h - 2.0))
+        _arrow(ax, (proj_x + proj_w + 0.1, row_y),
+               (llm_x - 0.1, target_y),
+               color=PAL["arrow"], lw=1.2)
+
+    # Output label above LLM
+    out_y = llm_y + llm_h + 0.8
+    _box(ax, llm_x + 0.2, out_y - 0.4, llm_w - 0.4, 0.9,
+         "#F5F5F5", "#BBBBBB",
+         text="Text Output", fontsize=9, fontweight="bold",
+         text_color=PAL["subtitle"], lw=1.0, pad=0.1)
+    _arrow(ax, (llm_x + llm_w / 2, llm_y + llm_h + 0.1),
+           (llm_x + llm_w / 2, out_y - 0.35),
+           color=PAL["arrow_light"], lw=1.2)
+
+    # -- Legend (bottom) --
+    legend_y = 0.2
+    legend_items = [
+        (ICON_FROZEN + "  Frozen", PAL["frozen_bg"], PAL["frozen_border"]),
+        (ICON_TRAIN + "  Trainable", PAL["train_bg"], PAL["train_border"]),
+        ("LLM + LoRA", PAL["llm_bg"], PAL["llm_border"]),
+        ("\u2726  Cross-Attn", PAL["flam_bg"], PAL["flam_border"]),
+    ]
+    legend_x_start = 1.5
+    legend_gap = 4.8
+    for i, (label, bg, border) in enumerate(legend_items):
+        lx = legend_x_start + i * legend_gap
+        _box(ax, lx, legend_y - 0.35, 2.0, 0.7,
+             bg, border, lw=1.2, pad=0.08)
+        ax.text(lx + 2.4, legend_y, label, ha="left", va="center",
+                fontsize=9, color=PAL["title_color"], zorder=4)
 
     return fig
 
 
+# ===================================================================
+# PANEL B: Training Pipeline (detailed SFT + GRPO)
+# ===================================================================
+def draw_panel_b():
+    """Create Panel B: Training Pipeline with detailed SFT and GRPO stages.
+
+    Returns a matplotlib Figure.
+    """
+    fig, ax = plt.subplots(figsize=(10, 12))
+    ax.set_xlim(-0.5, 15)
+    ax.set_ylim(-0.5, 20)
+    ax.set_aspect("equal")
+    ax.axis("off")
+    fig.patch.set_facecolor("white")
+
+    _section_label(ax, 0.3, 19.5, "(B) Training Pipeline")
+
+    b_cx = 7.5  # center x
+
+    # ===================== Stage 1: SFT =====================
+    sft_w, sft_h = 13.5, 9.5
+    sft_x = b_cx - sft_w / 2
+    sft_y = 9.8
+    _box(ax, sft_x, sft_y, sft_w, sft_h,
+         PAL["sft_bg"], PAL["sft_border"],
+         lw=2.0, pad=0.3)
+    ax.text(b_cx, sft_y + sft_h - 0.55,
+            "Stage 1: Supervised Fine-Tuning (SFT)", ha="center", va="center",
+            fontsize=11, fontweight="bold", color=PAL["frozen_text"], zorder=4)
+
+    # Dataset categories with examples and sample counts
+    categories = [
+        ("Function Prediction", '"What is the function of this protein?"', "2.15M"),
+        ("Catalytic Activity", '"Predict catalytic activity..."', "1.24M"),
+        ("General QA", '"Describe this protein\'s properties..."', "0.99M"),
+        ("Domain Classification", '"What domains does this contain?"', "0.46M"),
+    ]
+
+    cat_start_y = sft_y + sft_h - 2.0
+    cat_w = 12.0
+    cat_h = 1.35
+    cat_gap = 0.2
+    cat_x = b_cx - cat_w / 2
+
+    for i, (name, example, count) in enumerate(categories):
+        cy = cat_start_y - i * (cat_h + cat_gap)
+        # Category box
+        _box(ax, cat_x, cy, cat_w, cat_h,
+             "#FFFDE7", PAL["sft_border"],
+             lw=0.8, pad=0.1)
+        # Category name (bold, left-aligned)
+        ax.text(cat_x + 0.4, cy + cat_h * 0.65, name,
+                ha="left", va="center", fontsize=9.5, fontweight="bold",
+                color=PAL["frozen_text"], zorder=4)
+        # Example prompt (italic, smaller)
+        ax.text(cat_x + 0.4, cy + cat_h * 0.25, example,
+                ha="left", va="center", fontsize=7.5,
+                color=PAL["subtitle"], style="italic", zorder=4)
+        # Sample count (right-aligned, bold)
+        ax.text(cat_x + cat_w - 0.4, cy + cat_h * 0.5, count,
+                ha="right", va="center", fontsize=9, fontweight="bold",
+                color=PAL["frozen_text"], zorder=4)
+
+    # Total and training details
+    details_y = sft_y + 0.5
+    ax.text(b_cx, details_y + 0.7,
+            "Total: 4.89M samples, ~2.1B tokens",
+            ha="center", va="center", fontsize=9, fontweight="bold",
+            color=PAL["frozen_text"], zorder=4)
+    ax.text(b_cx, details_y,
+            "Chat template  |  LoRA r=8  |  1 epoch",
+            ha="center", va="center", fontsize=8.5,
+            color=PAL["subtitle"], zorder=4)
+
+    # ===================== Arrow SFT -> GRPO =====================
+    _arrow(ax, (b_cx, sft_y - 0.1), (b_cx, sft_y - 0.9),
+           color=PAL["arrow"], lw=2.2)
+    ax.text(b_cx + 0.5, sft_y - 0.5, "init from SFT",
+            ha="left", va="center", fontsize=7.5, style="italic",
+            color=PAL["subtitle"], zorder=4)
+
+    # ===================== Stage 2: GRPO =====================
+    grpo_h = 8.0
+    grpo_y = 1.0
+    _box(ax, sft_x, grpo_y, sft_w, grpo_h,
+         PAL["grpo_bg"], PAL["grpo_border"],
+         lw=2.0, pad=0.3)
+    ax.text(b_cx, grpo_y + grpo_h - 0.55,
+            "Stage 2: Group Relative Policy Optimization (GRPO)",
+            ha="center", va="center",
+            fontsize=11, fontweight="bold", color="#7D6608", zorder=4)
+
+    # Reward tasks with examples
+    rewards = [
+        ("GO F1", '"Predict Gene Ontology terms"', "F1 score reward", "10K"),
+        ("Stability \u0394\u0394G", '"Predict stability change"', "Numerical accuracy reward", "10K"),
+        ("Structure pLDDT", '"Describe structure quality"', "ESMFold pLDDT reward", "10K"),
+    ]
+
+    rew_start_y = grpo_y + grpo_h - 2.0
+    rew_w = 12.0
+    rew_h = 1.55
+    rew_gap = 0.2
+    rew_x = b_cx - rew_w / 2
+
+    for i, (name, prompt, reward_type, count) in enumerate(rewards):
+        ry = rew_start_y - i * (rew_h + rew_gap)
+        # Reward box
+        _box(ax, rew_x, ry, rew_w, rew_h,
+             "#FFF8E1", "#D4AC0D",
+             lw=0.8, pad=0.1)
+        # Task name (bold, left-aligned)
+        ax.text(rew_x + 0.4, ry + rew_h * 0.72, name,
+                ha="left", va="center", fontsize=9.5, fontweight="bold",
+                color="#7D6608", zorder=4)
+        # Example prompt (italic)
+        ax.text(rew_x + 0.4, ry + rew_h * 0.42, prompt,
+                ha="left", va="center", fontsize=7.5,
+                color=PAL["subtitle"], style="italic", zorder=4)
+        # Reward type (smaller, left below prompt)
+        ax.text(rew_x + 0.4, ry + rew_h * 0.15, reward_type,
+                ha="left", va="center", fontsize=7,
+                color="#B7950B", fontweight="bold", zorder=4)
+        # Sample count (right-aligned)
+        ax.text(rew_x + rew_w - 0.4, ry + rew_h * 0.5, count,
+                ha="right", va="center", fontsize=9, fontweight="bold",
+                color="#7D6608", zorder=4)
+
+    # GRPO details
+    grpo_details_y = grpo_y + 0.4
+    ax.text(b_cx, grpo_details_y + 0.6,
+            "Total: 30K samples",
+            ha="center", va="center", fontsize=9, fontweight="bold",
+            color="#7D6608", zorder=4)
+    ax.text(b_cx, grpo_details_y,
+            "Verifiable rewards  |  No human labels  |  KL penalty",
+            ha="center", va="center", fontsize=8.5,
+            color=PAL["subtitle"], zorder=4)
+
+    return fig
+
+
+# ===================================================================
+# COMPOSED FIGURE: Research Question + Panel A + Panel B
+# ===================================================================
+def draw_figure():
+    """Create the composed 2-panel schematic overview figure with research question.
+
+    This is called by plot_pub_figures.py for fig1.
+    Uses direct matplotlib drawing (not image composition) for crisp text.
+    Returns a matplotlib Figure.
+    """
+    # Total figure: research question banner + two panels side by side
+    fig = plt.figure(figsize=(24, 12))
+    fig.patch.set_facecolor("white")
+
+    # Research question banner at top (dedicated axes)
+    rq_text = ("Does ESM-3 structural embeddings improve post-training "
+               "(SFT + task-specific RL) of open-source LLMs for protein understanding?")
+
+    rq_ax = fig.add_axes([0.02, 0.925, 0.96, 0.055])
+    rq_ax.set_xlim(0, 1)
+    rq_ax.set_ylim(0, 1)
+    rq_ax.axis("off")
+
+    banner_box = FancyBboxPatch(
+        (0.005, 0.05), 0.99, 0.9,
+        boxstyle="round,pad=0.015",
+        facecolor=PAL["rq_bg"], edgecolor=PAL["rq_border"],
+        linewidth=1.5, zorder=2,
+    )
+    rq_ax.add_patch(banner_box)
+    rq_ax.text(0.5, 0.5, rq_text,
+               ha="center", va="center",
+               fontsize=14, style="italic", fontweight="normal",
+               color=PAL["rq_text"], zorder=3)
+
+    # Panel A: Four Pathways (left, wider)
+    ax_a = fig.add_axes([0.01, 0.01, 0.55, 0.9])
+    ax_a.set_xlim(-0.5, 21)
+    ax_a.set_ylim(-0.5, 14.5)
+    ax_a.set_aspect("equal")
+    ax_a.axis("off")
+    _draw_panel_a_on_ax(ax_a)
+
+    # Panel B: Training Pipeline (right)
+    ax_b = fig.add_axes([0.57, 0.01, 0.42, 0.9])
+    ax_b.set_xlim(-0.5, 15)
+    ax_b.set_ylim(-0.5, 20)
+    ax_b.set_aspect("equal")
+    ax_b.axis("off")
+    _draw_panel_b_on_ax(ax_b)
+
+    # Vertical separator line
+    sep_line = fig.add_axes([0.565, 0.03, 0.001, 0.85])
+    sep_line.set_xlim(0, 1)
+    sep_line.set_ylim(0, 1)
+    sep_line.axis("off")
+    sep_line.axvline(0.5, color=PAL["separator"], linewidth=1.2, alpha=0.3)
+
+    return fig
+
+
+def _draw_panel_a_on_ax(ax):
+    """Draw Panel A content onto a given axes (for composed figure)."""
+    _section_label(ax, 0.3, 13.8, "(A) Four Pathways")
+
+    # --- Protein Input (far left) ---
+    prot_x, prot_y = 0.3, 5.5
+    prot_w, prot_h = 2.8, 2.8
+    _box(ax, prot_x, prot_y, prot_w, prot_h,
+         PAL["protein_bg"], PAL["protein_border"],
+         text="Protein\nSequence", fontsize=11, fontweight="bold",
+         text_color=PAL["protein_text"], lw=2.0, pad=0.25)
+    ax.text(prot_x + prot_w / 2, prot_y + 0.4,
+            "MKTL...AVFG", ha="center", va="center",
+            fontsize=8, fontfamily="monospace", color=PAL["protein_text"],
+            style="italic", zorder=4)
+
+    # --- Fork point ---
+    fork_x = prot_x + prot_w + 0.8
+    fork_y = prot_y + prot_h / 2
+
+    ax.plot([prot_x + prot_w + 0.1, fork_x], [fork_y, fork_y],
+            color=PAL["arrow"], linewidth=1.8, zorder=3)
+    ax.plot(fork_x, fork_y, "o", color=PAL["arrow"], markersize=6, zorder=4)
+
+    # -- (a) Text-Only: top path --
+    text_y = 12.0
+    ax.plot([fork_x, fork_x], [fork_y + 0.2, text_y - 0.7],
+            color=PAL["text_border"], linewidth=1.5, linestyle=(0, (4, 3)),
+            alpha=0.6, zorder=2)
+
+    tb_x = fork_x + 0.6
+    tb_w, tb_h = 4.8, 1.4
+    _box(ax, tb_x, text_y - tb_h / 2, tb_w, tb_h,
+         PAL["text_bg"], PAL["text_border"],
+         text="(a) Text-Only", fontsize=10, fontweight="bold",
+         text_color=PAL["text_text"], lw=1.5,
+         sub_text="Tokenize AA sequence directly")
+    _arrow(ax, (fork_x, text_y), (tb_x - 0.05, text_y),
+           color=PAL["text_border"], lw=1.3)
+
+    ax.text(fork_x + 0.35, (fork_y + text_y) / 2 + 1.2, "direct",
+            ha="center", va="center", fontsize=8, style="italic",
+            color=PAL["text_text"], alpha=0.7, zorder=4)
+
+    # -- ESM-3 Encoder --
+    esm_cy = 5.5
+    ax.plot([fork_x, fork_x], [fork_y - 0.2, esm_cy + 1.1],
+            color=PAL["frozen_border"], linewidth=1.8, zorder=2)
+
+    esm_x = fork_x + 0.6
+    esm_w, esm_h = 3.0, 2.2
+    esm_y = esm_cy - esm_h / 2
+    _box(ax, esm_x, esm_y, esm_w, esm_h,
+         PAL["frozen_bg"], PAL["frozen_border"],
+         text="ESM-3", fontsize=12, fontweight="bold",
+         text_color=PAL["frozen_text"], lw=2.0,
+         sub_text="Protein Encoder", icon=ICON_FROZEN)
+    _arrow(ax, (fork_x, esm_cy), (esm_x - 0.05, esm_cy),
+           color=PAL["frozen_border"], lw=1.5)
+
+    ax.text(fork_x + 0.35, (fork_y + esm_cy) / 2 - 0.5, "encode",
+            ha="center", va="center", fontsize=8, style="italic",
+            color=PAL["frozen_text"], alpha=0.7, zorder=4)
+
+    # -- Three projector variants --
+    proj_x = esm_x + esm_w + 1.4
+    proj_w = 4.2
+
+    variants = [
+        ("(b) MLP Projector", PAL["mlp_bg"], PAL["mlp_border"], PAL["mlp_text"],
+         "AttnPool + MLP", 9.2, ICON_TRAIN),
+        ("(c) Perceiver", PAL["perc_bg"], PAL["perc_border"], PAL["perc_text"],
+         "Perceiver Resampler", 5.8, ICON_TRAIN),
+        ("(d) Flamingo", PAL["flam_bg"], PAL["flam_border"], PAL["flam_text"],
+         "Gated Cross-Attn", 2.4, ICON_TRAIN),
+    ]
+
+    esm_right = esm_x + esm_w
+    proj_row_ys = []
+
+    for label, bg, border, tc, desc, row_y, icon in variants:
+        row_h = 1.8
+        _box(ax, proj_x, row_y - row_h / 2, proj_w, row_h,
+             bg, border, text=label, fontsize=10, fontweight="bold",
+             text_color=tc, lw=1.5, sub_text=desc, icon=icon)
+        proj_row_ys.append(row_y)
+
+        rad = 0.0 if abs(esm_cy - row_y) < 0.5 else (
+            -0.25 if esm_cy > row_y else 0.25)
+        _arrow(ax, (esm_right + 0.15, esm_cy),
+               (proj_x - 0.15, row_y),
+               color=PAL["frozen_border"], lw=1.2,
+               connectionstyle=f"arc3,rad={rad}")
+
+    # -- LLM block --
+    llm_x = proj_x + proj_w + 1.2
+    llm_w, llm_h = 3.4, 10.0
+    llm_y = 1.5
+    _box(ax, llm_x, llm_y, llm_w, llm_h,
+         PAL["llm_bg"], PAL["llm_border"],
+         lw=2.0, pad=0.3)
+
+    ax.text(llm_x + llm_w / 2, llm_y + llm_h - 0.8,
+            "Qwen3", ha="center", va="center",
+            fontsize=13, fontweight="bold", color=PAL["llm_text"], zorder=4)
+    ax.text(llm_x + llm_w / 2, llm_y + llm_h - 1.5,
+            "LLM", ha="center", va="center",
+            fontsize=10, color=PAL["llm_text"], zorder=4)
+
+    n_layers = 8
+    layer_w = llm_w - 0.8
+    layer_h = 0.5
+    layer_gap = 0.15
+    layer_start_y = llm_y + 0.5
+    for i in range(n_layers):
+        ly = layer_start_y + i * (layer_h + layer_gap)
+        alpha_val = 0.35 + i * 0.07
+        _box(ax, llm_x + 0.4, ly, layer_w, layer_h,
+             "#C8E6C9", PAL["llm_border"],
+             lw=0.8, pad=0.05, alpha=alpha_val)
+
+    for i in [0, 2, 4, 6]:
+        ly = layer_start_y + i * (layer_h + layer_gap) + layer_h / 2
+        ax.text(llm_x + 0.2, ly, "\u2726",
+                ha="center", va="center",
+                fontsize=9, color=PAL["flam_border"],
+                fontweight="bold", zorder=5)
+
+    ax.text(llm_x + llm_w / 2, llm_y + 0.35,
+            "LoRA", ha="center", va="center",
+            fontsize=9, color="#27AE60", fontweight="bold",
+            style="italic", zorder=4)
+
+    # Arrow: Text-only -> LLM
+    _arrow(ax, (tb_x + tb_w + 0.1, text_y),
+           (llm_x - 0.1, llm_y + llm_h - 1.0),
+           color=PAL["text_border"], lw=1.5)
+
+    # Arrows: projectors -> LLM
+    for row_y in proj_row_ys:
+        target_y = max(llm_y + 1.0, min(row_y, llm_y + llm_h - 2.0))
+        _arrow(ax, (proj_x + proj_w + 0.1, row_y),
+               (llm_x - 0.1, target_y),
+               color=PAL["arrow"], lw=1.2)
+
+    # Output
+    out_y = llm_y + llm_h + 0.8
+    _box(ax, llm_x + 0.2, out_y - 0.4, llm_w - 0.4, 0.9,
+         "#F5F5F5", "#BBBBBB",
+         text="Text Output", fontsize=9, fontweight="bold",
+         text_color=PAL["subtitle"], lw=1.0, pad=0.1)
+    _arrow(ax, (llm_x + llm_w / 2, llm_y + llm_h + 0.1),
+           (llm_x + llm_w / 2, out_y - 0.35),
+           color=PAL["arrow_light"], lw=1.2)
+
+    # Legend
+    legend_y = 0.2
+    legend_items = [
+        (ICON_FROZEN + "  Frozen", PAL["frozen_bg"], PAL["frozen_border"]),
+        (ICON_TRAIN + "  Trainable", PAL["train_bg"], PAL["train_border"]),
+        ("LLM + LoRA", PAL["llm_bg"], PAL["llm_border"]),
+        ("\u2726  Cross-Attn", PAL["flam_bg"], PAL["flam_border"]),
+    ]
+    legend_x_start = 1.5
+    legend_gap = 4.8
+    for i, (label, bg, border) in enumerate(legend_items):
+        lx = legend_x_start + i * legend_gap
+        _box(ax, lx, legend_y - 0.35, 2.0, 0.7,
+             bg, border, lw=1.2, pad=0.08)
+        ax.text(lx + 2.4, legend_y, label, ha="left", va="center",
+                fontsize=9, color=PAL["title_color"], zorder=4)
+
+
+def _draw_panel_b_on_ax(ax):
+    """Draw Panel B content onto a given axes (for composed figure)."""
+    _section_label(ax, 0.3, 19.5, "(B) Training Pipeline")
+
+    b_cx = 7.5
+
+    # ===================== Stage 1: SFT =====================
+    sft_w, sft_h = 13.5, 9.5
+    sft_x = b_cx - sft_w / 2
+    sft_y = 9.8
+    _box(ax, sft_x, sft_y, sft_w, sft_h,
+         PAL["sft_bg"], PAL["sft_border"],
+         lw=2.0, pad=0.3)
+    ax.text(b_cx, sft_y + sft_h - 0.55,
+            "Stage 1: Supervised Fine-Tuning (SFT)", ha="center", va="center",
+            fontsize=11, fontweight="bold", color=PAL["frozen_text"], zorder=4)
+
+    categories = [
+        ("Function Prediction", '"What is the function of this protein?"', "2.15M"),
+        ("Catalytic Activity", '"Predict catalytic activity..."', "1.24M"),
+        ("General QA", '"Describe this protein\'s properties..."', "0.99M"),
+        ("Domain Classification", '"What domains does this contain?"', "0.46M"),
+    ]
+
+    cat_start_y = sft_y + sft_h - 2.0
+    cat_w = 12.0
+    cat_h = 1.35
+    cat_gap = 0.2
+    cat_x = b_cx - cat_w / 2
+
+    for i, (name, example, count) in enumerate(categories):
+        cy = cat_start_y - i * (cat_h + cat_gap)
+        _box(ax, cat_x, cy, cat_w, cat_h,
+             "#FFFDE7", PAL["sft_border"],
+             lw=0.8, pad=0.1)
+        ax.text(cat_x + 0.4, cy + cat_h * 0.65, name,
+                ha="left", va="center", fontsize=9.5, fontweight="bold",
+                color=PAL["frozen_text"], zorder=4)
+        ax.text(cat_x + 0.4, cy + cat_h * 0.25, example,
+                ha="left", va="center", fontsize=7.5,
+                color=PAL["subtitle"], style="italic", zorder=4)
+        ax.text(cat_x + cat_w - 0.4, cy + cat_h * 0.5, count,
+                ha="right", va="center", fontsize=9, fontweight="bold",
+                color=PAL["frozen_text"], zorder=4)
+
+    details_y = sft_y + 0.5
+    ax.text(b_cx, details_y + 0.7,
+            "Total: 4.89M samples, ~2.1B tokens",
+            ha="center", va="center", fontsize=9, fontweight="bold",
+            color=PAL["frozen_text"], zorder=4)
+    ax.text(b_cx, details_y,
+            "Chat template  |  LoRA r=8  |  1 epoch",
+            ha="center", va="center", fontsize=8.5,
+            color=PAL["subtitle"], zorder=4)
+
+    # Arrow SFT -> GRPO
+    _arrow(ax, (b_cx, sft_y - 0.1), (b_cx, sft_y - 0.9),
+           color=PAL["arrow"], lw=2.2)
+    ax.text(b_cx + 0.5, sft_y - 0.5, "init from SFT",
+            ha="left", va="center", fontsize=7.5, style="italic",
+            color=PAL["subtitle"], zorder=4)
+
+    # ===================== Stage 2: GRPO =====================
+    grpo_h = 8.0
+    grpo_y = 1.0
+    _box(ax, sft_x, grpo_y, sft_w, grpo_h,
+         PAL["grpo_bg"], PAL["grpo_border"],
+         lw=2.0, pad=0.3)
+    ax.text(b_cx, grpo_y + grpo_h - 0.55,
+            "Stage 2: Group Relative Policy Optimization (GRPO)",
+            ha="center", va="center",
+            fontsize=11, fontweight="bold", color="#7D6608", zorder=4)
+
+    rewards = [
+        ("GO F1", '"Predict Gene Ontology terms"', "F1 score reward", "10K"),
+        ("Stability \u0394\u0394G", '"Predict stability change"', "Numerical accuracy reward", "10K"),
+        ("Structure pLDDT", '"Describe structure quality"', "ESMFold pLDDT reward", "10K"),
+    ]
+
+    rew_start_y = grpo_y + grpo_h - 2.0
+    rew_w = 12.0
+    rew_h = 1.55
+    rew_gap = 0.2
+    rew_x = b_cx - rew_w / 2
+
+    for i, (name, prompt, reward_type, count) in enumerate(rewards):
+        ry = rew_start_y - i * (rew_h + rew_gap)
+        _box(ax, rew_x, ry, rew_w, rew_h,
+             "#FFF8E1", "#D4AC0D",
+             lw=0.8, pad=0.1)
+        ax.text(rew_x + 0.4, ry + rew_h * 0.72, name,
+                ha="left", va="center", fontsize=9.5, fontweight="bold",
+                color="#7D6608", zorder=4)
+        ax.text(rew_x + 0.4, ry + rew_h * 0.42, prompt,
+                ha="left", va="center", fontsize=7.5,
+                color=PAL["subtitle"], style="italic", zorder=4)
+        ax.text(rew_x + 0.4, ry + rew_h * 0.15, reward_type,
+                ha="left", va="center", fontsize=7,
+                color="#B7950B", fontweight="bold", zorder=4)
+        ax.text(rew_x + rew_w - 0.4, ry + rew_h * 0.5, count,
+                ha="right", va="center", fontsize=9, fontweight="bold",
+                color="#7D6608", zorder=4)
+
+    grpo_details_y = grpo_y + 0.4
+    ax.text(b_cx, grpo_details_y + 0.6,
+            "Total: 30K samples",
+            ha="center", va="center", fontsize=9, fontweight="bold",
+            color="#7D6608", zorder=4)
+    ax.text(b_cx, grpo_details_y,
+            "Verifiable rewards  |  No human labels  |  KL penalty",
+            ha="center", va="center", fontsize=8.5,
+            color=PAL["subtitle"], zorder=4)
+
+
 def main():
-    print("Generating schematic overview...")
+    print("Generating schematic overview (v2 - separate panels + composed)...")
 
+    # Ensure output directories exist
+    MAIN_FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+    PAPER_MAIN_DIR.mkdir(parents=True, exist_ok=True)
+
+    # 1. Save Panel A separately
+    print("\n--- Panel A: Four Pathways ---")
+    fig_a = draw_panel_a()
+    save_main_figure(fig_a, "fig1a_pathways")
+
+    # 2. Save Panel B separately
+    print("\n--- Panel B: Training Pipeline ---")
+    fig_b = draw_panel_b()
+    save_main_figure(fig_b, "fig1b_training_pipeline")
+
+    # 3. Save composed figure
+    print("\n--- Composed: fig1_schematic_overview ---")
     fig = draw_figure()
-
-    # Save as main figure (blog PNG + paper PDF)
     save_main_figure(fig, "fig1_schematic_overview")
 
-    # Also save to blog/figures/ root for backward compat
+    # 4. Backward compat copy
     blog_path = str(BLOG_FIGURES_DIR / "schematic_overview.png")
     fig2 = draw_figure()
     fig2.savefig(blog_path, dpi=300, bbox_inches="tight",
@@ -502,7 +870,7 @@ def main():
     plt.close(fig2)
     print(f"  OK {blog_path}")
 
-    print("Done.")
+    print("\nDone.")
 
 
 if __name__ == "__main__":

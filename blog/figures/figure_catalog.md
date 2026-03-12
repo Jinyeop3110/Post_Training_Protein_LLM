@@ -1,13 +1,13 @@
 # Figure Catalog
 
-> **Single source of truth** for all project figures. Updated 2026-03-09.
+> **Single source of truth** for all project figures. Updated 2026-03-11.
 
 ## Directory Structure
 
 ```
 blog/figures/
 ├── main_figures/           # 11 key figures for paper + website
-├── supple_figures/         # 50 supplementary blog figures
+├── supple_figures/         # 59 supplementary blog figures
 └── figure_catalog.md       # This file
 
 paper/figures/
@@ -21,8 +21,10 @@ These are the core figures used in the paper and website blog. Each tells a key 
 
 | Fig | Filename | Category | Content | Why Main | Source Script | Date | Status |
 |-----|----------|----------|---------|----------|---------------|------|--------|
-| 1 | `fig1_schematic_overview.png` | overview | 4-panel project overview (architecture, data, training, results) | Core narrative figure | `scripts/analysis/plot_pub_figures.py` | 2026-03-09 | confirmed |
-| 2 | `fig2_architecture.png` | architecture | ESM-3 + MLP projector architecture diagram | Explains model design | `scripts/analysis/plot_pub_figures.py` | 2026-03-09 | confirmed |
+| 1 | `fig1_schematic_overview.png` | overview | Composed 2-panel: (A) Four pathways (Text/MLP/Perceiver/Flamingo), (B) Detailed training pipeline (SFT with 4 dataset categories + GRPO with 3 reward tasks). Research question banner at top. Separate panels: `fig1a_pathways.png`, `fig1b_training_pipeline.png` | Core narrative figure | `scripts/analysis/plot_schematic_overview.py` | 2026-03-11 | confirmed |
+| 1a | `fig1a_pathways.png` | overview | Panel A standalone: Four pathways diagram with protein input, ESM-3 encoder, 3 projector variants, LLM. Pastel fills, frozen/trainable icons | Standalone panel for flexible layout | `scripts/analysis/plot_schematic_overview.py` | 2026-03-11 | confirmed |
+| 1b | `fig1b_training_pipeline.png` | overview | Panel B standalone: SFT (4 categories with example prompts, 4.89M samples) + GRPO (3 reward tasks with descriptions, 30K samples) | Standalone panel for flexible layout | `scripts/analysis/plot_schematic_overview.py` | 2026-03-11 | confirmed |
+| 2 | `fig2_architecture.png` | architecture | 4-column comparison with token sequence visualization: colored squares showing token counts at each stage (input, encoder, projection, LLM). Token mixing annotations per approach. 33% larger text vs v1 | Explains model design with token flow | `scripts/analysis/plot_pub_figures.py` | 2026-03-11 | confirmed |
 | 3 | `fig3_data_composition.png` | data | Dataset breakdown (4.89M samples, 6 sources, 4 categories) | Training data overview | `scripts/analysis/plot_pub_figures.py` | 2026-03-09 | confirmed |
 | 4 | `fig4_main_run_progress.png` | training | Train + eval loss curves (MLP 4.89M, colored markers) | Key result: training trajectory | `scripts/analysis/plot_pub_figures.py` | 2026-03-09 | confirmed |
 | 5 | `fig5_eval_loss.png` | evaluation | Eval loss with best-point annotation (0.361 at step 9750) | Key result: model quality | `scripts/analysis/plot_pub_figures.py` | 2026-03-09 | confirmed |
@@ -32,12 +34,23 @@ These are the core figures used in the paper and website blog. Each tells a key 
 | 9 | `fig9_final_comparison.png` | comparison | Cross-approach bar chart (4 configs, annotated eval_loss) | Summary comparison | `scripts/analysis/plot_pub_figures.py` | 2026-03-09 | confirmed |
 | 10 | `fig10_base_vs_finetuned.png` | comparison | Base model vs SFT: perplexity, BLEU, ROUGE-L (126x BLEU improvement) | Key result: SFT impact | `scripts/analysis/plot_pub_figures.py` | 2026-03-09 | confirmed |
 | 11 | `fig11_generation_over_steps.png` | generation | BLEU & ROUGE-L progression over training steps (MLP vs Text) | Generation quality trend over time | `scripts/analysis/plot_pub_figures.py` | 2026-03-09 | confirmed |
+| 12 | `fig12_embedding_umap.png` | embedding | UMAP 3-panel: Raw ESM-3 vs Trained vs Random projector | Shows projection training effect | `scripts/analysis/plot_embedding_analysis.py` | 2026-03-10 | confirmed |
+| 5b | `fig5_sft_loss_curves.png` | training | SFT eval loss: ESM3+MLP vs Text-only (Qwen3-8B, 4.89M). Best MLP=0.361, best Text=1.207 | Updated SFT comparison with both approaches | `scripts/analysis/plot_grpo_diagnostics.py` | 2026-03-11 | confirmed |
+| 7b | `fig7_grpo_reward_curves.png` | grpo | GRPO reward vs step: ProteinLM v1 (3ep), v2 (10ep), Structure (10ep). Structure reaches ~0.83, ProteinLM ~0.68 | GRPO training progress across tasks | `scripts/analysis/plot_grpo_diagnostics.py` | 2026-03-11 | confirmed |
+| 8b | `fig8_grpo_reward_breakdown.png` | grpo | 2-panel: ProteinLM bench reward summary (mean/max/min/format) + Structure quality reward components (quality_align/numerical/category/format) | Reward component analysis per task | `scripts/analysis/plot_grpo_diagnostics.py` | 2026-03-11 | confirmed |
+| 9b | `fig9_grpo_grad_norms.png` | grpo | 2-panel: LoRA grad norms + Multimodal grad norms for all GRPO runs. ProteinLM: LoRA only, Structure: multimodal only | Gradient flow diagnostic for GRPO | `scripts/analysis/plot_grpo_diagnostics.py` | 2026-03-11 | confirmed |
+| 13 | `fig13_grpo_structure_reward_curves.png` | grpo | 2-panel: training reward + eval reward, Text-only vs ESM3+MLP on structure quality task. Text reaches 0.832, MLP stuck at 0.582 | Key GRPO comparison: text vs MLP reward trajectory | `scripts/analysis/plot_grpo_structure_comparison.py` | 2026-03-12 | confirmed |
+| 14 | `fig14_grpo_structure_reward_breakdown.png` | grpo | Grouped bar chart: 4 reward components (quality_alignment, numerical_accuracy, category_match, format_bonus) for Text vs MLP | Reward component analysis shows MLP deficit across all components | `scripts/analysis/plot_grpo_structure_comparison.py` | 2026-03-12 | confirmed |
+| 15 | `fig15_grpo_structure_format_rate.png` | grpo | 2-panel: format compliance rate at eval steps + PG loss curves. Text 100% format, MLP 74-76% | Format compliance gap explains reward difference | `scripts/analysis/plot_grpo_structure_comparison.py` | 2026-03-12 | confirmed |
+| 16 | `fig16_grpo_structure_grad_norms.png` | grpo | 2-panel: LoRA grad norms (log scale) + Multimodal grad norms. MLP LoRA grad=0, Text MM grad=0 | Gradient flow diagnostic: MLP cannot update LoRA (format learning blocked) | `scripts/analysis/plot_grpo_structure_comparison.py` | 2026-03-12 | confirmed |
 
 ### Paper PDF Counterparts
 
 | Fig | Blog PNG | Paper PDF |
 |-----|----------|-----------|
 | 1 | `main_figures/fig1_schematic_overview.png` | `paper/figures/main/fig1_schematic_overview.pdf` |
+| 1a | `main_figures/fig1a_pathways.png` | `paper/figures/main/fig1a_pathways.pdf` |
+| 1b | `main_figures/fig1b_training_pipeline.png` | `paper/figures/main/fig1b_training_pipeline.pdf` |
 | 2 | `main_figures/fig2_architecture.png` | `paper/figures/main/fig2_architecture.pdf` |
 | 3 | `main_figures/fig3_data_composition.png` | `paper/figures/main/fig3_data_composition.pdf` |
 | 4 | `main_figures/fig4_main_run_progress.png` | `paper/figures/main/fig4_main_run_progress.pdf` |
@@ -48,10 +61,19 @@ These are the core figures used in the paper and website blog. Each tells a key 
 | 9 | `main_figures/fig9_final_comparison.png` | `paper/figures/main/fig9_final_comparison.pdf` |
 | 10 | `main_figures/fig10_base_vs_finetuned.png` | `paper/figures/main/fig10_base_vs_finetuned.pdf` |
 | 11 | `main_figures/fig11_generation_over_steps.png` | `paper/figures/main/fig11_generation_over_steps.pdf` |
+| 12 | `main_figures/fig12_embedding_umap.png` | `paper/figures/main/fig12_embedding_umap.pdf` |
+| 5b | `main_figures/fig5_sft_loss_curves.png` | `paper/figures/main/fig5_sft_loss_curves.pdf` |
+| 7b | `main_figures/fig7_grpo_reward_curves.png` | `paper/figures/main/fig7_grpo_reward_curves.pdf` |
+| 8b | `main_figures/fig8_grpo_reward_breakdown.png` | `paper/figures/main/fig8_grpo_reward_breakdown.pdf` |
+| 9b | `main_figures/fig9_grpo_grad_norms.png` | `paper/figures/main/fig9_grpo_grad_norms.pdf` |
+| 13 | `main_figures/fig13_grpo_structure_reward_curves.png` | `paper/figures/main/fig13_grpo_structure_reward_curves.pdf` |
+| 14 | `main_figures/fig14_grpo_structure_reward_breakdown.png` | `paper/figures/main/fig14_grpo_structure_reward_breakdown.pdf` |
+| 15 | `main_figures/fig15_grpo_structure_format_rate.png` | `paper/figures/main/fig15_grpo_structure_format_rate.pdf` |
+| 16 | `main_figures/fig16_grpo_structure_grad_norms.png` | `paper/figures/main/fig16_grpo_structure_grad_norms.pdf` |
 
 ---
 
-## Supplementary Figures — Blog (50)
+## Supplementary Figures — Blog (59)
 
 ### Early Experiments (50K data, Feb 2026)
 
@@ -112,6 +134,8 @@ These are the core figures used in the paper and website blog. Each tells a key 
 | `mlp_epoch1_grad_norms.png` | Log-scale grad norms with spike detection | 2026-03-07 | Epoch 1 analysis |
 | `mlp_epoch1_comparison_bar.png` | Final metrics bar chart | 2026-03-07 | Epoch 1 analysis |
 | `mlp_epoch1_convergence_table.png` | Summary convergence table | 2026-03-07 | Epoch 1 analysis |
+| `mlp_epoch1_eval_loss.png` | Eval loss curve with best-point annotation | 2026-03-09 | Epoch 1 analysis |
+| `mlp_epoch1_generation_quality.png` | BLEU & ROUGE-L generation metrics | 2026-03-09 | Epoch 1 analysis |
 
 ### Publication-Quality Variants (pub_*)
 
@@ -122,6 +146,12 @@ These are the core figures used in the paper and website blog. Each tells a key 
 | `pub_convergence_table.png` | Convergence table (styled) | 2026-03-07 | Publication style |
 | `pub_generation_quality.png` | BLEU/ROUGE-L by task type | 2026-03-07 | Publication style |
 | `pub_gradient_norms.png` | Gradient norms (log scale, styled) | 2026-03-07 | Publication style |
+| `pub_architecture.png` | ESM-3 + MLP architecture diagram | 2026-03-09 | Publication style |
+| `pub_data_composition.png` | Dataset breakdown (4.89M, 6 sources) | 2026-03-09 | Publication style |
+| `pub_final_comparison.png` | Cross-approach final metrics bar chart | 2026-03-09 | Publication style |
+| `pub_main_run_progress.png` | Main run train + eval loss curves | 2026-03-09 | Publication style |
+| `pub_mlp_vs_text_4m.png` | MLP vs Text-only on 4.89M dataset | 2026-03-09 | Publication style |
+| `pub_scaling_effect.png` | 50K to 4.89M scaling effect bar chart | 2026-03-09 | Publication style |
 
 ### Website Variants (web_*)
 
@@ -142,6 +172,7 @@ These are the core figures used in the paper and website blog. Each tells a key 
 | Filename | Content | Source Date | Notes |
 |----------|---------|-------------|-------|
 | `architecture_comparison.pdf` | Architecture diagram (PDF) | 2026-03-06 | PDF variant in supple |
+| `schematic_overview.png` | Early 4-panel project overview diagram | 2026-03-09 | Architecture overview |
 
 ---
 
@@ -191,6 +222,23 @@ Paper supplementary figures live at `paper/figures/supplementary/`. Mix of PDFs 
 
 ---
 
+
+### Embedding Quality Analysis (Mar 2026)
+
+**Dataset**: 27,818 downstream proteins (GO 8.8K + stability 10K + structure 10K), 7 biological classes. Flatten + PCA(128).
+
+| Filename | Content | Source Date | Notes |
+|----------|---------|-------------|-------|
+| `embedding_umap_3panel.png` | UMAP 3-panel: Raw ESM-3, Trained MLP, Random MLP | 2026-03-11 | Downstream biological labels |
+| `embedding_metrics_comparison.png` | kNN@5, linear probe, silhouette bar chart | 2026-03-11 | All ~54%; random edges out |
+| `embedding_cka_heatmap.png` | 3x3 CKA similarity heatmap | 2026-03-11 | Trained↔random=0.053 |
+| `embedding_cosine_distributions.png` | Intra- vs inter-class cosine similarity | 2026-03-11 | Trained shows cosine~1.0 spike |
+| `embedding_knn_vs_k.png` | kNN accuracy vs k (1, 5, 10, 20) | 2026-03-11 | Curves nearly overlap |
+| `embedding_rank_isotropy.png` | Effective rank and isotropy bars | 2026-03-11 | Trained high isotropy, low rank |
+
+**Blog post**: `blog/posts/2026-03-11_embedding-analysis-downstream.html`
+**Key finding**: Trained projector does NOT improve embedding clustering — consistent with ACL 2024, VIRAL 2025, CVPR 2024 literature. Novel for protein domain.
+
 ## Generation Scripts
 
 All scripts use `scripts/analysis/figure_style.py` for consistent styling. See `scripts/analysis/STYLE_GUIDE.md`.
@@ -199,6 +247,7 @@ All scripts use `scripts/analysis/figure_style.py` for consistent styling. See `
 |--------|-------------------|-------|
 | `scripts/analysis/plot_pub_figures.py` | `fig1`–`fig11` (main figures) | Consolidated from `blog/data/03-07/pub_figures.py` (archived). CLI: `--figures 4 5 6 10 11` |
 | `scripts/analysis/plot_training.py` | Diagnostic plots (loss, eval, grad norms, etc.) | Reusable: `--experiments`, `--output`, `--paper-output`, `--prefix`, `--plots` |
+| `scripts/analysis/plot_grpo_diagnostics.py` | `fig5_sft_loss_curves`, `fig7_grpo_reward_curves`, `fig8_grpo_reward_breakdown`, `fig9_grpo_grad_norms` | GRPO + SFT comparison diagnostics |
 | `scripts/analysis/plot_schematic_overview.py` | `fig1_schematic_overview` | 4-panel diagram, called by plot_pub_figures.py |
 | `scripts/analysis/figure_style.py` | (style module) | Colors, fonts, sizes, save helpers. Import, don't run. |
 

@@ -27,7 +27,7 @@ training:
 
   # ddG predictions are short (one line)
   rollout:
-    max_tokens: 128
+    max_tokens: 256       # Qwen3 generates think blocks before answer
 
   wandb:
     tags:

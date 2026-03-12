@@ -27,7 +27,7 @@ training:
 
   # GO term outputs are short lists
   rollout:
-    max_tokens: 256
+    max_tokens: 512       # Qwen3 generates think blocks before answer
 
   wandb:
     tags:

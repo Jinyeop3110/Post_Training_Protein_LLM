@@ -95,6 +95,108 @@ from .rewards import (  # noqa: F401, E402
 )
 
 # =============================================================================
+# GRPO Prompt Constants
+# =============================================================================
+
+# GRPO-specific system prompt: adds <answer> tag instruction to base prompt.
+# This teaches the model to wrap final answers in <answer>...</answer> tags,
+# enabling clean reward extraction (content inside tags) + format reward.
+_GRPO_ANSWER_SUFFIX = " Always wrap your final answer in <answer> and </answer> tags."
+
+# Task-specific system prompts for GRPO.
+# Two variants per task: thinking-enabled and thinking-disabled.
+#
+# Thinking-enabled: model uses <think>...</think> to reason, then <answer>...</answer>.
+#   Allows the model to process ESM-3 embeddings and reason before answering.
+#   Requires more max_tokens but produces more diverse/accurate predictions.
+#
+# Thinking-disabled: empty <think></think> prefix, direct answer.
+#   Faster but model can't reason, tends to copy examples verbatim.
+
+# --- Structure Quality (ESMFold) ---
+_ESMFOLD_SYSTEM_PROMPT_THINK = (
+    "You are a protein structure expert. You have already analyzed the protein's "
+    "3D structure using computational methods. Based on your analysis, report the "
+    "structural quality assessment.\n\n"
+    "Think BRIEFLY (1-2 sentences only) inside <think>...</think> tags about the "
+    "protein's structural features, then give your final answer inside "
+    "<answer>...</answer> tags. Keep your thinking SHORT.\n\n"
+    "Examples:\n"
+    "<think>Strong hydrophobic core, regular secondary structure. High confidence ~88.</think>\n"
+    "<answer>Fold quality: high. pLDDT: 88.4. This protein is well-folded with high confidence.</answer>\n\n"
+    "<think>Mixed ordered/disordered regions. N-terminal structured, C-terminal flexible.</think>\n"
+    "<answer>Fold quality: medium. pLDDT: 62.1. This protein is moderate confidence, partially structured.</answer>\n\n"
+    "<think>Rich in charged/polar residues, lacks hydrophobic core. Likely disordered.</think>\n"
+    "<answer>Fold quality: low. pLDDT: 35.7. This protein is likely disordered with low confidence.</answer>"
+)
+
+_ESMFOLD_SYSTEM_PROMPT_NO_THINK = (
+    "You are a protein structure expert. You have already analyzed the protein's "
+    "3D structure using computational methods. Based on your analysis, report the "
+    "structural quality assessment.\n\n"
+    "First write a brief reasoning about the protein's structural features on a line "
+    "starting with \"Reasoning:\", then give your final assessment inside "
+    "<answer>...</answer> tags.\n\n"
+    "Examples:\n"
+    "Reasoning: Strong hydrophobic core, regular secondary structure. High confidence ~88.\n"
+    "<answer>Fold quality: high. pLDDT: 88.4. This protein is well-folded with high confidence.</answer>\n\n"
+    "Reasoning: Mixed ordered/disordered regions. N-terminal structured, C-terminal flexible.\n"
+    "<answer>Fold quality: medium. pLDDT: 62.1. This protein is moderate confidence, partially structured.</answer>\n\n"
+    "Reasoning: Rich in charged/polar residues, lacks hydrophobic core. Likely disordered.\n"
+    "<answer>Fold quality: low. pLDDT: 35.7. This protein is likely disordered with low confidence.</answer>"
+)
+
+# --- ProteinLMBench (MC) ---
+_PROTEINLM_SYSTEM_PROMPT_THINK = (
+    "You are a protein science expert. Given a protein amino acid sequence, "
+    "you analyze its properties, predict its function, structure, and "
+    "biological associations based on your knowledge of protein biology.\n\n"
+    "Think BRIEFLY (1-2 sentences only) inside <think>...</think> tags, then "
+    "give your final answer inside <answer>...</answer> tags. Keep thinking SHORT.\n\n"
+    "Examples:\n"
+    "<think>Hemoglobin is the primary oxygen carrier. Option 2 matches.</think>\n"
+    "<answer>option 2</answer>\n\n"
+    "<think>Active site residues suggest serine protease. Option 4.</think>\n"
+    "<answer>option 4</answer>"
+)
+
+_PROTEINLM_SYSTEM_PROMPT_NO_THINK = (
+    "You are a protein science expert. Given a protein amino acid sequence, "
+    "you analyze its properties, predict its function, structure, and "
+    "biological associations based on your knowledge of protein biology.\n\n"
+    "First write a brief reasoning on a line starting with \"Reasoning:\", "
+    "then give your final answer inside <answer>...</answer> tags.\n\n"
+    "Examples:\n"
+    "Reasoning: Hemoglobin is the primary oxygen carrier. Option 2 matches.\n"
+    "<answer>option 2</answer>\n\n"
+    "Reasoning: Active site residues suggest serine protease. Option 4.\n"
+    "<answer>option 4</answer>"
+)
+
+# Empty thinking prefix appended after the generation prompt.
+# With enable_thinking=False, the model generates directly after this,
+# producing: <think>\n\n</think>\n\n<answer>...</answer>
+_THINKING_PREFIX = "<think>\n\n</think>\n\n"
+
+
+def _get_grpo_system_prompt(task: str, enable_thinking: bool = True) -> str:
+    """Return the task-specific GRPO system prompt.
+
+    Args:
+        task: Task name (esmfold, proteinlm_bench, etc.)
+        enable_thinking: If True, use think+answer format. If False, answer-only.
+    """
+    task = task.lower()
+    if task in ("esmfold", "structure", "structure_prediction", "fold_quality"):
+        return _ESMFOLD_SYSTEM_PROMPT_THINK if enable_thinking else _ESMFOLD_SYSTEM_PROMPT_NO_THINK
+    if task in ("proteinlm_bench", "protein_lm_bench", "multiple_choice"):
+        return _PROTEINLM_SYSTEM_PROMPT_THINK if enable_thinking else _PROTEINLM_SYSTEM_PROMPT_NO_THINK
+    # Fallback: generic
+    from src.data.mol_instructions import DEFAULT_SYSTEM_PROMPT
+    return DEFAULT_SYSTEM_PROMPT + _GRPO_ANSWER_SUFFIX
+
+
+# =============================================================================
 # Configuration Functions
 # =============================================================================
 
@@ -131,6 +233,9 @@ def get_grpo_config(cfg: DictConfig) -> Dict[str, Any]:
         "max_new_tokens": rollout_cfg.get("max_tokens", 512),
         "top_p": rollout_cfg.get("top_p", 0.95),
         "do_sample": rollout_cfg.get("do_sample", True),
+        # Thinking mode: if True, model generates <think>...</think> freely;
+        # if False, we prepend empty <think>\n\n</think>\n\n prefix.
+        "enable_thinking": rollout_cfg.get("enable_thinking", False),
     }
 
 
@@ -197,6 +302,7 @@ class GRPOTrainer:
         self.is_main_process = True
         self.use_fsdp = False
         self._grad_ckpt_available = False  # toggled gradient checkpointing
+        self._probe_indices: List[int] = []  # fixed probe prompts for wandb logging
 
         # Validate dependencies
         if not HAS_TRANSFORMERS:
@@ -256,6 +362,16 @@ class GRPOTrainer:
 
         # Load datasets
         self._load_datasets()
+
+        # Select fixed probe prompts for wandb completion logging
+        self._select_probe_prompts(num_probes=5)
+
+        # Optionally freeze multimodal head (pooling + projector) so only
+        # LoRA adapters are optimized.  Eliminates joint gradient clipping
+        # where 38M multimodal params with higher LR dominate the gradient
+        # norm and starve LoRA of learning signal.
+        if self.cfg.training.get("freeze_multimodal", False):
+            self._freeze_multimodal()
 
         # Set up optimizer and scheduler (with differential LR)
         self._setup_optimizer()
@@ -783,6 +899,32 @@ class GRPOTrainer:
             log.warning(f"Could not load ProteinLLM: {e}. Using text-only training.")
             self.protein_llm = None
 
+    def _freeze_multimodal(self) -> None:
+        """Freeze pooling and projector so only LoRA adapters are optimized.
+
+        Sets requires_grad=False on all pooling and projector parameters.
+        This eliminates the joint gradient clipping problem where multimodal
+        params with a higher LR dominate the gradient norm and starve LoRA.
+        The multimodal head is already well-trained from SFT.
+        """
+        if self.protein_llm is None:
+            log.info("No ProteinLLM — nothing to freeze")
+            return
+
+        frozen_count = 0
+        for module_name in ("pooling", "projector"):
+            module = getattr(self.protein_llm, module_name, None)
+            if module is not None:
+                for p in module.parameters():
+                    if p.requires_grad:
+                        p.requires_grad = False
+                        frozen_count += p.numel()
+
+        log.info(
+            f"Frozen multimodal head: {frozen_count:,} params "
+            f"(pooling + projector) set to requires_grad=False"
+        )
+
     def _create_reference_model(self) -> None:
         """Create a frozen reference model for KL penalty computation."""
         log.info("Creating reference model for KL penalty...")
@@ -847,6 +989,191 @@ class GRPOTrainer:
         log.info("Loading validation dataset...")
         self.eval_dataset = MolInstructionsDataset(split="validation", **common_kwargs)
         log.info(f"Validation dataset loaded: {len(self.eval_dataset)} samples")
+
+    def _select_probe_prompts(self, num_probes: int = 5) -> None:
+        """Select fixed probe prompts from training data for wandb logging.
+
+        Picks evenly-spaced indices so probes span the dataset diversity.
+        Stores indices in ``self._probe_indices`` for use during eval.
+        """
+        if self.train_dataset is None or len(self.train_dataset) == 0:
+            return
+
+        n = len(self.train_dataset)
+        num_probes = min(num_probes, n)
+        # Evenly spaced indices
+        self._probe_indices = [
+            int(i * n / num_probes) for i in range(num_probes)
+        ]
+
+        if self.is_main_process:
+            log.info(
+                f"Selected {num_probes} probe prompts at indices: "
+                f"{self._probe_indices}"
+            )
+
+    def _log_probe_completions(self) -> None:
+        """Generate completions for probe prompts and log to wandb as a Table.
+
+        Called at eval_steps intervals. Generates 2 completions per probe
+        prompt with GRPO system prompt and logs them with rewards.
+        """
+        from .rewards import extract_answer_content
+
+        if not HAS_WANDB or wandb.run is None:
+            return
+        if not self._probe_indices or not self.is_main_process:
+            return
+
+        task = self.cfg.data.get("task", "go_prediction").lower()
+        enable_thinking = self.grpo_config.get("enable_thinking", False)
+        grpo_system_prompt = _get_grpo_system_prompt(task, enable_thinking=enable_thinking)
+
+        num_completions = 2
+        rows = []
+
+        self._ensure_grad_ckpt_off()
+        self.model.eval()
+
+        with torch.no_grad():
+            for idx in self._probe_indices:
+                sample = self.train_dataset[idx]
+                # Use raw instruction + input_text (same as _training_step).
+                # For multimodal with protein, exclude raw protein text from
+                # prompt — protein info delivered via ESM-3 embeddings.
+                instruction = sample.get("instruction", "")
+                input_text = sample.get("input_text", "")
+                protein_seq = sample.get("protein_sequence", None)
+                has_protein = (
+                    protein_seq
+                    and self.protein_llm is not None
+                )
+                if instruction:
+                    raw_prompt = instruction.strip()
+                    if input_text and input_text.strip() and not has_protein:
+                        raw_prompt += f"\n\n{input_text.strip()}"
+                else:
+                    raw_prompt = sample.get(
+                        "inference_prompt",
+                        sample.get("formatted_prompt", ""),
+                    )
+
+                # Ground truth for reward
+                task = self.cfg.data.get("task", "go_prediction").lower()
+                metadata = sample.get("metadata", {})
+                if task in ("stability", "ddg") and isinstance(metadata, dict) and "ddG" in metadata:
+                    ground_truth = metadata["ddG"]
+                elif (
+                    task in ("esmfold", "structure", "structure_prediction", "fold_quality")
+                    and isinstance(metadata, dict) and "plddt" in metadata
+                ):
+                    ground_truth = json.dumps({
+                        "plddt": metadata.get("plddt", 0),
+                        "ptm": metadata.get("ptm", 0),
+                    })
+                else:
+                    ground_truth = sample.get("response", sample.get("output", ""))
+
+                completions = []
+                rewards = []
+
+                for _ in range(num_completions):
+                    if self.protein_llm is not None and protein_seq:
+                        texts = self.protein_llm.generate(
+                            protein_sequences=[protein_seq],
+                            prompt=[raw_prompt],
+                            max_new_tokens=256,
+                            temperature=self.grpo_config["temperature"],
+                            top_p=self.grpo_config["top_p"],
+                            do_sample=True,
+                            use_cache=True,
+                            system_prompt=grpo_system_prompt,
+                            generation_prefix=None if enable_thinking else _THINKING_PREFIX,
+                        )
+                        completion = texts[0]
+                    else:
+                        messages = [
+                            {"role": "system", "content": grpo_system_prompt},
+                            {"role": "user", "content": raw_prompt},
+                        ]
+                        wrapped = self.tokenizer.apply_chat_template(
+                            messages, tokenize=False, add_generation_prompt=True,
+                        )
+                        if not enable_thinking:
+                            wrapped += _THINKING_PREFIX
+                        inputs = self.tokenizer(
+                            wrapped,
+                            return_tensors="pt",
+                            truncation=True,
+                            max_length=self.cfg.training.get("max_seq_length", 2048) - 256,
+                        )
+                        inputs = {k: v.to(self.device) for k, v in inputs.items()}
+                        outputs = self.model.generate(
+                            **inputs,
+                            max_new_tokens=256,
+                            temperature=self.grpo_config["temperature"],
+                            top_p=self.grpo_config["top_p"],
+                            do_sample=True,
+                            pad_token_id=self.tokenizer.pad_token_id,
+                        )
+                        completion = self.tokenizer.decode(
+                            outputs[0, inputs["input_ids"].shape[1]:],
+                            skip_special_tokens=True,
+                        )
+
+                    # Extract answer and compute reward
+                    answer_text, has_tags = extract_answer_content(completion)
+                    if self._is_esmfold_reward:
+                        gt_str = str(ground_truth)
+                        if gt_str.strip().startswith("{"):
+                            second_arg = ground_truth
+                        elif protein_seq:
+                            second_arg = protein_seq
+                        else:
+                            second_arg = ground_truth
+                        reward = self.reward_fn(answer_text, second_arg)
+                    else:
+                        reward = self.reward_fn(answer_text, ground_truth)
+
+                    completions.append(completion[:500])  # truncate for table
+                    rewards.append(round(reward, 4))
+
+                row = {
+                    "step": self.global_step,
+                    "prompt": raw_prompt[:200],
+                    "protein_seq": (protein_seq[:50] + "...") if protein_seq and len(protein_seq) > 50 else (protein_seq or ""),
+                }
+                for ci in range(num_completions):
+                    row[f"completion_{ci+1}"] = completions[ci] if ci < len(completions) else ""
+                    row[f"reward_{ci+1}"] = rewards[ci] if ci < len(rewards) else 0.0
+                rows.append(row)
+
+        self.model.train()
+        self._ensure_grad_ckpt_on()
+
+        # Log as wandb Table
+        if HAS_WANDB and wandb.run is not None:
+            columns = list(rows[0].keys())
+            table = wandb.Table(columns=columns)
+            for row in rows:
+                table.add_data(*[row[c] for c in columns])
+            wandb.log({"probe_completions": table}, step=self.global_step)
+
+        # Log to file: results/{experiment_name}/logs/probe_completions.jsonl
+        log_dir = Path(self.cfg.get("paths", {}).get(
+            "log_dir",
+            Path(self.cfg.get("paths", {}).get("experiment_dir", "results/unknown")) / "logs",
+        ))
+        log_dir.mkdir(parents=True, exist_ok=True)
+        probe_file = log_dir / "probe_completions.jsonl"
+        with open(probe_file, "a") as f:
+            for row in rows:
+                f.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+        log.info(
+            f"Logged {len(rows)} probe completions at step {self.global_step} "
+            f"→ {probe_file}"
+        )
 
     @staticmethod
     def _list_collate(batch: List[Dict[str, Any]]) -> Dict[str, list]:
@@ -983,24 +1310,63 @@ class GRPOTrainer:
             temperature=self.grpo_config["temperature"],
             top_p=self.grpo_config["top_p"],
             do_sample=self.grpo_config["do_sample"],
+            use_cache=True,
         )
 
+        # Explicitly enable KV cache on model config (gradient checkpointing
+        # may have set it to False).  Restore after generation.
+        base_model = self._get_base_model()
+        _prev_use_cache = getattr(base_model.config, "use_cache", True)
+        base_model.config.use_cache = True
+
+        import time as _time
+        _t_gen_start = _time.monotonic()
+
+        # Build GRPO system prompt (base + answer tag instruction)
+        task = self.cfg.data.get("task", "go_prediction").lower()
+        enable_thinking = self.grpo_config.get("enable_thinking", False)
+        grpo_system_prompt = _get_grpo_system_prompt(task, enable_thinking=enable_thinking)
+
+        from src.models.multimodal_llm import PROTEIN_PLACEHOLDER
+
         for i, prompt in enumerate(prompts):
-            # Multimodal path: use ProteinLLM.generate()
-            if (
+            # Build GRPO-formatted prompt with answer tag instruction +
+            # empty thinking prefix.  Both paths share the same wrapping.
+            is_multimodal = (
                 self.protein_llm is not None
                 and protein_sequences is not None
                 and protein_sequences[i]
-            ):
+            )
+
+            # Build user content (add protein placeholder for multimodal)
+            user_content = prompt
+            if is_multimodal:
+                user_content = f"{prompt}\n\n{PROTEIN_PLACEHOLDER}"
+
+            messages = [
+                {"role": "system", "content": grpo_system_prompt},
+                {"role": "user", "content": user_content},
+            ]
+            wrapped_prompt = self.tokenizer.apply_chat_template(
+                messages, tokenize=False, add_generation_prompt=True,
+            )
+            # When thinking disabled: append empty <think></think> prefix.
+            # When thinking enabled: model generates its own <think>...</think>.
+            if not enable_thinking:
+                wrapped_prompt += _THINKING_PREFIX
+
+            if is_multimodal:
+                # Multimodal path: use ProteinLLM.generate() with pre-wrapped prompt
                 protein_seq = protein_sequences[i]
                 batch_proteins = [protein_seq] * num_completions
-                batch_prompts = [prompt] * num_completions
+                batch_prompts = [wrapped_prompt] * num_completions
 
                 with torch.no_grad():
                     texts, token_ids, input_len = self.protein_llm.generate(
                         protein_sequences=batch_proteins,
                         prompt=batch_prompts,
                         return_token_ids=True,
+                        wrap_chat_template=False,  # already wrapped above
                         **gen_kwargs,
                     )
 
@@ -1012,7 +1378,7 @@ class GRPOTrainer:
             else:
                 # Text-only path: use model.generate() directly
                 inputs = self.tokenizer(
-                    prompt,
+                    wrapped_prompt,
                     return_tensors="pt",
                     truncation=True,
                     max_length=(
@@ -1050,44 +1416,27 @@ class GRPOTrainer:
                 all_generated_ids.append(gen_ids_list)
 
             # Store prompt token IDs for log prob re-computation.
-            # For multimodal, must include chat template + protein placeholder
-            # so prepare_inputs() finds the placeholder during log prob forward.
-            if (
-                self.protein_llm is not None
-                and protein_sequences is not None
-                and protein_sequences[i]
-            ):
-                from src.data.mol_instructions import DEFAULT_SYSTEM_PROMPT
-                from src.models.multimodal_llm import PROTEIN_PLACEHOLDER
-
-                user_content = f"{prompt}\n\n{PROTEIN_PLACEHOLDER}"
-                messages = [
-                    {"role": "system", "content": DEFAULT_SYSTEM_PROMPT},
-                    {"role": "user", "content": user_content},
-                ]
-                wrapped_prompt = self.tokenizer.apply_chat_template(
-                    messages, tokenize=False, add_generation_prompt=True,
-                )
-                prompt_inputs = self.tokenizer(
-                    wrapped_prompt,
-                    return_tensors="pt",
-                    truncation=True,
-                    max_length=(
-                        self.cfg.training.get("max_seq_length", 2048)
-                        - self.grpo_config["max_new_tokens"]
-                    ),
-                )
-            else:
-                prompt_inputs = self.tokenizer(
-                    prompt,
-                    return_tensors="pt",
-                    truncation=True,
-                    max_length=(
-                        self.cfg.training.get("max_seq_length", 2048)
-                        - self.grpo_config["max_new_tokens"]
-                    ),
-                )
+            # Uses the same wrapped_prompt (with GRPO system prompt + thinking
+            # prefix) for consistency between generation and log-prob phases.
+            prompt_inputs = self.tokenizer(
+                wrapped_prompt,
+                return_tensors="pt",
+                truncation=True,
+                max_length=(
+                    self.cfg.training.get("max_seq_length", 2048)
+                    - self.grpo_config["max_new_tokens"]
+                ),
+            )
             all_prompt_ids.append(prompt_inputs["input_ids"].to(self.device))
+
+        # Restore use_cache and log generation time
+        base_model.config.use_cache = _prev_use_cache
+        _t_gen_elapsed = _time.monotonic() - _t_gen_start
+        if self.is_main_process:
+            log.info(
+                f"[TIMING] _generate_completions: {_t_gen_elapsed:.2f}s "
+                f"({len(prompts)} prompts × {num_completions} completions)"
+            )
 
         return all_completions, all_generated_ids, all_prompt_ids
 
@@ -1130,6 +1479,7 @@ class GRPOTrainer:
         prompt_ids: torch.Tensor,
         generated_ids: torch.Tensor,
         protein_sequence: Optional[str] = None,
+        precomputed_encoder_embeds: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         """Compute differentiable log probabilities for generated tokens.
 
@@ -1146,6 +1496,9 @@ class GRPOTrainer:
                 (1, gen_len).
             protein_sequence: Protein sequence string for multimodal
                 forward pass, or None for text-only.
+            precomputed_encoder_embeds: Cached ESM-3 encoder output
+                [1, L, D].  Skips frozen encoder, pooling+projector
+                still run with gradients.
 
         Returns:
             Scalar tensor: sum of log probabilities over the generated
@@ -1160,12 +1513,13 @@ class GRPOTrainer:
         prompt_length = prompt_ids.shape[1]
         attention_mask = torch.ones_like(full_ids)
 
-        if self.protein_llm is not None and protein_sequence is not None:
+        if self.protein_llm is not None and protein_sequence:
             # Multimodal: encode protein + prepend prefix embeddings
             prepared = self.protein_llm.prepare_inputs(
                 protein_sequences=[protein_sequence],
                 text_input_ids=full_ids,
                 text_attention_mask=attention_mask,
+                precomputed_encoder_embeds=precomputed_encoder_embeds,
             )
             outputs = self.protein_llm.llm(
                 inputs_embeds=prepared["inputs_embeds"],
@@ -1200,6 +1554,104 @@ class GRPOTrainer:
 
         return token_log_probs.sum()
 
+    def _compute_batched_log_probs(
+        self,
+        prompt_ids: torch.Tensor,
+        generated_ids_list: List[torch.Tensor],
+        protein_sequence: Optional[str] = None,
+        precomputed_encoder_embeds: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
+        """Compute log probs for multiple completions in ONE forward pass.
+
+        All completions share the same prompt and protein sequence.  They are
+        padded to the same length and batched together for a single LLM
+        forward, reducing sequential overhead from group_size calls to 1.
+
+        Args:
+            prompt_ids: Tokenized prompt [1, prompt_len].
+            generated_ids_list: List of generated token ID tensors, one per
+                completion.  Each is shape (gen_len,) or (1, gen_len).
+            protein_sequence: Protein sequence for multimodal, or None.
+            precomputed_encoder_embeds: Cached ESM-3 encoder output [1, L, D].
+
+        Returns:
+            Tensor of shape (group_size,) with per-completion log prob sums.
+        """
+        group_size = len(generated_ids_list)
+        prompt_length = prompt_ids.shape[1]
+        pad_id = self.tokenizer.pad_token_id
+
+        # Ensure all generated_ids are 1D
+        gen_ids = [
+            g.squeeze(0) if g.dim() == 2 else g for g in generated_ids_list
+        ]
+
+        # Pad completions to same length
+        max_gen_len = max(g.shape[0] for g in gen_ids)
+        padded_gens = []
+        gen_lengths = []
+        for g in gen_ids:
+            gen_lengths.append(g.shape[0])
+            if g.shape[0] < max_gen_len:
+                pad = torch.full(
+                    (max_gen_len - g.shape[0],), pad_id,
+                    dtype=g.dtype, device=g.device,
+                )
+                padded_gens.append(torch.cat([g, pad]))
+            else:
+                padded_gens.append(g)
+
+        # Build batched full sequences: [prompt | padded_completion] × group_size
+        batch_prompt = prompt_ids.expand(group_size, -1)  # [G, prompt_len]
+        batch_gen = torch.stack(padded_gens)  # [G, max_gen_len]
+        full_ids = torch.cat([batch_prompt, batch_gen], dim=1)  # [G, prompt_len + max_gen_len]
+
+        # Attention mask: 1 for real tokens, 0 for padding
+        attention_mask = torch.ones_like(full_ids)
+        for i, gl in enumerate(gen_lengths):
+            if gl < max_gen_len:
+                attention_mask[i, prompt_length + gl:] = 0
+
+        if self.protein_llm is not None and protein_sequence:
+            # Expand cached encoder embeds for the batch
+            batch_embeds = (
+                precomputed_encoder_embeds.expand(group_size, -1, -1)
+                if precomputed_encoder_embeds is not None
+                else None
+            )
+            prepared = self.protein_llm.prepare_inputs(
+                protein_sequences=[protein_sequence] * group_size,
+                text_input_ids=full_ids,
+                text_attention_mask=attention_mask,
+                precomputed_encoder_embeds=batch_embeds,
+            )
+            outputs = self.protein_llm.llm(
+                inputs_embeds=prepared["inputs_embeds"],
+                attention_mask=prepared["attention_mask"],
+                position_ids=prepared["position_ids"],
+                return_dict=True,
+            )
+            num_prefix = self.protein_llm.num_prefix_tokens
+            logits = outputs.logits[:, num_prefix + prompt_length - 2:-1, :]
+        else:
+            outputs = self.model(full_ids, attention_mask=attention_mask, return_dict=True)
+            logits = outputs.logits[:, prompt_length - 1:-1, :]
+
+        target_ids = full_ids[:, prompt_length:]  # [G, max_gen_len]
+
+        # Log probs with padding mask
+        log_probs = F.log_softmax(logits, dim=-1)
+        token_log_probs = torch.gather(
+            log_probs, dim=-1, index=target_ids.unsqueeze(-1)
+        ).squeeze(-1)  # [G, max_gen_len]
+
+        # Mask padding
+        pad_mask = (target_ids != pad_id).float()
+        token_log_probs = token_log_probs * pad_mask
+
+        # Sum per completion
+        return token_log_probs.sum(dim=-1)  # [G]
+
     def _compute_rewards(
         self,
         completions: List[List[str]],
@@ -1207,6 +1659,10 @@ class GRPOTrainer:
         protein_sequences: Optional[List[str]] = None,
     ) -> Tuple[torch.Tensor, Dict[str, List[float]]]:
         """Compute rewards for all completions with supplementary metrics.
+
+        Extracts content from ``<answer>`` tags before passing to reward
+        functions.  Adds a format reward bonus when ``<answer>`` tags are
+        present, encouraging consistent output structure.
 
         Args:
             completions: List of lists of completions (one list per prompt).
@@ -1218,6 +1674,8 @@ class GRPOTrainer:
                 - Tensor of rewards with shape (batch_size, group_size).
                 - Dict of supplementary metric lists (one value per completion).
         """
+        from .rewards import FORMAT_REWARD_BONUS, extract_answer_content
+
         rewards = []
         all_metrics: Dict[str, List[float]] = {}
 
@@ -1226,23 +1684,30 @@ class GRPOTrainer:
         ):
             prompt_rewards = []
             for completion in prompt_completions:
+                # Extract answer content from <answer> tags
+                answer_text, has_answer_tags = extract_answer_content(completion)
+
                 # ESMFold reward: prefer pre-computed metrics (JSON) over live fold
                 if self._is_esmfold_reward:
                     gt_str = str(ground_truth)
                     if gt_str.strip().startswith("{"):
-                        # Pre-computed pLDDT/pTM in ground truth JSON
                         second_arg = ground_truth
                     elif protein_sequences is not None:
-                        # Live ESMFold: pass protein sequence
                         second_arg = protein_sequences[idx]
                     else:
                         second_arg = ground_truth
                 else:
                     second_arg = ground_truth
                 reward, metrics = self.reward_fn(
-                    completion, second_arg, detailed=True
+                    answer_text, second_arg, detailed=True
                 )
+
+                # Format reward: bonus for using <answer> tags
+                format_bonus = FORMAT_REWARD_BONUS if has_answer_tags else 0.0
+                reward += format_bonus
+
                 prompt_rewards.append(reward)
+                all_metrics.setdefault("format_bonus", []).append(format_bonus)
                 for k, v in metrics.items():
                     if isinstance(v, (int, float)) and not isinstance(v, bool):
                         all_metrics.setdefault(k, []).append(float(v))
@@ -1327,9 +1792,13 @@ class GRPOTrainer:
         base = self._get_base_model()
         if hasattr(base, "gradient_checkpointing_disable"):
             base.gradient_checkpointing_disable()
-        # Also clear the flag on model config
+        # Also clear the flag on model config and all submodules
         if hasattr(base, "config"):
             base.config.gradient_checkpointing = False
+        # Force-clear per-module gradient_checkpointing flags (belt + suspenders)
+        for mod in base.modules():
+            if hasattr(mod, "gradient_checkpointing"):
+                mod.gradient_checkpointing = False
 
     def _ensure_grad_ckpt_on(self) -> None:
         """Enable gradient checkpointing for training forward pass."""
@@ -1398,12 +1867,37 @@ class GRPOTrainer:
         Returns:
             Tuple of (loss tensor, metrics dict).
         """
-        # Extract batch data
-        prompts = batch.get(
-            "inference_prompt",
-            batch.get("formatted_prompt", batch.get("instruction", [])),
-        )
+        # Extract batch data — use raw instruction + input for GRPO prompt
+        # rebuilding (so we can inject GRPO system prompt + answer tags).
+        # Falls back to inference_prompt for backward compatibility.
+        raw_instructions = batch.get("instruction", [])
+        raw_inputs = batch.get("input_text", [])
         protein_sequences = batch.get("protein_sequence", None)
+
+        if raw_instructions:
+            # Build user content from raw fields.
+            # For multimodal with protein sequences: use instruction only
+            # (protein goes through ESM-3 encoder, placeholder added later).
+            # For text-only or no protein: include input_text in prompt.
+            prompts = []
+            for i, inst in enumerate(raw_instructions):
+                inp = (raw_inputs[i] if raw_inputs and i < len(raw_inputs) else "")
+                has_protein = (
+                    protein_sequences is not None
+                    and i < len(protein_sequences)
+                    and protein_sequences[i]
+                    and self.protein_llm is not None
+                )
+                p = inst.strip()
+                if inp and inp.strip() and not has_protein:
+                    # Text-only: include raw input (protein sequence as text)
+                    p += f"\n\n{inp.strip()}"
+                prompts.append(p)
+        else:
+            prompts = batch.get(
+                "inference_prompt",
+                batch.get("formatted_prompt", batch.get("instruction", [])),
+            )
 
         # Task-aware ground truth extraction:
         # - stability/ddg: use metadata.ddG (float) instead of text output
@@ -1434,7 +1928,10 @@ class GRPOTrainer:
             # ProteinLMBench: ground truth is "option N" from metadata or response
             metadata_list = batch.get("metadata", [])
             if metadata_list and isinstance(metadata_list, list) and isinstance(metadata_list[0], dict):
-                ground_truths = [m.get("answer", "") for m in metadata_list]
+                ground_truths = [
+                    m.get("answer", m.get("correct_answer", ""))
+                    for m in metadata_list
+                ]
             else:
                 ground_truths = batch.get("response", batch.get("output", []))
         else:
@@ -1449,45 +1946,73 @@ class GRPOTrainer:
 
         group_size = self.grpo_config["group_size"]
 
+        import time as _time
+
         # Step 1: Generate completions (no grad)
-        # Switch to eval mode so gradient checkpointing deactivates
-        # (HF check: self.gradient_checkpointing AND self.training).
-        # This allows generation to use KV cache.
+        # Disable gradient checkpointing and switch to eval mode so KV cache
+        # works during generation.  HF's per-layer check is:
+        #   self.gradient_checkpointing AND self.training AND use_cache
+        # eval() sets training=False, which is sufficient.  We also disable
+        # grad ckpt explicitly as belt-and-suspenders.
+        self._ensure_grad_ckpt_off()
         self.model.eval()
+        _t0 = _time.monotonic()
 
         completions, all_generated_ids, all_prompt_ids = (
             self._generate_completions(prompts, protein_sequences, group_size)
         )
 
-        # Switch back to train mode for differentiable forward pass
+        _t1 = _time.monotonic()
+        # Switch back to train mode and re-enable gradient checkpointing
         self.model.train()
+        self._ensure_grad_ckpt_on()
 
         # Step 2: Compute rewards
         rewards, reward_metrics = self._compute_rewards(
             completions, ground_truths, protein_sequences=protein_sequences
         )
+        _t2 = _time.monotonic()
 
         # Step 3: Compute advantages (detached from reward computation)
         advantages = self._compute_advantages(rewards).detach()
 
+        # Pre-compute ESM-3 encoder embeddings for all unique proteins.
+        # ESM-3 is frozen → output is deterministic.  Cache avoids redundant
+        # encoding during log-prob recomputation (group_size calls per protein).
+        # Encode each sequence individually to avoid padding mismatch when
+        # the cached tensor is used later with a single-sequence call.
+        esm_cache = {}
+        if (
+            self.protein_llm is not None
+            and protein_sequences is not None
+            and self.protein_llm.encoder is not None
+        ):
+            unique_seqs = list(set(s for s in protein_sequences if s))
+            if unique_seqs:
+                with torch.no_grad():
+                    for seq in unique_seqs:
+                        enc_out = self.protein_llm.encoder.encode([seq])
+                        esm_cache[seq] = enc_out["embeddings"]  # [1, L, D]
+
         # Step 4: Re-compute log probs WITH gradients (differentiable forward)
+        # Batch all completions for each prompt into a single forward pass.
         diff_log_probs = []
         for prompt_idx in range(len(prompts)):
-            prompt_log_probs = []
             protein_seq = (
                 protein_sequences[prompt_idx]
                 if protein_sequences is not None
                 else None
             )
-            for comp_idx in range(group_size):
-                log_prob = self._compute_policy_log_probs(
-                    all_prompt_ids[prompt_idx],
-                    all_generated_ids[prompt_idx][comp_idx],
-                    protein_sequence=protein_seq,
-                )
-                prompt_log_probs.append(log_prob)
-            diff_log_probs.append(torch.stack(prompt_log_probs))
+            cached_embeds = esm_cache.get(protein_seq) if protein_seq else None
+            prompt_log_probs = self._compute_batched_log_probs(
+                all_prompt_ids[prompt_idx],
+                all_generated_ids[prompt_idx],
+                protein_sequence=protein_seq,
+                precomputed_encoder_embeds=cached_embeds,
+            )
+            diff_log_probs.append(prompt_log_probs)
         log_probs = torch.stack(diff_log_probs)  # (batch_size, group_size)
+        _t3 = _time.monotonic()
 
         # Step 5: Policy gradient loss = -E[advantage * log_prob]
         pg_loss = -(advantages * log_probs).mean()
@@ -1500,6 +2025,20 @@ class GRPOTrainer:
             loss = pg_loss
             kl_penalty = torch.tensor(0.0)
 
+        _t_total = _t3 - _t0  # total excluding backward (added in train loop)
+
+        # --- Completion length diagnostics ---
+        comp_lengths = []
+        for prompt_gen_ids in all_generated_ids:
+            for gen_ids in prompt_gen_ids:
+                comp_lengths.append(gen_ids.shape[-1])
+
+        # --- Reward diagnostics ---
+        # frac_reward_zero_std: fraction of groups where all completions
+        # get the same reward (no learning signal for that group)
+        group_stds = rewards.std(dim=1)  # (batch_size,)
+        frac_zero_std = (group_stds < 1e-8).float().mean().item()
+
         step_metrics = {
             "loss": loss.item(),
             "pg_loss": pg_loss.item(),
@@ -1508,6 +2047,15 @@ class GRPOTrainer:
             "max_reward": rewards.max().item(),
             "min_reward": rewards.min().item(),
             "reward_std": rewards.std().item(),
+            "timing/generate_s": _t1 - _t0,
+            "timing/reward_s": _t2 - _t1,
+            "timing/log_prob_s": _t3 - _t2,
+            "timing/total_step_s": _t_total,
+            "diagnostics/completion_mean_length": sum(comp_lengths) / max(len(comp_lengths), 1),
+            "diagnostics/completion_max_length": max(comp_lengths) if comp_lengths else 0,
+            "diagnostics/frac_reward_zero_std": frac_zero_std,
+            "diagnostics/advantage_mean": advantages.mean().item(),
+            "diagnostics/advantage_std": advantages.std().item(),
         }
 
         # Add averaged supplementary metrics from reward functions
@@ -1586,11 +2134,20 @@ class GRPOTrainer:
             accum_count = 0
 
             for step, batch in enumerate(dataloader):
+                import time as _time
+
                 loss, metrics = self._training_step(batch)
 
                 # Scale loss for gradient accumulation
                 scaled_loss = loss / grad_accum_steps
+                _t_bwd_start = _time.monotonic()
                 scaled_loss.backward()
+                _t_bwd_end = _time.monotonic()
+                metrics["timing/backward_s"] = _t_bwd_end - _t_bwd_start
+                # Update total_step_s to include backward
+                metrics["timing/total_step_s"] = (
+                    metrics.get("timing/total_step_s", 0) + metrics["timing/backward_s"]
+                )
                 accum_count += 1
                 epoch_metrics.append(metrics)
 
@@ -1646,6 +2203,33 @@ class GRPOTrainer:
                         if all_params:
                             torch.nn.utils.clip_grad_norm_(all_params, max_grad_norm)
 
+                    # Compute gradient norms (after clipping, for diagnostics)
+                    _lora_grad_norm = 0.0
+                    _mm_grad_norm = 0.0
+                    lora_model = self.model
+                    lora_grads = [
+                        p.grad.detach().float().norm()
+                        for p in lora_model.parameters()
+                        if p.requires_grad and p.grad is not None
+                    ]
+                    if lora_grads:
+                        _lora_grad_norm = torch.stack(lora_grads).norm().item()
+                    if self.protein_llm is not None:
+                        mm_grads = []
+                        for mod in [self.protein_llm.pooling, self.protein_llm.projector]:
+                            if mod is not None:
+                                mm_grads.extend(
+                                    p.grad.detach().float().norm()
+                                    for p in mod.parameters()
+                                    if p.requires_grad and p.grad is not None
+                                )
+                        if mm_grads:
+                            _mm_grad_norm = torch.stack(mm_grads).norm().item()
+                    # Store in the most recent metrics entry
+                    if epoch_metrics:
+                        epoch_metrics[-1]["diagnostics/grad_norm_lora"] = _lora_grad_norm
+                        epoch_metrics[-1]["diagnostics/grad_norm_multimodal"] = _mm_grad_norm
+
                     self.optimizer.step()
                     self.scheduler.step()
                     self.optimizer.zero_grad()
@@ -1658,16 +2242,29 @@ class GRPOTrainer:
                             len(epoch_metrics),
                         )
                         recent = epoch_metrics[-window:]
+                        # Collect all keys across recent entries
+                        all_recent_keys = set()
+                        for m in recent:
+                            all_recent_keys.update(m.keys())
                         avg_metrics = {
-                            k: sum(m[k] for m in recent) / len(recent)
-                            for k in metrics.keys()
+                            k: sum(m.get(k, 0) for m in recent) / max(sum(1 for m in recent if k in m), 1)
+                            for k in all_recent_keys
                         }
                         avg_metrics["lr"] = self.scheduler.get_last_lr()[0]
+                        t_gen = avg_metrics.get("timing/generate_s", 0)
+                        t_logp = avg_metrics.get("timing/log_prob_s", 0)
+                        t_bwd = avg_metrics.get("timing/backward_s", 0)
+                        t_total = avg_metrics.get("timing/total_step_s", 0)
+                        grad_lora = avg_metrics.get("diagnostics/grad_norm_lora", 0)
+                        grad_mm = avg_metrics.get("diagnostics/grad_norm_multimodal", 0)
                         log.info(
                             f"Step {self.global_step}: "
                             f"loss={avg_metrics['loss']:.4f}, "
                             f"reward={avg_metrics['mean_reward']:.4f}, "
-                            f"lr={avg_metrics['lr']:.2e}"
+                            f"lr={avg_metrics['lr']:.2e}, "
+                            f"t_gen={t_gen:.1f}s, t_logp={t_logp:.1f}s, "
+                            f"t_bwd={t_bwd:.1f}s, t_total={t_total:.1f}s, "
+                            f"grad_lora={grad_lora:.4f}, grad_mm={grad_mm:.4f}"
                         )
                         if HAS_WANDB and wandb.run is not None:
                             wandb.log(avg_metrics, step=self.global_step)
@@ -1682,6 +2279,8 @@ class GRPOTrainer:
                                     {f"eval_{k}": v for k, v in eval_metrics.items()},
                                     step=self.global_step,
                                 )
+                        # Log probe completions to wandb
+                        self._log_probe_completions()
 
                     # Save checkpoint
                     if self.is_main_process and self.global_step % save_steps == 0:
@@ -1696,7 +2295,7 @@ class GRPOTrainer:
                         )
                         recent = epoch_metrics[-window:]
                         ckpt_metrics = {
-                            k: sum(m[k] for m in recent) / max(len(recent), 1)
+                            k: sum(m.get(k, 0) for m in recent) / max(sum(1 for m in recent if k in m), 1)
                             for k in metrics.keys()
                         }
                         self.save_checkpoint(
@@ -1706,12 +2305,15 @@ class GRPOTrainer:
 
             all_metrics.extend(epoch_metrics)
 
-        # Compute final metrics
+        # Compute final metrics (handle varying keys across steps)
         final_metrics = {}
         if all_metrics:
+            all_keys = set()
+            for m in all_metrics:
+                all_keys.update(m.keys())
             final_metrics = {
-                k: sum(m[k] for m in all_metrics) / len(all_metrics)
-                for k in all_metrics[0].keys()
+                k: sum(m.get(k, 0) for m in all_metrics) / len(all_metrics)
+                for k in all_keys
             }
 
         # Save final checkpoint (main process only)
@@ -1724,29 +2326,47 @@ class GRPOTrainer:
     def evaluate(self, num_samples: int = 50) -> Dict[str, float]:
         """Run evaluation on validation set using ProteinLLM when available.
 
+        Uses GRPO system prompt with answer tag instruction for consistency
+        with training.  Extracts answer content from ``<answer>`` tags before
+        computing rewards.
+
         Args:
             num_samples: Number of samples to evaluate on.
 
         Returns:
             Dictionary of evaluation metrics.
         """
+        from .rewards import extract_answer_content
+
         if self.eval_dataset is None:
             return {}
 
-        # eval mode deactivates gradient checkpointing → KV cache works
+        # Disable gradient checkpointing + eval mode for KV cache during generation
+        self._ensure_grad_ckpt_off()
         self.model.eval()
+
+        task = self.cfg.data.get("task", "go_prediction").lower()
+        enable_thinking = self.grpo_config.get("enable_thinking", False)
+        grpo_system_prompt = _get_grpo_system_prompt(task, enable_thinking=enable_thinking)
 
         num_samples = min(num_samples, len(self.eval_dataset))
         eval_rewards = []
+        format_hits = 0
 
         with torch.no_grad():
             for i in range(num_samples):
                 sample = self.eval_dataset[i]
 
-                prompt = sample.get(
-                    "inference_prompt",
-                    sample.get("formatted_prompt", sample.get("instruction", "")),
-                )
+                # Use raw instruction + input_text for GRPO prompt rebuilding
+                instruction = sample.get("instruction", "")
+                input_text = sample.get("input_text", "")
+                if instruction and input_text:
+                    raw_prompt = f"{instruction.strip()}\n\n{input_text.strip()}"
+                else:
+                    raw_prompt = sample.get(
+                        "inference_prompt",
+                        sample.get("formatted_prompt", sample.get("instruction", "")),
+                    )
                 protein_seq = sample.get("protein_sequence", None)
 
                 # Task-aware ground truth extraction (mirrors _training_step)
@@ -1765,21 +2385,34 @@ class GRPOTrainer:
                 else:
                     ground_truth = sample.get("response", sample.get("output", ""))
 
-                # Multimodal: use ProteinLLM.generate()
+                # Multimodal: use ProteinLLM.generate() with GRPO system prompt
                 if self.protein_llm is not None and protein_seq:
                     texts = self.protein_llm.generate(
                         protein_sequences=[protein_seq],
-                        prompt=[prompt],
+                        prompt=[raw_prompt],
                         max_new_tokens=256,
                         temperature=0.7,
                         top_p=0.9,
                         do_sample=True,
+                        use_cache=True,
+                        system_prompt=grpo_system_prompt,
+                        generation_prefix=None if enable_thinking else _THINKING_PREFIX,
                     )
                     completion = texts[0]
                 else:
-                    # Text-only fallback
+                    # Text-only: wrap with GRPO system prompt + thinking prefix
+                    messages = [
+                        {"role": "system", "content": grpo_system_prompt},
+                        {"role": "user", "content": raw_prompt},
+                    ]
+                    wrapped = self.tokenizer.apply_chat_template(
+                        messages, tokenize=False, add_generation_prompt=True,
+                    )
+                    if not enable_thinking:
+                        wrapped += _THINKING_PREFIX
+
                     inputs = self.tokenizer(
-                        prompt,
+                        wrapped,
                         return_tensors="pt",
                         truncation=True,
                         max_length=self.cfg.training.get("max_seq_length", 2048) - 256,
@@ -1800,6 +2433,11 @@ class GRPOTrainer:
                         skip_special_tokens=True,
                     )
 
+                # Extract answer content from <answer> tags
+                answer_text, has_answer_tags = extract_answer_content(completion)
+                if has_answer_tags:
+                    format_hits += 1
+
                 # ESMFold reward: pass pre-computed metrics or protein sequence
                 if self._is_esmfold_reward:
                     gt_str = str(ground_truth)
@@ -1809,18 +2447,20 @@ class GRPOTrainer:
                         second_arg = protein_seq
                     else:
                         second_arg = ground_truth
-                    reward = self.reward_fn(completion, second_arg)
+                    reward = self.reward_fn(answer_text, second_arg)
                 else:
-                    reward = self.reward_fn(completion, ground_truth)
+                    reward = self.reward_fn(answer_text, ground_truth)
                 eval_rewards.append(reward)
 
-        # train() re-activates gradient checkpointing (checked via self.training)
+        # Re-enable gradient checkpointing and train mode
         self.model.train()
+        self._ensure_grad_ckpt_on()
 
         return {
             "mean_reward": sum(eval_rewards) / len(eval_rewards),
             "max_reward": max(eval_rewards),
             "min_reward": min(eval_rewards),
+            "format_rate": format_hits / max(num_samples, 1),
         }
 
     def _save_model_inner(self, path: Path) -> None:

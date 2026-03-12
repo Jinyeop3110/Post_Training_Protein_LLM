@@ -90,7 +90,7 @@ claude
 **Merges former roles**: Code-Reviewer + Test-Writer + QA-Engineer
 
 **Key responsibilities**:
-- Review all changes against the 7-item critical checklist
+- Review all changes against the 9-item critical checklist
 - Write unit, integration, and regression tests
 - Enforce type hints, docstrings, code quality
 - Run ruff, mypy, pytest
@@ -104,6 +104,8 @@ claude
 5. Chat template format (not Alpaca)
 6. No secrets in code
 7. Safe CUDA operations
+8. Flamingo exception: no LoRA (LLM frozen, only flamingo components trainable)
+9. No zero-init or gate/tanh init for projector (causes NaN explosion)
 
 **Agent file**: `.claude/agents/qa.md`
 
@@ -281,7 +283,7 @@ Add to `.claude/settings.json`:
 
 ## Scientist Team (Separate)
 
-The **scientist team** (data-collector, analyst, reporter) handles training metric analysis and blog post generation. See `SCIENTIST_TEAM.md` for details. These agents are independent of the SWE team.
+The **scientist team** (data-collector, analyst, artist, reporter) handles training metric analysis, figure drawing, and blog post generation. See `SCIENTIST_TEAM.md` for details. These agents are independent of the SWE team.
 
 ---
 

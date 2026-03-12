@@ -3,9 +3,19 @@
 # GRPO Structure Quality: Base Qwen3-8B (fresh LoRA, no SFT parent)
 # Tests whether RL alone (without SFT pretraining) can learn structural quality.
 #
-# Memory budget (FSDP/4, per GPU):
-#   Static: 9.4 GB (model + LoRA + ESM-3 + projector + ESMFold)
-#   Peak:   ~16 GB (generation + grad)  →  30 GB headroom on L40S 46GB
+# Memory budget (DDP, per GPU on 8×H100 80GB):
+#   LLM (full replica): ~16 GB
+#   ESM-3 (replicated): ~1.2 GB, KV cache (2 seqs * 256 tokens): ~3 GB
+#   ESMFold (lazy): ~2 GB, activations+grad: ~15 GB
+#   Total peak: ~40 GB → 40 GB headroom on H100 80GB
+#
+# Optimizations (2026-03-10):
+#   - KV cache enabled during generation (model.eval() + use_cache=True)
+#   - ESM-3 embeddings cached across log-prob recomputations
+#   - Batched log-prob: all completions per prompt in one forward pass
+#   - group_size=8: 2.4x throughput vs gs=2, ~37s/step, no OOM
+#   - <answer> tags: model wraps answers in <answer>...</answer>, format reward +0.1
+#   - enable_thinking=False: empty <think></think> prefix, no reasoning overhead
 #
 # Usage:
 #   python scripts/train.py main_RL=grpo_structure_base
@@ -20,6 +30,9 @@ defaults:
 approach: esm3
 experiment_name: grpo_structure_base_${model.name}_${now:%m%d_%H%M%S}
 
+encoder:
+  encoder_batch_size: 4
+
 # No parent — fresh LoRA init
 parent_experiment: null
 parent_checkpoint: null
@@ -27,37 +40,40 @@ parent_checkpoint: null
 # Data task for reward routing
 data:
   task: esmfold
+  processing:
+    max_protein_length: 512  # ESM-3 geom_attention is O(L^2), OOMs on long seqs
 
 training:
-  # --- Optimized for 4×L40S 46GB ---
+  # --- DDP on 8×H100 80GB (no FSDP) ---
   lr: 5e-6
   projector_lr: 5e-5     # 10x base LR: random-init projector needs faster learning
-  batch_size: 4           # prompts per micro-batch per GPU
-  gradient_accumulation_steps: 4  # effective batch = 4×4×4 = 64 prompts
+  batch_size: 2
+  gradient_accumulation_steps: 4  # effective batch = 2 * 8 GPUs * 4 = 64
+  gradient_checkpointing: true
   epochs: 1
   warmup_steps: 20
   max_grad_norm: 1.0
 
   grpo:
-    group_size: 8         # 8 completions per prompt — more diverse reward signal
-    temperature: 1.0
+    group_size: 16        # 16 completions per prompt — max diversity for GRPO
+    temperature: 0.9
     use_kl_penalty: false  # DAPO: no KL (no reference model for base)
     normalize_advantages: false  # Dr. GRPO
 
   # Structural quality descriptions are short
   rollout:
-    max_tokens: 256
+    max_tokens: 512       # Thinking mode needs more tokens for <think>...</think>
     top_p: 0.95
     do_sample: true
+    enable_thinking: true  # Let model reason before <answer>
 
   # Checkpointing
   save_steps: 50
   eval_steps: 25
   logging_steps: 5
 
-  # FSDP for multi-GPU (shards 8B model across 4 GPUs)
   fsdp:
-    enabled: true
+    enabled: false  # DDP: full model on each GPU, KV cache works with grad ckpt toggle
 
   wandb:
     tags:

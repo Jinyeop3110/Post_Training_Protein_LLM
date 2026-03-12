@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GRPO Structure Quality: Text vs MLP — High Reward, Fake Reasoning</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #1a1a2e;
+            --accent: #2563eb;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --code-bg: #f3f4f6;
+            --table-header: #f9fafb;
+            --blockquote-bg: #fffbeb;
+            --blockquote-border: #f59e0b;
+            --success-bg: #f0fdf4;
+            --success-border: #22c55e;
+            --warning-bg: #fff7ed;
+            --warning-border: #f97316;
+            --danger-bg: #fef2f2;
+            --danger-border: #ef4444;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--fg);
+            background: var(--bg);
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        header { margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 2px solid var(--border); }
+        header .meta { color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem; }
+        header .tags { margin-top: 0.5rem; }
+        header .tag {
+            display: inline-block; background: var(--code-bg); color: var(--accent);
+            padding: 0.15rem 0.6rem; border-radius: 1rem; font-size: 0.8rem; margin-right: 0.4rem;
+            font-weight: 500;
+        }
+        h1 { font-size: 1.9rem; line-height: 1.3; font-weight: 700; letter-spacing: -0.02em; }
+        h2 { font-size: 1.4rem; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); font-weight: 600; }
+        h3 { font-size: 1.15rem; margin: 1.8rem 0 0.8rem; font-weight: 600; }
+        h4 { font-size: 1rem; margin: 1.2rem 0 0.5rem; color: var(--muted); }
+        p { margin: 0.8rem 0; }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code {
+            font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+            background: var(--code-bg); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.88em;
+        }
+        pre {
+            background: var(--code-bg); padding: 1rem 1.2rem; border-radius: 6px; overflow-x: auto;
+            margin: 1rem 0; font-size: 0.88em; line-height: 1.5;
+        }
+        pre code { background: none; padding: 0; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.92rem; }
+        th, td { padding: 0.6rem 0.8rem; text-align: left; border: 1px solid var(--border); }
+        th { background: var(--table-header); font-weight: 600; }
+        tr:hover { background: #f9fafb; }
+        blockquote {
+            background: var(--blockquote-bg); border-left: 4px solid var(--blockquote-border);
+            padding: 0.8rem 1.2rem; margin: 1rem 0; border-radius: 0 6px 6px 0; font-style: italic;
+        }
+        blockquote p { margin: 0.3rem 0; }
+        .callout {
+            padding: 1rem 1.2rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid;
+        }
+        .callout-info { background: #eff6ff; border-color: var(--accent); }
+        .callout-success { background: var(--success-bg); border-color: var(--success-border); }
+        .callout-warning { background: var(--warning-bg); border-color: var(--warning-border); }
+        .callout-danger { background: var(--danger-bg); border-color: var(--danger-border); }
+        .callout strong { display: block; margin-bottom: 0.3rem; }
+        ul, ol { margin: 0.8rem 0; padding-left: 1.5rem; }
+        li { margin: 0.3rem 0; }
+        strong { font-weight: 600; }
+        hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+        .toc { background: var(--code-bg); padding: 1.2rem; border-radius: 8px; margin-bottom: 2rem; }
+        .toc ul { list-style: none; padding-left: 0; margin-bottom: 0; }
+        .toc li { margin-bottom: 0.3rem; }
+        .toc a { color: var(--accent); text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        .metric-highlight {
+            display: inline-block; background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 8px; padding: 0.8rem 1.2rem; margin: 0.3rem; text-align: center;
+            min-width: 140px;
+        }
+        .metric-highlight .value { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
+        .metric-highlight .label { font-size: 0.8rem; color: var(--muted); display: block; margin-top: 0.2rem; }
+        .metrics-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; justify-content: center; }
+        .completion-box {
+            background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 1rem 1.2rem; margin: 0.8rem 0; font-size: 0.9rem;
+        }
+        .completion-box .label {
+            font-weight: 600; font-size: 0.85rem; color: var(--muted);
+            margin-bottom: 0.5rem; display: block;
+        }
+        .completion-box .reward {
+            font-weight: 600; color: var(--accent); float: right;
+        }
+        figure { margin: 1.5rem 0; text-align: center; }
+        figure img { max-width: 100%; height: auto; border-radius: 6px; border: 1px solid var(--border); }
+        figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 0.5rem; }
+        nav.blog-nav { margin-bottom: 1.5rem; font-size: 0.9rem; }
+        nav.blog-nav a { margin-right: 1rem; }
+        footer {
+            margin-top: 3rem; padding-top: 1.5rem; border-top: 2px solid var(--border);
+            color: var(--muted); font-size: 0.85rem;
+        }
+        @media (max-width: 700px) {
+            .metrics-row { flex-direction: column; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="blog-nav">
+    <a href="../index.html">&larr; All posts</a>
+</nav>
+
+<header>
+    <h1>GRPO Structure Quality: Text vs MLP &mdash; High Reward, Fake Reasoning</h1>
+    <div class="meta">2026-03-12 &middot; Post-Training Protein LLM Project</div>
+    <div class="tags">
+        <span class="tag">GRPO</span>
+        <span class="tag">Structure Quality</span>
+        <span class="tag">Text vs MLP</span>
+        <span class="tag">reward hacking</span>
+        <span class="tag">gradient flow</span>
+        <span class="tag">Qwen3-8B</span>
+    </div>
+</header>
+
+<div class="toc">
+    <strong>Contents</strong>
+    <ul>
+        <li><a href="#summary">1. Summary</a></li>
+        <li><a href="#setup">2. Experiment Setup</a></li>
+        <li><a href="#reward-curves">3. Reward Curves</a></li>
+        <li><a href="#reward-breakdown">4. Reward Component Breakdown</a></li>
+        <li><a href="#format-rate">5. Format Rate &amp; Loss</a></li>
+        <li><a href="#completions">6. Probe Completions: Template Copying vs Original Reasoning</a></li>
+        <li><a href="#gradient-diagnosis">7. Gradient Flow Diagnosis</a></li>
+        <li><a href="#interpretation">8. Interpretation</a></li>
+        <li><a href="#next-steps">9. Next Steps</a></li>
+    </ul>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="summary">1. Summary</h2>
+
+<p>We ran matched GRPO experiments on the <strong>structure quality</strong> task (ESMFold reward) comparing <strong>Text-only</strong> and <strong>ESM3+MLP</strong> approaches. Text achieves 0.83 mean reward vs MLP's 0.58, with 100% format compliance vs 74%. But the Text model's high reward comes from <strong>copying system prompt templates verbatim</strong> &mdash; "Strong hydrophobic core, regular secondary structure" appears identically for every protein, regardless of actual sequence properties.</p>
+
+<div class="callout callout-danger">
+    <strong>Key finding: GRPO reward is gameable by template copying</strong>
+    <p>The Text model achieves high structure quality reward by memorizing and replaying the example reasoning pattern from the system prompt. It never inspects the protein sequence. The MLP model generates original, protein-aware reasoning from ESM-3 embeddings &mdash; but a <strong>gradient flow bug</strong> prevents its LoRA weights from learning the output format.</p>
+</div>
+
+<div class="metrics-row">
+    <div class="metric-highlight">
+        <span class="value">0.83</span>
+        <span class="label">Text Mean Reward</span>
+    </div>
+    <div class="metric-highlight">
+        <span class="value">0.58</span>
+        <span class="label">MLP Mean Reward</span>
+    </div>
+    <div class="metric-highlight">
+        <span class="value">100%</span>
+        <span class="label">Text Format Rate</span>
+    </div>
+    <div class="metric-highlight">
+        <span class="value">74%</span>
+        <span class="label">MLP Format Rate</span>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="setup">2. Experiment Setup</h2>
+
+<p>Both runs use the same GRPO hyperparameters and differ only in the protein input pathway:</p>
+
+<table>
+    <tr><th>Parameter</th><th>Text-only</th><th>ESM3+MLP</th></tr>
+    <tr><td>Base model</td><td colspan="2">Qwen3-8B-Instruct-2507</td></tr>
+    <tr><td>SFT parent</td><td><code>sft_text_combined_...</code> (step 9647)</td><td><code>sft_esm3_mlp_combined_...</code> (step 9750)</td></tr>
+    <tr><td>Approach</td><td>Raw AA tokens</td><td>ESM-3 &rarr; AttentionPooling &rarr; MLP &rarr; LLM</td></tr>
+    <tr><td>LoRA</td><td>r=8, all linear layers</td><td>r=8, all linear layers</td></tr>
+    <tr><td>Learning rate</td><td colspan="2">5e-6 (projector_lr: 2.5e-5)</td></tr>
+    <tr><td>Batch size</td><td>4 &times; 2 grad_accum</td><td>2 &times; 4 grad_accum</td></tr>
+    <tr><td>GRPO group size</td><td colspan="2">16</td></tr>
+    <tr><td>Temperature</td><td colspan="2">0.9</td></tr>
+    <tr><td>Epochs</td><td colspan="2">1 (92 steps)</td></tr>
+    <tr><td>Thinking mode</td><td colspan="2"><code>enable_thinking=False</code></td></tr>
+    <tr><td>Reward</td><td colspan="2">ESMFold: quality_alignment + numerical_accuracy + category_match + format_bonus</td></tr>
+    <tr><td>Dataset</td><td colspan="2">structure_quality (10K proteins)</td></tr>
+    <tr><td>wandb</td><td><code>grpo_structure_text_sft_...</code></td><td><code>sjinyeop/.../qos63ov4</code></td></tr>
+</table>
+
+<p>The output format is: <code>Reasoning: ...&lt;reasoning&gt;\n&lt;answer&gt;Fold quality: high/medium/low. pLDDT: XX.X. ...&lt;/answer&gt;</code></p>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="reward-curves">3. Reward Curves</h2>
+
+<figure>
+    <img src="../figures/main_figures/fig13_grpo_structure_reward_curves.png" alt="GRPO structure quality reward curves: Text vs MLP">
+    <figcaption>Fig 13. Training reward (left) and eval reward (right) over 85 steps. Text-only climbs steadily to 0.83 mean reward while MLP plateaus at 0.58. The gap is evident from step 15 onward.</figcaption>
+</figure>
+
+<p>The Text model shows a clear upward trend from 0.63 (step 5) to consistently above 0.85 after step 30. The MLP model flatlines around 0.58&ndash;0.62 throughout training with no improvement trend.</p>
+
+<p>Eval rewards confirm the pattern: Text improves from 0.75 &rarr; 0.80 &rarr; 0.84 across evaluations at steps 25/50/75, while MLP fluctuates between 0.46&ndash;0.54 without clear improvement.</p>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="reward-breakdown">4. Reward Component Breakdown</h2>
+
+<figure>
+    <img src="../figures/main_figures/fig14_grpo_structure_reward_breakdown.png" alt="GRPO structure quality reward breakdown">
+    <figcaption>Fig 14. Final reward decomposition by component. Text-only leads in all four components, with the largest gaps in numerical_accuracy (2.1x) and category_match (1.9x).</figcaption>
+</figure>
+
+<table>
+    <tr><th>Component</th><th>Text</th><th>MLP</th><th>Ratio</th></tr>
+    <tr><td>quality_alignment</td><td>0.351</td><td>0.326</td><td>1.08x</td></tr>
+    <tr><td>numerical_accuracy</td><td>0.185</td><td>0.086</td><td>2.15x</td></tr>
+    <tr><td>category_match</td><td>0.197</td><td>0.104</td><td>1.89x</td></tr>
+    <tr><td>format_bonus</td><td>0.099</td><td>0.065</td><td>1.52x</td></tr>
+    <tr><td><strong>Total mean_reward</strong></td><td><strong>0.832</strong></td><td><strong>0.582</strong></td><td><strong>1.43x</strong></td></tr>
+</table>
+
+<p>The largest gaps are in <code>numerical_accuracy</code> (how close the predicted pLDDT is to ESMFold's actual value) and <code>category_match</code> (predicting high/medium/low correctly). The Text model learns to always predict "high" with pLDDT ~87&ndash;90, which happens to be correct for a large fraction of well-folded proteins in the dataset.</p>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="format-rate">5. Format Rate &amp; Loss</h2>
+
+<figure>
+    <img src="../figures/main_figures/fig15_grpo_structure_format_rate.png" alt="Format rate and PG loss comparison">
+    <figcaption>Fig 15. Left: Format compliance at eval checkpoints. Text achieves 100% format rate throughout; MLP stalls at 74&ndash;76%. Right: PG loss trajectories &mdash; Text converges near zero (policy saturated), MLP maintains large negative loss.</figcaption>
+</figure>
+
+<p>The format rate gap is a <strong>downstream consequence of the gradient flow bug</strong> (Section 7). The MLP model cannot learn to reliably produce the <code>&lt;answer&gt;...&lt;/answer&gt;</code> wrapper because its LoRA gradients are zero.</p>
+
+<p>The Text PG loss converges to near zero after step 25, indicating the policy is already near-deterministic &mdash; it has found a single high-reward template and exploits it. MLP's large negative PG loss reflects the optimizer pushing hard on multimodal parameters but unable to improve the LLM's generation format.</p>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="completions">6. Probe Completions: Template Copying vs Original Reasoning</h2>
+
+<h3>Text-only: Copies the System Prompt Template</h3>
+
+<p>Every Text completion follows the same pattern regardless of the input protein:</p>
+
+<div class="completion-box">
+    <span class="label">Text &mdash; Protein: MAAVDDLQFEEFGNAATSLT... (step 25)</span>
+    <span class="reward">reward: 0.553</span>
+    <br style="clear:both">
+    <pre><code>Reasoning: Strong hydrophobic core, regular secondary structure. High confidence ~88.
+&lt;answer&gt;Fold quality: high. pLDDT: 88.4. This protein is well-folded with high confidence.&lt;/answer&gt;</code></pre>
+</div>
+
+<div class="completion-box">
+    <span class="label">Text &mdash; Protein: MPMTLGYWDIRGLAHAIR... (step 75)</span>
+    <span class="reward">reward: 0.867</span>
+    <br style="clear:both">
+    <pre><code>Reasoning: Strong hydrophobic core, regular secondary structure. High confidence ~87.
+&lt;answer&gt;Fold quality: high. pLDDT: 87.1. This protein is well-folded with high confidence.&lt;/answer&gt;</code></pre>
+</div>
+
+<div class="callout callout-warning">
+    <strong>Same reasoning for different proteins</strong>
+    <p>The phrase "Strong hydrophobic core, regular secondary structure" appears verbatim in the vast majority of Text completions. Only the pLDDT number varies slightly (84&ndash;90 range). This is the system prompt's example reasoning being replayed. The model never inspects the amino acid sequence.</p>
+</div>
+
+<h3>MLP: Generates Original, Protein-Aware Reasoning</h3>
+
+<p>The MLP model produces diverse completions that vary with the input protein:</p>
+
+<div class="completion-box">
+    <span class="label">MLP &mdash; Protein: MAAVDDLQFEEFGNAATSLT... (step 25)</span>
+    <span class="reward">reward: 0.400</span>
+    <br style="clear:both">
+    <pre><code>Reasoning: Rich in charged/polar residues, lacks hydrophobic core. Likely disordered.
+&lt;answer&gt;Fold quality: low. pLDDT: 40.2. This protein is likely disordered with low confidence.&lt;/answer&gt;</code></pre>
+</div>
+
+<div class="completion-box">
+    <span class="label">MLP &mdash; Protein: MSELEKAMVALIDVFHQYSG... (step 25)</span>
+    <span class="reward">reward: 0.969</span>
+    <br style="clear:both">
+    <pre><code>Reasoning: The protein presents a structured backbone with a low degree of local flexibility.
+The protein structure prediction model shows a reasonable agreement with the experimental data.
+&lt;answer&gt;Fold quality: high. pLDDT: 88.0. This protein is well-folded with high confidence.&lt;/answer&gt;</code></pre>
+</div>
+
+<div class="completion-box">
+    <span class="label">MLP &mdash; Protein: ... (step 50)</span>
+    <span class="reward">reward: 0.932</span>
+    <br style="clear:both">
+    <pre><code>Reasoning: The structural quality is affected by missing residues and regions.
+The protein appears to have a relatively high level of order and stability.
+&lt;answer&gt;Fold quality: high. pLDDT: 85.5. The protein is well-folded with high confidence
+despite some structural inaccuracies.</code></pre>
+</div>
+
+<p>MLP completions show <strong>protein-specific features</strong>: "Rich in charged/polar residues", "affected by missing residues", "structured backbone with low local flexibility". These vary between proteins and training steps. However, MLP frequently fails the <code>&lt;answer&gt;...&lt;/answer&gt;</code> format (missing closing tag, truncated), costing it the format_bonus and often the numerical/category rewards.</p>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="gradient-diagnosis">7. Gradient Flow Diagnosis</h2>
+
+<figure>
+    <img src="../figures/main_figures/fig16_grpo_structure_grad_norms.png" alt="Gradient norm diagnostic: LoRA vs multimodal">
+    <figcaption>Fig 16. Gradient norms for LoRA (left, log scale) and multimodal (right) parameters. MLP LoRA grad norms are effectively zero (~5.8e-10), while Text LoRA grads are healthy at ~0.48. Only MLP has non-zero multimodal gradients.</figcaption>
+</figure>
+
+<p>This is the <strong>root cause</strong> of MLP's poor format compliance:</p>
+
+<table>
+    <tr><th>Gradient</th><th>Text</th><th>MLP</th></tr>
+    <tr><td><code>grad_norm_lora</code></td><td>0.476</td><td>5.8e-10 &asymp; 0</td></tr>
+    <tr><td><code>grad_norm_multimodal</code></td><td>0.0</td><td>0.247</td></tr>
+</table>
+
+<div class="callout callout-danger">
+    <strong>MLP LoRA gradients are zero</strong>
+    <p>The joint gradient clipping (<code>max_grad_norm=1.0</code>) clips LoRA and multimodal parameters together. The multimodal parameters (pooling + projector, ~30M params with 5x learning rate) dominate the gradient norm, causing LoRA gradients to be effectively zeroed. The LLM's LoRA weights cannot learn to format outputs.</p>
+</div>
+
+<h3>Why this matters</h3>
+
+<p>In the MLP approach, GRPO rewards flow backward through:</p>
+<ol>
+    <li><strong>LLM output tokens</strong> &rarr; LoRA weights (controls format, vocabulary, reasoning)</li>
+    <li><strong>LLM input embeddings</strong> &rarr; Projector &rarr; Pooling (controls protein representation)</li>
+</ol>
+
+<p>With joint clipping, path (2) consumes the entire gradient budget. Path (1) gets nothing. The projector learns better protein representations (grad_mm = 0.247), but the LLM cannot learn to use them in the correct output format.</p>
+
+<p>For Text, there are no multimodal parameters, so all gradient flows through LoRA &mdash; enabling format learning, vocabulary adaptation, and (unfortunately) template memorization.</p>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="interpretation">8. Interpretation</h2>
+
+<h3>What this experiment reveals</h3>
+
+<ol>
+    <li><strong>Reward hacking via template copying</strong>: The Text model discovers that a single template ("Strong hydrophobic core...high confidence") achieves consistently high reward because most proteins in the dataset are well-folded. It optimizes for this shortcut rather than genuine protein analysis.</li>
+
+    <li><strong>Multimodal GRPO needs separate gradient clipping</strong>: Joint clipping of LoRA + multimodal parameters is catastrophic for the MLP path. The multimodal parameters monopolize gradient budget, starving LoRA of learning signal.</li>
+
+    <li><strong>Format compliance is a LoRA-level skill</strong>: Generating <code>&lt;answer&gt;...&lt;/answer&gt;</code> tags is fundamentally a text generation capability. It requires LoRA updates. When LoRA can't learn (grad &asymp; 0), format compliance stays at the SFT baseline (~74%).</li>
+
+    <li><strong>Higher reward &ne; better model</strong>: Text's 0.83 reward reflects exploitation of a distributional prior (most proteins are well-folded), not protein understanding. MLP's 0.58 reward with original reasoning is arguably more valuable scientifically.</li>
+</ol>
+
+<h3>The structural reward's vulnerability</h3>
+
+<p>The ESMFold reward uses four components: quality_alignment (text description matching), numerical_accuracy (pLDDT prediction), category_match (high/medium/low), and format_bonus. All four can be partially gamed by predicting "high quality" with pLDDT ~87 for every protein:</p>
+
+<ul>
+    <li><strong>quality_alignment</strong>: "well-folded with high confidence" matches the ground truth for ~70% of proteins</li>
+    <li><strong>numerical_accuracy</strong>: pLDDT ~87 is within 10 points of the actual value for most well-folded proteins</li>
+    <li><strong>category_match</strong>: "high" is the mode category in the dataset</li>
+    <li><strong>format_bonus</strong>: a fixed template always gets this right</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="next-steps">9. Next Steps</h2>
+
+<ol>
+    <li><strong>Separate gradient clipping</strong>: Clip LoRA and multimodal parameter groups independently with separate <code>max_grad_norm</code> values. This is the critical fix for MLP GRPO.</li>
+
+    <li><strong>Harder reward function</strong>: Add penalties for repeated/templated reasoning, require protein-specific features in the explanation, or weight the reward by dataset difficulty (down-weight easy well-folded proteins).</li>
+
+    <li><strong>Calibration reward</strong>: Penalize models that predict the same category/pLDDT for all proteins. Add a diversity term or calibration metric.</li>
+
+    <li><strong>Two-phase GRPO for MLP</strong>: Phase 1: freeze multimodal, train LoRA only (learn format). Phase 2: train both with separate clipping.</li>
+
+    <li><strong>Longer training with fixed gradients</strong>: Rerun MLP with the gradient fix to see if protein-aware reasoning can also achieve high reward when format compliance is not a bottleneck.</li>
+</ol>
+
+<hr>
+
+<h2>Experiment Details</h2>
+
+<table>
+    <tr><th></th><th>MLP</th><th>Text</th></tr>
+    <tr><td>Experiment</td><td><code>grpo_structure_mlp_sft_qwen3_8b_it_0312_011859</code></td><td><code>grpo_structure_text_sft_qwen3_8b_it_0312_032738</code></td></tr>
+    <tr><td>wandb</td><td><code>sjinyeop/protein-llm-rl/runs/qos63ov4</code></td><td>&mdash;</td></tr>
+    <tr><td>Duration</td><td>~2h 8m (01:19&ndash;03:27)</td><td>~2h 7m (03:28&ndash;05:35)</td></tr>
+    <tr><td>Steps</td><td>92</td><td>92</td></tr>
+    <tr><td>SFT parent</td><td><code>sft_esm3_mlp_combined_..._0306</code></td><td><code>sft_text_combined_..._0307</code></td></tr>
+</table>
+
+<footer>
+    <p>Post-Training Protein LLM &middot; Internal Development Blog &middot; 2026-03-12</p>
+    <p>Figures: <code>scripts/analysis/plot_grpo_structure_comparison.py</code></p>
+</footer>
+
+</body>
+</html>

@@ -3,9 +3,17 @@
 # GRPO Structure Quality: Text SFT → GRPO
 # Chains from text-only SFT checkpoint. Tests RL on top of text-only SFT.
 #
-# Memory budget (FSDP/4, per GPU):
-#   Static: 7.6 GB (model + LoRA + ESMFold, no ESM-3)
-#   Peak:   ~14 GB (generation + grad)  →  32 GB headroom on L40S 46GB
+# Memory budget (DDP, per GPU on 8×H100 80GB):
+#   LLM (full replica): ~16 GB
+#   ESMFold (lazy): ~2 GB, activations+grad: ~10 GB
+#   Total peak: ~30 GB → 50 GB headroom on H100 80GB
+#
+# Optimizations (2026-03-10):
+#   - KV cache enabled during generation (model.eval() + use_cache=True)
+#   - Batched log-prob: all completions per prompt in one forward pass
+#   - group_size=8: best throughput/stability from P1c scaling tests
+#   - <answer> tags: model wraps answers in <answer>...</answer>, format reward +0.1
+#   - enable_thinking=False: empty <think></think> prefix, no reasoning overhead
 #
 # Usage:
 #   python scripts/train.py main_RL=grpo_structure_text_sft
@@ -24,33 +32,37 @@ parent_experiment: sft_text_combined_qwen3_8b_it_0307_190324
 # Data task for reward routing
 data:
   task: esmfold
+  processing:
+    max_protein_length: 512  # ESMFold is O(L^2), OOMs on long seqs
 
 training:
-  # --- Optimized for 4×L40S 46GB ---
+  # --- DDP on 8×H100 80GB (no FSDP) ---
   lr: 5e-6
   batch_size: 4
-  gradient_accumulation_steps: 4  # effective batch = 64
+  gradient_accumulation_steps: 2  # effective batch = 4 * 8 GPUs * 2 = 64
+  gradient_checkpointing: true
   epochs: 1
   warmup_steps: 20
   max_grad_norm: 1.0
 
   grpo:
-    group_size: 8
-    temperature: 1.0
+    group_size: 16
+    temperature: 0.9
     use_kl_penalty: false
     normalize_advantages: false
 
   rollout:
-    max_tokens: 256
+    max_tokens: 512       # Thinking mode needs more tokens for <think>...</think>
     top_p: 0.95
     do_sample: true
+    enable_thinking: false  # Reasoning induced via system prompt inside <answer> tags
 
   save_steps: 50
   eval_steps: 25
   logging_steps: 5
 
   fsdp:
-    enabled: true
+    enabled: false  # DDP: full model on each GPU, KV cache works with grad ckpt toggle
 
   wandb:
     tags:

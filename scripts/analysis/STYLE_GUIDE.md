@@ -154,12 +154,12 @@ Some data sources use variant names. These are auto-resolved:
 
 ```
 blog/figures/
-├── main_figures/           # 9 key figures (fig1–fig9)
+├── main_figures/           # 11 key figures (fig1–fig11)
 ├── supple_figures/         # All supplementary figures
 └── figure_catalog.md       # Single source of truth
 
 paper/figures/
-├── main/                   # PDFs of fig1–fig9
+├── main/                   # PDFs of fig1–fig11
 └── supplementary/          # Supplementary PDFs + PNGs
 ```
 

@@ -32,7 +32,6 @@ from figure_style import (
     DATA_DIR,
     MAIN_FIGURES_DIR,
     PAPER_MAIN_DIR,
-    SCHEMATIC_COLORS,
     annotate_bars,
     annotate_best,
     get_approach_label,
@@ -354,251 +353,519 @@ def fig1_schematic_overview():
 
 
 def fig2_architecture(colors):
-    """Fig 2: Four architecture approaches in a 4-column layout.
+    """Fig 2: Four architecture approaches with token sequence visualization.
 
     Shows all four protein-LLM pathways side-by-side:
     (a) Text-only, (b) ESM-3+MLP, (c) ESM-3+Perceiver, (d) ESM-3+Flamingo.
     Bottom-to-top flow: Protein -> Encoder -> Projector -> LLM -> Output.
-    """
-    from matplotlib.patches import Patch
-    SC = SCHEMATIC_COLORS
 
-    fig, axes = plt.subplots(1, 4, figsize=(16, 8))
+    v2: Token sequences shown as colored squares at each stage.
+    All text 33% larger than v1. Token mixing annotations.
+    """
+    from matplotlib.patches import Patch, Rectangle
+
+    # Soft pastel palette (consistent with fig1 redesign)
+    PAL = {
+        "frozen_bg":     "#DCEEFB",
+        "frozen_border": "#5B9BD5",
+        "frozen_text":   "#2B5C8A",
+        "train_bg":      "#FDE8D0",
+        "train_border":  "#E8875B",
+        "train_text":    "#8B4513",
+        "llm_bg":        "#D5F5E3",
+        "llm_border":    "#5BAD7C",
+        "llm_text":      "#2D6A4F",
+        "protein_bg":    "#E8E0F0",
+        "protein_border":"#7B68AE",
+        "protein_text":  "#4A3878",
+        "text_bg":       "#EDEDED",
+        "text_border":   "#888888",
+        "text_text":     "#444444",
+        "flam_bg":       "#FADBD8",
+        "flam_border":   "#C0392B",
+        "flam_text":     "#922B21",
+        "perc_bg":       "#FFF3E0",
+        "perc_border":   "#E67E22",
+        "perc_text":     "#935116",
+        "mlp_bg":        "#D6EAF8",
+        "mlp_border":    "#2E86C1",
+        "mlp_text":      "#1A5276",
+        "output_bg":     "#F5F5F5",
+        "output_border": "#AAAAAA",
+        "arrow":         "#4A4A4A",
+        "subtitle":      "#7B8D9E",
+        "title_color":   "#2C3E50",
+        # Token colors
+        "tok_protein":   "#C8A2DE",   # lavender for protein tokens
+        "tok_esm":       "#A3C4E8",   # blue for ESM embeddings
+        "tok_mlp":       "#A8D5BA",   # green for MLP projected
+        "tok_perc":      "#F5CDA6",   # orange for perceiver
+        "tok_flam":      "#F5A8A8",   # red for flamingo
+        "tok_text":      "#D0D0D0",   # gray for text tokens
+        "tok_sys":       "#E8E8E8",   # light gray for system tokens
+        "tok_inst":      "#B8D4E8",   # light blue for instruction tokens
+    }
+
+    # 33% larger text: base 9->12, titles 11->15, sub 7.5->10, annot 8->11
+    FS_TITLE = 15       # was 11
+    FS_BOX = 12         # was 9
+    FS_BOX_LG = 13      # was 10
+    FS_SUB = 10         # was 7.5
+    FS_ANNOT = 11       # was 8
+    FS_ICON = 11        # was 8
+    FS_LEGEND = 12      # was 9
+    FS_MIXING = 8.5     # token mixing annotation
+    FS_TOK_LABEL = 7    # tiny labels on token squares
+
+    fig, axes = plt.subplots(1, 4, figsize=(20, 13))
     fig.patch.set_facecolor("white")
 
     # ── Shared drawing helpers ──────────────────────────────────────
 
-    def _box(ax, xy, w, h, bg, border, text="", fontsize=9,
+    def _box(ax, xy, w, h, bg, border, text="", fontsize=FS_BOX,
              fontweight="normal", text_color="#2C3E50", lw=1.5,
-             linestyle="-", sub_text=None):
-        """Draw a rounded box with optional sub-text below main text."""
+             sub_text=None, sub_fontsize=FS_SUB, icon=None, pad=0.2):
+        """Draw a rounded box with optional sub-text and icon."""
         patch = FancyBboxPatch(
             xy, w, h,
-            boxstyle="round,pad=0.25",
+            boxstyle=f"round,pad={pad}",
             facecolor=bg, edgecolor=border,
-            linewidth=lw, linestyle=linestyle, zorder=2,
+            linewidth=lw, zorder=2,
         )
         ax.add_patch(patch)
         cx, cy = xy[0] + w / 2, xy[1] + h / 2
         if text and sub_text:
-            ax.text(cx, cy + 0.18, text, ha="center", va="center",
+            ax.text(cx, cy + h * 0.14, text, ha="center", va="center",
                     fontsize=fontsize, fontweight=fontweight,
                     color=text_color, zorder=3)
-            ax.text(cx, cy - 0.22, sub_text, ha="center", va="center",
-                    fontsize=fontsize - 1.5, color="#7B8D9E",
+            ax.text(cx, cy - h * 0.18, sub_text, ha="center", va="center",
+                    fontsize=sub_fontsize, color=PAL["subtitle"],
                     style="italic", zorder=3)
         elif text:
             ax.text(cx, cy, text, ha="center", va="center",
                     fontsize=fontsize, fontweight=fontweight,
                     color=text_color, zorder=3)
+        # Icon (snowflake=frozen, asterisk=trainable) in top-right corner
+        if icon:
+            icon_color = PAL["frozen_text"] if icon == "\u2744" else PAL["train_text"]
+            ax.text(xy[0] + w - 0.35, xy[1] + h - 0.35, icon,
+                    ha="center", va="center",
+                    fontsize=max(fontsize, FS_ICON), fontweight="bold",
+                    color=icon_color, zorder=4)
 
-    def _arrow(ax, x, y_start, y_end, color="#566573"):
-        """Vertical upward arrow."""
+    def _varrow(ax, x, y_start, y_end, color="#4A4A4A", lw=1.5):
+        """Vertical arrow."""
         arrow = FancyArrowPatch(
             (x, y_start), (x, y_end),
             arrowstyle="-|>", color=color,
-            linewidth=1.3, mutation_scale=12, zorder=3,
+            linewidth=lw, mutation_scale=13, zorder=3,
         )
         ax.add_patch(arrow)
 
+    def _draw_token_row(ax, x_start, y, n_tokens, color, border_color,
+                        sq_size=0.22, gap=0.04, max_show=16,
+                        labels=None, label_fontsize=None):
+        """Draw a row of small colored squares representing tokens.
+
+        Args:
+            labels: list of single-char labels for first few tokens
+        """
+        if label_fontsize is None:
+            label_fontsize = FS_TOK_LABEL
+        show_n = min(n_tokens, max_show)
+        show_dots = n_tokens > max_show
+        for i in range(show_n):
+            sx = x_start + i * (sq_size + gap)
+            rect = Rectangle(
+                (sx, y), sq_size, sq_size,
+                facecolor=color, edgecolor=border_color,
+                linewidth=0.5, zorder=4,
+            )
+            ax.add_patch(rect)
+            # Optional label on token
+            if labels and i < len(labels):
+                ax.text(sx + sq_size / 2, y + sq_size / 2, labels[i],
+                        ha="center", va="center",
+                        fontsize=label_fontsize, fontfamily="monospace",
+                        color="#333333", zorder=5)
+        if show_dots:
+            dots_x = x_start + show_n * (sq_size + gap)
+            ax.text(dots_x, y + sq_size / 2, "...",
+                    ha="left", va="center",
+                    fontsize=label_fontsize + 1, color="#666666", zorder=5)
+        # Return total width
+        return show_n * (sq_size + gap)
+
     # ── Layout constants ────────────────────────────────────────────
-    COL_W = 4.0
-    BOX_W = 3.2
+    COL_W = 5.5
+    BOX_W = 4.4
     BOX_X = (COL_W - BOX_W) / 2
     ARR_X = COL_W / 2
 
-    Y_PROTEIN = 0.3
-    Y_ENCODER = 2.2
-    BOX_H     = 1.2
-    BOX_H_SM  = 1.0
-    Y_LLM     = 6.5
-    Y_OUTPUT  = 8.8
+    Y_PROTEIN = 0.5
+    Y_ENCODER = 3.0
+    BOX_H     = 1.6
+    BOX_H_SM  = 1.3
+    Y_LLM     = 9.0
+    Y_OUTPUT  = 12.5
+
+    # Token row parameters
+    SQ = 0.2
+    SQ_GAP = 0.03
+
+    # AA letters for protein input visualization
+    AA_LETTERS = list("MKTLVAVFG")
 
     # ── Column definitions ──────────────────────────────────────────
     col_defs = [
         {
             "title": "(a) Text-Only",
             "approach": "text",
-            "has_encoder": False,
-            "note": "~2M trainable (LoRA only)",
+            "title_color": PAL["text_text"],
+            "tok_color": PAL["tok_text"],
+            "tok_border": PAL["text_border"],
+            "n_proj_tokens": 0,  # text: ~500 raw tokens, shown as many
+            "mixing_text": "No mixing: raw AA\ncharacters as text tokens",
         },
         {
             "title": "(b) ESM-3 + MLP",
             "approach": "mlp",
-            "has_encoder": True,
-            "note": "~32.5M trainable",
+            "title_color": PAL["mlp_text"],
+            "tok_color": PAL["tok_mlp"],
+            "tok_border": PAL["mlp_border"],
+            "n_proj_tokens": 32,
+            "mixing_text": "Token mixing: Attention\nPooling (500\u219232 tokens)",
         },
         {
             "title": "(c) ESM-3 + Perceiver",
             "approach": "perceiver",
-            "has_encoder": True,
-            "note": "~29.4M trainable",
+            "title_color": PAL["perc_text"],
+            "tok_color": PAL["tok_perc"],
+            "tok_border": PAL["perc_border"],
+            "n_proj_tokens": 32,
+            "mixing_text": "Token mixing: Cross-Attn\n(500\u219232 queries)",
         },
         {
             "title": "(d) ESM-3 + Flamingo",
             "approach": "flamingo",
-            "has_encoder": True,
-            "note": "~120-150M trainable (no LoRA)",
+            "title_color": PAL["flam_text"],
+            "tok_color": PAL["tok_flam"],
+            "tok_border": PAL["flam_border"],
+            "n_proj_tokens": 64,
+            "mixing_text": "Token mixing: Gated Cross-Attn\nat every 4th LLM layer",
         },
     ]
 
     for ax, col in zip(axes, col_defs):
-        ax.set_xlim(-0.3, COL_W + 0.3)
-        ax.set_ylim(-0.5, 10.5)
+        ax.set_xlim(-0.5, COL_W + 0.5)
+        ax.set_ylim(-0.5, 14.5)
         ax.set_aspect("equal")
         ax.axis("off")
 
         approach = col["approach"]
-        approach_color = colors.get(approach, "#808080")
+        tc = col["title_color"]
 
-        # --- Title ---
-        ax.text(COL_W / 2, 10.1, col["title"], ha="center", va="center",
-                fontsize=11, fontweight="bold", color=approach_color, zorder=4)
+        # --- Column title ---
+        ax.text(COL_W / 2, 14.0, col["title"], ha="center", va="center",
+                fontsize=FS_TITLE, fontweight="bold", color=tc, zorder=4)
 
         # --- Output box ---
         _box(ax, (BOX_X, Y_OUTPUT), BOX_W, BOX_H_SM,
-             "#F2F3F4", "#95A5A6",
-             text="Text Output", fontsize=9, fontweight="bold",
-             text_color="#2C3E50")
+             PAL["output_bg"], PAL["output_border"],
+             text="Text Output", fontsize=FS_BOX, fontweight="bold",
+             text_color=PAL["title_color"])
 
-        # --- LLM box ---
+        # --- LLM box (taller to show token sequence inside) ---
         is_flamingo = (approach == "flamingo")
-        llm_h = 1.8 if is_flamingo else BOX_H
-        llm_label = "LLM (frozen)" if is_flamingo else "LLM + LoRA"
-        _box(ax, (BOX_X, Y_LLM), BOX_W, llm_h,
-             SC["llm_bg"], SC["llm_border"],
-             text=llm_label, fontsize=9, fontweight="bold",
-             text_color=SC["llm_text"],
-             sub_text="Qwen3-8B")
+        llm_h = 2.8 if is_flamingo else 2.4
 
-        # Flamingo cross-attention markers
         if is_flamingo:
-            for yy in [Y_LLM + 0.5, Y_LLM + 0.95, Y_LLM + 1.4]:
-                ax.plot(BOX_X + 0.15, yy, marker="*",
-                        color=SC["proj_flam_border"], markersize=8, zorder=5)
-            ax.text(BOX_X + BOX_W - 0.15, Y_LLM + 0.95,
-                    "gated\n\u00d7-attn", ha="right", va="center",
-                    fontsize=6.5, color=SC["proj_flam_border"],
-                    fontweight="bold", style="italic", zorder=4)
+            llm_label = "Qwen3 LLM"
+            llm_sub = "frozen (no LoRA)"
+            llm_icon = "\u2744"
+        else:
+            llm_label = "Qwen3 LLM"
+            llm_sub = "LoRA fine-tuned"
+            llm_icon = "\u2731"
+
+        _box(ax, (BOX_X, Y_LLM), BOX_W, llm_h,
+             PAL["llm_bg"], PAL["llm_border"],
+             text=llm_label, fontsize=FS_BOX_LG, fontweight="bold",
+             text_color=PAL["llm_text"],
+             sub_text=llm_sub, icon=llm_icon)
+
+        # Draw token sequence INSIDE LLM: [sys] + [protein] + [inst]
+        tok_y_llm = Y_LLM + 0.3
+        tok_x_start = BOX_X + 0.2
+        # System tokens (3)
+        w1 = _draw_token_row(ax, tok_x_start, tok_y_llm, 3,
+                             PAL["tok_sys"], "#BBBBBB", sq_size=SQ, gap=SQ_GAP,
+                             labels=["S", "Y", "S"])
+        # Protein embedding tokens
+        prot_tok_x = tok_x_start + w1 + 0.06
+        if approach == "text":
+            n_prot = 12  # show 12 of ~500
+            w2 = _draw_token_row(ax, prot_tok_x, tok_y_llm, n_prot,
+                                 col["tok_color"], col["tok_border"],
+                                 sq_size=SQ, gap=SQ_GAP, max_show=8,
+                                 labels=list("MKTLVAVF"))
+        elif approach == "flamingo":
+            # Flamingo: no prefix tokens, show cross-attn markers
+            w2 = 0
+        else:
+            n_prot = col["n_proj_tokens"]
+            show = min(n_prot, 8)
+            w2 = _draw_token_row(ax, prot_tok_x, tok_y_llm, n_prot,
+                                 col["tok_color"], col["tok_border"],
+                                 sq_size=SQ, gap=SQ_GAP, max_show=show)
+        # Instruction tokens (4)
+        inst_x = prot_tok_x + w2 + 0.06
+        _draw_token_row(ax, inst_x, tok_y_llm, 4,
+                        PAL["tok_inst"], "#8BAEC4", sq_size=SQ, gap=SQ_GAP,
+                        labels=["I", "N", "S", "T"])
+
+        # Flamingo: draw gated cross-attention layers inside LLM
+        if is_flamingo:
+            for yy in [Y_LLM + 0.9, Y_LLM + 1.5, Y_LLM + 2.1]:
+                ax.plot([BOX_X + 0.3, BOX_X + BOX_W - 0.3], [yy, yy],
+                        color=PAL["flam_border"], linewidth=1.2,
+                        alpha=0.4, zorder=3)
+                ax.text(BOX_X + 0.45, yy,
+                        "\u2726", ha="center", va="center",
+                        fontsize=FS_ICON - 1, fontweight="bold",
+                        color=PAL["flam_border"], zorder=4)
 
         # Arrow: LLM -> Output
-        _arrow(ax, ARR_X, Y_LLM + llm_h + 0.05, Y_OUTPUT - 0.05, "#566573")
+        _varrow(ax, ARR_X, Y_LLM + llm_h + 0.05, Y_OUTPUT - 0.05,
+                PAL["arrow"])
+
+        # --- Protein input (bottom) with token visualization ---
+        _box(ax, (BOX_X, Y_PROTEIN), BOX_W, BOX_H_SM + 0.2,
+             PAL["protein_bg"], PAL["protein_border"],
+             text="Protein Sequence", fontsize=FS_BOX, fontweight="bold",
+             text_color=PAL["protein_text"])
+        # Draw AA token row inside protein box
+        aa_tok_y = Y_PROTEIN + 0.15
+        _draw_token_row(ax, BOX_X + 0.3, aa_tok_y, len(AA_LETTERS),
+                        PAL["tok_protein"], PAL["protein_border"],
+                        sq_size=SQ + 0.03, gap=SQ_GAP,
+                        labels=AA_LETTERS, label_fontsize=FS_TOK_LABEL)
 
         # --- Text-only path ---
         if approach == "text":
-            tok_y = 3.5
+            tok_y = 4.2
             _box(ax, (BOX_X, tok_y), BOX_W, BOX_H,
-                 "#F2F3F4", "#95A5A6",
-                 text="embed_tokens()", fontsize=8.5,
-                 text_color="#566573",
-                 sub_text="tokenize AA sequence")
+                 PAL["text_bg"], PAL["text_border"],
+                 text="Tokenizer", fontsize=FS_BOX, fontweight="bold",
+                 text_color=PAL["text_text"],
+                 sub_text="AA chars as text tokens")
 
-            ax.text(COL_W / 2, 2.7,
-                    "protein is tokenized using\nthe LLM tokenizer",
-                    ha="center", va="center",
-                    fontsize=6.5, color="#AAB7C0", style="italic", zorder=3)
+            # Token row after tokenizer: ~500 gray squares
+            tok_row_y = tok_y + BOX_H + 0.15
+            _draw_token_row(ax, BOX_X + 0.15, tok_row_y, 500,
+                            PAL["tok_text"], PAL["text_border"],
+                            sq_size=SQ - 0.02, gap=0.02, max_show=16)
+            ax.text(BOX_X + BOX_W - 0.1, tok_row_y + SQ / 2,
+                    "~500 tokens", ha="right", va="center",
+                    fontsize=FS_TOK_LABEL + 1, color=PAL["text_text"],
+                    style="italic", zorder=5)
 
             # Arrows
-            _arrow(ax, ARR_X, Y_PROTEIN + BOX_H_SM + 0.05, tok_y - 0.05,
-                   "#566573")
-            _arrow(ax, ARR_X, tok_y + BOX_H + 0.05, Y_LLM - 0.05,
-                   "#566573")
+            _varrow(ax, ARR_X, Y_PROTEIN + BOX_H_SM + 0.25, tok_y - 0.05,
+                    PAL["arrow"])
+            _varrow(ax, ARR_X, tok_row_y + SQ + 0.15, Y_LLM - 0.05,
+                    PAL["arrow"])
 
-            # Spacer text
-            ax.text(COL_W / 2, 5.5,
-                    "Text prompt\n+ AA tokens",
+            # Token mixing annotation
+            ax.text(COL_W / 2, 7.2,
+                    col["mixing_text"],
                     ha="center", va="center",
-                    fontsize=7, color="#95A5A6", zorder=3)
+                    fontsize=FS_MIXING, color="#777777",
+                    style="italic", zorder=3,
+                    bbox=dict(boxstyle="round,pad=0.3", facecolor="#F8F8F8",
+                              edgecolor="#DDDDDD", linewidth=0.8))
 
         # --- Encoder-based paths ---
         else:
             # ESM-3 Encoder
             _box(ax, (BOX_X, Y_ENCODER), BOX_W, BOX_H,
-                 SC["esm3_bg"], SC["esm3_border"],
-                 text="ESM-3 Encoder", fontsize=9, fontweight="bold",
-                 text_color=SC["esm3_border"],
-                 sub_text="frozen, 1536-dim")
-            _arrow(ax, ARR_X, Y_PROTEIN + BOX_H_SM + 0.05,
-                   Y_ENCODER - 0.05, "#566573")
+                 PAL["frozen_bg"], PAL["frozen_border"],
+                 text="ESM-3 Encoder", fontsize=FS_BOX, fontweight="bold",
+                 text_color=PAL["frozen_text"],
+                 sub_text="protein language model",
+                 icon="\u2744")
+            _varrow(ax, ARR_X, Y_PROTEIN + BOX_H_SM + 0.25,
+                    Y_ENCODER - 0.05, PAL["arrow"])
 
-            # Projector boxes
+            # Token row after encoder: ~500 ESM embedding tokens
+            esm_tok_y = Y_ENCODER + BOX_H + 0.15
+            _draw_token_row(ax, BOX_X + 0.15, esm_tok_y, 500,
+                            PAL["tok_esm"], PAL["frozen_border"],
+                            sq_size=SQ - 0.02, gap=0.02, max_show=14)
+            ax.text(BOX_X + BOX_W - 0.1, esm_tok_y + SQ / 2,
+                    "~500 \u00d7 1536d", ha="right", va="center",
+                    fontsize=FS_TOK_LABEL + 1, color=PAL["frozen_text"],
+                    style="italic", zorder=5)
+
             if approach == "mlp":
-                pool_y = 3.7
+                # Attention Pooling
+                pool_y = 5.3
                 _box(ax, (BOX_X, pool_y), BOX_W, BOX_H_SM,
-                     SC["proj_mlp_bg"], SC["proj_mlp_border"],
-                     text="Attention Pooling", fontsize=8,
-                     text_color=SC["proj_mlp_border"],
-                     sub_text="32 tokens")
-                _arrow(ax, ARR_X, Y_ENCODER + BOX_H + 0.05,
-                       pool_y - 0.05, SC["proj_mlp_border"])
+                     PAL["mlp_bg"], PAL["mlp_border"],
+                     text="Attention Pooling", fontsize=FS_BOX - 0.5, fontweight="bold",
+                     text_color=PAL["mlp_text"],
+                     icon="\u2731")
+                _varrow(ax, ARR_X, esm_tok_y + SQ + 0.15,
+                        pool_y - 0.05, PAL["mlp_border"])
 
-                proj_y = 5.0
+                # MLP Projector
+                proj_y = 6.9
                 _box(ax, (BOX_X, proj_y), BOX_W, BOX_H,
-                     SC["proj_mlp_bg"], SC["proj_mlp_border"],
-                     text="MLP Projector", fontsize=9, fontweight="bold",
-                     text_color=SC["proj_mlp_border"],
-                     sub_text="1536 \u2192 2560")
-                _arrow(ax, ARR_X, pool_y + BOX_H_SM + 0.05,
-                       proj_y - 0.05, SC["proj_mlp_border"])
-                _arrow(ax, ARR_X, proj_y + BOX_H + 0.05,
-                       Y_LLM - 0.05, "#566573")
+                     PAL["mlp_bg"], PAL["mlp_border"],
+                     text="MLP Projector", fontsize=FS_BOX, fontweight="bold",
+                     text_color=PAL["mlp_text"],
+                     sub_text="1536\u21925120\u21922560",
+                     icon="\u2731")
+                _varrow(ax, ARR_X, pool_y + BOX_H_SM + 0.05,
+                        proj_y - 0.05, PAL["mlp_border"])
+
+                # Token row after projection: 32 green squares
+                proj_tok_y = proj_y + BOX_H + 0.15
+                _draw_token_row(ax, BOX_X + 0.4, proj_tok_y, 32,
+                                col["tok_color"], col["tok_border"],
+                                sq_size=SQ, gap=SQ_GAP, max_show=10)
+                ax.text(BOX_X + BOX_W - 0.1, proj_tok_y + SQ / 2,
+                        "32 tokens", ha="right", va="center",
+                        fontsize=FS_TOK_LABEL + 1, color=PAL["mlp_text"],
+                        fontweight="bold", zorder=5)
+
+                _varrow(ax, ARR_X, proj_tok_y + SQ + 0.15,
+                        Y_LLM - 0.05, PAL["arrow"])
+
+                # Token mixing annotation
+                ax.text(COL_W / 2 + 0.1, proj_tok_y + SQ + 0.55,
+                        col["mixing_text"],
+                        ha="center", va="center",
+                        fontsize=FS_MIXING, color=PAL["mlp_text"],
+                        style="italic", zorder=3,
+                        bbox=dict(boxstyle="round,pad=0.3",
+                                  facecolor=PAL["mlp_bg"],
+                                  edgecolor=PAL["mlp_border"],
+                                  linewidth=0.8, alpha=0.7))
 
             elif approach == "perceiver":
-                proj_y = 4.2
-                proj_h = 1.5
+                proj_y = 5.5
+                proj_h = 2.0
                 _box(ax, (BOX_X, proj_y), BOX_W, proj_h,
-                     SC["proj_perc_bg"], SC["proj_perc_border"],
-                     text="Perceiver Resampler", fontsize=9, fontweight="bold",
-                     text_color=SC["proj_perc_border"],
-                     sub_text="32 queries \u00b7 2560-dim")
-                _arrow(ax, ARR_X, Y_ENCODER + BOX_H + 0.05,
-                       proj_y - 0.05, SC["proj_perc_border"])
-                _arrow(ax, ARR_X, proj_y + proj_h + 0.05,
-                       Y_LLM - 0.05, "#566573")
+                     PAL["perc_bg"], PAL["perc_border"],
+                     text="Perceiver\nResampler", fontsize=FS_BOX, fontweight="bold",
+                     text_color=PAL["perc_text"],
+                     sub_text="learned queries",
+                     icon="\u2731")
+                _varrow(ax, ARR_X, esm_tok_y + SQ + 0.15,
+                        proj_y - 0.05, PAL["perc_border"])
+
+                # Token row after perceiver: 32 orange squares
+                proj_tok_y = proj_y + proj_h + 0.15
+                _draw_token_row(ax, BOX_X + 0.4, proj_tok_y, 32,
+                                col["tok_color"], col["tok_border"],
+                                sq_size=SQ, gap=SQ_GAP, max_show=10)
+                ax.text(BOX_X + BOX_W - 0.1, proj_tok_y + SQ / 2,
+                        "32 tokens", ha="right", va="center",
+                        fontsize=FS_TOK_LABEL + 1, color=PAL["perc_text"],
+                        fontweight="bold", zorder=5)
+
+                _varrow(ax, ARR_X, proj_tok_y + SQ + 0.15,
+                        Y_LLM - 0.05, PAL["arrow"])
+
+                # Token mixing annotation
+                ax.text(COL_W / 2 + 0.1, proj_tok_y + SQ + 0.55,
+                        col["mixing_text"],
+                        ha="center", va="center",
+                        fontsize=FS_MIXING, color=PAL["perc_text"],
+                        style="italic", zorder=3,
+                        bbox=dict(boxstyle="round,pad=0.3",
+                                  facecolor=PAL["perc_bg"],
+                                  edgecolor=PAL["perc_border"],
+                                  linewidth=0.8, alpha=0.7))
 
             elif approach == "flamingo":
-                proj_y = 4.2
-                proj_h = 1.5
+                proj_y = 5.5
+                proj_h = 2.0
                 _box(ax, (BOX_X, proj_y), BOX_W, proj_h,
-                     SC["proj_flam_bg"], SC["proj_flam_border"],
-                     text="Perceiver Resampler", fontsize=9, fontweight="bold",
-                     text_color=SC["proj_flam_border"],
-                     sub_text="64 queries \u00b7 6 layers")
-                _arrow(ax, ARR_X, Y_ENCODER + BOX_H + 0.05,
-                       proj_y - 0.05, SC["proj_flam_border"])
-                _arrow(ax, ARR_X, proj_y + proj_h + 0.05,
-                       Y_LLM - 0.05, "#566573")
+                     PAL["flam_bg"], PAL["flam_border"],
+                     text="Flamingo\nPerceiver", fontsize=FS_BOX, fontweight="bold",
+                     text_color=PAL["flam_text"],
+                     sub_text="cross-attn queries",
+                     icon="\u2731")
+                _varrow(ax, ARR_X, esm_tok_y + SQ + 0.15,
+                        proj_y - 0.05, PAL["flam_border"])
 
-        # --- Protein input (bottom) ---
-        _box(ax, (BOX_X, Y_PROTEIN), BOX_W, BOX_H_SM,
-             SC["protein_bg"], SC["protein_border"],
-             text="Protein: MKTL...AVFG", fontsize=8,
-             text_color=SC["protein_text"])
+                # Token row after flamingo perceiver: 64 red squares
+                proj_tok_y = proj_y + proj_h + 0.15
+                _draw_token_row(ax, BOX_X + 0.15, proj_tok_y, 64,
+                                col["tok_color"], col["tok_border"],
+                                sq_size=SQ - 0.02, gap=0.02, max_show=14)
+                ax.text(BOX_X + BOX_W - 0.1, proj_tok_y + SQ / 2,
+                        "64 tokens", ha="right", va="center",
+                        fontsize=FS_TOK_LABEL + 1, color=PAL["flam_text"],
+                        fontweight="bold", zorder=5)
 
-        # --- Param note ---
-        ax.text(COL_W / 2, -0.25, col["note"],
-                ha="center", va="center",
-                fontsize=7.5, color="#7B8D9E", style="italic", zorder=3)
+                _varrow(ax, ARR_X, proj_tok_y + SQ + 0.15,
+                        Y_LLM - 0.05, PAL["arrow"])
+
+                # Side arrows showing cross-attention injection
+                side_mid_y = (proj_tok_y + SQ + Y_LLM + 1.5) / 2
+                ax.annotate("",
+                            xy=(BOX_X + BOX_W - 0.2, Y_LLM + 1.5),
+                            xytext=(BOX_X + BOX_W - 0.2, proj_tok_y + SQ + 0.15),
+                            arrowprops=dict(arrowstyle="-|>",
+                                            color=PAL["flam_border"],
+                                            lw=1.2, ls=(0, (3, 2)),
+                                            connectionstyle="arc3,rad=0.6"),
+                            zorder=3)
+
+                # Token mixing annotation
+                ax.text(COL_W / 2 + 0.1, proj_tok_y + SQ + 0.55,
+                        col["mixing_text"],
+                        ha="center", va="center",
+                        fontsize=FS_MIXING, color=PAL["flam_text"],
+                        style="italic", zorder=3,
+                        bbox=dict(boxstyle="round,pad=0.3",
+                                  facecolor=PAL["flam_bg"],
+                                  edgecolor=PAL["flam_border"],
+                                  linewidth=0.8, alpha=0.7))
 
     # ── Legend ───────────────────────────────────────────────────────
     legend_items = [
-        (SC["esm3_bg"], SC["esm3_border"], "Frozen (pretrained)"),
-        (SC["proj_mlp_bg"], SC["proj_mlp_border"], "Trainable"),
-        (SC["llm_bg"], SC["llm_border"], "LLM + LoRA"),
-        (SC["proj_flam_bg"], SC["proj_flam_border"], "Gated Cross-Attention"),
+        (PAL["frozen_bg"], PAL["frozen_border"], "\u2744  Frozen (pretrained)"),
+        (PAL["train_bg"], PAL["train_border"], "\u2731  Trainable"),
+        (PAL["llm_bg"], PAL["llm_border"], "LLM (LoRA / frozen)"),
     ]
     legend_patches = [
         Patch(facecolor=bg, edgecolor=border, linewidth=1.2, label=label)
         for bg, border, label in legend_items
     ]
-    fig.legend(handles=legend_patches, loc="lower center",
-               ncol=4, fontsize=8.5, frameon=False,
-               bbox_to_anchor=(0.5, -0.02))
 
-    fig.suptitle("Protein-LLM Architecture: Four Approaches",
-                 fontsize=14, fontweight="bold", y=0.98)
+    # Token legend
+    tok_legend_items = [
+        (PAL["tok_protein"], PAL["protein_border"], "Protein tokens"),
+        (PAL["tok_esm"], PAL["frozen_border"], "ESM-3 embeddings"),
+        (PAL["tok_mlp"], PAL["mlp_border"], "Projected tokens"),
+        (PAL["tok_sys"], "#BBBBBB", "System/Instruction"),
+    ]
+    tok_patches = [
+        Patch(facecolor=bg, edgecolor=border, linewidth=1.0, label=label)
+        for bg, border, label in tok_legend_items
+    ]
 
-    fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+    fig.legend(handles=legend_patches + tok_patches, loc="lower center",
+               ncol=4, fontsize=FS_LEGEND, frameon=False,
+               bbox_to_anchor=(0.5, -0.015),
+               handlelength=1.5, handleheight=1.0)
+
+    fig.suptitle("", fontsize=1)
+    fig.tight_layout(rect=[0, 0.04, 1, 0.97])
     return fig
 
 

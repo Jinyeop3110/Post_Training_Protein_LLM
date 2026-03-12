@@ -1,23 +1,22 @@
 method: grpo
-framework: verl
 
 # GRPO-specific settings
 grpo:
-  group_size: 4          # Number of completions per prompt
-  temperature: 1.0
+  group_size: 8          # Number of completions per prompt
+  temperature: 0.9
   use_kl_penalty: false  # DAPO improvement
   normalize_advantages: false  # Dr. GRPO improvement
 
-# Quantization (disabled for GRPO — FSDP2 incompatible with bitsandbytes)
+# Quantization (disabled for GRPO)
 quantization:
   enabled: false
 
 # Training parameters
-lr: 5e-6  # Much lower than SFT!
-projector_lr: 2.5e-5  # 5x base LR for pooling+projector (safer for 8B models)
+lr: 5e-6
+projector_lr: 2.5e-5  # 5x base LR for pooling+projector
 epochs: 1
 batch_size: 4
-gradient_accumulation_steps: 8
+gradient_accumulation_steps: 4
 max_seq_length: 2048
 max_grad_norm: 1.0
 
@@ -35,12 +34,12 @@ lora:
     - up_proj
     - down_proj
 
-# Rollout settings
+# Rollout settings (generation during GRPO)
 rollout:
-  engine: vllm
-  temperature: 1.0
   top_p: 0.95
   max_tokens: 512
+  do_sample: true
+  enable_thinking: true  # Allow <think>...</think> before <answer>. Qwen3 reasoning.
 
 # Checkpointing
 save_steps: 100

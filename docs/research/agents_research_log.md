@@ -22,7 +22,395 @@
 
 ---
 
-## Literature Review: Multimodal Protein-LLM Systems (2024-2026)
+## [2026-03-12] GRPO Structure Quality: Matched Text vs MLP Comparison
+
+### Summary
+Ran matched GRPO experiments on the structure quality task (ESMFold reward) comparing Text-only and ESM3+MLP approaches on Qwen3-8B. Text achieves 0.83 mean reward vs MLP's 0.58, but through template copying rather than protein understanding.
+
+### Configuration
+- Model: Qwen3-8B-Instruct-2507
+- Task: Structure quality (ESMFold reward)
+- Training: GRPO, 1 epoch, 92 steps, group_size=16, lr=5e-6
+- MLP experiment: `grpo_structure_mlp_sft_qwen3_8b_it_0312_011859` (wandb: qos63ov4)
+- Text experiment: `grpo_structure_text_sft_qwen3_8b_it_0312_032738`
+- SFT parents: MLP from step-9750, Text from step-9647 (both on 4.89M combined dataset)
+
+### Results
+| Metric | Text-only | ESM3+MLP |
+|--------|-----------|----------|
+| mean_reward | 0.832 | 0.582 |
+| quality_alignment | 0.351 | 0.326 |
+| numerical_accuracy | 0.185 | 0.086 |
+| category_match | 0.197 | 0.104 |
+| format_bonus | 0.099 | 0.065 |
+| format_rate | 100% | 74% |
+| grad_norm_lora | 0.476 | 5.8e-10 |
+| grad_norm_multimodal | 0.0 | 0.247 |
+
+### Key Findings
+1. **Text copies system prompt templates verbatim**: "Strong hydrophobic core, regular secondary structure" appears for every protein regardless of sequence. High reward through dataset bias exploitation (most proteins are well-folded).
+2. **MLP generates original protein-aware reasoning**: Diverse completions referencing charged/polar residues, disordered regions, structural flexibility. But fails format compliance (~74%).
+3. **Critical bug: MLP LoRA gradients are zero**: Joint gradient clipping with multimodal params (30M at 5x LR) monopolizes the gradient budget. LoRA grad_norm = 5.8e-10 means the LLM cannot learn output format.
+4. **Higher reward ≠ better model**: Text's 0.83 is reward hacking; MLP's 0.58 reflects genuine (but format-limited) protein reasoning.
+
+### Decisions
+- Decision: Must implement separate gradient clipping for LoRA vs multimodal parameter groups
+- Rationale: Joint clipping is catastrophic for multimodal GRPO — multimodal params consume all gradient budget
+- Decision: Need harder reward function to prevent template copying
+- Rationale: Current ESMFold reward is gameable by always predicting "high quality, pLDDT ~87"
+
+### Next Steps
+1. Implement separate gradient clipping for LoRA and multimodal params
+2. Design anti-template reward (diversity penalty, calibration metric)
+3. Rerun MLP with gradient fix to assess true potential
+4. Consider two-phase GRPO: Phase 1 LoRA-only (format), Phase 2 joint (reasoning)
+
+### Blog Post
+`blog/posts/2026-03-12_grpo-structure-text-vs-mlp.html`
+
+### Figures
+- `fig13_grpo_structure_reward_curves` — Training and eval reward curves
+- `fig14_grpo_structure_reward_breakdown` — Reward component grouped bar chart
+- `fig15_grpo_structure_format_rate` — Format rate and PG loss comparison
+- `fig16_grpo_structure_grad_norms` — LoRA vs multimodal gradient diagnostic
+
+---
+
+## Literature Review: Protein Embedding Evaluation & Multimodal Protein-LLM Systems (2024-2026)
+
+### 2026-03-10: Standard Methods for Evaluating Protein Embedding Quality (Trained vs Random Projector)
+
+**Objective**: Survey established methods for quantifying whether a trained projector (ESM-3 frozen -> AttentionPooling -> MLP -> LLM space) produces better embeddings than a random (untrained) projector. Identify the most informative, implementable, and visually impactful analyses.
+
+---
+
+#### 1. Standard Protein Embedding Evaluation Methods
+
+##### 1a. Linear Probing (Most Common in Literature)
+
+Train a single linear layer (or logistic regression) on frozen embeddings to predict biological labels. This is the gold standard from the NLP/CV transfer learning literature, adopted extensively in protein ML.
+
+- **How it works**: Freeze the embedding model. Extract embeddings for a labeled dataset. Train a linear classifier (sklearn LogisticRegression with L2 regularization, or a 1-layer MLP). Report accuracy/F1.
+- **Used by**: ESM-2 (Rives et al., Lin et al. 2023), ProtTrans (Elnaggar et al. 2022), ANKH (Elnaggar et al. 2023), TAPE benchmark (Rao et al. 2019)
+- **Tasks commonly probed**: Secondary structure (3-class per-residue), remote homology (fold-level), subcellular localization, contact prediction
+- **Key detail**: TAPE (Rao et al. 2019) established 5 canonical tasks: secondary structure prediction, contact prediction, remote homology detection, fluorescence landscape, stability landscape
+- **For our case**: Run linear probing on **trained projector outputs** vs **random projector outputs** on the same frozen ESM-3 embeddings. The gap in probe accuracy directly measures how much the projector has learned.
+
+##### 1b. kNN Classification / Annotation Transfer
+
+Use k-nearest neighbors in embedding space to transfer annotations from labeled proteins to unlabeled ones.
+
+- **How it works**: Compute pairwise cosine distances between embeddings. For each query protein, find k nearest neighbors. Transfer majority-vote annotation.
+- **Used by**: GoPredSim (Littmann et al. 2021) -- kNN with k=1 on ProtT5 embeddings for GO annotation transfer. Reached Fmax of 37%/50%/57% for BPO/MFO/CCO on CAFA3.
+- **Metrics**: Accuracy, F1, Fmax (threshold-optimized F1 used in CAFA)
+- **For our case**: kNN (k=1,5,10) on trained vs random projector embeddings. If trained projector preserves or improves biological signal, kNN accuracy should be higher.
+
+##### 1c. UMAP/t-SNE Visualization with Biological Labels
+
+Dimensionality reduction to 2D, colored by known biological categories.
+
+- **How it works**: Extract embeddings, apply UMAP (or t-SNE), color by SCOP fold / GO category / EC number / Pfam family / subcellular location
+- **Used by**: Virtually all protein embedding papers include this. ESM-2 paper shows UMAP colored by protein families. ProtTrans shows t-SNE colored by subcellular location. PROVAL framework (Vath et al. 2022) systematically evaluates embedding space visualization.
+- **Visual impact**: Very high -- immediately shows whether functional clusters form
+- **For our case**: Side-by-side UMAP: (a) raw ESM-3 embeddings, (b) trained projector output, (c) random projector output. Colored by same labels. This is the most visually compelling figure for a paper.
+
+##### 1d. Silhouette Score on Functional Clusters
+
+Quantitative measure of clustering quality.
+
+- **How it works**: Given known labels (e.g., SCOP fold class), compute silhouette coefficient: (b-a)/max(a,b) where a=intra-cluster distance, b=nearest-cluster distance. Range [-1, 1], higher is better.
+- **Used by**: PROVAL framework, various protein embedding surveys
+- **For our case**: Compute silhouette scores for trained vs random projector embeddings, grouped by functional labels. Single number that summarizes clustering quality.
+
+##### 1e. Retrieval Metrics
+
+Measure how well nearest neighbors share biological function.
+
+- **How it works**: For each query protein, retrieve top-k nearest neighbors. Compute precision@k (fraction sharing same function). Also: mean reciprocal rank (MRR), recall@k.
+- **Used by**: Protein domain embedding work (Nallapareddy et al. 2024), GoPredSim
+- **For our case**: Precision@k and MRR for trained vs random. Answers: "does the projector make functionally similar proteins closer?"
+
+##### 1f. Fold Classification / Remote Homology Detection
+
+Classify proteins into structural folds (SCOP/CATH) using only embeddings.
+
+- **How it works**: Use SCOP fold/superfamily/family level labels. Train classifier (linear probe or kNN) on embeddings. Evaluate at fold, superfamily, and family levels.
+- **Used by**: TAPE benchmark (remote homology task), ESM-2, ESM-S (structure-informed ESM)
+- **Splits**: Homology-aware splits via CD-HIT at 40% sequence identity to test generalization beyond sequence similarity
+
+##### 1g. Contact Prediction
+
+Predict residue-residue contacts from per-residue embeddings.
+
+- **Used by**: TAPE, ESM-2, ESM-3
+- **Note**: Requires per-residue embeddings, not pooled embeddings. Less relevant for our case since we use AttentionPooling to 32 tokens (protein-level, not residue-level).
+
+---
+
+#### 2. Common Labels/Annotations for Clustering Evaluation
+
+| Annotation | Source | Granularity | Ease of Obtaining | Best For |
+|------------|--------|-------------|-------------------|----------|
+| **SCOP/SCOPe folds** | SCOPe database | 4 levels (class/fold/superfamily/family) | Medium -- need PDB structures | Fold classification, remote homology |
+| **CATH domains** | CATH database | 4 levels (class/architecture/topology/homology) | Medium -- structure-based | Structure classification |
+| **Gene Ontology (GO)** | UniProt/GOA | 3 categories (MF/BP/CC), hierarchical | Easy -- UniProt annotations | Function prediction, kNN transfer |
+| **Enzyme Commission (EC)** | UniProt/BRENDA | 4-level hierarchy | Easy -- UniProt annotations | Catalytic function |
+| **Pfam families** | InterPro/Pfam | Domain-level | Easy -- sequence-based HMM | Family clustering |
+| **Subcellular location** | UniProt/DeepLoc | ~10 categories | Easy -- UniProt annotations | Localization prediction |
+
+**Recommendation for our project**: GO terms (MF/BP/CC) and EC numbers are the easiest to obtain (already in UniProt for any protein) and are the most commonly used in the literature. Pfam families are also trivially available. SCOP/CATH require structural data and are more effort.
+
+---
+
+#### 3. Comparison Frameworks: Trained vs Random Baseline
+
+##### 3a. Downstream Task Probing (Most Standard)
+
+The most established approach from NLP/CV transfer learning:
+- **Method**: Compare linear probe accuracy on trained embeddings vs random-init embeddings vs raw input features
+- **Papers**: Alain & Bengio (2017) "Understanding intermediate layers using linear classifier probes"; Belinkov (2022) probing classifiers survey
+- **For our case**: Three conditions: (1) raw ESM-3 mean-pooled, (2) ESM-3 -> trained projector, (3) ESM-3 -> random projector. If trained >> random, projector has learned useful transformation.
+
+##### 3b. Centered Kernel Alignment (CKA)
+
+Measures representational similarity between two sets of representations.
+
+- **Method**: Compute linear CKA between representation matrices. CKA=1 means identical structure, CKA=0 means orthogonal.
+- **Papers**: Kornblith et al. (2019) "Similarity of Neural Network Representations Revisited" -- showed CKA is more robust than CCA/SVCCA for comparing representations across different random seeds and widths
+- **For our case**: CKA between (a) raw ESM-3 embeddings and (b) projected embeddings. Compare CKA(ESM3, trained_proj) vs CKA(ESM3, random_proj). If trained projector preserves biological structure while adapting to LLM space, it should show characteristic CKA patterns.
+
+##### 3c. Embedding Space Entropy Analysis
+
+From the vision-language model literature (LLaVA analysis):
+- **Method**: Measure entropy of embedding distributions after projection. Pretrained projectors compress features (lower entropy) compared to random projectors which barely change entropy.
+- **Papers**: "Analyzing Fine-Grained Alignment and Enhancing Vision Understanding in Multimodal Language Models" (2025, arXiv 2505.17316)
+- **For our case**: Compute entropy of trained vs random projector outputs. Trained projector should show lower entropy (more structured, compressed representation).
+
+##### 3d. Representation Similarity Analysis (RSA)
+
+From neuroscience, adopted in ML:
+- **Method**: Compute pairwise distance matrix in embedding space. Compare distance matrices across conditions using Spearman correlation.
+- **For our case**: RSA between ESM-3 distance matrix and projected distance matrix. Does training preserve relative distances?
+
+##### 3e. Intrinsic Dimensionality
+
+- **Method**: Estimate intrinsic dimensionality of the embedding manifold (e.g., via TwoNN estimator or PCA explained variance)
+- **For our case**: Compare intrinsic dimensionality of trained vs random projector outputs. Trained projector may learn a more compact, lower-dimensional manifold.
+
+---
+
+#### 4. Key Papers to Reference
+
+| Paper | Year | Key Contribution | Relevance |
+|-------|------|------------------|-----------|
+| **TAPE** (Rao et al.) | 2019 | 5 benchmark tasks for protein embeddings | Established standard evaluation protocol |
+| **ESM-2** (Lin et al.) | 2023 | Scaling protein language models | Linear probing, structure prediction benchmarks |
+| **ESM-3** (Hayes et al.) | 2024 | Multimodal protein model (seq+struct+function) | NLL evaluation, generative quality metrics |
+| **ProtTrans** (Elnaggar et al.) | 2022 | Protein transformers (ProtBert, ProtT5) | UMAP visualization, per-residue probing tasks |
+| **ANKH** (Elnaggar et al.) | 2023 | Optimized protein LM | Probing tasks, embedding dimension analysis |
+| **GoPredSim** (Littmann et al.) | 2021 | kNN GO annotation transfer from embeddings | kNN evaluation protocol for function prediction |
+| **PEER** (Xu et al.) | 2022 (NeurIPS) | 17-task benchmark (5 categories) | Comprehensive multi-task protein evaluation |
+| **PROVAL** (Vath et al.) | 2022 | Framework for comparing protein embeddings | Systematic evaluation: classification, visualization, complexity |
+| **ProteinGPT** (Xiao et al.) | 2024 | Multimodal protein LLM | Projector training stages, ablation showing progressive improvement |
+| **EvoLlama** (Zheng et al.) | 2024 | ESM-2 + LLaMA multimodal | MLP projection evaluation, stage-wise training |
+| **CKA** (Kornblith et al.) | 2019 | Representation similarity metric | Gold standard for comparing learned representations |
+| **LLaVA projector analysis** | 2025 | Vision projector quality evaluation | Entropy analysis, CKA heatmaps for multimodal alignment |
+| **Aligning LLMs and GDMs** (Wang et al.) | 2025 (Cell Patterns) | Protein-LLM alignment evaluation | Showed alignment quality correlates with downstream performance; 2-layer projectors better than linear |
+
+---
+
+#### 5. Practical Recommendations: Top 5 Analyses for Our Project
+
+Given our setup (ESM-3 frozen -> AttentionPooling(32 tokens) -> MLP(1536->5120->2560) -> Qwen3 LLM space), here are the top 5 analyses ranked by combined informativeness, ease of implementation, and visual impact:
+
+**Rank 1: UMAP Visualization with GO/EC Labels (Side-by-Side)**
+- Informativeness: HIGH -- immediately shows whether functional structure is preserved/enhanced
+- Ease: EASY -- requires only: (a) run proteins through both projectors, (b) UMAP, (c) matplotlib scatter plot
+- Visual impact: HIGHEST -- makes an excellent paper figure (3-panel: ESM-3 raw / trained proj / random proj)
+- Implementation: ~50 lines of code. Use sklearn UMAP, color by GO slim categories or EC top-level class.
+- Data: Use proteins from our existing datasets (Mol-Instructions) that already have GO/function annotations
+- Metric: Qualitative (visual inspection) + quantitative silhouette score overlay
+
+**Rank 2: Linear Probing on Frozen Embeddings**
+- Informativeness: HIGHEST -- the quantitative gold standard. Directly measures how much biological signal the projector preserves/adds
+- Ease: EASY-MEDIUM -- requires labeled dataset + sklearn LogisticRegression
+- Visual impact: MEDIUM -- bar chart comparing accuracy across conditions
+- Implementation: ~100 lines. Three conditions: ESM-3 mean-pooled (baseline), trained projector output (mean over 32 tokens), random projector output (mean over 32 tokens)
+- Tasks to probe: (a) EC number (top-level, 7 classes), (b) subcellular localization (~10 classes), (c) GO slim terms
+- Metric: Accuracy, macro-F1, with 5-fold stratified CV
+
+**Rank 3: kNN Function Retrieval (Precision@k)**
+- Informativeness: HIGH -- directly answers "do functionally similar proteins cluster together?"
+- Ease: EASY -- cosine similarity + top-k retrieval
+- Visual impact: MEDIUM-HIGH -- precision@k curves for trained vs random
+- Implementation: ~80 lines. Compute pairwise cosine distances, check if top-k neighbors share the same annotation
+- Metric: Precision@1, Precision@5, Precision@10, MRR
+- Data: Same labeled protein set as linear probing
+
+**Rank 4: CKA Between ESM-3 and Projected Spaces**
+- Informativeness: MEDIUM-HIGH -- shows whether projector preserves representational structure
+- Ease: MEDIUM -- requires implementing linear CKA (but straightforward matrix operations)
+- Visual impact: MEDIUM -- single number comparison, or heatmap if comparing across layers
+- Implementation: ~40 lines for linear CKA computation
+- Interpretation: If CKA(ESM3, trained_proj) >> CKA(ESM3, random_proj), the trained projector preserves biological structure while transforming to LLM space. If CKA(ESM3, trained_proj) is moderate (not too high, not too low), the projector is usefully transforming the space rather than just rotating it.
+
+**Rank 5: Embedding Space Statistics (Isotropy, Effective Rank, Cosine Similarity Distribution)**
+- Informativeness: MEDIUM -- reveals pathologies (e.g., representation collapse, anisotropy)
+- Ease: EASIEST -- just compute basic statistics on embedding matrices
+- Visual impact: MEDIUM -- histograms of cosine similarity distributions
+- Implementation: ~30 lines. Compute: (a) mean pairwise cosine similarity (should not be too high -- that indicates collapse), (b) singular value spectrum / effective rank, (c) isotropy score
+- Interpretation: Random projector might produce near-uniform or collapsed embeddings. Trained projector should show structured distribution. If all embeddings have cosine similarity > 0.99, the projector has collapsed.
+
+---
+
+#### Summary: Evaluation Matrix
+
+| Method | Informativeness | Ease | Visual Impact | Priority |
+|--------|----------------|------|---------------|----------|
+| UMAP + bio labels | High | Easy | Highest | 1 |
+| Linear probing | Highest | Easy-Medium | Medium | 2 |
+| kNN retrieval (P@k) | High | Easy | Medium-High | 3 |
+| CKA | Medium-High | Medium | Medium | 4 |
+| Embedding statistics | Medium | Easiest | Medium | 5 |
+| Silhouette score | Medium | Easy | Low | 6 (supplement) |
+| RSA | Medium | Medium | Low | 7 (supplement) |
+| Contact prediction | High | Hard | Medium | Skip (pooled embeddings) |
+| Fold classification | High | Hard | Medium | Skip (need SCOP data) |
+
+#### Key Decisions
+
+- **Skip contact prediction**: Our projector outputs 32 pooled tokens, not per-residue embeddings, so contact prediction is not applicable.
+- **Skip SCOP/CATH fold classification**: Requires structural data mapping that adds complexity without proportional insight for our question (trained vs random projector).
+- **Use GO/EC/subcellular location for labels**: Already available in UniProt for any protein, and we have GO annotations in our existing dataset.
+- **Three-condition comparison**: Always compare (1) raw ESM-3 mean-pooled, (2) trained projector, (3) random projector. The raw ESM-3 baseline is critical -- it shows whether the projector adds value beyond what ESM-3 already provides.
+
+---
+
+### 2026-03-11: Embedding Analysis Results & Literature Review — Why Projectors Don't Improve Clustering
+
+**Objective**: Document downstream embedding analysis results and contextualize with literature on multimodal projector representation quality.
+
+---
+
+#### Experimental Setup
+
+- **Proteins**: 27,818 from 3 downstream datasets — GO prediction (8,818), MegaScale stability (10,000), Structure quality (10,000)
+- **7 biological labels**: go, stability:neutral, stability:stabilizing, stability:destabilizing, structure:high, structure:medium, structure:low
+- **Conditions**: Raw ESM-3 (attention-pooled), Trained MLP projector, Random MLP projector
+- **Reduction**: Flatten 32 tokens × dim → PCA to 128 dims (retains 97-99% variance for ESM3/trained, 86% for random)
+- **Metrics**: kNN, linear probe, silhouette, CKA, cosine distributions, retrieval (P@5, MRR), effective rank, isotropy, UMAP
+
+#### Results Summary
+
+| Metric | ESM3 Raw | Trained | Random |
+|--------|----------|---------|--------|
+| kNN@5 | 0.542 | 0.540 | **0.554** |
+| Linear Probe | 0.544 | 0.526 | **0.572** |
+| Silhouette | -0.094 | -0.168 | **-0.067** |
+| P@5 | 0.456 | 0.439 | **0.473** |
+| MRR | 0.665 | 0.648 | **0.686** |
+| Cosine Separation | **0.165** | 0.149 | 0.083 |
+| Effective Rank | 67.2 | 58.8 | **93.7** |
+| Isotropy | 0.003 | **0.125** | 0.002 |
+| CKA (raw↔trained) | 0.311 | — | — |
+| CKA (raw↔random) | 0.180 | — | — |
+| CKA (trained↔random) | — | 0.053 | — |
+
+**Key finding**: The trained MLP projector does NOT improve embedding-level classification over raw ESM-3 or even random projection. The random projector slightly outperforms both.
+
+#### Figures
+
+All figures at `blog/figures/supple_figures/embedding_*.png` and `blog/figures/main_figures/fig12_embedding_umap.png`.
+
+| Figure | Key Observation |
+|--------|----------------|
+| UMAP 3-panel | Trained projector produces compact, centralized embedding; random creates dataset-level islands |
+| Metrics bars | All three conditions score ~54% kNN/linear probe; random edges out |
+| CKA heatmap | Trained↔random = 0.053 (very low); trained learns substantially different transform |
+| Cosine distributions | Trained has spike near cosine=1.0 (partial collapse); raw has broadest spread |
+| kNN vs k | All curves nearly overlap; random consistently ~1-2% higher |
+| Rank/Isotropy | Trained has high isotropy (0.125) but low rank (58.8); random has highest rank (93.7) |
+
+#### Literature Context: This Is Expected
+
+The finding that trained projectors don't improve embedding clustering is well-documented in the multimodal LLM literature:
+
+**1. Projectors don't extract modality-specific attributes — the LLM compensates**
+
+> Verma et al., "Cross-Modal Projection in Multimodal LLMs Doesn't Really Project Visual Attributes to Textual Space" (ACL 2024)
+
+The projector merely learns to "route" information to leverage pre-existing LLM knowledge. Domain-specific understanding is modeled by the LLM parameters, not the projector. When only the projection is fine-tuned, it doesn't improve representation quality.
+
+**2. Generative training degrades embedding discriminability**
+
+> "VIRAL: Visual Representation Alignment for MLLMs" (KAIST, 2025)
+
+Next-token prediction retains only features that aid text prediction, discarding other cues. Internal representations drift away from encoder features. They propose explicit intermediate supervision to counteract this.
+
+> Tong et al., "Eyes Wide Shut? Exploring Visual Shortcomings of Multimodal LLMs" (CVPR 2024)
+
+Generative training does not fix, and may exacerbate, embedding-level discriminability issues.
+
+**3. Visual token redundancy — projectors inherit, don't fix**
+
+> "What Do Visual Tokens Really Encode?" (2026)
+
+Only ~60% of visual tokens carry image-specific meaning (alive vs sink/dead). The projector's linear transformation inherits this redundancy.
+
+**4. Random projections preserve structure (Johnson-Lindenstrauss)**
+
+LLaVA's single linear layer (600K training pairs) achieved strong results. Extreme token reduction (75-89%) shows comparable performance. Since our projector maps 1536→2560 (dimensionality increases), random projections are even more likely to preserve pairwise distances.
+
+**5. Over-alignment can hurt**
+
+> Fang et al., "To Align or Not to Align" (2025)
+
+Optimal alignment depends on data characteristics. Over-alignment can hurt unimodal performance.
+
+**6. No protein-LLM embedding analysis exists**
+
+No published work analyzes post-projection embedding quality in protein-LLMs. The closest:
+- "Aligning LLMs and Geometric Deep Models for Protein Representation" (Patterns/Cell, 2025): LLM fine-tuning, not the projector, drives alignment quality.
+- ProtST uses contrastive learning (not generative), which preserves embedding discriminability by design.
+
+#### Interpretation
+
+The projector's job is to **reformat features for the LLM decoder**, not to create linearly separable clusters. SFT optimizes P(next_token | context), which is fundamentally different from optimizing embedding geometry. The LLM compensates for projector limitations through its own parameters (LoRA). This means:
+
+1. **Embedding-level metrics are not the right evaluation** for generative protein-LLMs
+2. **Generation quality** (BLEU, task accuracy, expert evaluation) is the appropriate metric
+3. **Our analysis is novel** — no protein-LLM paper has measured this, and it confirms the vision-LLM literature findings extend to the protein domain
+
+#### Implications for RL (GRPO)
+
+**Does poor embedding clustering mean embeddings won't help for RL? No.**
+
+Embedding clustering ≠ information content. The LLM is a nonlinear decoder that can extract subtle signals from embeddings that don't form clean clusters.
+
+**SFT evidence**: MLP eval_loss=0.361 vs text eval_loss=1.266 (3.5× gap) — proves the projector carries substantial protein information.
+
+**Early GRPO results (mixed signals)**:
+- ProteinLMBench (MC QA): reward 0.676–0.695, format compliance improved (85%→94%), factual accuracy unchanged (3/5). Task unsuitable for RL (binary, sparse reward).
+- Structure Quality: reward 0.780, good variance (0.154), BUT LoRA grad_norm=4.93e-10 (near zero). Projector receives gradients (multimodal_grad=1.0) but LLM isn't updating. Training bug, not fundamental limitation.
+
+**Key factors for RL**:
+
+| Factor | Helps RL | Hurts RL |
+|--------|----------|----------|
+| SFT 3.5× advantage | Info flows through projector | — |
+| Cosine collapse (spike at ~1.0) | — | Proteins become indistinguishable |
+| RL reward gradients | Could reshape projector for task-relevant features | Noisy if collapse is severe |
+| Low CKA (trained↔random=0.053) | Learned genuinely different transform | Doesn't help linear classification |
+
+**Prediction**: ESM-3 embeddings will still help for RL because:
+1. The 3.5× SFT advantage is too large to disappear
+2. RL rewards flow through the projector — task-specific signals could reshape embeddings
+3. Cosine collapse may decrease under RL (reward penalizes same answer for different proteins)
+4. The LoRA gradient bug must be fixed first for a fair comparison
+
+**Definitive test**: Text-only GRPO vs MLP GRPO on structure quality (continuous reward). Currently in progress.
+
+---
 
 ### 2026-03-02: Comprehensive Survey of Frozen-Encoder Protein-LLM Architectures
 

@@ -587,6 +587,7 @@ class ProteinLLM(nn.Module):
         self,
         sequences: List[str],
         return_attention_mask: bool = False,
+        precomputed_encoder_embeds: Optional[torch.Tensor] = None,
     ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
         """
         Encode protein sequences into prefix embeddings.
@@ -599,6 +600,11 @@ class ProteinLLM(nn.Module):
         Args:
             sequences: List of protein sequences (amino acid strings).
             return_attention_mask: Whether to return attention mask for prefix tokens.
+            precomputed_encoder_embeds: If provided, skip ESM-3 encoding and use
+                these embeddings directly (shape [B, L, encoder_embed_dim]).
+                Useful for caching: ESM-3 is frozen so encoder output is
+                deterministic for the same input.  Pooling and projector still
+                run with gradients.
 
         Returns:
             If return_attention_mask is False:
@@ -617,10 +623,13 @@ class ProteinLLM(nn.Module):
             )
 
         # Get encoder embeddings [B, L, encoder_embed_dim]
-        # ESM-3 encoder manages its own autocast (bf16 by default) inside
-        # _encode_batched, so we just need torch.no_grad() here.
-        encoder_output = self.encoder.encode(sequences)
-        embeddings = encoder_output["embeddings"]  # [B, L, D]
+        if precomputed_encoder_embeds is not None:
+            embeddings = precomputed_encoder_embeds
+        else:
+            # ESM-3 encoder manages its own autocast (bf16 by default) inside
+            # _encode_batched, so we just need torch.no_grad() here.
+            encoder_output = self.encoder.encode(sequences)
+            embeddings = encoder_output["embeddings"]  # [B, L, D]
 
         if self.pooling is not None:
             # MLP path: pool then project
@@ -649,6 +658,7 @@ class ProteinLLM(nn.Module):
         text_input_ids: torch.Tensor,
         text_attention_mask: torch.Tensor,
         labels: Optional[torch.Tensor] = None,
+        precomputed_encoder_embeds: Optional[torch.Tensor] = None,
     ) -> Dict[str, torch.Tensor]:
         """
         Prepare combined inputs by replacing the protein placeholder token
@@ -674,6 +684,8 @@ class ProteinLLM(nn.Module):
             text_input_ids: Text input token IDs [B, T].
             text_attention_mask: Text attention mask [B, T].
             labels: Optional labels for training [B, T].
+            precomputed_encoder_embeds: If provided, skip ESM-3 encoding
+                and pass directly to pooling/projector.  Shape [B, L, D].
 
         Returns:
             Dictionary containing:
@@ -687,7 +699,8 @@ class ProteinLLM(nn.Module):
 
         # Get protein embeddings [B, N, D]
         protein_embeds, protein_mask = self.encode_protein(
-            protein_sequences, return_attention_mask=True
+            protein_sequences, return_attention_mask=True,
+            precomputed_encoder_embeds=precomputed_encoder_embeds,
         )
         num_protein_tokens = protein_embeds.shape[1]
 
@@ -972,6 +985,7 @@ class ProteinLLM(nn.Module):
         return_token_ids: bool = False,
         wrap_chat_template: bool = True,
         system_prompt: Optional[str] = None,
+        generation_prefix: Optional[str] = None,
         **generate_kwargs,
     ) -> Union[List[str], Tuple[List[str], torch.Tensor, int]]:
         """
@@ -993,6 +1007,10 @@ class ProteinLLM(nn.Module):
                 markers (e.g. ``<|im_start|>``).
             system_prompt: System prompt for chat wrapping.  Defaults to the
                 protein-expert system prompt used during training.
+            generation_prefix: Optional text to append after the chat template
+                generation prompt (e.g., ``"<think>\n\n</think>\n\n"`` to
+                suppress Qwen3 thinking mode).  Only used when
+                ``wrap_chat_template`` is True.
             **generate_kwargs: Additional arguments for generate().
 
         Returns:
@@ -1037,6 +1055,8 @@ class ProteinLLM(nn.Module):
                 text = self.tokenizer.apply_chat_template(
                     messages, tokenize=False, add_generation_prompt=True,
                 )
+                if generation_prefix:
+                    text += generation_prefix
                 wrapped.append(text)
             prompt = wrapped
 

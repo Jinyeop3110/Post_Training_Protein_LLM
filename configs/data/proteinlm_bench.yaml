@@ -19,5 +19,8 @@ splits:
   validation: 0.1
   test: 0.1
 
+# Thinking mode for Qwen3 RL generation
+enable_thinking: true
+
 # Optional: limit number of samples (null = use all)
 limit: null

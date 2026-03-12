@@ -1,25 +1,17 @@
-# Scientist Agent Team: Training Diagnostics
+# Scientist Agent Team: Training Diagnostics & Publishing
 
-> **Purpose**: Analyze training experiments, create diagnostic plots, and produce concise reports. Read-only with respect to source code — only writes to `blog/`.
+> **Purpose**: Analyze training experiments, create diagnostic plots, and produce reports across multiple output destinations. Parallel team-lead structure — agents work independently and the lead coordinates.
 
 ---
 
 ## Quick Start
 
 ```bash
-# 1. Enable agent teams
-export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
-
-# 2. Start Claude Code
+# Start Claude Code (team lead)
 claude
 
-# 3. Request scientist team
-> Create a scientist team with 3 teammates:
-> - data-collector: fetch metrics from wandb and local experiment files
-> - analyst: create diagnostic plots and statistical analysis
-> - reporter: write markdown report with embedded figures
->
-> Question: "Compare loss curves for MLP vs text-only SFT"
+# Request analysis
+> Analyze loss curves for MLP vs text-only SFT and publish to blog + Jekyll site
 ```
 
 ---
@@ -37,31 +29,115 @@ claude
                         │                     │
                         │ • YOUR interface    │
                         │ • Scopes question   │
-                        │ • Coordinates flow  │
-                        │ • Delivers report   │
+                        │ • Delegates tasks   │
+                        │ • Runs agents in    │
+                        │   PARALLEL          │
+                        │ • Synthesizes work  │
                         └──────────┬──────────┘
                                    │
-       ┌───────────────────────────┼───────────────────────────┐
-       ▼                           ▼                           ▼
-┌──────────────┐         ┌──────────────┐            ┌──────────────┐
-│DATA-COLLECTOR│         │   ANALYST    │            │   REPORTER   │
-│              │         │              │            │              │
-│ • wandb API  │────────>│ • Loss plots │───────────>│ • post.html  │
-│ • Local files│  CSVs   │ • Grad norms │   PNGs     │ • Figures    │
-│ • Metadata   │  JSONs  │ • LR sched   │   JSON     │ • Findings   │
-│ • Configs    │         │ • Statistics  │            │ • Recs       │
-└──────────────┘         └──────────────┘            └──────────────┘
-       │                         │                          │
-       └─────────────────────────┴──────────────────────────┘
+       ┌──────────────┬──────────────┬──────────────┐
+       ▼              ▼              ▼              ▼
+┌──────────────┐┌──────────────┐┌──────────────┐┌──────────────┐
+│DATA-COLLECTOR││   ANALYST    ││    ARTIST    ││   REPORTER   │
+│              ││              ││              ││              │
+│ • wandb scan ││ • Statistics ││ • Loss plots ││ • HTML posts │
+│ • Local files││ • Anomalies  ││ • Bar charts ││ • Jekyll MD  │
+│ • Discovery  ││ • Comparison ││ • Paper PDFs ││ • Blog index │
+│ • Metadata   ││ • Plot specs ││ • Style/DPI  ││ • Cross-post │
+└──────────────┘└──────────────┘└──────────────┘└──────────────┘
+       │                │                │              │
+       └────────────────┴────────────────┴──────────────┘
                                  │
-                  blog/
-                  ├── data/MM-DD/  (CSVs, JSONs)
-                  ├── figures/
-                  │   ├── figure_catalog.md   (single source of truth)
-                  │   ├── main_figures/       (9 key figures)
-                  │   └── supple_figures/     (supplementary)
-                  └── posts/       (HTML reports)
+                    SHARED OUTPUT DESTINATIONS
 ```
+
+### Key Difference from Sequential Pipeline
+
+Agents are **independent** — each reads `results/` directly:
+
+| Agent | Reads | Writes | Can run in parallel? |
+|-------|-------|--------|---------------------|
+| **data-collector** | wandb + `results/` | `blog/data/` CSVs, JSONs | Yes (independent) |
+| **analyst** | `results/` + `blog/data/` | `blog/data/` analysis JSONs | Yes (independent) |
+| **artist** | `blog/data/` + `results/` | `blog/figures/`, `paper/figures/`, Jekyll assets | Yes (reads raw data directly) |
+| **reporter** | `blog/data/` + `blog/figures/` + `results/` | `blog/posts/`, Jekyll `_posts/` | Yes (reads raw data directly) |
+
+The lead spawns all 4 in parallel when possible. For simple questions, the lead may skip agents and do the work directly.
+
+---
+
+## Output Destinations
+
+All agents must be aware of **4 output destinations** with different formats:
+
+### 1. Internal Blog (`blog/`)
+
+```
+blog/
+├── index.html                    # Blog index (auto-generated)
+├── posts/                        # HTML blog posts
+│   └── YYYY-MM-DD_title.html
+├── figures/
+│   ├── figure_catalog.md         # Single source of truth
+│   ├── main_figures/             # Key figures (paper + website)
+│   └── supple_figures/           # Supplementary figures
+└── data/
+    └── MM-DD/                    # Analysis data by date
+        ├── run_histories.csv
+        ├── experiment_metadata.json
+        └── analysis_summary.json
+```
+
+- **Format**: HTML posts, PNGs for figures
+- **Convention**: `YYYY-MM-DD_title-in-kebab-case.html`
+- **Figure refs**: `../figures/main_figures/name.png` from posts
+- **Tags**: kickoff, architecture, training, evaluation, data, rl, sft, infrastructure, milestone, debug
+
+### 2. Jekyll Site (`Jinyeop3110.github.io/`)
+
+```
+/home/yeopjin/orcd/pool/workspace/Jinyeop3110.github.io/
+├── _posts/                       # Markdown blog posts (Jekyll)
+│   └── YYYY-MM-DD-title.md
+└── assets/img/blog/              # Blog images
+    └── protein-llm/              # Project-specific images
+```
+
+- **Format**: Markdown with Jekyll frontmatter (YAML header)
+- **Convention**: `YYYY-MM-DD-title.md` (hyphens, not underscores)
+- **Frontmatter**:
+  ```yaml
+  ---
+  layout: post
+  title: "Post Title"
+  description: >
+    One-paragraph description for meta tags.
+  date: YYYY-MM-DD
+  categories: [research]
+  tags: [llm, protein, multimodal, esm3]
+  ---
+  ```
+- **Figure refs**: `/assets/img/blog/protein-llm/name.png` (absolute from site root)
+- **Style**: Narrative, engaging, first-person. Suitable for public audience.
+
+### 3. Paper Figures (`paper/figures/`)
+
+```
+paper/figures/
+├── main/                         # PDFs (NeurIPS-compatible)
+│   └── fig{N}_{name}.pdf
+└── supplementary/                # Additional PDFs + PNGs
+    └── *.pdf
+```
+
+- **Format**: PDF (vector, NeurIPS-compatible), 300 DPI
+- **Naming**: `fig{N}_{descriptive_name}.pdf`
+- **Style**: Publication-quality, no titles (caption goes in LaTeX), minimal text
+- **Always generate both** PNG (for blog) and PDF (for paper) from same script
+
+### 4. Blog Figure Catalog (`blog/figures/figure_catalog.md`)
+
+Single source of truth for all figures. Must be updated whenever new figures are created.
 
 ---
 
@@ -71,85 +147,72 @@ claude
 
 **Focus**: Fetch training metrics from wandb API and local experiment files
 
+**Works independently** — reads `results/` directly, no dependencies.
+
 **Responsibilities**:
 - Query `wandb.Api()` for run histories from protein-LLM projects
 - Read local `trainer_state.json`, `metrics.json`, `training_args.json`, `lineage.json`
 - Parse HF Trainer log history from `trainer_state.json`
 - Output organized CSVs and JSONs to `blog/data/MM-DD/`
-- Collect and normalize experiment metadata (approach, model, LR, epochs, etc.)
+- Collect and normalize experiment metadata
 
-**Key Files Read**:
-```
-results/{experiment_name}/
-├── config.yaml            # Full Hydra config
-├── lineage.json           # Stage, approach, parent, timestamps
-├── training_args.json     # Hyperparameters
-├── metrics.json           # Final summary metrics
-├── checkpoints/
-│   ├── trainer_state.json           # Full training log history
-│   └── checkpoint-*/
-│       └── trainer_state.json       # Per-checkpoint state
-└── train.log              # Raw training output
-```
-
-**Output Format**:
+**Output**:
 ```
 blog/data/MM-DD/
-├── run_histories.csv           # Step-level: step, loss, eval_loss, lr, grad_norm, ...
-├── experiment_metadata.json    # Per-run: name, approach, model, LR, epochs, ...
-└── wandb_summaries.json        # wandb run summaries (if available)
+├── run_histories.csv           # Step-level metrics
+├── experiment_metadata.json    # Per-run metadata
+└── wandb_summaries.json        # wandb summaries (if fetched)
 ```
 
 **Critical Rules**:
-- NEVER write outside `blog/`
+- NEVER write outside `blog/data/`
 - NEVER modify source code or experiment files
 - Distinguish `loss` (HF running average) from `token_avg_loss` (true average)
-- Always include `approach` field (text/esm3) and `projector_type` (mlp/perceiver) in metadata
+- Always include `approach` and `projector_type` in metadata
 
-**Spawn Prompt**:
-```
-You are the data-collector agent for the protein-LLM scientist team.
-
-FIRST: Read SCIENTIST_TEAM.md for team context, then CLAUDE.md for project context.
-
-Your job: Gather training metrics and experiment metadata.
-
-Data sources (in priority order):
-1. Local trainer_state.json — log_history field has per-step metrics
-2. Local metrics.json — final summary metrics
-3. Local lineage.json — experiment metadata (approach, model, timestamps)
-4. Local training_args.json — hyperparameters
-5. Local config.yaml — full Hydra resolved config
-6. wandb API — if local data is incomplete
-
-trainer_state.json log_history fields:
-- loss: HF Trainer running average (inflated by early high losses — DO NOT use for plots)
-- token_avg_loss: true per-token average loss (USE THIS)
-- eval_loss: validation loss (computed periodically)
-- learning_rate: current LR
-- grad_norm: gradient norm
-- epoch: fractional epoch
-- step: global step
-
-Output to: blog/data/MM-DD/ (where MM-DD is today's date)
-Format: CSV for time series, JSON for metadata
-
-CRITICAL: NEVER write outside blog/. NEVER modify experiment files.
-```
+**Agent file**: `.claude/agents/data-collector.md`
 
 ---
 
 ### 2. ANALYST
 
-**Focus**: Create diagnostic plots and statistical analysis from collected data
+**Focus**: Statistical analysis, anomaly detection, metric computation — numbers only, no figures
+
+**Works independently** — reads `results/` directly OR `blog/data/MM-DD/` if available.
+
+**Responsibilities**:
+- Compute per-experiment statistics (convergence, loss trajectory, gradient stats)
+- Run statistical comparisons between experiments (t-tests, effect sizes)
+- Detect anomalies (NaN, spikes, divergence)
+- Produce structured `analysis_summary.json` with all findings
+- Generate **plot specifications** for the artist agent
+
+**Output**: `blog/data/MM-DD/analysis_summary.json` + optional CSVs
+
+**Critical Rules**:
+- NEVER create figures — that's the artist's job
+- ALWAYS use `token_avg_loss`, NOT `loss`
+- Every finding must include specific numbers
+- NEVER write outside `blog/data/`
+
+**Agent file**: `.claude/agents/analyst.md`
+
+---
+
+### 3. ARTIST
+
+**Focus**: Publication-quality figure drawing — owns ALL visual output
+
+**Works independently** — reads `results/`, `blog/data/`, or analyst's plot specs.
 
 **Responsibilities**:
 - Create matplotlib/seaborn plots (headless: `matplotlib.use('Agg')`)
-- Standard plot catalog: loss curves, gradient norms, LR schedule, convergence comparison
-- Compute summary statistics: min/max/final loss, convergence step, gradient stats
-- Detect anomalies: NaN occurrences, loss spikes, gradient explosions
-- Output PNGs to `blog/figures/supple_figures/` (default) or `blog/figures/main_figures/` (key figures, with team lead approval)
-- Output `analysis_summary.json` to `blog/data/MM-DD/`
+- Use `figure_style.py` + `STYLE_GUIDE.md` as single source of truth
+- Standard plot catalog: loss curves, gradient norms, LR schedule, bar charts
+- **Output PNGs** to `blog/figures/` (main or supplementary)
+- **Output PDFs** to `paper/figures/` for publication
+- **Copy figures** to Jekyll site `assets/img/blog/protein-llm/`
+- Update `blog/figures/figure_catalog.md` after creating figures
 
 **Standard Plot Catalog**:
 | Plot | X-axis | Y-axis | Notes |
@@ -162,394 +225,144 @@ CRITICAL: NEVER write outside blog/. NEVER modify experiment files.
 | `convergence_table.png` | — | — | Rendered table image |
 | `gpu_memory.png` | Experiment | GB | Allocated vs reserved |
 
-**Style Requirements**:
-```python
-import matplotlib
-matplotlib.use('Agg')  # Headless — MUST be before pyplot import
-import matplotlib.pyplot as plt
-import sys, os
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'scripts', 'analysis'))
-from figure_style import style, save_figure, get_color, get_label, get_approach_label, smooth, annotate_best, annotate_bars, to_rgba_alpha
-
-colors = style.apply("blog")  # or "web", "paper"
-# Use style.color("mlp"), style.dpi(), style.figsize(), save_figure(fig, "name")
-```
-
-**Output Format**:
-```
-blog/figures/
-├── figure_catalog.md          # Single source of truth — update after adding figures
-├── main_figures/              # Key figures (paper + website, team lead approval)
-│   └── {name}.png
-├── supple_figures/            # Supplementary figures (default destination)
-│   ├── loss_curves.png
-│   ├── eval_loss_curves.png
-│   ├── gradient_norms.png
-│   └── ...
-
-blog/data/MM-DD/
-└── analysis_summary.json     # Per-experiment stats + anomalies
-```
-
-**analysis_summary.json schema**:
-```json
-{
-  "experiments": {
-    "<name>": {
-      "approach": "esm3",
-      "projector_type": "mlp",
-      "final_train_loss": 2.49,
-      "best_eval_loss": 3.64,
-      "best_eval_step": 200,
-      "total_steps": 7815,
-      "convergence_step": 150,
-      "max_grad_norm": 1.2,
-      "anomalies": ["loss_spike_step_530"]
-    }
-  },
-  "comparison": {
-    "best_experiment": "<name>",
-    "metric": "best_eval_loss"
-  }
-}
-```
+**Style Targets**:
+| Target | Font | DPI | Size | Use |
+|--------|------|-----|------|-----|
+| `blog` | sans-serif 11pt | 150 | 10x6 | Internal dev blog |
+| `web` | sans-serif 12pt | 200 | 9x5.5 | Jekyll site |
+| `paper` | serif 8pt | 300 | 3.25x2.4 | NeurIPS paper |
 
 **Critical Rules**:
-- ALWAYS use `token_avg_loss`, NOT `loss` (HF running average is misleading)
-- Use `matplotlib.use('Agg')` BEFORE importing pyplot
-- 150 DPI PNGs, consistent color scheme
-- NEVER write outside `blog/`
-- Include legend with experiment names and approach type
+- ALWAYS import from `figure_style.py` — NEVER define inline colors/DPI/sizes
+- ALWAYS use `save_figure()` or `save_main_figure()` — NEVER raw `fig.savefig()`
+- ALWAYS update `figure_catalog.md` after creating figures
+- Paper figures: no titles (caption in LaTeX), minimal text
 
-**Spawn Prompt**:
-```
-You are the analyst agent for the protein-LLM scientist team.
-
-FIRST: Read SCIENTIST_TEAM.md for team context, then CLAUDE.md for project context.
-
-Your job: Create diagnostic plots and statistical analysis from training data.
-
-CRITICAL setup (MUST be first lines of any plotting code):
-  import matplotlib
-  matplotlib.use('Agg')
-  import matplotlib.pyplot as plt
-  import sys, os
-  sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'scripts', 'analysis'))
-  from figure_style import style, save_figure, get_color, get_label, get_approach_label, smooth, annotate_best, annotate_bars, to_rgba_alpha
-  colors = style.apply("blog")
-
-figure_style.py is the SINGLE SOURCE OF TRUTH for colors and styling.
-Use style.color("mlp"), style.dpi(), style.figsize(), save_figure(fig, "name").
-NEVER define inline APPROACH_COLORS, FIG_DPI, or FIG_SIZE.
-
-CRITICAL: Use 'token_avg_loss' for loss plots, NOT 'loss' (which is HF running average
-and is heavily inflated by early high losses). 'eval_loss' is always reliable.
-
-Input: CSVs and JSONs from blog/data/MM-DD/ (produced by data-collector)
-Output: PNGs to blog/figures/
-        analysis_summary.json to blog/data/MM-DD/
-
-Every plot must have:
-- Title, axis labels, legend
-- Consistent color scheme by approach type (from figure_style.py)
-- Grid lines (via seaborn whitegrid)
-- Saved via save_figure(fig, "name")
-
-Also produce analysis_summary.json with per-experiment stats and anomaly flags.
-
-CRITICAL: NEVER write outside blog/. NEVER modify source code or experiment files.
-```
+**Agent file**: `.claude/agents/artist.md`
 
 ---
 
-### 3. REPORTER
+### 4. REPORTER
 
-**Focus**: Write concise markdown analysis reports with embedded figures
+**Focus**: Write reports across ALL output destinations
+
+**Works independently** — reads `results/` directly, `blog/data/`, and `blog/figures/`.
 
 **Responsibilities**:
-- Synthesize data-collector's metadata and analyst's findings into a coherent report
-- Follow standard report template (see below)
-- Embed PNGs via relative paths (`../figures/name.png` from posts)
-- Use scientific tone: specific numbers, not vague qualifiers
-- Save HTML to `blog/posts/YYYY-MM-DD_title-in-kebab-case.html`
+- Write **HTML posts** to `blog/posts/` (internal dev blog)
+- Write **Jekyll markdown** to `Jinyeop3110.github.io/_posts/` (public website)
+- Regenerate `blog/index.html` for internal blog
+- Ensure figures are in correct locations for each destination
 
-**Report Template**:
-```markdown
-# {Report Title}
+**Multi-Destination Output**:
 
-**Date**: YYYY-MM-DD
-**Question**: {The original analysis question}
-**Experiments analyzed**: {list}
+| Destination | Format | Path | Figure Refs |
+|-------------|--------|------|-------------|
+| Internal blog | HTML | `blog/posts/YYYY-MM-DD_title.html` | `../figures/main_figures/name.png` |
+| Jekyll site | Markdown + YAML | `Jinyeop3110.github.io/_posts/YYYY-MM-DD-title.md` | `/assets/img/blog/protein-llm/name.png` |
 
-## Executive Summary
-
-{2-3 sentences: key finding, best performer, notable issues}
-
-## Methodology
-
-- **Data source**: {local trainer_state.json / wandb / both}
-- **Metrics**: {which metrics were compared}
-- **Experiments**: {N} runs spanning {date range}
-
-## Experiment Configuration
-
-| Parameter | {Exp 1} | {Exp 2} | ... |
-|-----------|---------|---------|-----|
-| Approach | esm3 | text | ... |
-| Projector | mlp | — | ... |
-| Base model | Qwen3-8B | Qwen3-8B | ... |
-| LR | 2e-4 | 2e-4 | ... |
-| Epochs | 3 | 3 | ... |
-
-## Key Findings
-
-### 1. {Finding title}
-
-{Description with specific numbers}
-
-![Loss Curves](../figures/loss_curves.png)
-
-### 2. {Finding title}
-
-{Description}
-
-![Gradient Norms](../figures/gradient_norms.png)
-
-## Summary Results
-
-| Metric | {Exp 1} | {Exp 2} | ... |
-|--------|---------|---------|-----|
-| Final train loss | 2.49 | 2.53 | ... |
-| Best eval loss | 3.64 | 3.71 | ... |
-| Convergence step | 150 | 180 | ... |
-
-## Recommendations
-
-1. {Actionable recommendation}
-2. {Actionable recommendation}
-```
+**Writing Style by Destination**:
+| Aspect | Internal Blog | Jekyll Site |
+|--------|--------------|-------------|
+| Tone | Technical, data-focused | Narrative, engaging |
+| Audience | Dev team | Public (researchers, students) |
+| Numbers | Exact metrics required | Key numbers + context |
+| Length | 150-300 lines | 300-600 lines |
+| Format | HTML tables, figures | Markdown, storytelling |
 
 **Critical Rules**:
-- NEVER write outside `blog/`
-- NEVER modify source code
-- Use RELATIVE paths for figure references (e.g., `../figures/loss_curves.png` from posts)
-- Numbers over vague qualifiers ("eval loss decreased 8.2%" not "loss improved significantly")
-- Always state which loss metric was used (token_avg_loss vs eval_loss)
-- Include experiment names in full (for reproducibility)
-
-**Spawn Prompt**:
-```
-You are the reporter agent for the protein-LLM scientist team.
-
-FIRST: Read SCIENTIST_TEAM.md for team context, then CLAUDE.md for project context.
-
-Your job: Write a concise HTML blog post synthesizing the analysis.
-
-Input:
-- blog/data/MM-DD/experiment_metadata.json (from data-collector)
-- blog/data/MM-DD/analysis_summary.json (from analyst)
-- blog/figures/*.png (from analyst)
-
-Output: blog/posts/YYYY-MM-DD_title-in-kebab-case.html
-Also regenerate blog/index.html to include the new post.
-
-Report structure:
-1. Executive Summary (2-3 sentences)
-2. Methodology (data sources, metrics, scope)
-3. Experiment Configuration table
-4. Key Findings (with embedded figures using relative paths)
-5. Summary Results table
-6. Recommendations (actionable)
-
-Style rules:
-- Scientific tone, specific numbers ("eval loss 3.64" not "good performance")
-- Relative paths for figures: <img src="../figures/filename.png">
+- NEVER modify source code or experiment files
+- NEVER delete existing blog/post files
+- Use RELATIVE paths for internal blog figures, ABSOLUTE paths for Jekyll
+- Numbers over vague qualifiers — every claim needs a number
 - Always state which loss metric is used
 - Include full experiment names for reproducibility
-- Keep it concise: aim for 200-400 lines
 
-CRITICAL: NEVER write outside blog/. NEVER modify source code.
-```
+**Agent file**: `.claude/agents/reporter.md`
 
 ---
 
 ## Workflow Patterns
 
-### Pattern 1: Single-Run Diagnostics
+### Pattern 1: Quick Analysis (Lead does it)
 
 ```
-User: "Analyze the MLP SFT run sft_lora_esm3_qwen3_8b_it_0227_022604"
+User: "What's the eval loss for the latest MLP run?"
 
-Lead → data-collector: Fetch all metrics for this single run
-       data-collector → blog/data/MM-DD/
-Lead → analyst:        Plot loss curve, grad norms, LR schedule for single run
-       analyst → blog/figures/
-Lead → reporter:       Write single-run diagnostic HTML post
-       reporter → blog/posts/YYYY-MM-DD_mlp-sft-diagnostics.html
-Lead → User:           "Report ready at blog/posts/YYYY-MM-DD_mlp-sft-diagnostics.html"
+Lead reads results/ directly -> answers immediately
+(No agents needed)
 ```
 
-### Pattern 2: Multi-Run Comparison
+### Pattern 2: Single-Run Diagnostics (Parallel)
 
 ```
-User: "Compare loss curves for MLP vs text-only SFT"
+User: "Analyze the MLP SFT run"
 
-Lead → data-collector: Fetch metrics for all MLP and text-only runs
-       data-collector → blog/data/MM-DD/
-Lead → analyst:        Overlay loss curves, create comparison bar chart
-       analyst → blog/figures/
-Lead → reporter:       Write comparison HTML post with recommendations
-       reporter → blog/posts/YYYY-MM-DD_mlp-vs-text-sft-comparison.html
-Lead → User:           "Report ready. Key finding: MLP achieves 8% lower eval loss."
+Lead spawns in PARALLEL:
+├─ data-collector: fetch metrics -> blog/data/MM-DD/
+├─ analyst: compute stats, anomalies -> blog/data/MM-DD/analysis_summary.json
+├─ artist: plot loss, grad norms -> blog/figures/
+└─ reporter: draft from results/ directly, fill figures when ready
+
+Lead delivers: "Report at blog/posts/..."
 ```
 
-### Pattern 3: Anomaly Investigation
+### Pattern 3: Multi-Run Comparison (Parallel)
 
 ```
-User: "Investigate the NaN issue in the 0225 runs"
+User: "Compare MLP vs text-only and publish everywhere"
 
-Lead → data-collector: Fetch all 0225 runs, focus on gradient norms and loss near NaN
-       data-collector → blog/data/MM-DD/
-Lead → analyst:        Plot gradient norms with NaN markers, loss before/after spike
-       analyst → blog/figures/
-Lead → reporter:       Document root cause, affected runs, resolution
-       reporter → blog/posts/YYYY-MM-DD_nan-investigation.html
-Lead → User:           "Root cause: multimodal params not clipped. See report."
+Lead spawns in PARALLEL:
+├─ data-collector: fetch all run metrics -> blog/data/MM-DD/
+├─ analyst: statistical comparison -> blog/data/MM-DD/analysis_summary.json
+├─ artist: comparison plots -> blog/figures/ + paper/figures/ + Jekyll assets/
+└─ reporter: write HTML post + Jekyll markdown
+
+Lead delivers: "Internal blog + Jekyll post ready"
 ```
 
-### Pattern 4: Periodic Health Check
+### Pattern 4: Discovery (Data-collector alone)
 
 ```
-User: "Give me a health check on all completed experiments"
+User: "What experiments do we have?"
 
-Lead → data-collector: Fetch metadata and final metrics for ALL experiments
-       data-collector → blog/data/MM-DD/
-Lead → analyst:        Create summary dashboard: bar charts, convergence comparison
-       analyst → blog/figures/
-Lead → reporter:       Write overview with experiment status table
-       reporter → blog/posts/YYYY-MM-DD_health-check.html
-Lead → User:           "9 experiments analyzed. 6 converged, 3 had issues. See report."
+Lead -> data-collector: scan wandb + local results/ -> run_inventory.json
+Lead delivers: "Found N runs: 4 complete, 2 partial. Here's the inventory."
 ```
 
----
-
-## Data Sources Reference
-
-### Local Experiment Files
-
-All experiments are stored under `results/{experiment_name}/`:
-
-| File | Contents | Key Fields |
-|------|----------|------------|
-| `lineage.json` | Experiment identity | `approach`, `projector_type`, `base_model`, `stage`, `created_at`, `completed_at` |
-| `training_args.json` | Hyperparameters | `learning_rate`, `num_train_epochs`, `per_device_train_batch_size`, `projector_lr` |
-| `metrics.json` | Final summary | `train_loss`, `token_avg_loss`, `train_runtime`, `gpu_memory_*` |
-| `config.yaml` | Full Hydra config | Everything (model, training, data, encoder) |
-| `checkpoints/trainer_state.json` | Step-by-step log | `log_history` array with per-step metrics |
-
-### trainer_state.json Field Catalog
-
-The `log_history` array contains objects with these fields (not all present at every step):
-
-**Training steps** (every `logging_steps`):
-| Field | Description | Notes |
-|-------|-------------|-------|
-| `loss` | HF Trainer running average | **DO NOT USE for plots** — inflated by early high losses |
-| `token_avg_loss` | True per-token average loss | **USE THIS** for training loss |
-| `grad_norm` | Gradient L2 norm | Log-scale for plots |
-| `learning_rate` | Current LR | Shows warmup + decay schedule |
-| `epoch` | Fractional epoch | `1.5` = halfway through epoch 2 |
-| `step` | Global step count | X-axis for most plots |
-
-**Evaluation steps** (every `eval_steps`):
-| Field | Description | Notes |
-|-------|-------------|-------|
-| `eval_loss` | Validation loss | Most reliable performance metric |
-| `eval_runtime` | Eval duration (seconds) | |
-| `eval_samples_per_second` | Throughput | |
-
-### wandb Projects
-
-| Project | Contents |
-|---------|----------|
-| `protein-llm-sft` | SFT training runs (loss, eval_loss, LR, grad_norm) |
-| `protein-llm-rl` | GRPO training runs (reward, policy loss) |
-
-API access:
-```python
-import wandb
-api = wandb.Api()
-runs = api.runs("protein-llm-sft")
-for run in runs:
-    history = run.history()  # DataFrame
-    config = run.config       # Dict
-    summary = run.summary     # Dict
-```
-
-### Available Experiments (as of 2026-03-01)
-
-| Experiment | Approach | Status | Notes |
-|------------|----------|--------|-------|
-| `sft_lora_esm3_qwen3_8b_it_0225_203237` | esm3/mlp | Partial | |
-| `sft_lora_esm3_qwen3_8b_it_0226_151416` | esm3/mlp | Complete | Multiple checkpoints (1000, 1250, 1500) |
-| `sft_lora_esm3_qwen3_8b_it_0227_022604` | esm3/mlp | Complete | Latest MLP run |
-| `sft_text_qwen3_8b_it_0227_115556` | text | Partial | |
-| `sft_text_qwen3_8b_it_0227_115751` | text | Partial | |
-| `sft_text_qwen3_8b_it_0227_145821` | text | Complete | Full text-only run with metrics |
-
----
-
-## Reports Directory Convention
-
-**Output directory**:
-```
-/home/yeopjin/orcd/pool/workspace/Post_Training_Protein_LLM/blog
-```
-
-All agents MUST write to this absolute path, following the blog conventions in `blog/README.md`:
+### Pattern 5: Figure-Only (Artist alone)
 
 ```
-blog/
-├── index.html                           # Blog index page (auto-generated)
-├── README.md                            # Conventions and reading order
-├── posts/                               # HTML blog posts
-│   └── YYYY-MM-DD_title-in-kebab-case.html
-├── figures/                             # All plot images
-│   ├── figure_catalog.md               # Single source of truth for all figures
-│   ├── main_figures/                   # 9 key figures (paper + website)
-│   ├── supple_figures/                 # Supplementary figures
-│   └── *.png                           # Legacy flat figures (pre-reorganization)
-└── data/                                # Analysis code + data by date
-    └── MM-DD/
-        ├── analysis_script.py
-        ├── run_histories.csv
-        ├── experiment_metadata.json
-        └── analysis_summary.json
+User: "Regenerate paper figures for latest results"
+
+Lead -> artist: read results/, generate PDFs to paper/figures/main/
+(No data-collector, analyst, or reporter needed)
 ```
 
-**Paper figures**:
+### Pattern 6: Cross-Post (Reporter alone)
+
 ```
-paper/figures/
-├── main/                               # 9 PDFs (NeurIPS-compatible)
-└── supplementary/                      # 30 PDFs + PNGs
+User: "Convert the latest internal blog post to Jekyll"
+
+Lead -> reporter: read blog/posts/latest.html -> write Jekyll markdown
+(No data-collector, analyst, or artist needed)
 ```
 
-**Blog post conventions**:
-- Posts are HTML files in `blog/posts/`
-- Filename: `YYYY-MM-DD_title-in-kebab-case.html`
-- Figures in `blog/figures/main_figures/` or `blog/figures/supple_figures/`, referenced from posts as `../figures/main_figures/name.png` or `../figures/supple_figures/name.png`
-- Data in `blog/data/MM-DD/`, referenced from posts as `../data/MM-DD/`
-- Index at `blog/index.html` links to all posts via `posts/filename.html`
-- Tags: kickoff, architecture, training, evaluation, data, rl, sft, infrastructure, milestone, debug
+### Pattern 7: Deep Analysis (Analyst + Artist)
 
-**CRITICAL**: Never overwrite or delete existing files in `blog/`. Always create new dated content.
+```
+User: "Is there a convergence issue in the 0227 runs?"
+
+Lead spawns in PARALLEL:
+├─ analyst: anomaly detection, convergence analysis -> analysis_summary.json
+├─ artist: gradient norm plots with anomaly markers -> blog/figures/
+
+Lead synthesizes findings and delivers.
+```
 
 ---
 
 ## Agent Communication
-
-### Communication Hierarchy
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -563,19 +376,21 @@ paper/figures/
 │                             TEAM LEAD                                   │
 │                                                                         │
 │  • Receives YOUR analysis questions                                     │
-│  • Scopes question into report name and experiment list                 │
-│  • Coordinates sequential pipeline: collect → analyze → report          │
+│  • Breaks into independent tasks                                        │
+│  • Spawns agents in PARALLEL when possible                              │
+│  • Synthesizes results from all agents                                  │
 │  • Delivers final report to YOU                                         │
 └─────────────────────────────────────────────────────────────────────────┘
                                    ▲
-                                   │ Data, Figures, Report
+                                   │ Results, Status
                                    ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                             TEAMMATES                                   │
 │                                                                         │
-│  data-collector ──→ analyst ──→ reporter                                │
-│   (sequential pipeline — each depends on the previous)                  │
+│  data-collector <---> analyst <---> artist <---> reporter               │
 │                                                                         │
+│  • Work INDEPENDENTLY (each reads results/ directly)                    │
+│  • Can communicate directly with each other                             │
 │  • Report results to TEAM LEAD                                          │
 │  • Do NOT contact YOU directly                                          │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -586,108 +401,82 @@ paper/figures/
 | From | To | Allowed? | How |
 |------|----|----------|-----|
 | **You** | Team Lead | Yes | Direct conversation |
-| **Team Lead** | You | Yes | Progress reports, final report delivery |
-| **Team Lead** | Teammates | Yes | Task assignment with question_name and experiment list |
+| **Team Lead** | You | Yes | Progress reports, final delivery |
+| **Team Lead** | Teammates | Yes | Task assignment with destinations |
 | **Teammates** | Team Lead | Yes | Completion notifications, blockers |
-| **Teammates** | Each other | Yes | Direct messages (e.g., data-collector → analyst handoff) |
+| **Teammates** | Each other | Yes | Direct messages (shared data paths) |
 | **Teammates** | You | No | Must go through Team Lead |
-
-### Pipeline Coordination
-
-Tasks are **sequential with dependencies**:
-
-```
-1. data-collector: Fetch data     [no dependencies]
-   └─> Creates: blog/data/MM-DD/run_histories.csv
-   └─> Creates: blog/data/MM-DD/experiment_metadata.json
-
-2. analyst: Create plots          [blocked by: data-collector]
-   └─> Reads:   blog/data/MM-DD/*
-   └─> Creates: blog/figures/*.png
-   └─> Creates: blog/data/MM-DD/analysis_summary.json
-
-3. reporter: Write HTML post      [blocked by: analyst]
-   └─> Reads:   blog/data/MM-DD/*, blog/figures/*
-   └─> Creates: blog/posts/YYYY-MM-DD_title.html
-```
 
 ---
 
-## End-to-End Worked Example
+## When Lead Should Ask You
 
-**Question**: "Compare loss curves for MLP vs text-only SFT"
+| Situation | Example |
+|-----------|---------|
+| **Destination unclear** | "Should this go to Jekyll site, internal blog, or both?" |
+| **Main vs supplementary** | "This figure looks important — promote to main_figures?" |
+| **Conflicting data** | "wandb and local metrics disagree — which to trust?" |
+| **Missing experiments** | "Can't find results for experiment X — skip or investigate?" |
+| **Style choice** | "Technical report or narrative blog post for Jekyll?" |
 
-### Step 1: Lead scopes the question
-- Post slug: `mlp-vs-text-sft-comparison`
-- Experiments: `sft_lora_esm3_qwen3_8b_it_0227_022604` (MLP), `sft_text_qwen3_8b_it_0227_145821` (text)
-- Data goes to `blog/data/MM-DD/`, figures to `blog/figures/`, post to `blog/posts/`
+---
 
-### Step 2: data-collector gathers data
+## Path Reference
 
-Reads from each experiment:
-```
-results/sft_lora_esm3_qwen3_8b_it_0227_022604/checkpoints/trainer_state.json
-results/sft_lora_esm3_qwen3_8b_it_0227_022604/lineage.json
-results/sft_lora_esm3_qwen3_8b_it_0227_022604/metrics.json
-results/sft_text_qwen3_8b_it_0227_145821/checkpoints/trainer_state.json
-results/sft_text_qwen3_8b_it_0227_145821/lineage.json
-results/sft_text_qwen3_8b_it_0227_145821/metrics.json
-```
+| Name | Absolute Path |
+|------|---------------|
+| **Project root** | `/orcd/pool/006/yeopjin/workspace/Post_Training_Protein_LLM` |
+| **Results** | `results/` (relative to project root) |
+| **Internal blog** | `blog/` |
+| **Blog figures** | `blog/figures/{main,supple}_figures/` |
+| **Blog data** | `blog/data/MM-DD/` |
+| **Figure catalog** | `blog/figures/figure_catalog.md` |
+| **Paper figures** | `paper/figures/{main,supplementary}/` |
+| **Jekyll site** | `/home/yeopjin/orcd/pool/workspace/Jinyeop3110.github.io` |
+| **Jekyll posts** | `/home/yeopjin/orcd/pool/workspace/Jinyeop3110.github.io/_posts/` |
+| **Jekyll images** | `/home/yeopjin/orcd/pool/workspace/Jinyeop3110.github.io/assets/img/blog/protein-llm/` |
+| **Figure style** | `scripts/analysis/figure_style.py` |
 
-Outputs:
-```
-blog/data/MM-DD/run_histories.csv
-  Columns: experiment, step, epoch, token_avg_loss, eval_loss, grad_norm, learning_rate
-blog/data/MM-DD/experiment_metadata.json
-  {experiment_name, approach, projector_type, base_model, lr, epochs, ...}
-```
+---
 
-### Step 3: analyst creates plots
+## Data Sources Reference
 
-```python
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import seaborn as sns
-import pandas as pd
+### trainer_state.json Field Catalog
 
-sns.set_theme(style="whitegrid", palette="colorblind")
-COLORS = {"mlp": "#1f77b4", "text": "#808080"}
+**Training steps** (every `logging_steps`):
+| Field | Description | Notes |
+|-------|-------------|-------|
+| `loss` | HF Trainer running average | **DO NOT USE for plots** |
+| `token_avg_loss` | True per-token average loss | **USE THIS** |
+| `grad_norm` | Gradient L2 norm | Log-scale for plots |
+| `learning_rate` | Current LR | Shows warmup + decay |
+| `epoch` | Fractional epoch | |
+| `step` | Global step count | X-axis for most plots |
 
-df = pd.read_csv("blog/data/MM-DD/run_histories.csv")
+**Evaluation steps** (every `eval_steps`):
+| Field | Description |
+|-------|-------------|
+| `eval_loss` | Validation loss (most reliable) |
+| `eval_runtime` | Eval duration (seconds) |
 
-# Loss curves
-fig, ax = plt.subplots(figsize=(10, 6))
-for name, group in df.groupby("experiment"):
-    approach = "mlp" if "esm3" in name else "text"
-    ax.plot(group["step"], group["token_avg_loss"],
-            color=COLORS[approach], label=f"{approach}: {name[:30]}...")
-ax.set_xlabel("Step")
-ax.set_ylabel("Token Average Loss")
-ax.set_title("Training Loss: MLP vs Text-Only")
-ax.legend()
-fig.savefig("blog/figures/loss_curves.png", dpi=150)
-plt.close()
-```
+### wandb Projects
 
-Outputs: PNGs + `analysis_summary.json`
+| Project | Contents |
+|---------|----------|
+| `protein-llm-sft` | SFT training runs |
+| `protein-llm-rl` | GRPO training runs |
 
-### Step 4: reporter writes HTML post
+---
 
-Creates `blog/posts/2026-03-01_mlp-vs-text-sft-comparison.html` with:
-- Executive Summary (2-3 sentences with specific numbers)
-- Experiment Configuration table
-- Key Findings with embedded figures (`<img src="../figures/loss_curves.png">`)
-- Summary Results table
-- Recommendations
+## Critical Rules (All Agents)
 
-Also regenerates `blog/index.html` to include the new post.
-
-### Step 5: Lead delivers to user
-
-> Report ready at `blog/posts/2026-03-01_mlp-vs-text-sft-comparison.html`.
-> Key finding: MLP achieves 1.6% lower token_avg_loss (2.49 vs 2.53).
-> Both converge by step 200. See report for full analysis.
+1. **NEVER modify source code or experiment files**
+2. **NEVER delete existing blog/post files** — always create new dated content
+3. **ALWAYS use `token_avg_loss`** for training loss, NOT `loss`
+4. **ALWAYS update `figure_catalog.md`** after creating figures
+5. **ALWAYS use `figure_style.py`** for colors, DPI, and styling
+6. **Use correct format per destination**: HTML for internal blog, MD for Jekyll, PDF for paper
+7. **Use correct figure paths per destination**: relative for blog, absolute for Jekyll
 
 ---
 
@@ -695,5 +484,6 @@ Also regenerates `blog/index.html` to include the new post.
 
 - [CLAUDE.md](CLAUDE.md) — Project context and critical rules
 - [SWE_AGENT_TEAM.md](SWE_AGENT_TEAM.md) — Development agent team (separate purpose)
+- [blog/README.md](blog/README.md) — Blog conventions
+- [blog/figures/figure_catalog.md](blog/figures/figure_catalog.md) — Figure inventory
 - [docs/research/agents_research_log.md](docs/research/agents_research_log.md) — Research log
-- [PROJECT_GOALS.md](PROJECT_GOALS.md) — Strategic goals

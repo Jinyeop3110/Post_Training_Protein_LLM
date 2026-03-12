@@ -3,9 +3,16 @@
 # GRPO ProteinLM Bench: Text SFT → GRPO
 # Chains from text-only SFT checkpoint. Tests RL refinement on MC questions.
 #
-# Memory budget (FSDP/4, per GPU):
-#   Static: 4.6 GB (model + LoRA, no encoder)
-#   Peak:   ~10 GB (generation + grad)  →  36 GB headroom on L40S 46GB
+# Memory budget (DDP, per GPU on 8×H100 80GB):
+#   LLM (full replica): ~16 GB, no encoder (text-only)
+#   Peak: ~20 GB → 60 GB headroom on H100 80GB
+#
+# Optimizations (2026-03-10):
+#   - KV cache enabled during generation (model.eval() + use_cache=True)
+#   - Batched log-prob: all completions per prompt in one forward pass
+#   - group_size=8: best throughput/stability from P1c scaling tests
+#   - <answer> tags: model wraps answers in <answer>...</answer>, format reward +0.1
+#   - enable_thinking=False: empty <think></think> prefix, no reasoning overhead
 #
 # Usage:
 #   python scripts/train.py main_RL=grpo_proteinlm_text_sft
@@ -26,31 +33,33 @@ data:
   task: proteinlm_bench
 
 training:
-  # --- Optimized for 4×L40S 46GB ---
+  # --- DDP on 8×H100 80GB (no FSDP) ---
   lr: 2e-6               # lower LR for fine-tuning already-trained model
   batch_size: 4
-  gradient_accumulation_steps: 2  # effective batch = 32
+  gradient_accumulation_steps: 2  # effective batch = 4 * 8 GPUs * 2 = 64
+  gradient_checkpointing: true
   epochs: 3               # fewer epochs than base (already has protein knowledge)
   warmup_steps: 10
   max_grad_norm: 1.0
 
   grpo:
-    group_size: 8
-    temperature: 0.8
+    group_size: 16
+    temperature: 0.9
     use_kl_penalty: false
     normalize_advantages: false
 
   rollout:
-    max_tokens: 64
+    max_tokens: 256       # Thinking mode: ~50 tokens think + ~20 tokens answer
     top_p: 0.95
     do_sample: true
+    enable_thinking: true  # Let model reason before <answer>
 
   save_steps: 25
   eval_steps: 10
   logging_steps: 5
 
   fsdp:
-    enabled: true
+    enabled: false  # DDP: full model on each GPU, KV cache works with grad ckpt toggle
 
   wandb:
     tags:

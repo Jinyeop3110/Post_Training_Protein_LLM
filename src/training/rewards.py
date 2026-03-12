@@ -21,6 +21,41 @@ import torch
 
 log = logging.getLogger(__name__)
 
+_THINK_RE = re.compile(r"<think>.*?</think>", re.DOTALL)
+_ANSWER_RE = re.compile(r"<answer>(.*?)</answer>", re.DOTALL)
+
+# Instruction appended to GRPO prompts to encourage <answer> tag usage
+ANSWER_TAG_INSTRUCTION = (
+    "Always wrap your final answer in <answer> and </answer> tags."
+)
+
+# Format reward for using <answer> tags correctly
+FORMAT_REWARD_BONUS = 0.1
+
+
+def _strip_think_tags(text: str) -> str:
+    """Remove <think>...</think> blocks from model output before reward parsing."""
+    return _THINK_RE.sub("", text).strip()
+
+
+def extract_answer_content(text: str) -> Tuple[str, bool]:
+    """Extract content from <answer>...</answer> tags.
+
+    Args:
+        text: Raw model output (may contain <think> and <answer> blocks).
+
+    Returns:
+        Tuple of (extracted_text, has_answer_tags).
+        If <answer> tags found, returns content inside them.
+        Otherwise returns text with <think> tags stripped (fallback).
+    """
+    # First strip think tags
+    clean = _strip_think_tags(text)
+    match = _ANSWER_RE.search(clean)
+    if match:
+        return match.group(1).strip(), True
+    return clean, False
+
 
 def get_reward_function(task: str) -> Callable[[str, Any], float]:
     """Get verifiable reward function for a specific protein task.
@@ -100,6 +135,7 @@ def compute_go_reward(
         ...                   ["GO:0003674", "GO:0008150"])
         0.5  # Precision: 0.5, Recall: 0.5, F1: 0.5
     """
+    generated_text = _strip_think_tags(generated_text)
     # Extract GO terms from generated text (format: GO:XXXXXXX)
     go_pattern = r"GO:\d{7}"
     predicted_terms = set(re.findall(go_pattern, generated_text.upper()))
@@ -201,6 +237,7 @@ def compute_ppi_reward(
             return 0.0
 
     # Parse generated text for prediction
+    generated_text = _strip_think_tags(generated_text)
     text_lower = generated_text.lower()
 
     # Check for explicit positive indicators
@@ -314,6 +351,7 @@ def compute_stability_reward(
         gt_value = float(ground_truth_ddg)
 
     # Extract predicted ddG from generated text
+    generated_text = _strip_think_tags(generated_text)
     patterns = [
         r"ddG\s*[=:]\s*(-?\d+\.?\d*)",
         r"ΔΔG\s*[=:]\s*(-?\d+\.?\d*)",
@@ -411,6 +449,7 @@ def compute_esmfold_reward(
         plddt = fold_result["plddt"]
         ptm = fold_result["ptm"]
 
+    generated_text = _strip_think_tags(generated_text)
     text_lower = generated_text.lower()
     reward = 0.0
     component_scores = {}
@@ -529,6 +568,7 @@ def compute_proteinlm_bench_reward(
     """
     from src.evaluation.proteinlm_bench import parse_mc_answer
 
+    generated_text = _strip_think_tags(generated_text)
     # Parse correct answer index from ground truth
     gt = ground_truth.strip()
     gt_match = re.match(r'option\s+(\d+)', gt, re.IGNORECASE)
@@ -587,6 +627,7 @@ def compute_generic_reward(
         return compute_stability_reward(generated_text, ground_truth, detailed=detailed)
 
     # Fallback: simple text matching
+    generated_text = _strip_think_tags(generated_text)
     gen_lower = generated_text.lower().strip()
     gt_lower = ground_truth.lower().strip()
 

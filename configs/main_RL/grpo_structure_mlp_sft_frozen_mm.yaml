@@ -1,0 +1,77 @@
+# @package _global_
+
+# GRPO Structure Quality: ESM3+MLP SFT → GRPO (frozen multimodal head)
+# Same as grpo_structure_mlp_sft but freezes pooling+projector during GRPO.
+# Only LoRA adapters train — eliminates joint gradient clipping issue where
+# 38M multimodal params with 5x LR dominate the gradient norm and starve LoRA.
+#
+# Rationale: pooling+projector are well-trained from 10-epoch SFT (eval_loss 2.5).
+# GRPO should tune the LLM's language generation (LoRA) using the frozen
+# protein representations, not re-learn the projection.
+#
+# Usage:
+#   python scripts/train.py main_RL=grpo_structure_mlp_sft_frozen_mm
+
+defaults:
+  - override /model: qwen3_8b
+  - override /encoder: esm3_small
+  - override /data: structure_quality
+  - override /training: grpo
+
+approach: esm3
+experiment_name: grpo_structure_mlp_sft_frozen_mm_${model.name}_${now:%m%d_%H%M%S}
+
+# ESM-3 sub-batch: 4 fits comfortably
+encoder:
+  encoder_batch_size: 4
+
+# Chain from ESM3+MLP SFT
+parent_experiment: sft_esm3_mlp_combined_qwen3_8b_it_0306_010408
+
+# Data task for reward routing
+data:
+  task: esmfold
+  processing:
+    max_protein_length: 512
+
+training:
+  # --- DDP on 8×H100 80GB (no FSDP) ---
+  lr: 5e-6
+  # projector_lr not needed — multimodal params frozen
+  batch_size: 2
+  gradient_accumulation_steps: 4  # effective batch = 2 * 8 GPUs * 4 = 64
+  gradient_checkpointing: true
+  epochs: 1
+  warmup_steps: 20
+  max_grad_norm: 1.0
+
+  # Freeze multimodal head: pooling + projector require_grad=False
+  # Only LoRA adapters are optimized during GRPO
+  freeze_multimodal: true
+
+  grpo:
+    group_size: 16
+    temperature: 0.9
+    use_kl_penalty: false
+    normalize_advantages: false
+
+  rollout:
+    max_tokens: 512
+    top_p: 0.95
+    do_sample: true
+    enable_thinking: false  # Reasoning induced via system prompt inside <answer> tags
+
+  save_steps: 50
+  eval_steps: 25
+  logging_steps: 5
+
+  fsdp:
+    enabled: false
+
+  wandb:
+    tags:
+      - grpo
+      - structure_quality
+      - mlp_sft
+      - frozen_mm
+      - ${model.name}
