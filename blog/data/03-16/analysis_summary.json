@@ -1,0 +1,1534 @@
+{
+  "analysis_date": "2026-03-16",
+  "question": "Comprehensive analysis of all SFT and GRPO experiments",
+  "model_base": "Qwen/Qwen3-8B",
+  "experiments": {
+    "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408": {
+      "global_step": 9750,
+      "total_train_entries": 975,
+      "total_eval_entries": 39,
+      "first_token_avg_loss": 3.2968,
+      "final_token_avg_loss": 0.3659,
+      "min_token_avg_loss": 0.3059,
+      "min_token_avg_loss_step": 8280,
+      "mean_token_avg_loss": 0.4479,
+      "loss_trajectory_by_epoch": {
+        "1": 0.3659
+      },
+      "grad_norm_min": 0.4303,
+      "grad_norm_max": 7.5982,
+      "grad_norm_mean": 0.6272,
+      "grad_norm_std": 0.3259,
+      "learning_rate_peak": 0.00019999995194549538,
+      "learning_rate_final": 0.00014966631553837325,
+      "convergence_step": 210,
+      "convergence_loss": 0.7525,
+      "anomalies": [
+        {
+          "type": "loss_spike",
+          "step": 10,
+          "value": 3.2968,
+          "threshold": 0.9191,
+          "severity": "warning",
+          "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+        },
+        {
+          "type": "loss_spike",
+          "step": 20,
+          "value": 2.4675,
+          "threshold": 0.9191,
+          "severity": "warning",
+          "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+        },
+        {
+          "type": "loss_spike",
+          "step": 30,
+          "value": 2.0685,
+          "threshold": 0.9191,
+          "severity": "warning",
+          "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+        },
+        {
+          "type": "loss_spike",
+          "step": 40,
+          "value": 1.6048,
+          "threshold": 0.9191,
+          "severity": "warning",
+          "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+        },
+        {
+          "type": "loss_spike",
+          "step": 50,
+          "value": 1.2563,
+          "threshold": 0.9191,
+          "severity": "warning",
+          "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+        },
+        {
+          "type": "loss_spike",
+          "step": 60,
+          "value": 1.1294,
+          "threshold": 0.9191,
+          "severity": "warning",
+          "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+        },
+        {
+          "type": "loss_spike",
+          "step": 70,
+          "value": 1.0829,
+          "threshold": 0.9191,
+          "severity": "warning",
+          "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+        },
+        {
+          "type": "loss_spike",
+          "step": 80,
+          "value": 0.9478,
+          "threshold": 0.9191,
+          "severity": "warning",
+          "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+        },
+        {
+          "type": "loss_spike",
+          "step": 90,
+          "value": 0.9466,
+          "threshold": 0.9191,
+          "severity": "warning",
+          "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+        },
+        {
+          "type": "loss_spike",
+          "step": 100,
+          "value": 0.9421,
+          "threshold": 0.9191,
+          "severity": "warning",
+          "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+        },
+        {
+          "type": "grad_spike",
+          "step": 10,
+          "value": 7.5982,
+          "threshold": 1.6049,
+          "severity": "warning",
+          "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+        },
+        {
+          "type": "grad_spike",
+          "step": 20,
+          "value": 4.5789,
+          "threshold": 1.6049,
+          "severity": "warning",
+          "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+        },
+        {
+          "type": "grad_spike",
+          "step": 30,
+          "value": 2.932,
+          "threshold": 1.6049,
+          "severity": "warning",
+          "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+        },
+        {
+          "type": "grad_spike",
+          "step": 40,
+          "value": 1.9611,
+          "threshold": 1.6049,
+          "severity": "warning",
+          "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+        },
+        {
+          "type": "grad_spike",
+          "step": 70,
+          "value": 2.0976,
+          "threshold": 1.6049,
+          "severity": "warning",
+          "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+        },
+        {
+          "type": "grad_spike",
+          "step": 2290,
+          "value": 4.6203,
+          "threshold": 1.6049,
+          "severity": "warning",
+          "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+        }
+      ],
+      "first_eval_loss": 0.6687,
+      "first_eval_step": 250,
+      "best_eval_loss": 0.3607,
+      "best_eval_step": 9750,
+      "final_eval_loss": 0.3607,
+      "final_eval_step": 9750,
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "dataset": "combined_sft (4.89M samples)",
+      "created_at": "2026-03-06",
+      "completed": true
+    },
+    "sft_text_combined_qwen3_8b_it_0307_190324": {
+      "global_step": 9647,
+      "total_train_entries": 964,
+      "total_eval_entries": 38,
+      "first_token_avg_loss": 4.0729,
+      "final_token_avg_loss": 1.6432,
+      "min_token_avg_loss": 1.5128,
+      "min_token_avg_loss_step": 5580,
+      "mean_token_avg_loss": 1.8517,
+      "grad_norm_min": 0.6201,
+      "grad_norm_max": 7.1699,
+      "grad_norm_mean": 2.3653,
+      "grad_norm_std": 0.6466,
+      "learning_rate_peak": 0.00019999956144849473,
+      "learning_rate_final": 0.00019113822860684186,
+      "convergence_step": 180,
+      "convergence_loss": 2.4358,
+      "anomalies": [
+        {
+          "type": "loss_spike",
+          "step": 10,
+          "value": 4.0729,
+          "threshold": 2.5211,
+          "severity": "warning",
+          "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+        },
+        {
+          "type": "loss_spike",
+          "step": 20,
+          "value": 3.7479,
+          "threshold": 2.5211,
+          "severity": "warning",
+          "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+        },
+        {
+          "type": "loss_spike",
+          "step": 30,
+          "value": 3.3791,
+          "threshold": 2.5211,
+          "severity": "warning",
+          "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+        },
+        {
+          "type": "loss_spike",
+          "step": 40,
+          "value": 2.9037,
+          "threshold": 2.5211,
+          "severity": "warning",
+          "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+        },
+        {
+          "type": "loss_spike",
+          "step": 50,
+          "value": 2.7213,
+          "threshold": 2.5211,
+          "severity": "warning",
+          "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+        },
+        {
+          "type": "loss_spike",
+          "step": 60,
+          "value": 2.7255,
+          "threshold": 2.5211,
+          "severity": "warning",
+          "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+        },
+        {
+          "type": "loss_spike",
+          "step": 70,
+          "value": 2.6351,
+          "threshold": 2.5211,
+          "severity": "warning",
+          "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+        },
+        {
+          "type": "loss_spike",
+          "step": 80,
+          "value": 2.5764,
+          "threshold": 2.5211,
+          "severity": "warning",
+          "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+        },
+        {
+          "type": "loss_spike",
+          "step": 90,
+          "value": 2.5944,
+          "threshold": 2.5211,
+          "severity": "warning",
+          "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+        },
+        {
+          "type": "grad_spike",
+          "step": 10,
+          "value": 7.1699,
+          "threshold": 4.305,
+          "severity": "warning",
+          "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+        },
+        {
+          "type": "grad_spike",
+          "step": 20,
+          "value": 6.1873,
+          "threshold": 4.305,
+          "severity": "warning",
+          "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+        },
+        {
+          "type": "grad_spike",
+          "step": 8550,
+          "value": 4.3428,
+          "threshold": 4.305,
+          "severity": "warning",
+          "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+        },
+        {
+          "type": "grad_spike",
+          "step": 9250,
+          "value": 4.7877,
+          "threshold": 4.305,
+          "severity": "warning",
+          "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+        }
+      ],
+      "first_eval_loss": 1.8529,
+      "first_eval_step": 250,
+      "best_eval_loss": 1.2072,
+      "best_eval_step": 8000,
+      "final_eval_loss": 1.2656,
+      "final_eval_step": 9500,
+      "approach": "text",
+      "projector_type": "none",
+      "dataset": "combined_sft (4.89M samples)",
+      "created_at": "2026-03-07",
+      "completed": true
+    },
+    "sft_esm3_mlp_thinking_qwen3_8b_it_0309_115011": {
+      "global_step": 500,
+      "total_train_entries": 50,
+      "total_eval_entries": 2,
+      "first_token_avg_loss": 2.6295,
+      "final_token_avg_loss": 0.6338,
+      "min_token_avg_loss": 0.6338,
+      "min_token_avg_loss_step": 500,
+      "mean_token_avg_loss": 0.9779,
+      "grad_norm_min": 1.1555,
+      "grad_norm_max": 4.9666,
+      "grad_norm_mean": 1.756,
+      "grad_norm_std": 0.5228,
+      "learning_rate_peak": 0.00019999995194549538,
+      "learning_rate_final": 0.00019990556639985362,
+      "convergence_step": 260,
+      "convergence_loss": 0.8979,
+      "anomalies": [
+        {
+          "type": "loss_spike",
+          "step": 10,
+          "value": 2.6295,
+          "threshold": 2.0317,
+          "severity": "warning",
+          "experiment": "sft_esm3_mlp_thinking_qwen3_8b_it_0309_115011"
+        },
+        {
+          "type": "grad_spike",
+          "step": 10,
+          "value": 4.9666,
+          "threshold": 3.3246,
+          "severity": "warning",
+          "experiment": "sft_esm3_mlp_thinking_qwen3_8b_it_0309_115011"
+        }
+      ],
+      "first_eval_loss": 0.7284,
+      "first_eval_step": 250,
+      "best_eval_loss": 0.6131,
+      "best_eval_step": 500,
+      "final_eval_loss": 0.6131,
+      "final_eval_step": 500,
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "dataset": "combined_sft (thinking mode)",
+      "created_at": "2026-03-09",
+      "completed": false,
+      "note": "Only 500 steps completed (early termination or ongoing)"
+    },
+    "grpo_proteinlm_mlp_sft_qwen3_8b_it_0310_214259": {
+      "total_steps": 35,
+      "logged_steps": 7,
+      "eval_count": 3,
+      "initial_reward": 0.7406,
+      "final_reward": 0.6072,
+      "best_reward": 0.7598,
+      "best_reward_step": 30,
+      "mean_reward": 0.6789,
+      "reward_improvement_pct": -18.01,
+      "initial_loss": -0.0246,
+      "final_loss": 0.0162,
+      "grad_norm_lora_mean": 0.804814,
+      "grad_norm_lora_max": 0.8635,
+      "grad_norm_mm_mean": 0.0,
+      "grad_norm_mm_max": 0.0,
+      "eval_initial_reward": 0.4468,
+      "eval_final_reward": 0.4681,
+      "eval_best_reward": 0.4681,
+      "anomalies": [
+        {
+          "type": "frozen_multimodal",
+          "severity": "info",
+          "note": "Multimodal params frozen (expected for some configs)",
+          "experiment": "grpo_proteinlm_mlp_sft_qwen3_8b_it_0310_214259"
+        }
+      ],
+      "final_metrics": {
+        "kl_penalty": 0.0,
+        "reward_std": 0.4276,
+        "reward/correct_index": 2.2305,
+        "diagnostics/advantage_mean": -0.0,
+        "pg_loss": -0.0064,
+        "diagnostics/advantage_std": 0.145,
+        "diagnostics/completion_max_length": 11.642,
+        "diagnostics/frac_reward_zero_std": 0.3724,
+        "max_reward": 1.0864,
+        "min_reward": 0.0815,
+        "diagnostics/completion_mean_length": 8.9516,
+        "diagnostics/grad_norm_multimodal": 0.0,
+        "loss": -0.0064,
+        "reward/format_bonus": 0.069,
+        "diagnostics/grad_norm_lora": 0.3863,
+        "reward/predicted_index": 2.2422,
+        "mean_reward": 0.6945
+      },
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "created_at": "2026-03-10T21:43:06.009512",
+      "completed": true,
+      "task": "proteinlm_bench",
+      "config_variant": "mlp_sft"
+    },
+    "grpo_proteinlm_mlp_sft_qwen3_8b_it_0311_091513": {
+      "total_steps": 130,
+      "logged_steps": 26,
+      "eval_count": 13,
+      "initial_reward": 0.7278,
+      "final_reward": 0.6706,
+      "best_reward": 0.774,
+      "best_reward_step": 120,
+      "mean_reward": 0.6637,
+      "reward_improvement_pct": -7.86,
+      "initial_loss": -0.0344,
+      "final_loss": -0.0076,
+      "grad_norm_lora_mean": 0.826112,
+      "grad_norm_lora_max": 1.0,
+      "grad_norm_mm_mean": 0.0,
+      "grad_norm_mm_max": 0.0,
+      "eval_initial_reward": 0.4681,
+      "eval_final_reward": 0.4681,
+      "eval_best_reward": 0.4894,
+      "anomalies": [
+        {
+          "type": "frozen_multimodal",
+          "severity": "info",
+          "note": "Multimodal params frozen (expected for some configs)",
+          "experiment": "grpo_proteinlm_mlp_sft_qwen3_8b_it_0311_091513"
+        }
+      ],
+      "final_metrics": {
+        "diagnostics/completion_mean_length": 9.2549,
+        "diagnostics/frac_reward_zero_std": 0.4225,
+        "diagnostics/advantage_mean": -0.0,
+        "loss": -0.0054,
+        "diagnostics/grad_norm_multimodal": 0.0,
+        "kl_penalty": 0.0,
+        "mean_reward": 0.6764,
+        "reward/format_bonus": 0.0756,
+        "min_reward": 0.0963,
+        "diagnostics/advantage_std": 0.1358,
+        "reward_std": 0.4309,
+        "reward/correct_index": 2.3358,
+        "diagnostics/completion_max_length": 12.963,
+        "reward/predicted_index": 2.1632,
+        "max_reward": 1.0848,
+        "pg_loss": -0.0054,
+        "diagnostics/grad_norm_lora": 0.4044
+      },
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "created_at": "2026-03-11T09:15:20.914307",
+      "completed": true,
+      "task": "proteinlm_bench",
+      "config_variant": "mlp_sft"
+    },
+    "grpo_structure_classify_qwen3_8b_it_0312_215435": {
+      "total_steps": 90,
+      "logged_steps": 18,
+      "eval_count": 3,
+      "initial_reward": 0.4111,
+      "final_reward": 0.6995,
+      "best_reward": 0.7076,
+      "best_reward_step": 85,
+      "mean_reward": 0.5961,
+      "reward_improvement_pct": 70.15,
+      "initial_loss": -0.7253,
+      "final_loss": -0.3492,
+      "grad_norm_lora_mean": 0.992983,
+      "grad_norm_lora_max": 1.0,
+      "grad_norm_mm_mean": 0.0,
+      "grad_norm_mm_max": 0.0,
+      "eval_initial_reward": 0.6592,
+      "eval_final_reward": 0.6811,
+      "eval_best_reward": 0.6811,
+      "anomalies": [
+        {
+          "type": "frozen_multimodal",
+          "severity": "info",
+          "note": "Multimodal params frozen (expected for some configs)",
+          "experiment": "grpo_structure_classify_qwen3_8b_it_0312_215435"
+        }
+      ],
+      "final_metrics": {
+        "reward/focal_weight": 0.9578,
+        "diagnostics/advantage_std": 0.3248,
+        "max_reward": 0.9834,
+        "loss": -0.3241,
+        "reward/format_bonus": 0.0951,
+        "diagnostics/completion_max_length": 60.7088,
+        "diagnostics/frac_reward_zero_std": 0.1769,
+        "min_reward": 0.1968,
+        "kl_penalty": 0.0,
+        "reward_std": 0.3248,
+        "diagnostics/grad_norm_multimodal": 0.0,
+        "reward/ptm": 0.0,
+        "mean_reward": 0.5985,
+        "diagnostics/completion_mean_length": 60.7088,
+        "diagnostics/grad_norm_lora": 0.123,
+        "reward/plddt": 79.725,
+        "diagnostics/advantage_mean": 0.0,
+        "pg_loss": -0.3241
+      },
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "created_at": "2026-03-12T21:54:44.776817",
+      "completed": true,
+      "task": "structure_prediction",
+      "config_variant": "classify"
+    },
+    "grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_180156": {
+      "total_steps": 5,
+      "logged_steps": 1,
+      "eval_count": 0,
+      "initial_reward": 0.5347,
+      "final_reward": 0.5347,
+      "best_reward": 0.5347,
+      "best_reward_step": 5,
+      "mean_reward": 0.5347,
+      "reward_improvement_pct": 0.0,
+      "initial_loss": -0.6016,
+      "final_loss": -0.6016,
+      "grad_norm_lora_mean": 1.0,
+      "grad_norm_lora_max": 1.0,
+      "grad_norm_mm_mean": 0.0,
+      "grad_norm_mm_max": 0.0,
+      "anomalies": [
+        {
+          "type": "frozen_multimodal",
+          "severity": "info",
+          "note": "Multimodal params frozen (expected for some configs)",
+          "experiment": "grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_180156"
+        }
+      ],
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "created_at": "2026-03-12T18:02:04.353478",
+      "completed": false,
+      "task": "structure_prediction",
+      "config_variant": "frozen_mm_focal"
+    },
+    "grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_182035": {
+      "total_steps": 90,
+      "logged_steps": 18,
+      "eval_count": 3,
+      "initial_reward": 0.5132,
+      "final_reward": 0.8244,
+      "best_reward": 0.8344,
+      "best_reward_step": 85,
+      "mean_reward": 0.7223,
+      "reward_improvement_pct": 60.64,
+      "initial_loss": -0.46,
+      "final_loss": -0.0504,
+      "grad_norm_lora_mean": 0.962372,
+      "grad_norm_lora_max": 1.0,
+      "grad_norm_mm_mean": 0.0,
+      "grad_norm_mm_max": 0.0,
+      "eval_initial_reward": 0.555,
+      "eval_final_reward": 0.7111,
+      "eval_best_reward": 0.7111,
+      "anomalies": [
+        {
+          "type": "frozen_multimodal",
+          "severity": "info",
+          "note": "Multimodal params frozen (expected for some configs)",
+          "experiment": "grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_182035"
+        }
+      ],
+      "final_metrics": {
+        "max_reward": 0.9447,
+        "reward/ptm": 0.0,
+        "reward/focal_weight": 0.9578,
+        "mean_reward": 0.7248,
+        "pg_loss": -0.186,
+        "diagnostics/advantage_std": 0.1694,
+        "reward/quality_alignment": 0.36,
+        "min_reward": 0.4814,
+        "loss": -0.186,
+        "reward/plddt": 79.725,
+        "reward/category_match": 0.1746,
+        "reward_std": 0.1694,
+        "diagnostics/grad_norm_multimodal": 0.0,
+        "reward/format_bonus": 0.0954,
+        "diagnostics/grad_norm_lora": 0.1192,
+        "diagnostics/completion_max_length": 57.483,
+        "diagnostics/completion_mean_length": 57.483,
+        "reward/predicted_plddt": 74.8483,
+        "kl_penalty": 0.0,
+        "diagnostics/frac_reward_zero_std": 0.0177,
+        "reward/numerical_accuracy": 0.1571,
+        "diagnostics/advantage_mean": -0.0
+      },
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "created_at": "2026-03-12T18:20:42.662725",
+      "completed": true,
+      "task": "structure_prediction",
+      "config_variant": "frozen_mm_focal"
+    },
+    "grpo_structure_mlp_sft_frozen_mm_qwen3_8b_it_0312_101631": {
+      "total_steps": 90,
+      "logged_steps": 18,
+      "eval_count": 3,
+      "initial_reward": 0.5559,
+      "final_reward": 0.7689,
+      "best_reward": 0.9393,
+      "best_reward_step": 65,
+      "mean_reward": 0.7758,
+      "reward_improvement_pct": 38.32,
+      "initial_loss": -0.6835,
+      "final_loss": 0.0001,
+      "grad_norm_lora_mean": 0.291,
+      "grad_norm_lora_max": 1.0,
+      "grad_norm_mm_mean": 0.0,
+      "grad_norm_mm_max": 0.0,
+      "eval_initial_reward": 0.7574,
+      "eval_final_reward": 0.764,
+      "eval_best_reward": 0.7653,
+      "anomalies": [
+        {
+          "type": "frozen_multimodal",
+          "severity": "info",
+          "note": "Multimodal params frozen (expected for some configs)",
+          "experiment": "grpo_structure_mlp_sft_frozen_mm_qwen3_8b_it_0312_101631"
+        }
+      ],
+      "final_metrics": {
+        "kl_penalty": 0.0,
+        "diagnostics/advantage_mean": 0.0,
+        "max_reward": 1.0145,
+        "diagnostics/advantage_std": 0.0611,
+        "diagnostics/frac_reward_zero_std": 0.0625,
+        "reward/predicted_plddt": 85.0582,
+        "pg_loss": -0.1856,
+        "min_reward": 0.5297,
+        "diagnostics/completion_max_length": 60.8424,
+        "reward/category_match": 0.1638,
+        "diagnostics/grad_norm_multimodal": 0.0,
+        "mean_reward": 0.7743,
+        "reward/ptm": 0.0,
+        "reward/numerical_accuracy": 0.1686,
+        "reward/plddt": 79.7024,
+        "reward_std": 0.1937,
+        "diagnostics/grad_norm_lora": 0.0712,
+        "diagnostics/completion_mean_length": 58.038,
+        "reward/quality_alignment": 0.3468,
+        "loss": -0.1856,
+        "reward/format_bonus": 0.0951
+      },
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "created_at": "2026-03-12T10:16:39.117054",
+      "completed": true,
+      "task": "structure_prediction",
+      "config_variant": "frozen_mm"
+    },
+    "grpo_structure_mlp_sft_qwen3_8b_it_0311_101732": {
+      "total_steps": 35,
+      "logged_steps": 7,
+      "eval_count": 1,
+      "initial_reward": 0.083,
+      "final_reward": 0.0802,
+      "best_reward": 0.0838,
+      "best_reward_step": 30,
+      "mean_reward": 0.0808,
+      "reward_improvement_pct": -3.37,
+      "initial_loss": 5.8323,
+      "final_loss": 5.6534,
+      "grad_norm_lora_mean": 0.0,
+      "grad_norm_lora_max": 0.0,
+      "grad_norm_mm_mean": 1.0,
+      "grad_norm_mm_max": 1.0,
+      "eval_initial_reward": 0.296,
+      "eval_final_reward": 0.296,
+      "eval_best_reward": 0.296,
+      "anomalies": [
+        {
+          "type": "reward_collapse",
+          "severity": "critical",
+          "last_3_rewards": [
+            0.0833,
+            0.0838,
+            0.0802
+          ],
+          "experiment": "grpo_structure_mlp_sft_qwen3_8b_it_0311_101732"
+        },
+        {
+          "type": "zero_lora_gradients",
+          "severity": "critical",
+          "max_grad": 0.0,
+          "experiment": "grpo_structure_mlp_sft_qwen3_8b_it_0311_101732"
+        }
+      ],
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "created_at": "2026-03-11T10:17:40.286297",
+      "completed": false,
+      "task": "structure_prediction",
+      "config_variant": "mlp_sft"
+    },
+    "grpo_structure_mlp_sft_qwen3_8b_it_0311_114205": {
+      "total_steps": 150,
+      "logged_steps": 30,
+      "eval_count": 5,
+      "initial_reward": 0.6336,
+      "final_reward": 0.8337,
+      "best_reward": 0.9098,
+      "best_reward_step": 65,
+      "mean_reward": 0.7896,
+      "reward_improvement_pct": 31.58,
+      "initial_loss": 0.0041,
+      "final_loss": -0.0078,
+      "grad_norm_lora_mean": 9e-05,
+      "grad_norm_lora_max": 0.0015,
+      "grad_norm_mm_mean": 1.0,
+      "grad_norm_mm_max": 1.0,
+      "eval_initial_reward": 0.414,
+      "eval_final_reward": 0.324,
+      "eval_best_reward": 0.4188,
+      "anomalies": [],
+      "final_metrics": {
+        "loss": -0.0081,
+        "pg_loss": -0.0081,
+        "kl_penalty": 0.0,
+        "mean_reward": 0.7796,
+        "max_reward": 0.9362,
+        "min_reward": 0.5226,
+        "reward_std": 0.1542,
+        "diagnostics/completion_mean_length": 32.0,
+        "diagnostics/completion_max_length": 32.0,
+        "diagnostics/frac_reward_zero_std": 0.0,
+        "diagnostics/advantage_mean": 0.0,
+        "diagnostics/advantage_std": 0.0328,
+        "reward/format_bonus": 0.1,
+        "reward/plddt": 80.1855,
+        "reward/ptm": 0.0,
+        "reward/predicted_plddt": 91.3973,
+        "reward/quality_alignment": 0.3544,
+        "reward/numerical_accuracy": 0.1621,
+        "reward/category_match": 0.1631,
+        "diagnostics/grad_norm_lora": 0.0,
+        "diagnostics/grad_norm_multimodal": 1.0
+      },
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "created_at": "2026-03-11T11:42:15.142821",
+      "completed": false,
+      "task": "structure_prediction",
+      "config_variant": "mlp_sft"
+    },
+    "grpo_structure_mlp_sft_qwen3_8b_it_0311_142756": {
+      "total_steps": 40,
+      "logged_steps": 8,
+      "eval_count": 1,
+      "initial_reward": 0.4396,
+      "final_reward": 0.4338,
+      "best_reward": 0.479,
+      "best_reward_step": 20,
+      "mean_reward": 0.4536,
+      "reward_improvement_pct": -1.32,
+      "initial_loss": -0.128,
+      "final_loss": -0.3671,
+      "grad_norm_lora_mean": 0.0,
+      "grad_norm_lora_max": 0.0,
+      "grad_norm_mm_mean": 1.0,
+      "grad_norm_mm_max": 1.0,
+      "eval_initial_reward": 0.398,
+      "eval_final_reward": 0.398,
+      "eval_best_reward": 0.398,
+      "anomalies": [
+        {
+          "type": "zero_lora_gradients",
+          "severity": "critical",
+          "max_grad": 0.0,
+          "experiment": "grpo_structure_mlp_sft_qwen3_8b_it_0311_142756"
+        }
+      ],
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "created_at": "2026-03-11T14:28:03.756345",
+      "completed": false,
+      "task": "structure_prediction",
+      "config_variant": "mlp_sft"
+    },
+    "grpo_structure_mlp_sft_qwen3_8b_it_0312_011859": {
+      "total_steps": 90,
+      "logged_steps": 18,
+      "eval_count": 3,
+      "initial_reward": 0.5184,
+      "final_reward": 0.5333,
+      "best_reward": 0.6205,
+      "best_reward_step": 20,
+      "mean_reward": 0.5821,
+      "reward_improvement_pct": 2.87,
+      "initial_loss": -0.5743,
+      "final_loss": -1.2092,
+      "grad_norm_lora_mean": 0.0,
+      "grad_norm_lora_max": 0.0,
+      "grad_norm_mm_mean": 0.988889,
+      "grad_norm_mm_max": 1.0,
+      "eval_initial_reward": 0.5439,
+      "eval_final_reward": 0.5262,
+      "eval_best_reward": 0.5439,
+      "anomalies": [
+        {
+          "type": "zero_lora_gradients",
+          "severity": "critical",
+          "max_grad": 0.0,
+          "experiment": "grpo_structure_mlp_sft_qwen3_8b_it_0312_011859"
+        }
+      ],
+      "final_metrics": {
+        "diagnostics/frac_reward_zero_std": 0.019,
+        "kl_penalty": 0.0,
+        "diagnostics/advantage_mean": 0.0,
+        "diagnostics/advantage_std": 0.2565,
+        "loss": -1.0207,
+        "reward/predicted_plddt": 67.924,
+        "reward/category_match": 0.104,
+        "diagnostics/completion_max_length": 97.9457,
+        "reward/quality_alignment": 0.326,
+        "reward/format_bonus": 0.0652,
+        "reward_std": 0.2806,
+        "max_reward": 1.0653,
+        "pg_loss": -1.0207,
+        "reward/numerical_accuracy": 0.0864,
+        "mean_reward": 0.5817,
+        "diagnostics/grad_norm_multimodal": 0.2473,
+        "reward/plddt": 79.7024,
+        "diagnostics/grad_norm_lora": 0.0,
+        "diagnostics/completion_mean_length": 85.9796,
+        "min_reward": 0.1015,
+        "reward/ptm": 0.0
+      },
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "created_at": "2026-03-12T01:19:06.199113",
+      "completed": true,
+      "task": "structure_prediction",
+      "config_variant": "mlp_sft"
+    },
+    "grpo_structure_text_classify_qwen3_8b_it_0313_010828": {
+      "total_steps": 90,
+      "logged_steps": 18,
+      "eval_count": 3,
+      "initial_reward": 0.5312,
+      "final_reward": 0.7215,
+      "best_reward": 0.8567,
+      "best_reward_step": 60,
+      "mean_reward": 0.7056,
+      "reward_improvement_pct": 35.82,
+      "initial_loss": -1.7049,
+      "final_loss": 0.0007,
+      "grad_norm_lora_mean": 1.0,
+      "grad_norm_lora_max": 1.0,
+      "grad_norm_mm_mean": 0.0,
+      "grad_norm_mm_max": 0.0,
+      "eval_initial_reward": 0.7585,
+      "eval_final_reward": 0.8076,
+      "eval_best_reward": 0.8076,
+      "anomalies": [
+        {
+          "type": "frozen_multimodal",
+          "severity": "info",
+          "note": "Multimodal params frozen (expected for some configs)",
+          "experiment": "grpo_structure_text_classify_qwen3_8b_it_0313_010828"
+        }
+      ],
+      "final_metrics": {
+        "mean_reward": 0.71,
+        "reward/ptm": 0.0,
+        "min_reward": 0.3222,
+        "reward/plddt": 79.7024,
+        "loss": -0.1613,
+        "pg_loss": -0.1613,
+        "reward_std": 0.3118,
+        "diagnostics/advantage_std": 0.1882,
+        "reward/format_bonus": 0.0992,
+        "diagnostics/grad_norm_lora": 0.25,
+        "kl_penalty": 0.0,
+        "reward/focal_weight": 0.9579,
+        "diagnostics/grad_norm_multimodal": 0.0,
+        "max_reward": 1.0444,
+        "diagnostics/advantage_mean": 0.0,
+        "diagnostics/frac_reward_zero_std": 0.5815,
+        "diagnostics/completion_mean_length": 57.0204,
+        "diagnostics/completion_max_length": 61.7201
+      },
+      "approach": "text",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_text_combined_qwen3_8b_it_0307_190324",
+      "created_at": "2026-03-13T01:08:36.306349",
+      "completed": true,
+      "task": "structure_prediction",
+      "config_variant": "classify"
+    },
+    "grpo_structure_text_sft_qwen3_8b_it_0311_142908": {
+      "total_steps": 90,
+      "logged_steps": 18,
+      "eval_count": 3,
+      "initial_reward": 0.3206,
+      "final_reward": 0.8224,
+      "best_reward": 0.9535,
+      "best_reward_step": 65,
+      "mean_reward": 0.75,
+      "reward_improvement_pct": 156.52,
+      "initial_loss": 0.3444,
+      "final_loss": 0.0008,
+      "grad_norm_lora_mean": 0.985983,
+      "grad_norm_lora_max": 1.0,
+      "grad_norm_mm_mean": 0.0,
+      "grad_norm_mm_max": 0.0,
+      "eval_initial_reward": 0.7452,
+      "eval_final_reward": 0.8463,
+      "eval_best_reward": 0.8463,
+      "anomalies": [
+        {
+          "type": "frozen_multimodal",
+          "severity": "info",
+          "note": "Multimodal params frozen (expected for some configs)",
+          "experiment": "grpo_structure_text_sft_qwen3_8b_it_0311_142908"
+        }
+      ],
+      "final_metrics": {
+        "diagnostics/frac_reward_zero_std": 0.0,
+        "min_reward": 0.3221,
+        "reward/numerical_accuracy": 0.1706,
+        "kl_penalty": 0.0,
+        "loss": -0.025,
+        "diagnostics/completion_max_length": 37.7554,
+        "diagnostics/advantage_mean": -0.0,
+        "reward/predicted_plddt": 79.0048,
+        "diagnostics/advantage_std": 0.1386,
+        "reward/format_bonus": 0.0602,
+        "diagnostics/grad_norm_multimodal": 0.0,
+        "pg_loss": -0.025,
+        "diagnostics/grad_norm_lora": 0.4931,
+        "max_reward": 1.0528,
+        "reward/ptm": 0.0,
+        "diagnostics/completion_mean_length": 36.774,
+        "reward/category_match": 0.1786,
+        "reward/plddt": 79.7181,
+        "reward/quality_alignment": 0.3432,
+        "mean_reward": 0.7525,
+        "reward_std": 0.227
+      },
+      "approach": "text",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_text_combined_qwen3_8b_it_0307_190324",
+      "created_at": "2026-03-11T14:29:15.833014",
+      "completed": true,
+      "task": "structure_prediction",
+      "config_variant": "text_sft"
+    },
+    "grpo_structure_text_sft_qwen3_8b_it_0312_032738": {
+      "total_steps": 90,
+      "logged_steps": 18,
+      "eval_count": 3,
+      "initial_reward": 0.628,
+      "final_reward": 0.8444,
+      "best_reward": 0.9619,
+      "best_reward_step": 65,
+      "mean_reward": 0.8309,
+      "reward_improvement_pct": 34.46,
+      "initial_loss": -0.6533,
+      "final_loss": 0.0104,
+      "grad_norm_lora_mean": 0.950778,
+      "grad_norm_lora_max": 1.0,
+      "grad_norm_mm_mean": 0.0,
+      "grad_norm_mm_max": 0.0,
+      "eval_initial_reward": 0.7536,
+      "eval_final_reward": 0.8444,
+      "eval_best_reward": 0.8444,
+      "anomalies": [
+        {
+          "type": "frozen_multimodal",
+          "severity": "info",
+          "note": "Multimodal params frozen (expected for some configs)",
+          "experiment": "grpo_structure_text_sft_qwen3_8b_it_0312_032738"
+        }
+      ],
+      "final_metrics": {
+        "reward/predicted_plddt": 79.0573,
+        "diagnostics/completion_mean_length": 55.428,
+        "reward/ptm": 0.0,
+        "reward/quality_alignment": 0.3508,
+        "pg_loss": -0.0944,
+        "diagnostics/completion_max_length": 63.1793,
+        "min_reward": 0.447,
+        "loss": -0.0944,
+        "reward_std": 0.2177,
+        "reward/format_bonus": 0.0991,
+        "reward/numerical_accuracy": 0.1846,
+        "reward/plddt": 79.7181,
+        "diagnostics/advantage_std": 0.1082,
+        "kl_penalty": 0.0,
+        "diagnostics/advantage_mean": -0.0,
+        "diagnostics/grad_norm_multimodal": 0.0,
+        "diagnostics/grad_norm_lora": 0.4759,
+        "reward/category_match": 0.1972,
+        "diagnostics/frac_reward_zero_std": 0.0,
+        "mean_reward": 0.8318,
+        "max_reward": 1.0944
+      },
+      "approach": "text",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_text_combined_qwen3_8b_it_0307_190324",
+      "created_at": "2026-03-12T03:27:45.708239",
+      "completed": true,
+      "task": "structure_prediction",
+      "config_variant": "text_sft"
+    }
+  },
+  "sft_comparison": {
+    "mlp_vs_text": {
+      "mlp_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "text_experiment": "sft_text_combined_qwen3_8b_it_0307_190324",
+      "mlp_best_eval_loss": 0.3607,
+      "text_best_eval_loss": 1.2072,
+      "mlp_final_eval_loss": 0.3607,
+      "text_final_eval_loss": 1.2656,
+      "mlp_final_token_avg_loss": 0.3659,
+      "text_final_token_avg_loss": 1.6432,
+      "eval_loss_improvement_pct": 70.12,
+      "mlp_wins": true,
+      "note": "MLP (ESM3 embeddings) dramatically outperforms text-only on eval loss"
+    }
+  },
+  "grpo_comparison": {
+    "structure_mlp_vs_text": {
+      "mlp_experiment": "grpo_structure_mlp_sft_frozen_mm_qwen3_8b_it_0312_101631",
+      "text_experiment": "grpo_structure_text_sft_qwen3_8b_it_0311_142908",
+      "mlp_config_variant": "frozen_mm",
+      "text_config_variant": "text_sft",
+      "mlp_final_reward": 0.7689,
+      "text_final_reward": 0.8224,
+      "mlp_eval_final_reward": 0.764,
+      "text_eval_final_reward": 0.8463,
+      "text_wins_on_eval": true
+    }
+  },
+  "grpo_task_groups": {
+    "proteinlm_bench_esm3": {
+      "num_experiments": 2,
+      "num_completed": 2,
+      "best_experiment": "grpo_proteinlm_mlp_sft_qwen3_8b_it_0310_214259",
+      "best_final_reward": 0.6072,
+      "best_eval_reward": 0.4681,
+      "experiments": [
+        "grpo_proteinlm_mlp_sft_qwen3_8b_it_0310_214259",
+        "grpo_proteinlm_mlp_sft_qwen3_8b_it_0311_091513"
+      ]
+    },
+    "structure_prediction_esm3": {
+      "num_experiments": 8,
+      "num_completed": 4,
+      "best_experiment": "grpo_structure_mlp_sft_frozen_mm_qwen3_8b_it_0312_101631",
+      "best_final_reward": 0.7689,
+      "best_eval_reward": 0.764,
+      "experiments": [
+        "grpo_structure_classify_qwen3_8b_it_0312_215435",
+        "grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_180156",
+        "grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_182035",
+        "grpo_structure_mlp_sft_frozen_mm_qwen3_8b_it_0312_101631",
+        "grpo_structure_mlp_sft_qwen3_8b_it_0311_101732",
+        "grpo_structure_mlp_sft_qwen3_8b_it_0311_114205",
+        "grpo_structure_mlp_sft_qwen3_8b_it_0311_142756",
+        "grpo_structure_mlp_sft_qwen3_8b_it_0312_011859"
+      ]
+    },
+    "structure_prediction_text": {
+      "num_experiments": 3,
+      "num_completed": 3,
+      "best_experiment": "grpo_structure_text_sft_qwen3_8b_it_0311_142908",
+      "best_final_reward": 0.8224,
+      "best_eval_reward": 0.8463,
+      "experiments": [
+        "grpo_structure_text_classify_qwen3_8b_it_0313_010828",
+        "grpo_structure_text_sft_qwen3_8b_it_0311_142908",
+        "grpo_structure_text_sft_qwen3_8b_it_0312_032738"
+      ]
+    }
+  },
+  "anomaly_summary": [
+    {
+      "type": "loss_spike",
+      "step": 10,
+      "value": 3.2968,
+      "threshold": 0.9191,
+      "severity": "warning",
+      "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+    },
+    {
+      "type": "loss_spike",
+      "step": 20,
+      "value": 2.4675,
+      "threshold": 0.9191,
+      "severity": "warning",
+      "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+    },
+    {
+      "type": "loss_spike",
+      "step": 30,
+      "value": 2.0685,
+      "threshold": 0.9191,
+      "severity": "warning",
+      "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+    },
+    {
+      "type": "loss_spike",
+      "step": 40,
+      "value": 1.6048,
+      "threshold": 0.9191,
+      "severity": "warning",
+      "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+    },
+    {
+      "type": "loss_spike",
+      "step": 50,
+      "value": 1.2563,
+      "threshold": 0.9191,
+      "severity": "warning",
+      "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+    },
+    {
+      "type": "loss_spike",
+      "step": 60,
+      "value": 1.1294,
+      "threshold": 0.9191,
+      "severity": "warning",
+      "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+    },
+    {
+      "type": "loss_spike",
+      "step": 70,
+      "value": 1.0829,
+      "threshold": 0.9191,
+      "severity": "warning",
+      "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+    },
+    {
+      "type": "loss_spike",
+      "step": 80,
+      "value": 0.9478,
+      "threshold": 0.9191,
+      "severity": "warning",
+      "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+    },
+    {
+      "type": "loss_spike",
+      "step": 90,
+      "value": 0.9466,
+      "threshold": 0.9191,
+      "severity": "warning",
+      "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+    },
+    {
+      "type": "loss_spike",
+      "step": 100,
+      "value": 0.9421,
+      "threshold": 0.9191,
+      "severity": "warning",
+      "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+    },
+    {
+      "type": "grad_spike",
+      "step": 10,
+      "value": 7.5982,
+      "threshold": 1.6049,
+      "severity": "warning",
+      "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+    },
+    {
+      "type": "grad_spike",
+      "step": 20,
+      "value": 4.5789,
+      "threshold": 1.6049,
+      "severity": "warning",
+      "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+    },
+    {
+      "type": "grad_spike",
+      "step": 30,
+      "value": 2.932,
+      "threshold": 1.6049,
+      "severity": "warning",
+      "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+    },
+    {
+      "type": "grad_spike",
+      "step": 40,
+      "value": 1.9611,
+      "threshold": 1.6049,
+      "severity": "warning",
+      "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+    },
+    {
+      "type": "grad_spike",
+      "step": 70,
+      "value": 2.0976,
+      "threshold": 1.6049,
+      "severity": "warning",
+      "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+    },
+    {
+      "type": "grad_spike",
+      "step": 2290,
+      "value": 4.6203,
+      "threshold": 1.6049,
+      "severity": "warning",
+      "experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+    },
+    {
+      "type": "loss_spike",
+      "step": 10,
+      "value": 4.0729,
+      "threshold": 2.5211,
+      "severity": "warning",
+      "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+    },
+    {
+      "type": "loss_spike",
+      "step": 20,
+      "value": 3.7479,
+      "threshold": 2.5211,
+      "severity": "warning",
+      "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+    },
+    {
+      "type": "loss_spike",
+      "step": 30,
+      "value": 3.3791,
+      "threshold": 2.5211,
+      "severity": "warning",
+      "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+    },
+    {
+      "type": "loss_spike",
+      "step": 40,
+      "value": 2.9037,
+      "threshold": 2.5211,
+      "severity": "warning",
+      "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+    },
+    {
+      "type": "loss_spike",
+      "step": 50,
+      "value": 2.7213,
+      "threshold": 2.5211,
+      "severity": "warning",
+      "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+    },
+    {
+      "type": "loss_spike",
+      "step": 60,
+      "value": 2.7255,
+      "threshold": 2.5211,
+      "severity": "warning",
+      "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+    },
+    {
+      "type": "loss_spike",
+      "step": 70,
+      "value": 2.6351,
+      "threshold": 2.5211,
+      "severity": "warning",
+      "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+    },
+    {
+      "type": "loss_spike",
+      "step": 80,
+      "value": 2.5764,
+      "threshold": 2.5211,
+      "severity": "warning",
+      "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+    },
+    {
+      "type": "loss_spike",
+      "step": 90,
+      "value": 2.5944,
+      "threshold": 2.5211,
+      "severity": "warning",
+      "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+    },
+    {
+      "type": "grad_spike",
+      "step": 10,
+      "value": 7.1699,
+      "threshold": 4.305,
+      "severity": "warning",
+      "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+    },
+    {
+      "type": "grad_spike",
+      "step": 20,
+      "value": 6.1873,
+      "threshold": 4.305,
+      "severity": "warning",
+      "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+    },
+    {
+      "type": "grad_spike",
+      "step": 8550,
+      "value": 4.3428,
+      "threshold": 4.305,
+      "severity": "warning",
+      "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+    },
+    {
+      "type": "grad_spike",
+      "step": 9250,
+      "value": 4.7877,
+      "threshold": 4.305,
+      "severity": "warning",
+      "experiment": "sft_text_combined_qwen3_8b_it_0307_190324"
+    },
+    {
+      "type": "loss_spike",
+      "step": 10,
+      "value": 2.6295,
+      "threshold": 2.0317,
+      "severity": "warning",
+      "experiment": "sft_esm3_mlp_thinking_qwen3_8b_it_0309_115011"
+    },
+    {
+      "type": "grad_spike",
+      "step": 10,
+      "value": 4.9666,
+      "threshold": 3.3246,
+      "severity": "warning",
+      "experiment": "sft_esm3_mlp_thinking_qwen3_8b_it_0309_115011"
+    },
+    {
+      "type": "frozen_multimodal",
+      "severity": "info",
+      "note": "Multimodal params frozen (expected for some configs)",
+      "experiment": "grpo_proteinlm_mlp_sft_qwen3_8b_it_0310_214259"
+    },
+    {
+      "type": "frozen_multimodal",
+      "severity": "info",
+      "note": "Multimodal params frozen (expected for some configs)",
+      "experiment": "grpo_proteinlm_mlp_sft_qwen3_8b_it_0311_091513"
+    },
+    {
+      "type": "frozen_multimodal",
+      "severity": "info",
+      "note": "Multimodal params frozen (expected for some configs)",
+      "experiment": "grpo_structure_classify_qwen3_8b_it_0312_215435"
+    },
+    {
+      "type": "frozen_multimodal",
+      "severity": "info",
+      "note": "Multimodal params frozen (expected for some configs)",
+      "experiment": "grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_180156"
+    },
+    {
+      "type": "frozen_multimodal",
+      "severity": "info",
+      "note": "Multimodal params frozen (expected for some configs)",
+      "experiment": "grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_182035"
+    },
+    {
+      "type": "frozen_multimodal",
+      "severity": "info",
+      "note": "Multimodal params frozen (expected for some configs)",
+      "experiment": "grpo_structure_mlp_sft_frozen_mm_qwen3_8b_it_0312_101631"
+    },
+    {
+      "type": "reward_collapse",
+      "severity": "critical",
+      "last_3_rewards": [
+        0.0833,
+        0.0838,
+        0.0802
+      ],
+      "experiment": "grpo_structure_mlp_sft_qwen3_8b_it_0311_101732"
+    },
+    {
+      "type": "zero_lora_gradients",
+      "severity": "critical",
+      "max_grad": 0.0,
+      "experiment": "grpo_structure_mlp_sft_qwen3_8b_it_0311_101732"
+    },
+    {
+      "type": "zero_lora_gradients",
+      "severity": "critical",
+      "max_grad": 0.0,
+      "experiment": "grpo_structure_mlp_sft_qwen3_8b_it_0311_142756"
+    },
+    {
+      "type": "zero_lora_gradients",
+      "severity": "critical",
+      "max_grad": 0.0,
+      "experiment": "grpo_structure_mlp_sft_qwen3_8b_it_0312_011859"
+    },
+    {
+      "type": "frozen_multimodal",
+      "severity": "info",
+      "note": "Multimodal params frozen (expected for some configs)",
+      "experiment": "grpo_structure_text_classify_qwen3_8b_it_0313_010828"
+    },
+    {
+      "type": "frozen_multimodal",
+      "severity": "info",
+      "note": "Multimodal params frozen (expected for some configs)",
+      "experiment": "grpo_structure_text_sft_qwen3_8b_it_0311_142908"
+    },
+    {
+      "type": "frozen_multimodal",
+      "severity": "info",
+      "note": "Multimodal params frozen (expected for some configs)",
+      "experiment": "grpo_structure_text_sft_qwen3_8b_it_0312_032738"
+    }
+  ],
+  "anomaly_counts": {
+    "warning": 31,
+    "info": 9,
+    "critical": 4
+  },
+  "plots_requested": [
+    {
+      "type": "loss_curves",
+      "title": "SFT Training Loss (token_avg_loss)",
+      "experiments": [
+        "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+        "sft_text_combined_qwen3_8b_it_0307_190324"
+      ],
+      "x": "step",
+      "y": "token_avg_loss",
+      "source": "trainer_state.json",
+      "notes": "MLP converges to much lower loss than text"
+    },
+    {
+      "type": "eval_loss_curves",
+      "title": "SFT Eval Loss Comparison",
+      "experiments": [
+        "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+        "sft_text_combined_qwen3_8b_it_0307_190324"
+      ],
+      "x": "step",
+      "y": "eval_loss",
+      "source": "trainer_state.json"
+    },
+    {
+      "type": "bar_chart",
+      "title": "SFT Best Eval Loss Comparison",
+      "metric": "best_eval_loss",
+      "values": {
+        "MLP (ESM3)": 0.3607,
+        "Text-only": 1.2072
+      }
+    },
+    {
+      "type": "reward_curves",
+      "title": "GRPO Structure Prediction: Reward Trajectories",
+      "experiments": [
+        "grpo_proteinlm_mlp_sft_qwen3_8b_it_0310_214259",
+        "grpo_proteinlm_mlp_sft_qwen3_8b_it_0311_091513",
+        "grpo_structure_classify_qwen3_8b_it_0312_215435",
+        "grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_180156",
+        "grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_182035",
+        "grpo_structure_mlp_sft_frozen_mm_qwen3_8b_it_0312_101631",
+        "grpo_structure_mlp_sft_qwen3_8b_it_0311_101732",
+        "grpo_structure_mlp_sft_qwen3_8b_it_0311_114205",
+        "grpo_structure_mlp_sft_qwen3_8b_it_0311_142756",
+        "grpo_structure_mlp_sft_qwen3_8b_it_0312_011859",
+        "grpo_structure_text_classify_qwen3_8b_it_0313_010828",
+        "grpo_structure_text_sft_qwen3_8b_it_0311_142908",
+        "grpo_structure_text_sft_qwen3_8b_it_0312_032738"
+      ],
+      "x": "step",
+      "y": "mean_reward",
+      "source": "train.log (parsed)",
+      "group_by": "approach"
+    },
+    {
+      "type": "bar_chart",
+      "title": "GRPO Final Eval Reward by Config Variant",
+      "metric": "eval_final_reward",
+      "values": {
+        "grpo_proteinlm_mlp_sft_qwen3_8b_it_0310_214259": 0.4681,
+        "grpo_proteinlm_mlp_sft_qwen3_8b_it_0311_091513": 0.4681,
+        "grpo_structure_classify_qwen3_8b_it_0312_215435": 0.6811,
+        "grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_182035": 0.7111,
+        "grpo_structure_mlp_sft_frozen_mm_qwen3_8b_it_0312_101631": 0.764,
+        "grpo_structure_mlp_sft_qwen3_8b_it_0312_011859": 0.5262,
+        "grpo_structure_text_classify_qwen3_8b_it_0313_010828": 0.8076,
+        "grpo_structure_text_sft_qwen3_8b_it_0311_142908": 0.8463,
+        "grpo_structure_text_sft_qwen3_8b_it_0312_032738": 0.8444
+      }
+    },
+    {
+      "type": "gradient_norms",
+      "title": "SFT Gradient Norms",
+      "experiments": [
+        "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+        "sft_text_combined_qwen3_8b_it_0307_190324"
+      ],
+      "x": "step",
+      "y": "grad_norm",
+      "source": "trainer_state.json",
+      "notes": "Log scale Y-axis"
+    }
+  ],
+  "summary": {
+    "total_experiments": 16,
+    "sft_experiments": 3,
+    "grpo_experiments": 13,
+    "completed_experiments": 11,
+    "incomplete_experiments": 5,
+    "key_findings": [
+      "MLP SFT best eval loss: 0.3607 (step 9750) \u2014 70.12% better than text-only",
+      "Text SFT best eval loss: 1.2072 (step 8000)",
+      "MLP final token_avg_loss: 0.3659 vs Text: 1.6432 (4.5x ratio)",
+      "GRPO structure task: 4 MLP runs, 3 text runs completed",
+      "Best GRPO structure (text): eval_reward=0.8463 from grpo_structure_text_sft_qwen3_8b_it_0311_142908",
+      "Best GRPO structure (MLP): eval_reward=0.764 from grpo_structure_mlp_sft_frozen_mm_qwen3_8b_it_0312_101631",
+      "Total anomalies detected: 44 ({'warning': 31, 'info': 9, 'critical': 4})",
+      "Perceiver experiment (0308) has NO data files \u2014 likely crashed or not started",
+      "SFT MLP thinking run (0309) only reached step 500 of expected ~9750"
+    ]
+  }
+}

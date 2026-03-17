@@ -1,0 +1,266 @@
+{
+  "discovery_date": "2026-03-13",
+  "summary": {
+    "total_local_runs": 21,
+    "sft_runs": 3,
+    "grpo_runs": 14,
+    "other_runs": 4,
+    "complete": 10,
+    "partial": 11,
+    "wandb_sft_total": 50,
+    "wandb_rl_total": 19,
+    "wandb_only_sft": 47,
+    "wandb_only_rl": 6
+  },
+  "local_experiments": {
+    "sft": [
+      {
+        "name": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+        "approach": "esm3",
+        "projector_type": "mlp",
+        "status": "partial",
+        "final_eval_loss": 0.360674113035202,
+        "has_wandb": true
+      },
+      {
+        "name": "sft_esm3_mlp_thinking_qwen3_8b_it_0309_115011",
+        "approach": "esm3",
+        "projector_type": "mlp",
+        "status": "partial",
+        "final_eval_loss": 0.6131405234336853,
+        "has_wandb": true
+      },
+      {
+        "name": "sft_text_combined_qwen3_8b_it_0307_190324",
+        "approach": "text",
+        "projector_type": "mlp",
+        "status": "partial",
+        "final_eval_loss": 1.2656197547912598,
+        "has_wandb": true
+      }
+    ],
+    "grpo": [
+      {
+        "name": "grpo_proteinlm_mlp_sft_qwen3_8b_it_0310_214259",
+        "approach": "esm3",
+        "projector_type": "mlp",
+        "status": "complete",
+        "final_eval_loss": null,
+        "reward": null,
+        "has_wandb": false
+      },
+      {
+        "name": "grpo_proteinlm_mlp_sft_qwen3_8b_it_0311_091513",
+        "approach": "esm3",
+        "projector_type": "mlp",
+        "status": "complete",
+        "final_eval_loss": null,
+        "reward": null,
+        "has_wandb": true
+      },
+      {
+        "name": "grpo_structure_classify_qwen3_8b_it_0312_215435",
+        "approach": "esm3",
+        "projector_type": "mlp",
+        "status": "complete",
+        "final_eval_loss": null,
+        "reward": null,
+        "has_wandb": true
+      },
+      {
+        "name": "grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_180156",
+        "approach": "esm3",
+        "projector_type": "mlp",
+        "status": "partial",
+        "final_eval_loss": null,
+        "reward": null,
+        "has_wandb": true
+      },
+      {
+        "name": "grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_182035",
+        "approach": "esm3",
+        "projector_type": "mlp",
+        "status": "complete",
+        "final_eval_loss": null,
+        "reward": null,
+        "has_wandb": true
+      },
+      {
+        "name": "grpo_structure_mlp_sft_frozen_mm_qwen3_8b_it_0312_101631",
+        "approach": "esm3",
+        "projector_type": "mlp",
+        "status": "complete",
+        "final_eval_loss": null,
+        "reward": null,
+        "has_wandb": true
+      },
+      {
+        "name": "grpo_structure_mlp_sft_qwen3_8b_it_0311_101732",
+        "approach": "esm3",
+        "projector_type": "mlp",
+        "status": "partial",
+        "final_eval_loss": null,
+        "reward": null,
+        "has_wandb": true
+      },
+      {
+        "name": "grpo_structure_mlp_sft_qwen3_8b_it_0311_114205",
+        "approach": "esm3",
+        "projector_type": "mlp",
+        "status": "complete",
+        "final_eval_loss": null,
+        "reward": null,
+        "has_wandb": true
+      },
+      {
+        "name": "grpo_structure_mlp_sft_qwen3_8b_it_0311_142756",
+        "approach": "esm3",
+        "projector_type": "mlp",
+        "status": "partial",
+        "final_eval_loss": null,
+        "reward": null,
+        "has_wandb": true
+      },
+      {
+        "name": "grpo_structure_mlp_sft_qwen3_8b_it_0311_170604",
+        "approach": "esm3",
+        "projector_type": "mlp",
+        "status": "partial",
+        "final_eval_loss": null,
+        "reward": null,
+        "has_wandb": false
+      },
+      {
+        "name": "grpo_structure_mlp_sft_qwen3_8b_it_0312_011859",
+        "approach": "esm3",
+        "projector_type": "mlp",
+        "status": "complete",
+        "final_eval_loss": null,
+        "reward": null,
+        "has_wandb": true
+      },
+      {
+        "name": "grpo_structure_text_classify_qwen3_8b_it_0313_010828",
+        "approach": "text",
+        "projector_type": "mlp",
+        "status": "complete",
+        "final_eval_loss": null,
+        "reward": null,
+        "has_wandb": true
+      },
+      {
+        "name": "grpo_structure_text_sft_qwen3_8b_it_0311_142908",
+        "approach": "text",
+        "projector_type": "mlp",
+        "status": "complete",
+        "final_eval_loss": null,
+        "reward": null,
+        "has_wandb": true
+      },
+      {
+        "name": "grpo_structure_text_sft_qwen3_8b_it_0312_032738",
+        "approach": "text",
+        "projector_type": "mlp",
+        "status": "complete",
+        "final_eval_loss": null,
+        "reward": null,
+        "has_wandb": true
+      }
+    ],
+    "other": [
+      {
+        "name": "base_qwen3_8b_esm3_random",
+        "status": "partial"
+      },
+      {
+        "name": "base_qwen3_8b_text",
+        "status": "partial"
+      },
+      {
+        "name": "sft_esm3_perceiver_combined_qwen3_8b_it_0308_165601",
+        "status": "partial"
+      },
+      {
+        "name": "trial_structure_mlp_review",
+        "status": "partial"
+      }
+    ]
+  },
+  "wandb_only": {
+    "sft": [
+      {
+        "name": "sft_lora_esm3_qwen3_8b_it_0225_203237",
+        "wandb_id": "nmpuhbnk",
+        "state": "finished",
+        "created": "2026-02-26T01:32:45Z",
+        "project": "sft"
+      },
+      {
+        "name": "sft_lora_esm3_qwen3_8b_it_0226_151416",
+        "wandb_id": "0vx0aryw",
+        "state": "finished",
+        "created": "2026-02-26T20:14:25Z",
+        "project": "sft"
+      },
+      {
+        "name": "sft_text_qwen3_8b_it_0227_145821",
+        "wandb_id": "z9ys68kg",
+        "state": "finished",
+        "created": "2026-02-27T19:58:30Z",
+        "project": "sft"
+      },
+      {
+        "name": "sft_esm3_mlp_long_qwen3_8b_it_0302_122343",
+        "wandb_id": "kty0ymk4",
+        "state": "crashed",
+        "created": "2026-03-02T17:23:52Z",
+        "project": "sft"
+      },
+      {
+        "name": "sft_esm3_mlp_combined_qwen3_8b_it_0302_125834",
+        "wandb_id": "qgbijsd6",
+        "state": "crashed",
+        "created": "2026-03-02T17:58:44Z",
+        "project": "sft"
+      }
+    ],
+    "rl": [
+      {
+        "name": "trial_grpo_structure_mlp_sft",
+        "wandb_id": "rw0qdrxn",
+        "state": "finished",
+        "created": "2026-03-09T22:09:19Z",
+        "project": "rl"
+      },
+      {
+        "name": "grpo_proteinlm_mlp_sft_qwen3_8b_it_0310_002753",
+        "wandb_id": "9a7n9py0",
+        "state": "crashed",
+        "created": "2026-03-10T04:28:01Z",
+        "project": "rl"
+      },
+      {
+        "name": "grpo_structure_mlp_sft_qwen3_8b_it_0310_011220",
+        "wandb_id": "xng73mlc",
+        "state": "crashed",
+        "created": "2026-03-10T05:12:28Z",
+        "project": "rl"
+      },
+      {
+        "name": "grpo_structure_mlp_sft_optimized",
+        "wandb_id": "jjy17yj4",
+        "state": "failed",
+        "created": "2026-03-10T05:52:18Z",
+        "project": "rl"
+      },
+      {
+        "name": "trial_probe_logging_test2",
+        "wandb_id": "p83rt37n",
+        "state": "finished",
+        "created": "2026-03-10T18:57:23Z",
+        "project": "rl"
+      }
+    ],
+    "note": "Many crashed/failed wandb runs without local data: 47 SFT, 6 RL"
+  }
+}

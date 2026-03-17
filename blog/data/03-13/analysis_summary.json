@@ -1,0 +1,1088 @@
+{
+  "analysis_date": "2026-03-13",
+  "analysis_scope": "Full experiment inventory: SFT (text, MLP) + GRPO (structure, Mol-Instructions)",
+  "sft_experiments": {
+    "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408": {
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "label": "MLP (ESM3)",
+      "total_steps": 9750,
+      "total_epochs": 1.0336909760016586,
+      "final_token_avg_loss": 0.4378,
+      "min_token_avg_loss": 0.3059,
+      "min_token_avg_loss_step": 8280,
+      "initial_token_avg_loss": 3.2968,
+      "loss_trajectory": {
+        "epoch_1_end": 0.3533
+      },
+      "max_grad_norm": 7.598205089569092,
+      "mean_grad_norm": 0.6271629141232906,
+      "std_grad_norm": 0.32589981859721184,
+      "median_grad_norm": 0.5800570845603943,
+      "learning_rate_peak": 0.00019999995194549538,
+      "convergence_step": 380,
+      "convergence_loss": 0.6343,
+      "anomalies": [
+        {
+          "type": "loss_spike",
+          "step": 10,
+          "value": 3.2968,
+          "threshold": 0.9164126645901123,
+          "severity": "warning"
+        },
+        {
+          "type": "loss_spike",
+          "step": 20,
+          "value": 2.4675,
+          "threshold": 0.9164126645901123,
+          "severity": "warning"
+        },
+        {
+          "type": "loss_spike",
+          "step": 30,
+          "value": 2.0685,
+          "threshold": 0.9164126645901123,
+          "severity": "warning"
+        },
+        {
+          "type": "loss_spike",
+          "step": 40,
+          "value": 1.6048,
+          "threshold": 0.9164126645901123,
+          "severity": "warning"
+        },
+        {
+          "type": "loss_spike",
+          "step": 50,
+          "value": 1.2563,
+          "threshold": 0.9164126645901123,
+          "severity": "warning"
+        },
+        {
+          "type": "loss_spike",
+          "step": 60,
+          "value": 1.1294,
+          "threshold": 0.9164126645901123,
+          "severity": "warning"
+        },
+        {
+          "type": "loss_spike",
+          "step": 70,
+          "value": 1.0829,
+          "threshold": 0.9164126645901123,
+          "severity": "warning"
+        },
+        {
+          "type": "loss_spike",
+          "step": 80,
+          "value": 0.9478,
+          "threshold": 0.9164126645901123,
+          "severity": "warning"
+        },
+        {
+          "type": "loss_spike",
+          "step": 90,
+          "value": 0.9466,
+          "threshold": 0.9164126645901123,
+          "severity": "warning"
+        },
+        {
+          "type": "loss_spike",
+          "step": 100,
+          "value": 0.9421,
+          "threshold": 0.9164126645901123,
+          "severity": "warning"
+        },
+        {
+          "type": "grad_spike",
+          "step": 10,
+          "value": 7.598205089569092,
+          "severity": "warning"
+        },
+        {
+          "type": "grad_spike",
+          "step": 20,
+          "value": 4.578925132751465,
+          "severity": "warning"
+        },
+        {
+          "type": "grad_spike",
+          "step": 30,
+          "value": 2.9319872856140137,
+          "severity": "warning"
+        },
+        {
+          "type": "grad_spike",
+          "step": 40,
+          "value": 1.9611071348190308,
+          "severity": "warning"
+        },
+        {
+          "type": "grad_spike",
+          "step": 70,
+          "value": 2.0976338386535645,
+          "severity": "warning"
+        },
+        {
+          "type": "grad_spike",
+          "step": 2290,
+          "value": 4.620326042175293,
+          "severity": "warning"
+        }
+      ],
+      "best_eval_loss": 0.360674113035202,
+      "best_eval_step": 9750,
+      "final_eval_loss": 0.360674113035202,
+      "eval_count": 39,
+      "created_at": "2026-03-06T10:56:57.626122",
+      "completed_at": "2026-03-08T16:53:33.671279",
+      "training_hours": 53.94
+    },
+    "sft_text_combined_qwen3_8b_it_0307_190324": {
+      "approach": "text",
+      "projector_type": "none",
+      "label": "Text-only",
+      "total_steps": 9640,
+      "total_epochs": 0.8552324677344114,
+      "final_token_avg_loss": 1.6432,
+      "min_token_avg_loss": 1.3415,
+      "min_token_avg_loss_step": 8000,
+      "initial_token_avg_loss": 4.0729,
+      "loss_trajectory": {},
+      "max_grad_norm": 7.169853210449219,
+      "mean_grad_norm": 2.3652514479590647,
+      "std_grad_norm": 0.6465923349506147,
+      "median_grad_norm": 2.3727587461471558,
+      "learning_rate_peak": 0.00019999956144849473,
+      "convergence_step": 350,
+      "convergence_loss": 2.3418,
+      "anomalies": [
+        {
+          "type": "loss_spike",
+          "step": 10,
+          "value": 4.0729,
+          "threshold": 2.520788171996527,
+          "severity": "warning"
+        },
+        {
+          "type": "loss_spike",
+          "step": 20,
+          "value": 3.7479,
+          "threshold": 2.520788171996527,
+          "severity": "warning"
+        },
+        {
+          "type": "loss_spike",
+          "step": 30,
+          "value": 3.3791,
+          "threshold": 2.520788171996527,
+          "severity": "warning"
+        },
+        {
+          "type": "loss_spike",
+          "step": 40,
+          "value": 2.9037,
+          "threshold": 2.520788171996527,
+          "severity": "warning"
+        },
+        {
+          "type": "loss_spike",
+          "step": 50,
+          "value": 2.7213,
+          "threshold": 2.520788171996527,
+          "severity": "warning"
+        },
+        {
+          "type": "loss_spike",
+          "step": 60,
+          "value": 2.7255,
+          "threshold": 2.520788171996527,
+          "severity": "warning"
+        },
+        {
+          "type": "loss_spike",
+          "step": 70,
+          "value": 2.6351,
+          "threshold": 2.520788171996527,
+          "severity": "warning"
+        },
+        {
+          "type": "loss_spike",
+          "step": 80,
+          "value": 2.5764,
+          "threshold": 2.520788171996527,
+          "severity": "warning"
+        },
+        {
+          "type": "loss_spike",
+          "step": 90,
+          "value": 2.5944,
+          "threshold": 2.520788171996527,
+          "severity": "warning"
+        },
+        {
+          "type": "grad_spike",
+          "step": 10,
+          "value": 7.169853210449219,
+          "severity": "warning"
+        },
+        {
+          "type": "grad_spike",
+          "step": 20,
+          "value": 6.18733024597168,
+          "severity": "warning"
+        },
+        {
+          "type": "grad_spike",
+          "step": 8550,
+          "value": 4.342833518981934,
+          "severity": "warning"
+        },
+        {
+          "type": "grad_spike",
+          "step": 9250,
+          "value": 4.787654399871826,
+          "severity": "warning"
+        }
+      ],
+      "best_eval_loss": 1.2072135210037231,
+      "best_eval_step": 8000,
+      "final_eval_loss": 1.2656197547912598,
+      "eval_count": 38,
+      "created_at": "2026-03-09T14:39:59.864128",
+      "completed_at": null
+    },
+    "sft_esm3_mlp_thinking_qwen3_8b_it_0309_115011": {
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "label": "MLP+Thinking",
+      "total_steps": 500,
+      "total_epochs": 0.05183227077178251,
+      "final_token_avg_loss": 0.8302,
+      "min_token_avg_loss": 0.6338,
+      "min_token_avg_loss_step": 500,
+      "initial_token_avg_loss": 2.6295,
+      "loss_trajectory": {},
+      "max_grad_norm": 4.966612815856934,
+      "mean_grad_norm": 1.7560282921791077,
+      "std_grad_norm": 0.5228484900990518,
+      "median_grad_norm": 1.7093884944915771,
+      "learning_rate_peak": 0.00019999995194549538,
+      "convergence_step": 430,
+      "convergence_loss": 0.7372,
+      "anomalies": [
+        {
+          "type": "loss_spike",
+          "step": 10,
+          "value": 2.6295,
+          "threshold": 2.0098416748672836,
+          "severity": "warning"
+        },
+        {
+          "type": "grad_spike",
+          "step": 10,
+          "value": 4.966612815856934,
+          "severity": "warning"
+        }
+      ],
+      "best_eval_loss": 0.6131405234336853,
+      "best_eval_step": 500,
+      "final_eval_loss": 0.6131405234336853,
+      "eval_count": 2,
+      "created_at": "2026-03-09T11:50:18.840620",
+      "completed_at": null
+    }
+  },
+  "grpo_experiments": {
+    "grpo_proteinlm_mlp_sft_qwen3_8b_it_0310_214259": {
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "completed": true,
+      "created_at": "2026-03-10T21:43:06.009512",
+      "completed_at": "2026-03-10T21:55:05.708274",
+      "training_hours": 0.2,
+      "final_mean_reward": 0.6945216140629332,
+      "final_max_reward": 1.0864197763579864,
+      "final_min_reward": 0.08148148205177283,
+      "final_reward_std": 0.4275933909057467,
+      "pg_loss": -0.0064074782673327,
+      "kl_penalty": 0.0,
+      "grad_norm_lora": 0.386268879160469,
+      "grad_norm_multimodal": 0.0,
+      "frac_reward_zero_std": 0.37242798378438124,
+      "completion_mean_length": 8.951646090534979,
+      "reward_breakdown": {
+        "correct_index": 2.230452674897119,
+        "format_bonus": 0.0690072016460905,
+        "predicted_index": 2.2421553497942384
+      }
+    },
+    "grpo_proteinlm_mlp_sft_qwen3_8b_it_0311_091513": {
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "completed": true,
+      "created_at": "2026-03-11T09:15:20.914307",
+      "completed_at": "2026-03-11T09:58:09.505043",
+      "training_hours": 0.71,
+      "final_mean_reward": 0.6764429168292769,
+      "final_max_reward": 1.0848148382372327,
+      "final_min_reward": 0.09629629676540692,
+      "final_reward_std": 0.43090300962190936,
+      "pg_loss": -0.005371573152175794,
+      "kl_penalty": 0.0,
+      "grad_norm_lora": 0.4043776473513356,
+      "grad_norm_multimodal": 0.0,
+      "frac_reward_zero_std": 0.4225308645654608,
+      "completion_mean_length": 9.254938271604937,
+      "reward_breakdown": {
+        "format_bonus": 0.07555555555555558,
+        "correct_index": 2.3358024691358024,
+        "predicted_index": 2.163233024691358
+      }
+    },
+    "grpo_structure_classify_qwen3_8b_it_0312_215435": {
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "completed": true,
+      "created_at": "2026-03-12T21:54:44.776817",
+      "completed_at": "2026-03-12T23:36:03.483966",
+      "training_hours": 1.69,
+      "final_mean_reward": 0.5984832188912801,
+      "final_max_reward": 0.9833584765897316,
+      "final_min_reward": 0.19683896052796823,
+      "final_reward_std": 0.324802302090185,
+      "pg_loss": -0.3240642835899275,
+      "kl_penalty": 0.0,
+      "grad_norm_lora": 0.12295041814142343,
+      "grad_norm_multimodal": 0.0,
+      "frac_reward_zero_std": 0.17687074829931973,
+      "completion_mean_length": 60.708843537414964,
+      "reward_breakdown": {
+        "focal_weight": 0.9578071265769718,
+        "format_bonus": 0.09514455782312971,
+        "ptm": 0.0,
+        "plddt": 79.72499319727889
+      }
+    },
+    "grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_180156": {
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "completed": false,
+      "created_at": "2026-03-12T18:02:04.353478",
+      "completed_at": null
+    },
+    "grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_182035": {
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "completed": true,
+      "created_at": "2026-03-12T18:20:42.662725",
+      "completed_at": "2026-03-12T20:04:16.643280",
+      "training_hours": 1.73,
+      "final_mean_reward": 0.7247728348792005,
+      "final_max_reward": 0.9447370741338957,
+      "final_min_reward": 0.48135598739780006,
+      "final_reward_std": 0.16939114666410063,
+      "pg_loss": -0.18599445715461077,
+      "kl_penalty": 0.0,
+      "grad_norm_lora": 0.11920143909194843,
+      "grad_norm_multimodal": 0.0,
+      "frac_reward_zero_std": 0.017687074829931974,
+      "completion_mean_length": 57.48299319727891,
+      "reward_breakdown": {
+        "ptm": 0.0,
+        "focal_weight": 0.9578071265769718,
+        "quality_alignment": 0.35996598639456034,
+        "plddt": 79.72499319727889,
+        "category_match": 0.17464285714285657,
+        "format_bonus": 0.09544217687074877,
+        "predicted_plddt": 74.84827962868562,
+        "numerical_accuracy": 0.15713561296206469
+      }
+    },
+    "grpo_structure_mlp_sft_frozen_mm_qwen3_8b_it_0312_101631": {
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "completed": true,
+      "created_at": "2026-03-12T10:16:39.117054",
+      "completed_at": "2026-03-12T12:01:37.065008",
+      "training_hours": 1.75,
+      "final_mean_reward": 0.7743107812965045,
+      "final_max_reward": 1.0144773725744174,
+      "final_min_reward": 0.5296793605518518,
+      "final_reward_std": 0.19366116539379657,
+      "pg_loss": -0.1856415112732278,
+      "kl_penalty": 0.0,
+      "grad_norm_lora": 0.07123960126393838,
+      "grad_norm_multimodal": 0.0,
+      "frac_reward_zero_std": 0.0625,
+      "completion_mean_length": 58.03804347826087,
+      "reward_breakdown": {
+        "predicted_plddt": 85.05816590447026,
+        "category_match": 0.1638332201086948,
+        "ptm": 0.0,
+        "numerical_accuracy": 0.1686297329585134,
+        "plddt": 79.7024320652174,
+        "quality_alignment": 0.34679008152174007,
+        "format_bonus": 0.09505774456521801
+      }
+    },
+    "grpo_structure_mlp_sft_qwen3_8b_it_0311_101732": {
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "completed": false,
+      "created_at": "2026-03-11T10:17:40.286297",
+      "completed_at": null
+    },
+    "grpo_structure_mlp_sft_qwen3_8b_it_0311_114205": {
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "completed": false,
+      "created_at": "2026-03-11T11:42:15.142821",
+      "completed_at": null,
+      "final_mean_reward": 0.7795777350664139,
+      "final_max_reward": 0.9361679136753083,
+      "final_min_reward": 0.5226469017565251,
+      "final_reward_std": 0.1542032578261569,
+      "pg_loss": -0.008052657707594335,
+      "kl_penalty": 0.0,
+      "grad_norm_lora": 4.933437408594088e-10,
+      "grad_norm_multimodal": 0.9999999880790711,
+      "frac_reward_zero_std": 0.0,
+      "completion_mean_length": 32.0,
+      "reward_breakdown": {
+        "format_bonus": 0.10000000000000006,
+        "plddt": 80.1855,
+        "ptm": 0.0,
+        "predicted_plddt": 91.39734375000003,
+        "quality_alignment": 0.3543750000000001,
+        "numerical_accuracy": 0.16207773963935324,
+        "category_match": 0.163125
+      }
+    },
+    "grpo_structure_mlp_sft_qwen3_8b_it_0311_142756": {
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "completed": false,
+      "created_at": "2026-03-11T14:28:03.756345",
+      "completed_at": null
+    },
+    "grpo_structure_mlp_sft_qwen3_8b_it_0311_170604": {
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "completed": false,
+      "created_at": "2026-03-11T17:06:12.394246",
+      "completed_at": null
+    },
+    "grpo_structure_mlp_sft_qwen3_8b_it_0312_011859": {
+      "approach": "esm3",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+      "completed": true,
+      "created_at": "2026-03-12T01:19:06.199113",
+      "completed_at": "2026-03-12T03:27:28.095809",
+      "training_hours": 2.14,
+      "final_mean_reward": 0.5816719054608889,
+      "final_max_reward": 1.0653109179566735,
+      "final_min_reward": 0.10146107242379446,
+      "final_reward_std": 0.2806335475862674,
+      "pg_loss": -1.0206549172694592,
+      "kl_penalty": 0.0,
+      "grad_norm_lora": 5.779692044254471e-10,
+      "grad_norm_multimodal": 0.247282600597195,
+      "frac_reward_zero_std": 0.019021739130434784,
+      "completion_mean_length": 85.97961956521739,
+      "reward_breakdown": {
+        "predicted_plddt": 67.9240445230632,
+        "category_match": 0.10404211956521747,
+        "quality_alignment": 0.3260190217391308,
+        "format_bonus": 0.06520889945652174,
+        "numerical_accuracy": 0.0864018649314596,
+        "plddt": 79.7024320652174,
+        "ptm": 0.0
+      }
+    },
+    "grpo_structure_text_classify_qwen3_8b_it_0313_010828": {
+      "approach": "text",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_text_combined_qwen3_8b_it_0307_190324",
+      "completed": true,
+      "created_at": "2026-03-13T01:08:36.306349",
+      "completed_at": "2026-03-13T03:10:28.027251",
+      "training_hours": 2.03,
+      "final_mean_reward": 0.7100486819551367,
+      "final_max_reward": 1.0443524051174198,
+      "final_min_reward": 0.3222100394980415,
+      "final_reward_std": 0.3117902120575309,
+      "pg_loss": -0.16126057874087407,
+      "kl_penalty": 0.0,
+      "grad_norm_lora": 0.2499999327828055,
+      "grad_norm_multimodal": 0.0,
+      "frac_reward_zero_std": 0.5815217391304348,
+      "completion_mean_length": 57.02038043478261,
+      "reward_breakdown": {
+        "ptm": 0.0,
+        "plddt": 79.7024320652174,
+        "format_bonus": 0.09915930706521807,
+        "focal_weight": 0.9579018605963391
+      }
+    },
+    "grpo_structure_text_sft_qwen3_8b_it_0311_142908": {
+      "approach": "text",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_text_combined_qwen3_8b_it_0307_190324",
+      "completed": true,
+      "created_at": "2026-03-11T14:29:15.833014",
+      "completed_at": "2026-03-11T16:17:38.294909",
+      "training_hours": 1.81,
+      "final_mean_reward": 0.752529568484296,
+      "final_max_reward": 1.052830160635969,
+      "final_min_reward": 0.32213967980574293,
+      "final_reward_std": 0.22702350010892944,
+      "pg_loss": -0.024954706627835076,
+      "kl_penalty": 0.0,
+      "grad_norm_lora": 0.4931465309599172,
+      "grad_norm_multimodal": 0.0,
+      "frac_reward_zero_std": 0.0,
+      "completion_mean_length": 36.774003623188406,
+      "reward_breakdown": {
+        "numerical_accuracy": 0.1705605910291746,
+        "predicted_plddt": 79.00481414099953,
+        "format_bonus": 0.06018172554347812,
+        "ptm": 0.0,
+        "category_match": 0.17859205163043493,
+        "plddt": 79.7180615942029,
+        "quality_alignment": 0.343195199275362
+      }
+    },
+    "grpo_structure_text_sft_qwen3_8b_it_0312_032738": {
+      "approach": "text",
+      "projector_type": "mlp",
+      "parent_experiment": "sft_text_combined_qwen3_8b_it_0307_190324",
+      "completed": true,
+      "created_at": "2026-03-12T03:27:45.708239",
+      "completed_at": "2026-03-12T05:34:43.600182",
+      "training_hours": 2.12,
+      "final_mean_reward": 0.8317525658918463,
+      "final_max_reward": 1.0944281916903413,
+      "final_min_reward": 0.44704515116451227,
+      "final_reward_std": 0.21765776328823488,
+      "pg_loss": -0.09444898913194344,
+      "kl_penalty": 0.0,
+      "grad_norm_lora": 0.4759241702116054,
+      "grad_norm_multimodal": 0.0,
+      "frac_reward_zero_std": 0.0,
+      "completion_mean_length": 55.42798913043478,
+      "reward_breakdown": {
+        "predicted_plddt": 79.05731584804671,
+        "ptm": 0.0,
+        "quality_alignment": 0.35080389492753594,
+        "format_bonus": 0.09913383152173906,
+        "numerical_accuracy": 0.1845831779167444,
+        "plddt": 79.7180615942029,
+        "category_match": 0.19723165760869577
+      }
+    }
+  },
+  "grpo_categories": {
+    "proteinlm_mol_instructions": [
+      "grpo_proteinlm_mlp_sft_qwen3_8b_it_0310_214259",
+      "grpo_proteinlm_mlp_sft_qwen3_8b_it_0311_091513"
+    ],
+    "structure_mlp": [
+      "grpo_structure_mlp_sft_qwen3_8b_it_0311_101732",
+      "grpo_structure_mlp_sft_qwen3_8b_it_0311_114205",
+      "grpo_structure_mlp_sft_qwen3_8b_it_0311_142756",
+      "grpo_structure_mlp_sft_qwen3_8b_it_0311_170604",
+      "grpo_structure_mlp_sft_qwen3_8b_it_0312_011859"
+    ],
+    "structure_text": [
+      "grpo_structure_text_sft_qwen3_8b_it_0311_142908",
+      "grpo_structure_text_sft_qwen3_8b_it_0312_032738"
+    ],
+    "structure_frozen_mm": [
+      "grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_180156",
+      "grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_182035",
+      "grpo_structure_mlp_sft_frozen_mm_qwen3_8b_it_0312_101631"
+    ],
+    "structure_classify": [
+      "grpo_structure_classify_qwen3_8b_it_0312_215435",
+      "grpo_structure_text_classify_qwen3_8b_it_0313_010828"
+    ]
+  },
+  "sft_comparison_mlp_vs_text": {
+    "train_loss_last_100": {
+      "mlp_mean": 0.38138399999999995,
+      "text_mean": 1.7216970000000003,
+      "difference": -1.3403130000000003,
+      "difference_pct": -77.84836704716336,
+      "t_statistic": -138.24072332643993,
+      "p_value": 6.855339451099251e-199,
+      "effect_size_cohens_d": -19.550190580051805,
+      "significant": true,
+      "method": "Independent t-test on last 100 training steps"
+    },
+    "eval_loss": {
+      "mlp_best": 0.360674113035202,
+      "mlp_best_step": 9750,
+      "text_best": 1.2072135210037231,
+      "text_best_step": 8000,
+      "difference": -0.8465394079685211,
+      "mlp_better": true
+    }
+  },
+  "grpo_comparison_mlp_vs_text": {
+    "best_mlp_grpo": {
+      "experiment": "grpo_structure_mlp_sft_frozen_mm_qwen3_8b_it_0312_101631",
+      "mean_reward": 0.7743107812965045,
+      "max_reward": 1.0144773725744174
+    },
+    "best_text_grpo": {
+      "experiment": "grpo_structure_text_sft_qwen3_8b_it_0312_032738",
+      "mean_reward": 0.8317525658918463,
+      "max_reward": 1.0944281916903413
+    },
+    "mlp_vs_text_reward_diff": -0.05744178459534177,
+    "mlp_better": false
+  },
+  "plots_requested": [
+    {
+      "id": "fig_sft_loss_comparison",
+      "type": "loss_curves_overlay",
+      "title": "SFT Training Loss: MLP vs Text-only",
+      "experiments": [
+        "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+        "sft_text_combined_qwen3_8b_it_0307_190324"
+      ],
+      "x": "step",
+      "y": "token_avg_loss",
+      "notes": "MLP converges to ~0.38, Text to ~1.72. Log-scale Y recommended."
+    },
+    {
+      "id": "fig_sft_eval_comparison",
+      "type": "eval_loss_curves",
+      "title": "SFT Eval Loss: MLP vs Text-only",
+      "experiments": [
+        "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+        "sft_text_combined_qwen3_8b_it_0307_190324"
+      ],
+      "x": "step",
+      "y": "eval_loss",
+      "annotations": [
+        {
+          "step": 9750,
+          "text": "MLP best: 0.3607",
+          "exp": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408"
+        },
+        {
+          "step": 8000,
+          "text": "Text best: 1.2072",
+          "exp": "sft_text_combined_qwen3_8b_it_0307_190324"
+        }
+      ]
+    },
+    {
+      "id": "fig_grpo_reward_bar",
+      "type": "bar_chart",
+      "title": "GRPO Final Mean Reward by Experiment",
+      "metric": "mean_reward",
+      "values": {
+        "grpo_proteinlm_mlp_sft_qwen3_8b_it_0310_214259": 0.6945216140629332,
+        "grpo_proteinlm_mlp_sft_qwen3_8b_it_0311_091513": 0.6764429168292769,
+        "grpo_structure_classify_qwen3_8b_it_0312_215435": 0.5984832188912801,
+        "grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_182035": 0.7247728348792005,
+        "grpo_structure_mlp_sft_frozen_mm_qwen3_8b_it_0312_101631": 0.7743107812965045,
+        "grpo_structure_mlp_sft_qwen3_8b_it_0311_114205": 0.7795777350664139,
+        "grpo_structure_mlp_sft_qwen3_8b_it_0312_011859": 0.5816719054608889,
+        "grpo_structure_text_classify_qwen3_8b_it_0313_010828": 0.7100486819551367,
+        "grpo_structure_text_sft_qwen3_8b_it_0311_142908": 0.752529568484296,
+        "grpo_structure_text_sft_qwen3_8b_it_0312_032738": 0.8317525658918463
+      },
+      "group_by": "approach",
+      "notes": "Color by approach (esm3=blue, text=orange). Sort by reward descending."
+    },
+    {
+      "id": "fig_grpo_reward_breakdown",
+      "type": "stacked_bar",
+      "title": "GRPO Reward Component Breakdown (Structure Task)",
+      "components": [
+        "format_bonus",
+        "quality_alignment",
+        "numerical_accuracy",
+        "category_match"
+      ],
+      "notes": "Only for completed structure experiments. Show which components dominate."
+    },
+    {
+      "id": "fig_grpo_mlp_vs_text_structure",
+      "type": "grouped_bar",
+      "title": "Structure GRPO: MLP vs Text Reward Comparison",
+      "notes": "Best MLP (0.7743) vs Best Text (0.8318). Text slightly better despite lower SFT loss."
+    },
+    {
+      "id": "fig_sft_gradient_norms",
+      "type": "gradient_norms",
+      "title": "SFT Gradient Norms: MLP vs Text",
+      "experiments": [
+        "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+        "sft_text_combined_qwen3_8b_it_0307_190324"
+      ],
+      "x": "step",
+      "y": "grad_norm",
+      "notes": "Log-scale Y. Flag spikes at steps 10, 2290 (MLP) and 8550, 9250 (Text)."
+    }
+  ],
+  "summary_statistics": {
+    "total_sft_experiments": 3,
+    "total_grpo_experiments": 14,
+    "completed_grpo": 9,
+    "incomplete_grpo": 5,
+    "perceiver_experiment_status": "EMPTY - only logs dir, never ran (sft_esm3_perceiver_combined_qwen3_8b_it_0308_165601)"
+  },
+  "grpo_trajectories": {
+    "grpo_proteinlm_mlp_sft_qwen3_8b_it_0311_091513": {
+      "total_steps": 130,
+      "n_logged_steps": 26,
+      "initial_reward": 0.727812510728836,
+      "final_reward": 0.6706250131130218,
+      "best_reward": 0.7739583353201548,
+      "worst_reward": 0.5246875017881394,
+      "reward_improvement": -0.05718749761581421,
+      "reward_improvement_pct": -7.857449105752014,
+      "reward_slope_per_step": 0.00044239685189861096,
+      "reward_trend": "flat",
+      "lora_grad_mean": 0.8261190750660041,
+      "lora_grad_max": 0.9999991059303284,
+      "lora_grad_min": 0.4689354598522186,
+      "mm_grad_mean": 0.0,
+      "frac_zero_std_mean": 0.41378205128205126,
+      "frac_zero_std_max": 0.575,
+      "completion_length_initial": 9.175,
+      "completion_length_final": 8.75,
+      "completion_length_change": -0.4250000000000007,
+      "anomalies": [
+        {
+          "type": "high_zero_std_fraction",
+          "mean": 0.41378205128205126,
+          "severity": "warning",
+          "note": "Many sample groups have identical rewards (no learning signal)"
+        }
+      ]
+    },
+    "grpo_structure_text_sft_qwen3_8b_it_0311_142908": {
+      "total_steps": 90,
+      "n_logged_steps": 18,
+      "initial_reward": 0.3205782353878021,
+      "final_reward": 0.8223563730716705,
+      "best_reward": 0.9535457193851472,
+      "worst_reward": 0.3205782353878021,
+      "reward_improvement": 0.5017781376838684,
+      "reward_improvement_pct": 156.5228335220167,
+      "reward_slope_per_step": 0.027250653612970455,
+      "reward_trend": "improving",
+      "lora_grad_mean": 0.98598848051495,
+      "lora_grad_max": 0.9999999165534972,
+      "lora_grad_min": 0.9107328534126282,
+      "mm_grad_mean": 0.0,
+      "frac_zero_std_mean": 0.0,
+      "frac_zero_std_max": 0.0,
+      "completion_length_initial": 48.25,
+      "completion_length_final": 35.925,
+      "completion_length_change": -12.325000000000003,
+      "anomalies": []
+    },
+    "grpo_structure_mlp_sft_qwen3_8b_it_0312_011859": {
+      "total_steps": 90,
+      "n_logged_steps": 18,
+      "initial_reward": 0.5183518171310425,
+      "final_reward": 0.5333277150988579,
+      "best_reward": 0.6205198720097542,
+      "worst_reward": 0.5183518171310425,
+      "reward_improvement": 0.0149758979678154,
+      "reward_improvement_pct": 2.8891377386701436,
+      "reward_slope_per_step": -0.0005447458072158916,
+      "reward_trend": "flat",
+      "lora_grad_mean": 2.291374447898558e-09,
+      "lora_grad_max": 3.504081957927951e-09,
+      "lora_grad_min": 1.306322172656138e-09,
+      "mm_grad_mean": 0.9888888557751974,
+      "frac_zero_std_mean": 0.019444444444444445,
+      "frac_zero_std_max": 0.075,
+      "completion_length_initial": 83.95,
+      "completion_length_final": 89.525,
+      "completion_length_change": 5.575000000000003,
+      "anomalies": [
+        {
+          "type": "near_zero_lora_grad",
+          "mean": 2.291374447898558e-09,
+          "severity": "critical"
+        }
+      ]
+    },
+    "grpo_structure_text_sft_qwen3_8b_it_0312_032738": {
+      "total_steps": 90,
+      "n_logged_steps": 18,
+      "initial_reward": 0.6280056893825531,
+      "final_reward": 0.8443510711193085,
+      "best_reward": 0.9618664741516112,
+      "worst_reward": 0.6280056893825531,
+      "reward_improvement": 0.21634538173675544,
+      "reward_improvement_pct": 34.44958945347507,
+      "reward_slope_per_step": 0.011431684797885361,
+      "reward_trend": "improving",
+      "lora_grad_mean": 0.9507783148023817,
+      "lora_grad_max": 0.9999997973442076,
+      "lora_grad_min": 0.7028494596481323,
+      "mm_grad_mean": 0.0,
+      "frac_zero_std_mean": 0.0,
+      "frac_zero_std_max": 0.0,
+      "completion_length_initial": 82.375,
+      "completion_length_final": 50.35,
+      "completion_length_change": -32.025,
+      "anomalies": []
+    },
+    "grpo_structure_mlp_sft_frozen_mm_qwen3_8b_it_0312_101631": {
+      "total_steps": 90,
+      "n_logged_steps": 18,
+      "initial_reward": 0.5559497132897377,
+      "final_reward": 0.7689200341701508,
+      "best_reward": 0.9392720520496368,
+      "worst_reward": 0.5559497132897377,
+      "reward_improvement": 0.212970320880413,
+      "reward_improvement_pct": 38.30747921789498,
+      "reward_slope_per_step": 0.010989041327353727,
+      "reward_trend": "improving",
+      "lora_grad_mean": 0.2909906002175477,
+      "lora_grad_max": 0.999999737739563,
+      "lora_grad_min": 0.0167610336095094,
+      "mm_grad_mean": 0.0,
+      "frac_zero_std_mean": 0.062499999999999986,
+      "frac_zero_std_max": 0.2,
+      "completion_length_initial": 82.475,
+      "completion_length_final": 51.25,
+      "completion_length_change": -31.224999999999994,
+      "anomalies": []
+    },
+    "grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_182035": {
+      "total_steps": 90,
+      "n_logged_steps": 18,
+      "initial_reward": 0.5131656132638455,
+      "final_reward": 0.8243850596249104,
+      "best_reward": 0.8343725502490997,
+      "worst_reward": 0.5131656132638455,
+      "reward_improvement": 0.3112194463610649,
+      "reward_improvement_pct": 60.64697990608552,
+      "reward_slope_per_step": 0.01544491187837533,
+      "reward_trend": "improving",
+      "lora_grad_mean": 0.9623673114511703,
+      "lora_grad_max": 0.9999997973442076,
+      "lora_grad_min": 0.8543509602546692,
+      "mm_grad_mean": 0.0,
+      "frac_zero_std_mean": 0.018055555555555557,
+      "frac_zero_std_max": 0.05,
+      "completion_length_initial": 86.85,
+      "completion_length_final": 50.5,
+      "completion_length_change": -36.349999999999994,
+      "anomalies": []
+    },
+    "grpo_structure_classify_qwen3_8b_it_0312_215435": {
+      "total_steps": 90,
+      "n_logged_steps": 18,
+      "initial_reward": 0.4111101370304822,
+      "final_reward": 0.699509846419096,
+      "best_reward": 0.7075660366564989,
+      "worst_reward": 0.4111101370304822,
+      "reward_improvement": 0.28839970938861376,
+      "reward_improvement_pct": 70.15144687790318,
+      "reward_slope_per_step": 0.014827724612318932,
+      "reward_trend": "improving",
+      "lora_grad_mean": 0.9929839783244662,
+      "lora_grad_max": 0.9999998092651368,
+      "lora_grad_min": 0.9225882649421692,
+      "mm_grad_mean": 0.0,
+      "frac_zero_std_mean": 0.17777777777777778,
+      "frac_zero_std_max": 0.45,
+      "completion_length_initial": 88.3,
+      "completion_length_final": 52.8,
+      "completion_length_change": -35.5,
+      "anomalies": []
+    },
+    "grpo_structure_text_classify_qwen3_8b_it_0313_010828": {
+      "total_steps": 90,
+      "n_logged_steps": 18,
+      "initial_reward": 0.5312316522002221,
+      "final_reward": 0.7215288300067186,
+      "best_reward": 0.8567475706338883,
+      "worst_reward": 0.5066800937056541,
+      "reward_improvement": 0.19029717780649658,
+      "reward_improvement_pct": 35.82188241576638,
+      "reward_slope_per_step": 0.01550063728032898,
+      "reward_trend": "improving",
+      "lora_grad_mean": 0.9999997324413723,
+      "lora_grad_max": 0.9999998450279236,
+      "lora_grad_min": 0.9999996304512024,
+      "mm_grad_mean": 0.0,
+      "frac_zero_std_mean": 0.5763888888888888,
+      "frac_zero_std_max": 0.975,
+      "completion_length_initial": 113.725,
+      "completion_length_final": 50.275,
+      "completion_length_change": -63.449999999999996,
+      "anomalies": [
+        {
+          "type": "high_zero_std_fraction",
+          "mean": 0.5763888888888888,
+          "severity": "warning",
+          "note": "Many sample groups have identical rewards (no learning signal)"
+        }
+      ]
+    }
+  },
+  "key_findings": [
+    {
+      "finding": "MLP (ESM3) SFT achieves dramatically lower training loss than Text-only",
+      "mlp_final_loss": 0.4378,
+      "text_final_loss": 1.6432,
+      "reduction_pct": 73.4,
+      "mlp_best_eval": 0.360674113035202,
+      "text_best_eval": 1.2072135210037231,
+      "eval_reduction_pct": 70.1,
+      "significance": "p < 0.000001, Cohen's d = -19.55"
+    },
+    {
+      "finding": "GRPO structure task: Text-only SFT baseline achieves higher reward than MLP",
+      "text_best_reward": 0.8317525658918463,
+      "mlp_best_reward": 0.7743107812965045,
+      "text_better_by": 0.0574,
+      "note": "Despite MLP having much lower SFT loss, text-only achieves higher GRPO reward on structure prediction",
+      "hypothesis": "Text approach may give LLM more flexibility to reason about structure since it processes raw sequence tokens directly"
+    },
+    {
+      "finding": "Frozen multimodal GRPO experiments show comparable or better rewards than non-frozen",
+      "frozen_rewards": {
+        "grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_182035": 0.7247728348792005,
+        "grpo_structure_mlp_sft_frozen_mm_qwen3_8b_it_0312_101631": 0.7743107812965045
+      },
+      "note": "Freezing projector+pooling during GRPO preserves SFT alignment while still improving reward"
+    },
+    {
+      "finding": "Classification-based GRPO (binary format) experiments",
+      "rewards": {
+        "grpo_structure_classify_qwen3_8b_it_0312_215435": 0.5984832188912801,
+        "grpo_structure_text_classify_qwen3_8b_it_0313_010828": 0.7100486819551367
+      },
+      "note": "Uses focal weighting and binary classification format for structure quality"
+    },
+    {
+      "finding": "Perceiver experiment never completed",
+      "experiment": "sft_esm3_perceiver_combined_qwen3_8b_it_0308_165601",
+      "status": "Only empty log file exists, no checkpoints or metrics",
+      "severity": "info"
+    },
+    {
+      "finding": "Thinking-mode MLP SFT started but only ran 500 steps",
+      "steps_completed": 500,
+      "best_eval_loss": 0.6131405234336853,
+      "status": "incomplete -- lineage shows completed_at=null",
+      "note": "At 500 steps, eval_loss=0.6131 which is already competitive"
+    }
+  ],
+  "grpo_statistical_tests": {
+    "mlp_vs_text_structure_reward": {
+      "mlp_mean_reward": 0.6933740339690337,
+      "mlp_std_reward": 0.11046593370191284,
+      "mlp_n": 54,
+      "mlp_runs": [
+        "grpo_structure_mlp_sft_qwen3_8b_it_0312_011859",
+        "grpo_structure_mlp_sft_frozen_mm_qwen3_8b_it_0312_101631",
+        "grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_182035"
+      ],
+      "text_mean_reward": 0.7904325722820229,
+      "text_std_reward": 0.13899342532029316,
+      "text_n": 36,
+      "text_runs": [
+        "grpo_structure_text_sft_qwen3_8b_it_0311_142908",
+        "grpo_structure_text_sft_qwen3_8b_it_0312_032738"
+      ],
+      "t_statistic": -3.6359886494141436,
+      "p_value": 0.0004657985218357621,
+      "effect_size_cohens_d": -0.7731123071785273,
+      "significant": true,
+      "winner": "text",
+      "method": "Independent t-test on all logged reward steps"
+    },
+    "classify_vs_standard": {
+      "classify_mean_final_reward": 0.7105193382129074,
+      "standard_mean_final_reward": 0.7586680506169796,
+      "classify_experiments": [
+        "grpo_structure_classify_qwen3_8b_it_0312_215435",
+        "grpo_structure_text_classify_qwen3_8b_it_0313_010828"
+      ],
+      "standard_experiments": [
+        "grpo_structure_text_sft_qwen3_8b_it_0311_142908",
+        "grpo_structure_mlp_sft_qwen3_8b_it_0312_011859",
+        "grpo_structure_text_sft_qwen3_8b_it_0312_032738",
+        "grpo_structure_mlp_sft_frozen_mm_qwen3_8b_it_0312_101631",
+        "grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_182035"
+      ]
+    }
+  },
+  "grpo_trajectory_findings": [
+    {
+      "finding": "Best GRPO reward improvement: grpo_structure_text_sft_qwen3_8b_it_0311_142908",
+      "initial_reward": 0.3205782353878021,
+      "final_reward": 0.8223563730716705,
+      "improvement": 0.5017781376838684,
+      "improvement_pct": 156.5228335220167
+    },
+    {
+      "finding": "GRPO structure: Text (0.7904) vs MLP (0.6934), p=0.0005",
+      "winner": "text",
+      "significant": true,
+      "effect_size": -0.7731123071785273
+    },
+    {
+      "finding": "Significant completion length change in grpo_structure_text_sft_qwen3_8b_it_0312_032738",
+      "initial": 82.375,
+      "final": 50.35,
+      "change": -32.025,
+      "note": "Length increase may indicate model learning to provide more detailed responses"
+    },
+    {
+      "finding": "Significant completion length change in grpo_structure_mlp_sft_frozen_mm_qwen3_8b_it_0312_101631",
+      "initial": 82.475,
+      "final": 51.25,
+      "change": -31.224999999999994,
+      "note": "Length increase may indicate model learning to provide more detailed responses"
+    },
+    {
+      "finding": "Significant completion length change in grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_182035",
+      "initial": 86.85,
+      "final": 50.5,
+      "change": -36.349999999999994,
+      "note": "Length increase may indicate model learning to provide more detailed responses"
+    },
+    {
+      "finding": "Significant completion length change in grpo_structure_classify_qwen3_8b_it_0312_215435",
+      "initial": 88.3,
+      "final": 52.8,
+      "change": -35.5,
+      "note": "Length increase may indicate model learning to provide more detailed responses"
+    },
+    {
+      "finding": "Significant completion length change in grpo_structure_text_classify_qwen3_8b_it_0313_010828",
+      "initial": 113.725,
+      "final": 50.275,
+      "change": -63.449999999999996,
+      "note": "Length increase may indicate model learning to provide more detailed responses"
+    }
+  ]
+}

@@ -1,0 +1,234 @@
+{
+  "discovery_date": "2026-03-16",
+  "wandb_runs": {
+    "sft": [
+      {
+        "wandb_id": "nmpuhbnk",
+        "name": "sft_lora_esm3_qwen3_8b_it_0225_203237",
+        "state": "finished",
+        "approach": "esm3",
+        "has_local": false
+      },
+      {
+        "wandb_id": "0vx0aryw",
+        "name": "sft_lora_esm3_qwen3_8b_it_0226_151416",
+        "state": "finished",
+        "approach": "esm3",
+        "has_local": false
+      },
+      {
+        "wandb_id": "z9ys68kg",
+        "name": "sft_text_qwen3_8b_it_0227_145821",
+        "state": "finished",
+        "approach": "text",
+        "has_local": false
+      },
+      {
+        "wandb_id": "p4ojn2n0",
+        "name": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+        "state": "crashed",
+        "approach": "esm3",
+        "has_local": true
+      },
+      {
+        "wandb_id": "i8rebnp7",
+        "name": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+        "state": "crashed",
+        "approach": "esm3",
+        "has_local": true
+      },
+      {
+        "wandb_id": "cre9zvww",
+        "name": "sft_text_combined_qwen3_8b_it_0307_190324",
+        "state": "crashed",
+        "approach": "text",
+        "has_local": true
+      },
+      {
+        "wandb_id": "x0vwht2v",
+        "name": "sft_esm3_mlp_thinking_qwen3_8b_it_0309_115011",
+        "state": "crashed",
+        "approach": "esm3",
+        "has_local": true
+      }
+    ],
+    "rl": [
+      {
+        "wandb_id": "zbzwdgwn",
+        "name": "grpo_proteinlm_mlp_sft_qwen3_8b_it_0311_091513",
+        "state": "finished",
+        "approach": "esm3",
+        "has_local": true
+      },
+      {
+        "wandb_id": "qos63ov4",
+        "name": "grpo_structure_mlp_sft_qwen3_8b_it_0312_011859",
+        "state": "finished",
+        "approach": "esm3",
+        "has_local": true
+      },
+      {
+        "wandb_id": "1a5x1d4n",
+        "name": "grpo_structure_text_sft_qwen3_8b_it_0311_142908",
+        "state": "finished",
+        "approach": "text",
+        "has_local": true
+      },
+      {
+        "wandb_id": "vucdl1wi",
+        "name": "grpo_structure_text_sft_qwen3_8b_it_0312_032738",
+        "state": "finished",
+        "approach": "text",
+        "has_local": true
+      },
+      {
+        "wandb_id": "uj98vdwb",
+        "name": "grpo_structure_mlp_sft_frozen_mm_qwen3_8b_it_0312_101631",
+        "state": "finished",
+        "approach": "esm3",
+        "has_local": true
+      },
+      {
+        "wandb_id": "wdedndp0",
+        "name": "grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_182035",
+        "state": "finished",
+        "approach": "esm3",
+        "has_local": true
+      },
+      {
+        "wandb_id": "8dv7s69b",
+        "name": "grpo_structure_classify_qwen3_8b_it_0312_215435",
+        "state": "finished",
+        "approach": "esm3",
+        "has_local": true
+      },
+      {
+        "wandb_id": "p5gmkvex",
+        "name": "grpo_structure_text_classify_qwen3_8b_it_0313_010828",
+        "state": "finished",
+        "approach": "text",
+        "has_local": true
+      }
+    ],
+    "sft_total_in_wandb": 53,
+    "rl_total_in_wandb": 18
+  },
+  "local_experiments": {
+    "sft": [
+      {
+        "name": "sft_esm3_mlp_combined_qwen3_8b_it_0306_010408",
+        "status": "complete",
+        "approach": "esm3",
+        "projector_type": "mlp"
+      },
+      {
+        "name": "sft_text_combined_qwen3_8b_it_0307_190324",
+        "status": "complete",
+        "approach": "text",
+        "projector_type": "mlp"
+      },
+      {
+        "name": "sft_esm3_mlp_thinking_qwen3_8b_it_0309_115011",
+        "status": "partial",
+        "approach": "esm3",
+        "projector_type": "mlp",
+        "note": "crashed at step ~500"
+      },
+      {
+        "name": "sft_esm3_perceiver_combined_qwen3_8b_it_0308_165601",
+        "status": "partial",
+        "approach": "esm3",
+        "projector_type": "perceiver",
+        "note": "no training data found"
+      }
+    ],
+    "grpo": [
+      {
+        "name": "grpo_proteinlm_mlp_sft_qwen3_8b_it_0310_214259",
+        "status": "complete",
+        "approach": "esm3"
+      },
+      {
+        "name": "grpo_proteinlm_mlp_sft_qwen3_8b_it_0311_091513",
+        "status": "complete",
+        "approach": "esm3"
+      },
+      {
+        "name": "grpo_structure_mlp_sft_qwen3_8b_it_0311_101732",
+        "status": "partial",
+        "approach": "esm3"
+      },
+      {
+        "name": "grpo_structure_mlp_sft_qwen3_8b_it_0311_114205",
+        "status": "partial",
+        "approach": "esm3"
+      },
+      {
+        "name": "grpo_structure_mlp_sft_qwen3_8b_it_0311_142756",
+        "status": "partial",
+        "approach": "esm3"
+      },
+      {
+        "name": "grpo_structure_mlp_sft_qwen3_8b_it_0311_170604",
+        "status": "partial",
+        "approach": "esm3"
+      },
+      {
+        "name": "grpo_structure_mlp_sft_qwen3_8b_it_0312_011859",
+        "status": "complete",
+        "approach": "esm3"
+      },
+      {
+        "name": "grpo_structure_mlp_sft_frozen_mm_qwen3_8b_it_0312_101631",
+        "status": "complete",
+        "approach": "esm3"
+      },
+      {
+        "name": "grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_180156",
+        "status": "partial",
+        "approach": "esm3"
+      },
+      {
+        "name": "grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_182035",
+        "status": "complete",
+        "approach": "esm3"
+      },
+      {
+        "name": "grpo_structure_classify_qwen3_8b_it_0312_215435",
+        "status": "complete",
+        "approach": "esm3"
+      },
+      {
+        "name": "grpo_structure_text_sft_qwen3_8b_it_0311_142908",
+        "status": "complete",
+        "approach": "text"
+      },
+      {
+        "name": "grpo_structure_text_sft_qwen3_8b_it_0312_032738",
+        "status": "complete",
+        "approach": "text"
+      },
+      {
+        "name": "grpo_structure_text_classify_qwen3_8b_it_0313_010828",
+        "status": "complete",
+        "approach": "text"
+      }
+    ],
+    "smoke_tests": [
+      "smoke_mlp_0313",
+      "smoke_text_0313"
+    ],
+    "baselines": [
+      "base_qwen3_8b_esm3_random",
+      "base_qwen3_8b_text"
+    ]
+  },
+  "summary": {
+    "total_local_experiments": 23,
+    "total_sft_complete": 3,
+    "total_grpo_complete": 8,
+    "total_partial": 6,
+    "total_wandb_sft_runs": 53,
+    "total_wandb_rl_runs": 18
+  }
+}

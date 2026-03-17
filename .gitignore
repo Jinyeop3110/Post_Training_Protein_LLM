@@ -101,9 +101,14 @@ data/checkpoints/
 results/
 reports/
 
-# Blog: exclude stray images / large binaries
+# Blog: exclude stray images / large binaries and large data dirs
 blog/*.jpeg
 blog/*.jpg
+blog/data/03-10/
+blog/data/03-11/
+
+# ESM embedding cache (LMDB, multi-GB)
+data/esm_cache/
 
 # Logs
 logs/

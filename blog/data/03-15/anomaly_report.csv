@@ -1,0 +1,52 @@
+stage,experiment,type,severity,step,value,description
+sft,sft_esm3_mlp_combined_qwen3_8b_it_0306_010408,loss_spike,warning,10,3.2968,
+sft,sft_esm3_mlp_combined_qwen3_8b_it_0306_010408,loss_spike,warning,20,2.4675,
+sft,sft_esm3_mlp_combined_qwen3_8b_it_0306_010408,loss_spike,warning,30,2.0685,
+sft,sft_esm3_mlp_combined_qwen3_8b_it_0306_010408,loss_spike,warning,40,1.6048,
+sft,sft_esm3_mlp_combined_qwen3_8b_it_0306_010408,loss_spike,warning,50,1.2563,
+sft,sft_esm3_mlp_combined_qwen3_8b_it_0306_010408,loss_spike,warning,60,1.1294,
+sft,sft_esm3_mlp_combined_qwen3_8b_it_0306_010408,loss_spike,warning,70,1.0829,
+sft,sft_esm3_mlp_combined_qwen3_8b_it_0306_010408,loss_spike,warning,80,0.9478,
+sft,sft_esm3_mlp_combined_qwen3_8b_it_0306_010408,loss_spike,warning,90,0.9466,
+sft,sft_esm3_mlp_combined_qwen3_8b_it_0306_010408,loss_spike,warning,100,0.9421,
+sft,sft_esm3_mlp_combined_qwen3_8b_it_0306_010408,grad_spike,warning,10,7.5982,
+sft,sft_esm3_mlp_combined_qwen3_8b_it_0306_010408,grad_spike,warning,20,4.5789,
+sft,sft_esm3_mlp_combined_qwen3_8b_it_0306_010408,grad_spike,warning,30,2.932,
+sft,sft_esm3_mlp_combined_qwen3_8b_it_0306_010408,grad_spike,warning,40,1.9611,
+sft,sft_esm3_mlp_combined_qwen3_8b_it_0306_010408,grad_spike,warning,70,2.0976,
+sft,sft_text_combined_qwen3_8b_it_0307_190324,loss_spike,warning,10,4.0729,
+sft,sft_text_combined_qwen3_8b_it_0307_190324,loss_spike,warning,20,3.7479,
+sft,sft_text_combined_qwen3_8b_it_0307_190324,loss_spike,warning,30,3.3791,
+sft,sft_text_combined_qwen3_8b_it_0307_190324,loss_spike,warning,40,2.9037,
+sft,sft_text_combined_qwen3_8b_it_0307_190324,loss_spike,warning,50,2.7213,
+sft,sft_text_combined_qwen3_8b_it_0307_190324,loss_spike,warning,60,2.7255,
+sft,sft_text_combined_qwen3_8b_it_0307_190324,loss_spike,warning,70,2.6351,
+sft,sft_text_combined_qwen3_8b_it_0307_190324,loss_spike,warning,80,2.5764,
+sft,sft_text_combined_qwen3_8b_it_0307_190324,loss_spike,warning,90,2.5944,
+sft,sft_text_combined_qwen3_8b_it_0307_190324,grad_spike,warning,10,7.1699,
+sft,sft_text_combined_qwen3_8b_it_0307_190324,grad_spike,warning,20,6.1873,
+sft,sft_text_combined_qwen3_8b_it_0307_190324,grad_spike,warning,8550,4.3428,
+sft,sft_text_combined_qwen3_8b_it_0307_190324,grad_spike,warning,9250,4.7877,
+sft,sft_esm3_mlp_thinking_qwen3_8b_it_0309_115011,loss_spike,warning,10,2.6295,
+sft,sft_esm3_mlp_thinking_qwen3_8b_it_0309_115011,grad_spike,warning,10,4.9666,
+sft,sft_esm3_perceiver_combined_qwen3_8b_it_0308_165601,no_training_data,critical,,,"Run appears to have failed at startup - empty train.log, no checkpoints"
+grpo,grpo_proteinlm_mlp_sft_qwen3_8b_it_0310_214259,zero_mm_gradients,info,,,Multimodal gradients are 0.0 (may be frozen)
+grpo,grpo_proteinlm_mlp_sft_qwen3_8b_it_0311_091513,zero_mm_gradients,info,,,Multimodal gradients are 0.0 (may be frozen)
+grpo,grpo_structure_mlp_sft_qwen3_8b_it_0311_101732,zero_lora_gradients,critical,,,LoRA gradients are 0.0 throughout training
+grpo,grpo_structure_mlp_sft_qwen3_8b_it_0311_114205,loss_spike,warning,130,-0.0197,
+grpo,grpo_structure_mlp_sft_qwen3_8b_it_0311_142756,zero_lora_gradients,critical,,,LoRA gradients are 0.0 throughout training
+grpo,grpo_structure_mlp_sft_qwen3_8b_it_0311_170604,no_step_data,critical,,,Could not parse step-level data from train.log
+grpo,grpo_structure_mlp_sft_qwen3_8b_it_0312_011859,zero_lora_gradients,critical,,,LoRA gradients are 0.0 throughout training
+grpo,grpo_structure_mlp_sft_qwen3_8b_it_0312_011859,reward_decline,warning,,,Reward declining in last 30% of training (slope=-0.012723)
+grpo,grpo_structure_text_sft_qwen3_8b_it_0311_142908,zero_mm_gradients,info,,,Multimodal gradients are 0.0 (may be frozen)
+grpo,grpo_structure_text_sft_qwen3_8b_it_0311_142908,reward_decline,warning,,,Reward declining in last 30% of training (slope=-0.021386)
+grpo,grpo_structure_text_sft_qwen3_8b_it_0312_032738,zero_mm_gradients,info,,,Multimodal gradients are 0.0 (may be frozen)
+grpo,grpo_structure_text_sft_qwen3_8b_it_0312_032738,reward_decline,warning,,,Reward declining in last 30% of training (slope=-0.020040)
+grpo,grpo_structure_mlp_sft_frozen_mm_qwen3_8b_it_0312_101631,zero_mm_gradients,info,,,Multimodal gradients are 0.0 (may be frozen)
+grpo,grpo_structure_mlp_sft_frozen_mm_qwen3_8b_it_0312_101631,reward_decline,warning,,,Reward declining in last 30% of training (slope=-0.024543)
+grpo,grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_180156,zero_mm_gradients,info,,,Multimodal gradients are 0.0 (may be frozen)
+grpo,grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_182035,zero_mm_gradients,info,,,Multimodal gradients are 0.0 (may be frozen)
+grpo,grpo_structure_classify_qwen3_8b_it_0312_215435,zero_mm_gradients,info,,,Multimodal gradients are 0.0 (may be frozen)
+grpo,grpo_structure_text_classify_qwen3_8b_it_0313_010828,zero_mm_gradients,info,,,Multimodal gradients are 0.0 (may be frozen)
+grpo,grpo_structure_text_classify_qwen3_8b_it_0313_010828,reward_decline,warning,,,Reward declining in last 30% of training (slope=-0.015543)
+grpo,grpo_structure_text_classify_qwen3_8b_it_0313_010828,loss_spike,warning,5,-1.7049,

@@ -1,0 +1,14 @@
+experiment,approach,task,config_variant,completed,total_steps,initial_reward,final_reward,best_reward,reward_improvement_pct,eval_final_reward,eval_best_reward,initial_loss,final_loss
+grpo_proteinlm_mlp_sft_qwen3_8b_it_0310_214259,esm3,proteinlm,mlp_sft,True,35,0.7406,0.6072,0.7598,-18.0,0.4681,0.4681,-0.0246,0.0162
+grpo_proteinlm_mlp_sft_qwen3_8b_it_0311_091513,esm3,proteinlm,mlp_sft,True,130,0.7278,0.6706,0.774,-7.9,0.4681,0.4894,-0.0344,-0.0076
+grpo_structure_classify_qwen3_8b_it_0312_215435,esm3,structure,classify,True,90,0.4111,0.6995,0.7076,70.2,0.6811,0.6811,-0.7253,-0.3492
+grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_180156,esm3,structure,frozen_mm_focal,False,5,0.5347,0.5347,0.5347,0.0,,,-0.6016,-0.6016
+grpo_structure_mlp_sft_frozen_mm_focal_qwen3_8b_it_0312_182035,esm3,structure,frozen_mm_focal,True,90,0.5132,0.8244,0.8344,60.6,0.7111,0.7111,-0.46,-0.0504
+grpo_structure_mlp_sft_frozen_mm_qwen3_8b_it_0312_101631,esm3,structure,frozen_mm,True,90,0.5559,0.7689,0.9393,38.3,0.764,0.7653,-0.6835,0.0001
+grpo_structure_mlp_sft_qwen3_8b_it_0311_101732,esm3,structure,mlp_sft,False,35,0.083,0.0802,0.0838,-3.4,0.296,0.296,5.8323,5.6534
+grpo_structure_mlp_sft_qwen3_8b_it_0311_114205,esm3,structure,mlp_sft,False,150,0.6336,0.8337,0.9098,31.6,0.324,0.4188,0.0041,-0.0078
+grpo_structure_mlp_sft_qwen3_8b_it_0311_142756,esm3,structure,mlp_sft,False,40,0.4396,0.4338,0.479,-1.3,0.398,0.398,-0.128,-0.3671
+grpo_structure_mlp_sft_qwen3_8b_it_0312_011859,esm3,structure,mlp_sft,True,90,0.5184,0.5333,0.6205,2.9,0.5262,0.5439,-0.5743,-1.2092
+grpo_structure_text_classify_qwen3_8b_it_0313_010828,text,structure,classify,True,90,0.5312,0.7215,0.8567,35.8,0.8076,0.8076,-1.7049,0.0007
+grpo_structure_text_sft_qwen3_8b_it_0311_142908,text,structure,text_sft,True,90,0.3206,0.8224,0.9535,156.5,0.8463,0.8463,0.3444,0.0008
+grpo_structure_text_sft_qwen3_8b_it_0312_032738,text,structure,text_sft,True,90,0.628,0.8444,0.9619,34.5,0.8444,0.8444,-0.6533,0.0104
