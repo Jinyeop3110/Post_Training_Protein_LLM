@@ -1,0 +1,62 @@
+# @package _global_
+
+# GRPO: Fold Classification via CATH (Text SFT -> GRPO)
+# Hierarchical 4-level classification with partial credit
+# Reward: 0.25 per correct CATH level (C, A, T, H)
+#
+# Usage:
+#   python scripts/train.py main_RL=grpo_fold_classification
+
+defaults:
+  - override /model: qwen3_8b
+  - override /data: fold_classification
+  - override /training: grpo
+
+approach: text
+experiment_name: grpo_fold_class_${model.name}_${now:%m%d_%H%M%S}
+
+# Chain from text SFT
+parent_experiment: sft_text_combined_qwen3_8b_it_0307_190324
+
+data:
+  task: fold_classification
+  processing:
+    max_protein_length: 512
+
+training:
+  lr: 5e-6
+  projector_lr: 2.5e-5
+  batch_size: 2
+  gradient_accumulation_steps: 4
+  gradient_checkpointing: true
+  epochs: 1
+  warmup_steps: 10
+  max_grad_norm: 1.0
+
+  grpo:
+    group_size: 8
+    temperature: 0.9
+    use_kl_penalty: false
+    normalize_advantages: false
+    focal_enabled: false  # CATH classes are more balanced
+
+  rollout:
+    max_tokens: 256  # CATH classification needs more space
+    top_p: 0.95
+    do_sample: true
+    enable_thinking: false
+
+  save_steps: 25
+  eval_steps: 25
+  logging_steps: 5
+
+  fsdp:
+    enabled: false
+
+  wandb:
+    tags:
+      - grpo
+      - fold_classification
+      - cath
+      - text_sft
+      - ${model.name}

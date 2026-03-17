@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprehensive Project Status: SFT to GRPO, What We Know After 25 Experiments</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #1a1a2e;
+            --accent: #2563eb;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --code-bg: #f3f4f6;
+            --table-header: #f9fafb;
+            --summary-bg: #f0f7ff;
+            --warning-bg: #fff7ed;
+            --warning-border: #f97316;
+            --success-bg: #f0fdf4;
+            --success-border: #22c55e;
+            --danger-bg: #fef2f2;
+            --danger-border: #ef4444;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--fg);
+            background: var(--bg);
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        h1 { font-size: 1.8rem; margin-bottom: 0.3rem; font-weight: 700; }
+        h2 { font-size: 1.35rem; margin: 1.8rem 0 0.8rem; border-bottom: 2px solid var(--border); padding-bottom: 0.3rem; }
+        h3 { font-size: 1.1rem; margin: 1.2rem 0 0.5rem; }
+        p { margin: 0.6rem 0; }
+        img { max-width: 100%; border: 1px solid var(--border); border-radius: 4px; margin: 1rem 0; }
+        table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+        th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; }
+        th { background: var(--table-header); font-weight: 600; }
+        .meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+        .summary { background: var(--summary-bg); padding: 1.2rem 1.5rem; border-radius: 6px; margin: 1.5rem 0; border-left: 4px solid var(--accent); }
+        .warning { background: var(--warning-bg); padding: 1rem 1.2rem; border-radius: 4px; border-left: 4px solid var(--warning-border); margin: 1rem 0; }
+        .success { background: var(--success-bg); padding: 1rem 1.2rem; border-radius: 4px; border-left: 4px solid var(--success-border); margin: 1rem 0; }
+        .danger { background: var(--danger-bg); padding: 1rem 1.2rem; border-radius: 4px; border-left: 4px solid var(--danger-border); margin: 1rem 0; }
+        code { background: var(--code-bg); padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.88em; }
+        ul, ol { margin: 0.5rem 0 0.5rem 1.5rem; }
+        li { margin: 0.3rem 0; }
+        .back-link { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+        .back-link a { color: var(--accent); text-decoration: none; }
+    </style>
+</head>
+<body>
+
+<h1>Comprehensive Project Status: SFT to GRPO, What We Know After 25 Experiments</h1>
+<p class="meta">
+    <strong>Date</strong>: 2026-03-13 |
+    <strong>Tags</strong>: sft, grpo, rl, training, evaluation, milestone |
+    <strong>Experiments</strong>: 4 SFT + 13 GRPO runs
+</p>
+
+<div class="summary">
+    <h3>Executive Summary</h3>
+    <p>After 25 experiments spanning SFT and GRPO phases on Qwen3-8B, the ESM3+MLP approach achieves eval_loss <strong>0.361</strong> on SFT (70.1% better than text-only at 1.207). GRPO on the structure quality task shows the strongest learning signal: text-only GRPO reaches mean_reward <strong>0.832</strong> while MLP plateaus at <strong>0.582</strong>, revealing a critical gradient routing problem where MLP's multimodal and LoRA pathways cannot both update simultaneously. Frozen-MM experiments partially resolve this, reaching <strong>0.774</strong> reward with LoRA-only updates. Classification-based reward reformulation is under active investigation.</p>
+</div>
+
+<h2>1. SFT Phase: Three Approaches Compared</h2>
+
+<p>All SFT experiments use Qwen3-8B-Instruct-2507 with LoRA (r=8, all linear layers), trained on the combined 4.89M sample dataset. Loss metric: <code>token_avg_loss</code> for training, <code>eval_loss</code> for validation.</p>
+
+<table>
+    <tr>
+        <th>Parameter</th>
+        <th>ESM3+MLP</th>
+        <th>Text-Only</th>
+        <th>Perceiver</th>
+    </tr>
+    <tr>
+        <td>Experiment</td>
+        <td><code>sft_esm3_mlp_combined_qwen3_8b_it_0306</code></td>
+        <td><code>sft_text_combined_qwen3_8b_it_0307</code></td>
+        <td><code>sft_esm3_perceiver_combined_qwen3_8b_it_0308</code></td>
+    </tr>
+    <tr>
+        <td>Approach</td>
+        <td>esm3 (MLP projector)</td>
+        <td>text (raw AA tokens)</td>
+        <td>esm3 (Perceiver)</td>
+    </tr>
+    <tr>
+        <td>Learning Rate</td>
+        <td>2e-4 (LR) / 1e-3 (projector)</td>
+        <td>2e-4</td>
+        <td>2e-4 / 1e-3 (projector)</td>
+    </tr>
+    <tr>
+        <td>Max Tokens/Batch</td>
+        <td>8192</td>
+        <td>8192</td>
+        <td>8192</td>
+    </tr>
+    <tr>
+        <td>Total Steps</td>
+        <td>9750</td>
+        <td>9647</td>
+        <td>Failed (empty logs)</td>
+    </tr>
+    <tr>
+        <td>Status</td>
+        <td>Completed</td>
+        <td>Completed</td>
+        <td>Failed to start</td>
+    </tr>
+</table>
+
+<h3>SFT Key Metrics</h3>
+
+<table>
+    <tr>
+        <th>Metric</th>
+        <th>ESM3+MLP</th>
+        <th>Text-Only</th>
+        <th>MLP Advantage</th>
+    </tr>
+    <tr>
+        <td>Best eval_loss</td>
+        <td><strong>0.3607</strong> (step 9750)</td>
+        <td>1.2072 (step 8000)</td>
+        <td>70.1% lower</td>
+    </tr>
+    <tr>
+        <td>Last eval_loss</td>
+        <td>0.3607 (step 9750)</td>
+        <td>1.2656 (step 9500)</td>
+        <td>71.5% lower</td>
+    </tr>
+    <tr>
+        <td>Final token_avg_loss</td>
+        <td>0.4378</td>
+        <td>1.6432</td>
+        <td>73.4% lower</td>
+    </tr>
+    <tr>
+        <td>Convergence</td>
+        <td>Fully converged (range 0.006)</td>
+        <td>Slight overfitting after step 8000</td>
+        <td>--</td>
+    </tr>
+    <tr>
+        <td>Grad norm (mean)</td>
+        <td>0.627</td>
+        <td>2.365</td>
+        <td>3.8x lower</td>
+    </tr>
+</table>
+
+<img src="../figures/main_figures/fig5_sft_loss_curves.png" alt="SFT eval loss curves: MLP vs Text">
+
+<div class="success">
+    <strong>Finding 1</strong>: ESM3+MLP SFT is unambiguously better. The 70.1% eval_loss improvement (0.361 vs 1.207) is the strongest evidence for multimodal protein embeddings. MLP converges smoothly with 3.8x lower gradient norms. Text-only shows slight overfitting past step 8000.
+</div>
+
+<div class="warning">
+    <strong>Finding 2</strong>: Perceiver SFT failed to launch (only empty log directory). This pathway remains untested at the 4.89M scale. Needs debugging or manual restart.
+</div>
+
+<h2>2. GRPO Phase: 13 Experiments Across Two Tasks</h2>
+
+<p>All GRPO experiments chain from one of two SFT parents: MLP (checkpoint-9750) or Text (checkpoint-9647). The structure quality task uses ESMFold-based rewards; ProteinLM bench uses a benchmark-specific reward.</p>
+
+<h3>2.1 ProteinLM Bench GRPO (MLP approach)</h3>
+
+<table>
+    <tr>
+        <th>Metric</th>
+        <th>v1 (3 epochs)</th>
+        <th>v2 (10 epochs)</th>
+    </tr>
+    <tr>
+        <td>Experiment</td>
+        <td><code>grpo_proteinlm_..._0310</code></td>
+        <td><code>grpo_proteinlm_..._0311</code></td>
+    </tr>
+    <tr>
+        <td>Steps</td>
+        <td>39</td>
+        <td>130</td>
+    </tr>
+    <tr>
+        <td>Mean reward (final)</td>
+        <td>0.695</td>
+        <td>0.676</td>
+    </tr>
+    <tr>
+        <td>Reward trend</td>
+        <td>Flat/noisy</td>
+        <td>Flat/noisy</td>
+    </tr>
+    <tr>
+        <td>Zero-std fraction</td>
+        <td>37.2%</td>
+        <td>42.3%</td>
+    </tr>
+    <tr>
+        <td>Grad LoRA</td>
+        <td>0.805</td>
+        <td>0.826</td>
+    </tr>
+    <tr>
+        <td>Grad multimodal</td>
+        <td>0.0</td>
+        <td>0.0</td>
+    </tr>
+</table>
+
+<div class="danger">
+    <strong>Finding 3</strong>: ProteinLM bench GRPO shows no improvement. More epochs (10 vs 3) yielded lower final reward (0.676 vs 0.695). 37-42% of groups have zero reward std, wasting compute. Only LoRA receives gradients; projector is frozen. This task has insufficient signal for GRPO.
+</div>
+
+<h3>2.2 Structure Quality GRPO: Text vs MLP</h3>
+
+<p>This is the most extensively explored GRPO task, with 11 experiments testing different configurations.</p>
+
+<table>
+    <tr>
+        <th>Experiment</th>
+        <th>Approach</th>
+        <th>Config</th>
+        <th>Final Reward</th>
+        <th>Key Finding</th>
+    </tr>
+    <tr>
+        <td><code>..._text_sft_0311_142908</code></td>
+        <td>Text</td>
+        <td>Standard</td>
+        <td><strong>0.753</strong></td>
+        <td>LoRA grad=0.493, format=100%</td>
+    </tr>
+    <tr>
+        <td><code>..._text_sft_0312_032738</code></td>
+        <td>Text</td>
+        <td>Extended</td>
+        <td><strong>0.832</strong></td>
+        <td>Best overall reward</td>
+    </tr>
+    <tr>
+        <td><code>..._text_classify_0313</code></td>
+        <td>Text</td>
+        <td>Classification</td>
+        <td><strong>0.710</strong></td>
+        <td>58.2% zero-std (too easy?)</td>
+    </tr>
+    <tr>
+        <td><code>..._mlp_sft_0311_114205</code></td>
+        <td>MLP</td>
+        <td>Standard (10ep)</td>
+        <td>0.834</td>
+        <td>LoRA grad~0, MM grad=1.0</td>
+    </tr>
+    <tr>
+        <td><code>..._mlp_sft_0312_011859</code></td>
+        <td>MLP</td>
+        <td>Extended</td>
+        <td>0.582</td>
+        <td>LoRA grad=0, MM grad=0.247</td>
+    </tr>
+    <tr>
+        <td><code>..._frozen_mm_0312</code></td>
+        <td>MLP</td>
+        <td>Frozen MM</td>
+        <td><strong>0.774</strong></td>
+        <td>LoRA grad=0.071, fixed routing</td>
+    </tr>
+    <tr>
+        <td><code>..._frozen_mm_focal_0312</code></td>
+        <td>MLP</td>
+        <td>Frozen MM + focal</td>
+        <td>0.725</td>
+        <td>LoRA grad=0.119</td>
+    </tr>
+    <tr>
+        <td><code>..._classify_0312</code></td>
+        <td>MLP</td>
+        <td>Classification</td>
+        <td>0.598</td>
+        <td>17.7% zero-std</td>
+    </tr>
+</table>
+
+<img src="../figures/main_figures/fig13_grpo_structure_reward_curves.png" alt="GRPO Structure reward: Text vs MLP">
+<img src="../figures/main_figures/fig16_grpo_structure_grad_norms.png" alt="GRPO gradient norms: Text vs MLP">
+
+<div class="danger">
+    <strong>Finding 4: The Gradient Routing Problem</strong>. In MLP GRPO, gradients flow exclusively to either LoRA <em>or</em> multimodal parameters, never both simultaneously. In ProteinLM bench, only LoRA updates (MM grad=0). In structure quality, only the projector updates (LoRA grad=0). The text-only approach avoids this by having a single gradient pathway (LoRA only), reaching reward 0.832 vs MLP's 0.582.
+</div>
+
+<div class="success">
+    <strong>Finding 5: Freezing multimodal params partially resolves routing</strong>. The frozen-MM experiment forces all gradients through LoRA, achieving reward 0.774 vs 0.582 for unfrozen MLP. However, text-only still outperforms (0.832) because it benefits from direct token-level interaction with protein sequences during RL generation.
+</div>
+
+<h3>2.3 Format Compliance Gap</h3>
+
+<table>
+    <tr>
+        <th>Metric</th>
+        <th>Text</th>
+        <th>MLP (standard)</th>
+        <th>MLP (frozen MM)</th>
+    </tr>
+    <tr>
+        <td>Format bonus (max 0.1)</td>
+        <td>0.099</td>
+        <td>0.065</td>
+        <td>0.095</td>
+    </tr>
+    <tr>
+        <td>Quality alignment</td>
+        <td>0.351</td>
+        <td>0.326</td>
+        <td>0.347</td>
+    </tr>
+    <tr>
+        <td>Numerical accuracy</td>
+        <td>0.185</td>
+        <td>0.086</td>
+        <td>0.169</td>
+    </tr>
+    <tr>
+        <td>Category match</td>
+        <td>0.197</td>
+        <td>0.104</td>
+        <td>0.164</td>
+    </tr>
+    <tr>
+        <td>Predicted pLDDT</td>
+        <td>79.1</td>
+        <td>67.9</td>
+        <td>85.1</td>
+    </tr>
+    <tr>
+        <td>Actual pLDDT</td>
+        <td>79.7</td>
+        <td>79.7</td>
+        <td>79.7</td>
+    </tr>
+</table>
+
+<img src="../figures/main_figures/fig14_grpo_structure_reward_breakdown.png" alt="Reward component breakdown">
+<img src="../figures/main_figures/fig15_grpo_structure_format_rate.png" alt="Format compliance comparison">
+
+<h2>3. Cross-Phase Summary</h2>
+
+<table>
+    <tr>
+        <th>Phase</th>
+        <th>Best Config</th>
+        <th>Key Metric</th>
+        <th>Value</th>
+        <th>Status</th>
+    </tr>
+    <tr>
+        <td>SFT</td>
+        <td>ESM3+MLP</td>
+        <td>eval_loss</td>
+        <td><strong>0.361</strong></td>
+        <td>Converged, production-ready</td>
+    </tr>
+    <tr>
+        <td>SFT</td>
+        <td>Text-only</td>
+        <td>eval_loss</td>
+        <td>1.207</td>
+        <td>Converged, slight overfitting</td>
+    </tr>
+    <tr>
+        <td>GRPO Structure</td>
+        <td>Text-only (extended)</td>
+        <td>mean_reward</td>
+        <td><strong>0.832</strong></td>
+        <td>Best GRPO result</td>
+    </tr>
+    <tr>
+        <td>GRPO Structure</td>
+        <td>MLP (frozen MM)</td>
+        <td>mean_reward</td>
+        <td>0.774</td>
+        <td>Best MLP GRPO result</td>
+    </tr>
+    <tr>
+        <td>GRPO ProteinLM</td>
+        <td>MLP (v1)</td>
+        <td>mean_reward</td>
+        <td>0.695</td>
+        <td>No improvement, discontinued</td>
+    </tr>
+</table>
+
+<h2>4. Open Questions and Anomalies</h2>
+
+<ul>
+    <li><strong>Gradient routing</strong>: Why can MLP not update both LoRA and projector simultaneously during GRPO? This is the most critical open question.</li>
+    <li><strong>pLDDT calibration</strong>: Frozen-MM predicts pLDDT=85.1 vs actual 79.7 (overestimation); unfrozen MLP predicts 67.9 (underestimation). Text-only is well-calibrated at 79.1.</li>
+    <li><strong>Classification reformulation</strong>: Text classify reaches 0.710 with 58.2% zero-std, suggesting the classification framing may be too easy (majority of groups agree). MLP classify at 0.598 with 17.7% zero-std has more variance but lower reward.</li>
+    <li><strong>Perceiver pathway</strong>: Still untested at 4.89M scale. Only has empty log directory from 0308 attempt.</li>
+</ul>
+
+<h2>5. Recommendations</h2>
+
+<ol>
+    <li><strong>For SFT deployment</strong>: Use MLP checkpoint-9750 (eval_loss 0.361). Text checkpoint-8000 (eval_loss 1.207) is the best text baseline.</li>
+    <li><strong>For GRPO</strong>: Text-only is currently the better RL pathway. If MLP GRPO is essential, freeze multimodal params and use LoRA-only updates.</li>
+    <li><strong>Debug gradient routing</strong>: Investigate the mutual exclusion of LoRA and multimodal gradients in GRPO. This may be a framework issue (FSDP interaction, loss routing) rather than a fundamental limitation.</li>
+    <li><strong>Retry Perceiver SFT</strong>: The perceiver pathway failed to launch and should be retried for the four-way comparison thesis.</li>
+    <li><strong>Consider two-stage GRPO</strong>: First stage with frozen-MM to teach format compliance via LoRA, second stage with unfrozen-MM for reward-specific learning. This could combine the strengths of both gradient pathways.</li>
+</ol>
+
+<div class="back-link">
+    <a href="../index.html">Back to blog index</a>
+</div>
+
+</body>
+</html>

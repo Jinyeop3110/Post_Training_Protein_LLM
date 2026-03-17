@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GRPO Multi-Task Analysis: ProteinLM-Bench vs Structure Quality</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #1a1a2e;
+      --accent: #2563eb;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --code-bg: #f3f4f6;
+      --table-header: #f9fafb;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.7;
+      color: var(--fg);
+      background: var(--bg);
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+    h1 { font-size: 1.7rem; margin-bottom: 0.3rem; }
+    h2 { font-size: 1.3rem; margin: 1.5rem 0 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; }
+    h3 { font-size: 1.1rem; margin: 1rem 0 0.4rem; }
+    img { max-width: 100%; border-radius: 4px; margin: 0.5rem 0; }
+    table { border-collapse: collapse; width: 100%; margin: 0.8rem 0; font-size: 0.9rem; }
+    th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
+    th { background: var(--table-header); font-weight: 600; }
+    code { background: var(--code-bg); padding: 2px 5px; border-radius: 3px; font-size: 0.85rem; }
+    .meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+    .summary { background: #f0f7ff; padding: 15px; border-radius: 5px; margin: 1rem 0; border-left: 4px solid var(--accent); }
+    .warning { background: #fff7ed; padding: 12px; border-radius: 5px; margin: 0.8rem 0; border-left: 4px solid #f97316; }
+    .success { background: #f0fdf4; padding: 12px; border-radius: 5px; margin: 0.8rem 0; border-left: 4px solid #22c55e; }
+    .tag { display: inline-block; background: var(--code-bg); color: var(--accent); padding: 0.1rem 0.5rem; border-radius: 1rem; font-size: 0.75rem; margin-right: 0.3rem; }
+    ul, ol { margin-left: 1.5rem; margin-bottom: 0.5rem; }
+    li { margin-bottom: 0.3rem; }
+    p { margin-bottom: 0.6rem; }
+  </style>
+</head>
+<body>
+
+<h1>GRPO Multi-Task Analysis: ProteinLM-Bench vs Structure Quality</h1>
+<p class="meta">
+  <strong>Date</strong>: 2026-03-11 |
+  <strong>Tags</strong>: <span class="tag">grpo</span><span class="tag">rl</span><span class="tag">training</span><span class="tag">milestone</span><br>
+  <strong>Parent SFT</strong>: <code>sft_esm3_mlp_combined_qwen3_8b_it_0306</code> (checkpoint-9750, eval_loss=0.361)
+</p>
+
+<div class="summary">
+  <h2 style="border:none; margin-top:0; padding:0;">Executive Summary</h2>
+  <p>Five GRPO runs completed from the MLP SFT checkpoint across two tasks. <strong>ProteinLM-Bench</strong> (v1: mean_reward=0.695, v2: mean_reward=0.676) shows consistent reward but suffers from 37-42% zero-std batches and very short completions (9-13 tokens). <strong>Structure Quality</strong> (mean_reward=0.780, pLDDT=80.19) achieves higher absolute reward with 0% zero-std batches, but LoRA grad norms are near-zero (4.9e-10), indicating the model is not actually learning from the structure signal. Both tasks reveal distinct failure modes that need targeted fixes before GRPO can improve over SFT.</p>
+</div>
+
+<h2>Pipeline Overview</h2>
+<p>All GRPO runs chain from the same parent:</p>
+<ul>
+  <li><strong>Parent SFT</strong>: <code>sft_esm3_mlp_combined_qwen3_8b_it_0306_010408</code></li>
+  <li><strong>Parent checkpoint</strong>: checkpoint-9750 (eval_loss=0.361, 9750 steps, 1.03 epochs)</li>
+  <li><strong>Architecture</strong>: ESM-3 (frozen) + MLP projector + Qwen3-8B (LoRA r=8)</li>
+  <li><strong>GRPO config</strong>: lr=2e-6, projector_lr=1e-5, clip_range=0.2, temperature=0.9, KL disabled</li>
+</ul>
+
+<h2>Experiment Inventory</h2>
+<table>
+  <tr>
+    <th>Experiment</th>
+    <th>Task</th>
+    <th>Steps</th>
+    <th>Epochs</th>
+    <th>Status</th>
+    <th>Group Size</th>
+    <th>Batch</th>
+  </tr>
+  <tr>
+    <td><code>grpo_proteinlm_..._0310_214259</code></td>
+    <td>proteinlm_bench</td>
+    <td>39</td>
+    <td>2</td>
+    <td>Complete</td>
+    <td>8</td>
+    <td>4</td>
+  </tr>
+  <tr>
+    <td><code>grpo_proteinlm_..._0311_091513</code></td>
+    <td>proteinlm_bench</td>
+    <td>130</td>
+    <td>9</td>
+    <td>Complete</td>
+    <td>8</td>
+    <td>4</td>
+  </tr>
+  <tr>
+    <td><code>grpo_structure_..._0311_114205</code></td>
+    <td>esmfold</td>
+    <td>100</td>
+    <td>1</td>
+    <td>Complete</td>
+    <td>16</td>
+    <td>2</td>
+  </tr>
+  <tr>
+    <td><code>grpo_structure_..._0311_101732</code></td>
+    <td>esmfold</td>
+    <td>--</td>
+    <td>--</td>
+    <td>Incomplete (no metrics)</td>
+    <td>--</td>
+    <td>--</td>
+  </tr>
+  <tr>
+    <td><code>grpo_structure_..._0311_142756</code></td>
+    <td>esmfold</td>
+    <td>--</td>
+    <td>--</td>
+    <td>Incomplete (no metrics)</td>
+    <td>--</td>
+    <td>--</td>
+  </tr>
+</table>
+<p>Two structure runs (0311_101732, 0311_142756) have no metrics.json and likely crashed early. Analysis focuses on the three completed runs.</p>
+
+<h2>Task 1: ProteinLM-Bench (Index Prediction)</h2>
+
+<h3>Reward Breakdown</h3>
+<table>
+  <tr>
+    <th>Metric</th>
+    <th>v1 (0310, 39 steps)</th>
+    <th>v2 (0311, 130 steps)</th>
+    <th>Delta</th>
+  </tr>
+  <tr><td>mean_reward</td><td>0.695</td><td>0.676</td><td>-0.019</td></tr>
+  <tr><td>max_reward</td><td>1.086</td><td>1.085</td><td>-0.001</td></tr>
+  <tr><td>min_reward</td><td>0.082</td><td>0.096</td><td>+0.014</td></tr>
+  <tr><td>reward_std</td><td>0.428</td><td>0.431</td><td>+0.003</td></tr>
+  <tr><td>correct_index</td><td>2.230</td><td>2.336</td><td>+0.106</td></tr>
+  <tr><td>predicted_index</td><td>2.242</td><td>2.163</td><td>-0.079</td></tr>
+  <tr><td>format_bonus</td><td>0.069</td><td>0.076</td><td>+0.007</td></tr>
+  <tr><td>pg_loss</td><td>-0.006</td><td>-0.005</td><td>+0.001</td></tr>
+</table>
+
+<h3>Diagnostics</h3>
+<table>
+  <tr>
+    <th>Diagnostic</th>
+    <th>v1 (0310)</th>
+    <th>v2 (0311)</th>
+  </tr>
+  <tr><td>completion_mean_length</td><td>8.95 tokens</td><td>9.25 tokens</td></tr>
+  <tr><td>completion_max_length</td><td>11.64 tokens</td><td>12.96 tokens</td></tr>
+  <tr><td>frac_reward_zero_std</td><td>37.2%</td><td>42.3%</td></tr>
+  <tr><td>grad_norm_lora</td><td>0.386</td><td>0.404</td></tr>
+  <tr><td>grad_norm_multimodal</td><td>0.0</td><td>0.0</td></tr>
+  <tr><td>kl_penalty</td><td>0.0</td><td>0.0</td></tr>
+  <tr><td>step_time</td><td>3.45s</td><td>3.73s</td></tr>
+</table>
+
+<div class="warning">
+  <strong>Key Issue: Zero-std fraction rising.</strong> 37.2% (v1) to 42.3% (v2) of batches have identical rewards within a group, providing zero learning signal. With group_size=8 and short completions (~9 tokens), the model collapses to a narrow set of nearly-identical outputs per prompt. Running 9 epochs (v2) worsened this compared to 2 epochs (v1).
+</div>
+
+<h3>Interpretation</h3>
+<ul>
+  <li><strong>Mean reward is stable at ~0.68-0.69</strong> across both runs, suggesting the SFT checkpoint already produces reasonable index predictions.</li>
+  <li><strong>Completions are extremely short</strong> (9-13 tokens). The model likely outputs only a number or short phrase and stops. With max_new_tokens=128, this means early EOS.</li>
+  <li><strong>correct_index improved</strong> from 2.23 to 2.34, but predicted_index dropped from 2.24 to 2.16, meaning the model got slightly worse at matching the correct index while the average correct index shifted.</li>
+  <li><strong>Format bonus is low</strong> (7-8%), indicating most completions fail the format check.</li>
+  <li><strong>LoRA gradients are nonzero</strong> (0.39-0.40), so the model IS receiving gradient signal, unlike the structure task.</li>
+</ul>
+
+<h2>Task 2: Structure Quality (ESMFold pLDDT)</h2>
+
+<h3>Reward Breakdown</h3>
+<table>
+  <tr>
+    <th>Metric</th>
+    <th>Value (0311_114205)</th>
+  </tr>
+  <tr><td>mean_reward</td><td>0.780</td></tr>
+  <tr><td>max_reward</td><td>0.936</td></tr>
+  <tr><td>min_reward</td><td>0.523</td></tr>
+  <tr><td>reward_std</td><td>0.154</td></tr>
+  <tr><td>pLDDT (actual)</td><td>80.19</td></tr>
+  <tr><td>predicted_plddt</td><td>91.40</td></tr>
+  <tr><td>quality_alignment</td><td>0.354</td></tr>
+  <tr><td>numerical_accuracy</td><td>0.162</td></tr>
+  <tr><td>category_match</td><td>0.163</td></tr>
+  <tr><td>format_bonus</td><td>0.100</td></tr>
+  <tr><td>pg_loss</td><td>-0.008</td></tr>
+</table>
+
+<h3>Diagnostics</h3>
+<table>
+  <tr>
+    <th>Diagnostic</th>
+    <th>Value</th>
+  </tr>
+  <tr><td>completion_mean_length</td><td>32.0 tokens (fixed)</td></tr>
+  <tr><td>completion_max_length</td><td>32.0 tokens (fixed)</td></tr>
+  <tr><td>frac_reward_zero_std</td><td>0.0% (good)</td></tr>
+  <tr><td>grad_norm_lora</td><td>4.93e-10 (near zero)</td></tr>
+  <tr><td>grad_norm_multimodal</td><td>1.0 (clipped)</td></tr>
+  <tr><td>kl_penalty</td><td>0.0</td></tr>
+  <tr><td>step_time</td><td>5.33s</td></tr>
+</table>
+
+<div class="success">
+  <strong>Good: Zero-std fraction is 0%.</strong> With group_size=16 and completions of exactly 32 tokens, every batch has reward variance. The structure reward function provides much better learning signal diversity than the index prediction task.
+</div>
+
+<div class="warning">
+  <strong>Critical Issue: LoRA grad_norm = 4.93e-10.</strong> Despite nonzero reward variance and nonzero pg_loss (-0.008), the LoRA parameters are receiving essentially zero gradient. The multimodal grad_norm is exactly 1.0 (clipped), but the LoRA parameters are frozen in effect. This means GRPO is not actually updating the language model for this task.
+</div>
+
+<h3>Interpretation</h3>
+<ul>
+  <li><strong>pLDDT = 80.19</strong> indicates the input proteins are moderately well-folded. The model predicts pLDDT = 91.40, consistently overestimating by ~11 points.</li>
+  <li><strong>quality_alignment = 0.354</strong>: the model's qualitative assessment (e.g., "good", "excellent") only partially matches the actual quality category.</li>
+  <li><strong>numerical_accuracy = 0.162</strong>: predicted pLDDT numbers are inaccurate (mean absolute error ~11 points).</li>
+  <li><strong>Fixed 32-token completions</strong>: all completions are exactly 32 tokens, suggesting max_new_tokens was set low or the model is producing fixed-length outputs. Training_args shows max_new_tokens=256, so the model is choosing to stop at 32.</li>
+  <li><strong>The LoRA gradient problem is the most concerning finding.</strong> Possible causes: advantage normalization producing near-zero advantages (advantage_std = 0.033, vs 0.136 for proteinlm-bench), or the reward landscape being too flat relative to the policy gradient signal.</li>
+</ul>
+
+<h2>Cross-Task Comparison</h2>
+<table>
+  <tr>
+    <th>Dimension</th>
+    <th>ProteinLM-Bench (v2)</th>
+    <th>Structure Quality</th>
+  </tr>
+  <tr><td>mean_reward</td><td>0.676</td><td>0.780</td></tr>
+  <tr><td>reward_std</td><td>0.431</td><td>0.154</td></tr>
+  <tr><td>frac_zero_std</td><td>42.3%</td><td>0.0%</td></tr>
+  <tr><td>advantage_std</td><td>0.136</td><td>0.033</td></tr>
+  <tr><td>completion_length</td><td>~9 tokens</td><td>32 tokens</td></tr>
+  <tr><td>grad_norm_lora</td><td>0.404</td><td>4.93e-10</td></tr>
+  <tr><td>grad_norm_multimodal</td><td>0.0</td><td>1.0</td></tr>
+  <tr><td>group_size</td><td>8</td><td>16</td></tr>
+  <tr><td>steps completed</td><td>130</td><td>100</td></tr>
+  <tr><td>epochs</td><td>9</td><td>1</td></tr>
+  <tr><td>Learning happening?</td><td>Partial (LoRA active, but high zero-std)</td><td>No (LoRA frozen in effect)</td></tr>
+</table>
+
+<p>The two tasks fail in opposite ways: ProteinLM-Bench has LoRA gradients but too many zero-variance batches; Structure Quality has good reward variance but zero LoRA gradients.</p>
+
+<h2>Recommendations</h2>
+<ol>
+  <li><strong>ProteinLM-Bench: increase group_size from 8 to 16 or 32.</strong> With only 8 completions per prompt and very short outputs (~9 tokens), groups collapse to identical outputs. Larger groups increase the chance of at least some variance.</li>
+  <li><strong>ProteinLM-Bench: increase max_new_tokens and add length-based reward.</strong> The model generates only 9 tokens. Encourage longer, more detailed responses with a minimum-length requirement in the reward function.</li>
+  <li><strong>Structure Quality: debug the LoRA gradient path.</strong> The advantage_std of 0.033 is 4x lower than proteinlm-bench (0.136). The near-zero LoRA gradients may stem from vanishing advantages after the policy gradient computation. Consider enabling advantage normalization or increasing group_size further.</li>
+  <li><strong>Structure Quality: investigate the 32-token fixed length.</strong> If the model always generates exactly 32 tokens, all variation comes from content, not stopping behavior. Check if this ceiling is limiting reward differentiation.</li>
+  <li><strong>Both tasks: enable KL penalty.</strong> Currently kl_coef=0.1 but use_kl_penalty=false. Without KL, the model can drift unconstrained from the SFT policy. Enable it with a small coefficient (0.01-0.05) to prevent degenerate mode collapse.</li>
+  <li><strong>Both tasks: run longer.</strong> v1 had only 39 steps (2 epochs), v2 had 130 steps (9 epochs). The structure run had 100 steps (1 epoch). Try 500+ steps with a warm-up schedule on the KL coefficient.</li>
+</ol>
+
+<h2>Data Sources</h2>
+<ul>
+  <li><strong>metrics.json</strong> from each experiment directory (final averaged metrics)</li>
+  <li><strong>lineage.json</strong> for parent chain and approach details</li>
+  <li><strong>training_args.json</strong> for hyperparameters and step counts</li>
+  <li>Figures pending -- no GRPO-specific plots have been generated yet by the artist agent</li>
+</ul>
+
+<p style="margin-top: 2rem; color: var(--muted);"><a href="../index.html">Back to index</a></p>
+
+</body>
+</html>

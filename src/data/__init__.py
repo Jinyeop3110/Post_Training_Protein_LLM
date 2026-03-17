@@ -17,6 +17,9 @@ from .download import (
     download_swissprotclap,
     list_available_datasets,
 )
+
+# ESM embedding cache (LMDB-backed)
+from .esm_embedding_cache import ESMEmbeddingCache
 from .ipd_pdb_converter import convert_ipd_pdb, prepare_ipd_pdb
 
 # Mol-Instructions dataset (instruction-following for proteins)
@@ -44,6 +47,9 @@ from .rcsb_dataset import (
     collate_rcsb_proteins,
     get_rcsb_dataloader,
 )
+
+# SSL dataset (continued pre-training on biology literature)
+from .ssl_dataset import SSLDataCollator, SSLDataset, SSLDatasetConfig
 from .swissprot_converter import convert_swissprot, prepare_swissprot
 from .swissprotclap_converter import convert_swissprotclap, prepare_swissprotclap
 from .wikipedia_protein_converter import convert_wikipedia_protein, prepare_wikipedia_protein

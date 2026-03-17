@@ -1,0 +1,24 @@
+name: combined_ssl_260316
+source: tsynbio/ProteinLMDataset
+subset: SSL Pre-training Data
+task: ssl  # Task type for routing
+
+# Data directory (symlinks to ProteinLMDataset JSON files)
+paths:
+  raw: ${paths.processed_dir}/combined_ssl_260316
+  processed: ${paths.processed_dir}/combined_ssl_260316
+
+processing:
+  max_seq_length: 4096
+
+# SSL uses 95/5 train/val (no test split needed)
+splits:
+  train: 0.95
+  validation: 0.05
+
+# Multi-source balancing (temperature-based upsampling)
+# Sources: pmc (full text), pubmed (abstracts), seq (protein-in-text)
+# 0.7 moderately upsamples smaller sources
+sampling_temperature: 0.7
+
+limit: null

@@ -1,0 +1,61 @@
+# @package _global_
+
+# GRPO Structure Properties: Text SFT -> GRPO
+# Text-only approach — protein sequence as raw tokens, no ESM-3 encoder.
+# Uses composite reward (Option C) by default.
+#
+# Usage:
+#   python scripts/train.py main_RL=grpo_structure_props_text_sft
+
+defaults:
+  - override /model: qwen3_8b
+  - override /data: structure_properties
+  - override /training: grpo
+
+approach: text
+experiment_name: grpo_struct_props_text_${model.name}_${now:%m%d_%H%M%S}
+
+# Chain from text SFT
+parent_experiment: null  # Set via CLI: parent_experiment=my_text_sft
+
+# Data task for reward routing
+data:
+  task: structure_properties  # Routes to compute_structure_composite_reward
+  processing:
+    max_protein_length: 512
+
+training:
+  lr: 5e-6
+  batch_size: 2
+  gradient_accumulation_steps: 4
+  gradient_checkpointing: true
+  epochs: 1
+  warmup_steps: 20
+  max_grad_norm: 1.0
+
+  grpo:
+    group_size: 8
+    temperature: 0.9
+    use_kl_penalty: false
+    normalize_advantages: false
+
+  rollout:
+    max_tokens: 512
+    top_p: 0.95
+    do_sample: true
+    enable_thinking: false
+
+  save_steps: 50
+  eval_steps: 25
+  logging_steps: 5
+
+  fsdp:
+    enabled: false
+
+  wandb:
+    tags:
+      - grpo
+      - structure_properties
+      - text_sft
+      - composite_reward
+      - ${model.name}

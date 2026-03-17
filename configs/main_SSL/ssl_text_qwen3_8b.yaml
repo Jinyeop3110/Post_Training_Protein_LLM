@@ -1,0 +1,45 @@
+# @package _global_
+
+# SSL experiment: Continued pre-training on biology literature
+# Qwen3-8B-Base + LoRA, plain causal LM (no chat template, no system prompt)
+# <seq>M K M R F...</seq> tags kept as plain text tokens
+#
+# Pipeline: SSL → merge → SFT (Instruct, chat template) → GRPO
+#
+# Usage: python scripts/train.py main_SSL=ssl_text_qwen3_8b
+
+defaults:
+  - override /model: qwen3_8b_base
+  - override /encoder: esm3_small  # Ignored for SSL, but Hydra needs it
+  - override /data: combined_ssl_260316
+  - override /training: ssl_lora
+
+approach: text
+experiment_name: ssl_text_${model.name}_${now:%m%d_%H%M%S}
+
+# SSL: NO system prompt, NO chat template — plain causal LM
+system_prompt: ""
+
+training:
+  lr: 5e-5
+  projector_lr: null
+
+  # Packing for SSL (documents vary wildly in length)
+  packing_sequences: true
+  max_seq_length: 4096
+
+  batch_size: 8
+  gradient_accumulation_steps: 8
+  eval_batch_size: 4
+
+  epochs: 1
+
+  save_steps: 1000
+  eval_steps: 1000
+
+  wandb:
+    tags:
+      - ssl_lora
+      - continued_pretraining
+      - biology_literature
+      - ${model.name}

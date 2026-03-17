@@ -1,0 +1,63 @@
+# @package _global_
+
+# GRPO Stability: Text SFT -> GRPO
+# Text-only approach — protein sequence as raw tokens, no ESM-3 encoder.
+# Focal weighting (gamma=2) to combat class imbalance.
+#
+# Usage:
+#   python scripts/train.py main_RL=grpo_stability_text_sft
+
+defaults:
+  - override /model: qwen3_8b
+  - override /data: megascale_stability
+  - override /training: grpo
+
+approach: text
+experiment_name: grpo_stability_text_${model.name}_${now:%m%d_%H%M%S}
+
+# Chain from text SFT
+parent_experiment: sft_text_combined_qwen3_8b_it_0307_190324
+
+# Data task for reward routing
+data:
+  task: stability
+  processing:
+    max_protein_length: 512
+
+training:
+  lr: 5e-6
+  batch_size: 2
+  gradient_accumulation_steps: 4
+  gradient_checkpointing: true
+  epochs: 1
+  warmup_steps: 20
+  max_grad_norm: 1.0
+
+  grpo:
+    group_size: 16
+    temperature: 0.9
+    use_kl_penalty: false
+    normalize_advantages: false
+    focal_enabled: true
+    focal_gamma: 2.0
+
+  rollout:
+    max_tokens: 256
+    top_p: 0.95
+    do_sample: true
+    enable_thinking: false
+
+  save_steps: 50
+  eval_steps: 25
+  logging_steps: 5
+
+  fsdp:
+    enabled: false
+
+  wandb:
+    tags:
+      - grpo
+      - stability
+      - text_sft
+      - focal
+      - ${model.name}

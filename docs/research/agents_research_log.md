@@ -22,6 +22,200 @@
 
 ---
 
+## [2026-03-16] New GRPO Tasks: Solubility Prediction & Fold Classification
+
+### Summary
+Implemented two new GRPO reward tasks — **solubility prediction** (eSOL, binary+regression) and **fold classification** (CATH, hierarchical 4-level) — expanding the RL training suite from 3 to 7+ tasks. Both passed SFT data contamination checks (<0.2% and <0.5% respectively). EC number prediction was skipped (~15% contamination). Trial runs completed for both tasks.
+
+### Configuration
+
+**Solubility Prediction**
+- Config: `configs/main_RL/grpo_solubility.yaml`
+- Data: eSOL via HuggingFace (`scripts/data/download_solubility.py`)
+- Approach: text (chains from `sft_text_combined_qwen3_8b_it_0307_190324`)
+- Reward: `compute_solubility_reward` — 0.5 classification + 0.3 numerical (Gaussian σ=15%) + 0.2 format
+- Focal weighting: gamma=1.0 (too aggressive, recommend 0.5)
+- Rollout: max_tokens=128, group_size=8, temp=0.9
+
+**Fold Classification (CATH)**
+- Config: `configs/main_RL/grpo_fold_classification.yaml`
+- Data: CATH via HuggingFace (`scripts/data/download_fold_classification.py`)
+- Approach: text (chains from `sft_text_combined_qwen3_8b_it_0307_190324`)
+- Reward: `compute_fold_classification_reward` — 0.25 per correct CATH level (hierarchical, early stop)
+- Focal: disabled (CATH classes are balanced)
+- Rollout: max_tokens=256, group_size=8, temp=0.9
+
+### Results
+
+| Task | Reward Start | Reward End | Change | Format Compliance |
+|------|-------------|-----------|--------|-------------------|
+| Solubility | 0.644 | 1.584 | +146% (2.46x) | 100% |
+| Fold Classification | 0.265 | 0.340 | +28% | 100% |
+
+**Solubility**: Strong signal. Model learned output format immediately and began improving classification accuracy. However, focal_gamma=1.0 caused reward oscillation (2.3x upweight of insoluble class too aggressive).
+
+**Fold Classification**: Class-level matches only (reward ~0.25). Model distinguishes alpha vs beta vs mixed but can't predict architecture/topology/homology from sequence text alone. Synthetic data quality may be a factor. ESM-3 multimodal approach expected to improve this significantly.
+
+### SFT Data Contamination Analysis
+
+| Candidate | Source | Overlap | Decision |
+|-----------|--------|---------|----------|
+| Solubility | eSOL | <0.2% | GO — implemented |
+| Fold Classification | CATH | <0.5% | GO — implemented |
+| EC Number | Swiss-Prot enzymes | ~15% | SKIP — too contaminated |
+| Fitness/DMS | ProteinGym | 3–4% | DEFER — redundant with stability |
+
+### Decisions
+- Decision: Skip EC number prediction
+- Rationale: ~15% contamination with SFT data (Swiss-Prot enzyme QA pairs). Model could get reward by memorizing rather than reasoning.
+- Decision: Reduce solubility focal_gamma from 1.0 to 0.5
+- Rationale: 2.3x upweight of insoluble class caused reward oscillation in trial run.
+
+### New Files
+| File | Purpose |
+|------|---------|
+| `scripts/data/download_solubility.py` | eSOL data download + MolInstructions JSON conversion |
+| `scripts/data/download_fold_classification.py` | CATH data download + MolInstructions JSON conversion |
+| `configs/main_RL/grpo_solubility.yaml` | GRPO config for solubility |
+| `configs/main_RL/grpo_fold_classification.yaml` | GRPO config for fold classification |
+| `src/training/rewards.py` additions | `compute_solubility_reward()`, `compute_fold_classification_reward()` |
+| `src/training/grpo_trainer.py` additions | System prompts, metadata routing, task detection flags |
+
+### Updated Task Inventory (7+ tasks)
+1. GO Prediction — ready (text + esm3)
+2. Stability/ddG — ready (text + esm3)
+3. Structure Quality — run, collapsed
+4. SS Composition (A) — blocked on data
+5. SS Per-Residue (B) — blocked on data
+6. **Solubility** — NEW, ready (text)
+7. **Fold Classification** — NEW, ready (text)
+
+### Next Steps
+1. Re-run solubility with focal_gamma=0.5
+2. Create ESM-3 MLP variants for both new tasks
+3. Generate structure properties data to unblock tasks 4–5
+4. Launch GO + Stability GRPO (still unrun)
+5. Investigate fold classification ceiling with ESM-3 embeddings
+
+### Blog Post
+`blog/posts/2026-03-16_solubility-fold-grpo-implementation.html`
+
+---
+
+## [2026-03-16] New GRPO Task: Per-Residue Structural Property Prediction
+
+### Summary
+Designed and implemented a new GRPO task to replace the collapsed structure quality task. Instead of predicting a single "high/medium/low" fold quality category (which the text model hacked with 2 memorized templates), the model now predicts per-residue structural properties — secondary structure (SS3), solvent accessibility (RSA), Ramachandran regions, and contact density — derived from ESMFold coordinates via biotite.
+
+Three reward function options implemented (A/B/C), with a full data generation pipeline and GRPO configs ready to run.
+
+### Motivation: Output Collapse in Current Task
+The text-only GRPO structure task converged to **2 memorized templates** for all proteins:
+- Template 1: "Strong hydrophobic core, regular secondary structure. High confidence ~87."
+- Template 2: "Mixed ordered/disordered regions. N-terminal structured, C-terminal flexible."
+
+Evidence from `probe_completions.jsonl`: 5 different proteins received identical reasoning at step 25. PG loss converged to ~0 by step 25 (fully deterministic policy). Text achieved 0.832 mean reward through reward hacking, not protein understanding.
+
+Root cause: protein-level classification (1 prediction per protein) is trivially exploitable when the dataset skews toward well-folded proteins.
+
+### Solution: Per-Residue Prediction
+Per-residue SS3 prediction requires L predictions per protein (L = sequence length). Each protein has a unique SS pattern, making template copying impossible. Dense reward signal at every position.
+
+### Implementation
+
+#### New Files
+| File | Purpose |
+|------|---------|
+| `scripts/data/download_structure_properties.py` | Data pipeline: ESMFold → biotite → JSON (3 task variants) |
+| `src/utils/structure_properties.py` | Core utility: atom37→AtomArray, SS3, SASA, dihedrals, contacts, Ramachandran |
+| `configs/data/structure_properties.yaml` | Data config (max_protein_length=512) |
+| `configs/main_RL/grpo_structure_props_a.yaml` | Option A: SS composition (group_size=16, max_tokens=256) |
+| `configs/main_RL/grpo_structure_props_b.yaml` | Option B: Per-residue SS3 (group_size=8, max_tokens=768) |
+| `configs/main_RL/grpo_structure_props.yaml` | Option C: Composite (group_size=8, max_tokens=512) |
+| `configs/main_RL/grpo_structure_props_text_sft.yaml` | Text SFT variant of Option C |
+
+#### Modified Files
+| File | Changes |
+|------|---------|
+| `src/training/rewards.py` | +3 reward functions, +8 registry aliases, +SS3 parser |
+
+#### Three Reward Functions
+
+**Option A — `compute_ss_composition_reward()`** (task: `ss_composition`)
+- SS fraction accuracy (0.4): Gaussian(σ=0.15) on helix/sheet/coil% errors
+- Dominant SS type match (0.3): helix-rich/sheet-rich/mixed/coil-rich
+- RSA accuracy (0.3): Gaussian(σ=0.1) on mean RSA error
+- Config: `main_RL=grpo_structure_props_a`
+
+**Option B — `compute_ss_sequence_reward()`** (task: `ss_sequence`) [Recommended]
+- Per-residue accuracy (0.6): fraction of correct H/E/C positions (length-normalized)
+- Segment-level F1 (0.4): matches contiguous SS segments with >50% overlap
+- Config: `main_RL=grpo_structure_props_b`
+
+**Option C — `compute_structure_composite_reward()`** (task: `structure_properties`)
+- SS3 per-residue accuracy (0.30)
+- SS composition fractions (0.25): Gaussian(σ=0.15)
+- Ramachandran region match (0.20): alpha/beta fraction accuracy
+- RSA (0.15) + contact density (0.10): Gaussian scoring
+- Config: `main_RL=grpo_structure_props`
+
+#### Reward Registry Aliases
+```
+ss_composition, structure_properties_a → compute_ss_composition_reward
+ss_sequence, ss_per_residue, structure_properties_b → compute_ss_sequence_reward
+structure_composite, structure_properties, structure_properties_c → compute_structure_composite_reward
+```
+
+#### Data Pipeline
+```bash
+# Generate 10K samples (requires GPU for ESMFold)
+python scripts/data/download_structure_properties.py --task full --max_samples 10000
+python scripts/data/download_structure_properties.py --task per_residue --max_samples 10000
+python scripts/data/download_structure_properties.py --task composition --max_samples 10000
+```
+
+#### Structural Property Extraction (src/utils/structure_properties.py)
+- `atom37_to_biotite()`: ESMFold atom37 → biotite AtomArray (in-memory, no file I/O)
+- `compute_secondary_structure()`: P-SEA algorithm → SS3 (H/E/C) + fractions
+- `compute_sasa()`: Shrake-Rupley → per-residue RSA (normalized by max SASA per residue type, Tien et al. 2013)
+- `compute_dihedrals()`: Backbone phi/psi
+- `classify_ramachandran()`: phi/psi → alpha/beta/left_helix/other regions
+- `compute_contact_map()`: Cβ-Cβ < 8Å, |i-j| > 5
+
+### Literature Gap
+No existing chat LLM generates per-residue structural annotations. Closest work:
+- **Prot2Token** (2024-25): Specialized decoder, not a chat model
+- **Porter 6** (2024): ESM-2 + CBRNN classifier, 86.6% Q3
+- **NetSurfP-3.0** (2022): ESM-1b + CNN + transformer, multi-task heads
+- **ProteinChat/ProteinGPT/Evola** etc.: Chat LLMs but protein-level only
+
+### Decisions
+- Decision: Start with Option B (per-residue SS3) for first GRPO experiments
+- Rationale: Best balance of signal density, output length, and anti-hacking properties. Q3 accuracy is a well-established benchmark (Porter 6: 86.6%).
+- Decision: Limit protein length to ≤512 residues initially
+- Rationale: SS3 string for 512 residues = ~512 output tokens, manageable with max_tokens=768
+- Decision: Use biotite (already installed) over mkdssp/pydssp
+- Rationale: In-memory AtomArray construction from ESMFold atom37, no external binaries needed, >97% DSSP agreement
+
+### Four-Way Comparison Predictions
+| Approach | Expected Q3 | Rationale |
+|----------|-------------|-----------|
+| Text-only | ~55-65% | Must infer structure from raw AA tokens |
+| ESM3+MLP | ~65-75% | ESM-3 embeds carry structural info, but pooling compresses L→32 |
+| ESM3+Perceiver | ~68-78% | Cross-attention may preserve more residue-level detail |
+| Flamingo | ~70-80% | Multi-layer cross-attention, best spatial reasoning potential |
+
+### Next Steps
+1. Generate 10K SS3 dataset with `download_structure_properties.py --task per_residue`
+2. Run GRPO Option B: text-only + MLP (both have SFT checkpoints ready)
+3. Compare Q3 accuracy: if MLP > text by ≥5%, projector pathway is working
+4. Phase in RSA (Option C) once SS3 training is stable
+
+### Blog Post
+`blog/posts/2026-03-16_structural-property-prediction-grpo.html`
+
+---
+
 ## [2026-03-12] GRPO Structure Quality: Matched Text vs MLP Comparison
 
 ### Summary

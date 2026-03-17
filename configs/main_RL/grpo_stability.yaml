@@ -1,12 +1,16 @@
 # @package _global_
 
-# GRPO experiment: Protein Stability (ddG) Prediction
-# Uses Mega-Scale data with stability reward (MAE-based).
-# Chain from a trained SFT checkpoint via parent_experiment.
+# GRPO experiment: Protein Stability (ddG) Prediction (ESM3+MLP SFT -> GRPO)
+# Uses MegaScale data with 3-component stability reward:
+#   - Classification accuracy (0.4): stabilizing/neutral/destabilizing
+#   - Numerical accuracy (0.3): Gaussian decay on ddG error
+#   - Direction accuracy (0.3): correct sign of ddG
+#
+# Class imbalance: 67.4% neutral, 31.8% stabilizing, 0.8% destabilizing
+# Focal weighting (gamma=2) up-weights rare classes.
 #
 # Usage:
-#   python scripts/train.py main_RL=grpo_stability \
-#     parent_experiment=sft_esm3_mlp_XXXX
+#   python scripts/train.py main_RL=grpo_stability
 
 defaults:
   - override /model: qwen3_8b
@@ -17,20 +21,56 @@ defaults:
 approach: esm3
 experiment_name: grpo_stability_${model.name}_${now:%m%d_%H%M%S}
 
+# ESM-3 sub-batch
+encoder:
+  encoder_batch_size: 4
+
+# Chain from ESM3+MLP SFT
+parent_experiment: sft_esm3_mlp_combined_qwen3_8b_it_0306_010408
+
 # Data task for reward routing
 data:
   task: stability
+  processing:
+    max_protein_length: 512
 
 training:
-  grpo:
-    group_size: 4
+  # --- DDP on 8x H100 80GB ---
+  lr: 5e-6
+  projector_lr: 2.5e-5
+  batch_size: 2
+  gradient_accumulation_steps: 4  # effective batch = 2 * 8 GPUs * 4 = 64
+  gradient_checkpointing: true
+  epochs: 1
+  warmup_steps: 20
+  max_grad_norm: 1.0
 
-  # ddG predictions are short (one line)
+  grpo:
+    group_size: 16
+    temperature: 0.9
+    use_kl_penalty: false
+    normalize_advantages: false
+    focal_enabled: true
+    focal_gamma: 2.0
+
+  # ddG predictions are short
   rollout:
-    max_tokens: 256       # Qwen3 generates think blocks before answer
+    max_tokens: 256
+    top_p: 0.95
+    do_sample: true
+    enable_thinking: false
+
+  save_steps: 50
+  eval_steps: 25
+  logging_steps: 5
+
+  fsdp:
+    enabled: false
 
   wandb:
     tags:
       - grpo
       - stability
+      - mlp_sft
+      - focal
       - ${model.name}

@@ -14,6 +14,12 @@ dtype: bfloat16
 # ESM-3's geometric attention is O(L² × B) so keep this conservative
 encoder_batch_size: 4
 
+# Pre-computed ESM embedding cache (LMDB). Eliminates ESM-3 GPU memory
+# (~6 GB) and ~40% of forward pass time during training.
+# null = live ESM-3 encoding (default). Set to LMDB path to use cache.
+# Pre-compute with: scripts/precompute_esm_embeddings.py
+embedding_cache_path: null
+
 # Pooling strategy
 pooling:
   method: attention  # attention, mean, cls

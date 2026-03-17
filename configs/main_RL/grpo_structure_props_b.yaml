@@ -1,0 +1,69 @@
+# @package _global_
+
+# GRPO experiment: Per-Residue SS Prediction — Option B reward
+# Most demanding task: predict full SS3 string matching sequence length
+#   - Per-residue accuracy (0.6): fraction of correct H/E/C positions
+#   - Segment-level F1 (0.4): correct segment boundaries
+#
+# Data: structure_properties_per_residue.json
+# Requires: python scripts/data/download_structure_properties.py --task per_residue
+#
+# Usage:
+#   python scripts/train.py main_RL=grpo_structure_props_b parent_experiment=my_sft
+
+defaults:
+  - override /model: qwen3_8b
+  - override /encoder: esm3_small
+  - override /data: structure_properties
+  - override /training: grpo
+
+approach: esm3
+experiment_name: grpo_struct_props_b_${model.name}_${now:%m%d_%H%M%S}
+
+encoder:
+  encoder_batch_size: 4
+
+parent_experiment: null
+
+data:
+  task: ss_sequence  # Routes to compute_ss_sequence_reward
+  processing:
+    max_protein_length: 512
+
+training:
+  lr: 5e-6
+  projector_lr: 2.5e-5
+  batch_size: 2
+  gradient_accumulation_steps: 4
+  gradient_checkpointing: true
+  epochs: 1
+  warmup_steps: 20
+  max_grad_norm: 1.0
+
+  grpo:
+    group_size: 8  # SS3 strings can be long; fewer completions
+    temperature: 0.9
+    use_kl_penalty: false
+    normalize_advantages: false
+
+  # SS3 string output is length-dependent (up to 512 chars + framing)
+  rollout:
+    max_tokens: 768
+    top_p: 0.95
+    do_sample: true
+    enable_thinking: false
+
+  save_steps: 50
+  eval_steps: 25
+  logging_steps: 5
+
+  fsdp:
+    enabled: false
+
+  wandb:
+    tags:
+      - grpo
+      - structure_properties
+      - ss_per_residue
+      - option_b
+      - ${model.name}

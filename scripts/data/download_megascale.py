@@ -89,34 +89,102 @@ def load_megascale_from_huggingface(
     return records
 
 
+def _parse_single_mutation(mut_str: str) -> Optional[Tuple[str, int, str]]:
+    """Parse a single mutation notation like 'G22I' into (wt_aa, position, mut_aa).
+
+    Returns None if the notation cannot be parsed.
+    """
+    import re
+
+    m = re.match(r"^([A-Z])(\d+)([A-Z])$", mut_str.strip())
+    if m:
+        return m.group(1), int(m.group(2)), m.group(3)
+    return None
+
+
+def reconstruct_wt_sequence(mutant_seq: str, mutation_str: str) -> Optional[str]:
+    """Reconstruct wild-type sequence from mutant sequence and mutation notation.
+
+    Supports single mutations (e.g., "G22I") and multi-mutations separated
+    by "+" or ":" (e.g., "G22I+A45V").
+
+    The mutation positions are 1-indexed relative to the mutant sequence.
+    We reverse the mutation: at position 22, the mutant has 'I', so the
+    wild-type has 'G'.
+
+    Args:
+        mutant_seq: Mutant amino acid sequence.
+        mutation_str: Mutation notation string.
+
+    Returns:
+        Wild-type sequence, or None if reconstruction failed.
+    """
+    if not mutant_seq or not mutation_str:
+        return None
+
+    import re
+
+    # Split multi-mutations
+    mutations = re.split(r"[+:,]", mutation_str)
+
+    wt_list = list(mutant_seq)
+    for mut in mutations:
+        parsed = _parse_single_mutation(mut)
+        if parsed is None:
+            return None
+        wt_aa, pos, mut_aa = parsed
+
+        # Position is 1-indexed
+        idx = pos - 1
+        if idx < 0 or idx >= len(wt_list):
+            return None
+
+        # Verify the mutant sequence has the expected mutant residue
+        if wt_list[idx] != mut_aa:
+            return None
+
+        # Reverse the mutation: put the wild-type residue back
+        wt_list[idx] = wt_aa
+
+    return "".join(wt_list)
+
+
 def parse_mutation_from_record(record: Dict[str, Any]) -> Tuple[str, str, str]:
     """Extract wild-type sequence, mutation notation, and mutant sequence.
 
-    Mega-Scale columns vary by version. Common columns:
-    - aa_seq: mutant amino acid sequence
+    Mega-Scale columns:
+    - aa_seq: mutant amino acid sequence (core region, no flanking)
+    - mut_type: mutation notation (e.g., "E1Q", 1-indexed relative to aa_seq)
     - WT_name: wild-type protein name/PDB ID
-    - mut_type: mutation type (e.g., "single", "double")
-    - deltaG / ddG_ML: stability values
-    - Stabilizing_mut: boolean flag
+
+    Wild-type sequence is reconstructed by reversing the mutation on the
+    mutant sequence.
 
     Returns:
         Tuple of (wild_type_seq, mutation_str, mutant_seq).
     """
     mutant_seq = record.get("aa_seq", record.get("mutant_sequence", ""))
-    wt_seq = record.get("wt_aa_seq", record.get("wild_type_sequence", ""))
     wt_name = record.get("WT_name", record.get("protein_name", "unknown"))
 
-    # Try to extract mutation notation
-    mutation = record.get("mutation", record.get("mut_type", ""))
-    if not mutation:
-        # Try to infer mutation from sequence difference
+    # Get mutation notation
+    mutation = record.get("mut_type", record.get("mutation", ""))
+
+    # Try explicit WT sequence first (some dataset versions have it)
+    wt_seq = record.get("wt_aa_seq", record.get("wild_type_sequence", ""))
+
+    # If no WT sequence, reconstruct from mutant + mutation
+    if not wt_seq and mutant_seq and mutation:
+        wt_seq = reconstruct_wt_sequence(mutant_seq, mutation)
+
+    # Fallback: infer mutation from sequence diff
+    if not mutation or mutation == "unknown":
         if wt_seq and mutant_seq and len(wt_seq) == len(mutant_seq):
             diffs = []
             for i, (wt_aa, mut_aa) in enumerate(zip(wt_seq, mutant_seq)):
                 if wt_aa != mut_aa:
                     diffs.append(f"{wt_aa}{i+1}{mut_aa}")
             mutation = "+".join(diffs) if diffs else "WT"
-        else:
+        elif not mutation:
             mutation = "unknown"
 
     return wt_seq, mutation, mutant_seq
@@ -177,8 +245,12 @@ def convert_to_instruction_format(
         wt_seq, mutation, mutant_seq = parse_mutation_from_record(record)
 
         # Need at least a mutant sequence
-        seq = mutant_seq or wt_seq
-        if not seq:
+        if not mutant_seq:
+            skipped += 1
+            continue
+
+        # Need valid WT sequence and mutation for proper format
+        if not wt_seq or mutation in ("unknown", "WT", ""):
             skipped += 1
             continue
 
@@ -186,11 +258,20 @@ def convert_to_instruction_format(
         stability_class = classify_ddg(ddg)
         class_counter[stability_class] += 1
 
-        # Build input text
-        if wt_seq and mutation != "unknown":
-            input_text = f"Wild-type: {wt_seq}\nMutation: {mutation}"
-        else:
-            input_text = seq
+        # Build instruction with mutation notation
+        instruction = (
+            f"Predict the change in protein stability (ddG in kcal/mol) "
+            f"for the mutation {mutation}. Compare the wild-type and mutant "
+            f"sequences below. Classify as stabilizing (ddG < -1.0), "
+            f"neutral (-1.0 to 1.0), or destabilizing (ddG > 1.0)."
+        )
+
+        # Build input with both sequences
+        input_text = (
+            f"Wild-type sequence: {wt_seq}\n"
+            f"Mutant sequence: {mutant_seq}\n"
+            f"Mutation: {mutation}"
+        )
 
         # Build output text
         output_text = f"ddG = {ddg:.2f} kcal/mol. This mutation is {stability_class}."
@@ -198,11 +279,7 @@ def convert_to_instruction_format(
         wt_name = record.get("WT_name", record.get("protein_name", "unknown"))
 
         sample = {
-            "instruction": (
-                "Predict the change in protein stability (ddG in kcal/mol) for this mutation. "
-                "Classify as stabilizing (ddG < -1.0), neutral (-1.0 to 1.0), or "
-                "destabilizing (ddG > 1.0)."
-            ),
+            "instruction": instruction,
             "input": input_text,
             "output": output_text,
             "metadata": {

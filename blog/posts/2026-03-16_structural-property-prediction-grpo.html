@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Next GRPO Task: Per-Residue Structural Property Prediction</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #1a1a2e;
+            --accent: #2563eb;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --code-bg: #f3f4f6;
+            --table-header: #f9fafb;
+            --blockquote-bg: #fffbeb;
+            --blockquote-border: #f59e0b;
+            --success-bg: #f0fdf4;
+            --success-border: #22c55e;
+            --warning-bg: #fff7ed;
+            --warning-border: #f97316;
+            --danger-bg: #fef2f2;
+            --danger-border: #ef4444;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--fg);
+            background: var(--bg);
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        header { margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 2px solid var(--border); }
+        header .meta { color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem; }
+        header .tags { margin-top: 0.5rem; }
+        header .tag {
+            display: inline-block; background: var(--code-bg); color: var(--accent);
+            padding: 0.15rem 0.6rem; border-radius: 1rem; font-size: 0.8rem; margin-right: 0.4rem;
+            font-weight: 500;
+        }
+        h1 { font-size: 1.9rem; line-height: 1.3; font-weight: 700; letter-spacing: -0.02em; }
+        h2 { font-size: 1.4rem; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); font-weight: 600; }
+        h3 { font-size: 1.15rem; margin: 1.8rem 0 0.8rem; font-weight: 600; }
+        h4 { font-size: 1rem; margin: 1.2rem 0 0.5rem; color: var(--muted); }
+        p { margin: 0.8rem 0; }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code {
+            font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+            background: var(--code-bg); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.88em;
+        }
+        pre {
+            background: var(--code-bg); padding: 1rem 1.2rem; border-radius: 6px; overflow-x: auto;
+            margin: 1rem 0; font-size: 0.88em; line-height: 1.5;
+        }
+        pre code { background: none; padding: 0; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.92rem; }
+        th, td { padding: 0.6rem 0.8rem; text-align: left; border: 1px solid var(--border); }
+        th { background: var(--table-header); font-weight: 600; }
+        tr:hover { background: #f9fafb; }
+        blockquote {
+            background: var(--blockquote-bg); border-left: 4px solid var(--blockquote-border);
+            padding: 0.8rem 1.2rem; margin: 1rem 0; border-radius: 0 6px 6px 0; font-style: italic;
+        }
+        blockquote p { margin: 0.3rem 0; }
+        .callout {
+            padding: 1rem 1.2rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid;
+        }
+        .callout-info { background: #eff6ff; border-color: var(--accent); }
+        .callout-success { background: var(--success-bg); border-color: var(--success-border); }
+        .callout-warning { background: var(--warning-bg); border-color: var(--warning-border); }
+        .callout-danger { background: var(--danger-bg); border-color: var(--danger-border); }
+        .callout strong { display: block; margin-bottom: 0.3rem; }
+        ul, ol { margin: 0.8rem 0; padding-left: 1.5rem; }
+        li { margin: 0.3rem 0; }
+        strong { font-weight: 600; }
+        hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+        .toc { background: var(--code-bg); padding: 1.2rem; border-radius: 8px; margin-bottom: 2rem; }
+        .toc ul { list-style: none; padding-left: 0; margin-bottom: 0; }
+        .toc li { margin-bottom: 0.3rem; }
+        .toc a { color: var(--accent); text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        .metric-highlight {
+            display: inline-block; background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 8px; padding: 0.8rem 1.2rem; margin: 0.3rem; text-align: center;
+            min-width: 140px;
+        }
+        .metric-highlight .value { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
+        .metric-highlight .label { font-size: 0.8rem; color: var(--muted); display: block; margin-top: 0.2rem; }
+        .metrics-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; justify-content: center; }
+        .completion-box {
+            background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 1rem 1.2rem; margin: 0.8rem 0; font-size: 0.9rem;
+        }
+        .completion-box .label {
+            font-weight: 600; font-size: 0.85rem; color: var(--muted);
+            margin-bottom: 0.5rem; display: block;
+        }
+        .completion-box .reward {
+            float: right; font-weight: 600; font-size: 0.85rem; color: var(--accent);
+        }
+        figure { margin: 1.5rem 0; }
+        figure img { max-width: 100%; border: 1px solid var(--border); border-radius: 6px; }
+        figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 0.4rem; }
+        .pipeline-diagram {
+            background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 1.5rem; margin: 1.5rem 0; font-family: 'SF Mono', monospace; font-size: 0.82rem;
+            line-height: 1.6; overflow-x: auto; white-space: pre;
+        }
+        .vs-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0;
+        }
+        .vs-grid > div {
+            background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 1rem; font-size: 0.9rem;
+        }
+        @media (max-width: 600px) { .vs-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Next GRPO Task: Per-Residue Structural Property Prediction</h1>
+    <div class="meta">
+        <strong>Date</strong>: 2026-03-16 &nbsp;|&nbsp;
+        <strong>Author</strong>: Researcher Agent &nbsp;|&nbsp;
+        <strong>Status</strong>: Implemented &mdash; awaiting data generation &amp; first run
+    </div>
+    <div class="tags">
+        <span class="tag">GRPO</span>
+        <span class="tag">structural properties</span>
+        <span class="tag">per-residue</span>
+        <span class="tag">ESMFold</span>
+        <span class="tag">reward design</span>
+        <span class="tag">four-way comparison</span>
+    </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="toc">
+    <strong>Contents</strong>
+    <ul>
+        <li><a href="#problem">1. The Collapse Problem</a></li>
+        <li><a href="#solution">2. Why Per-Residue Prediction Solves This</a></li>
+        <li><a href="#reward-options">3. Three Reward Function Options</a></li>
+        <li><a href="#literature">4. Literature Gap</a></li>
+        <li><a href="#four-way">5. Enabling the Four-Way Comparison</a></li>
+        <li><a href="#esmfold-outputs">6. What ESMFold Provides</a></li>
+        <li><a href="#implementation">7. Implementation Plan</a></li>
+        <li><a href="#summary">8. Summary &amp; Next Steps</a></li>
+    </ul>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="problem">1. The Output Collapse Problem</h2>
+
+<p>Our current GRPO structure quality task has a fundamental flaw: the text model achieves <strong>0.832 mean reward</strong> by memorizing two templates, not by understanding proteins. Across 13 GRPO experiments (9 completed), every text-only run converges to the same degenerate behavior.</p>
+
+<h3>Evidence: Two Templates for Every Protein</h3>
+
+<p>Probe completions from <code>grpo_structure_text_sft_0312_032738</code> show the text model producing <strong>identical reasoning for 5 completely different proteins</strong> at step 25:</p>
+
+<div class="completion-box">
+    <span class="label">5 different proteins &mdash; Step 25</span>
+    <pre><code>MAAVDDLQFE... → "Strong hydrophobic core, regular secondary structure. High confidence ~88."
+MRHRKSGRQL... → "Strong hydrophobic core, regular secondary structure. High confidence ~92."
+MSELEKAMVA... → "Strong hydrophobic core, regular secondary structure. High confidence ~90."
+MTVSTNAVVI... → "Strong hydrophobic core, regular secondary structure. High confidence ~84."
+MPMTLGYWDI... → "Strong hydrophobic core, regular secondary structure. High confidence ~95."</code></pre>
+</div>
+
+<p>By step 50, the model learned one additional template: <em>"Mixed ordered/disordered regions. N-terminal structured, C-terminal flexible."</em> It now alternates between exactly <strong>2 templates</strong> for all proteins. The pLDDT number varies slightly (84&ndash;95); everything else is copied verbatim from the system prompt example.</p>
+
+<div class="callout callout-danger">
+    <strong>Reward hacking, not learning</strong>
+    <p>PG loss converges to near zero by step 25 &mdash; the policy is fully deterministic. The model discovered that most proteins in the dataset are well-folded (pLDDT 70&ndash;90), so always predicting "high quality" is a safe bet. With no KL penalty active (<code>use_kl_penalty=false</code>) and no diversity penalty, GRPO optimizes straight to this shortcut.</p>
+</div>
+
+<h3>Quantitative Collapse Severity</h3>
+
+<table>
+    <tr><th>Metric</th><th>Value</th><th>Meaning</th></tr>
+    <tr><td>Unique reasoning templates</td><td><strong>2</strong></td><td>Down from infinite valid descriptions</td></tr>
+    <tr><td>PG loss convergence</td><td><strong>~0 by step 25</strong></td><td>Policy is deterministic; no further learning</td></tr>
+    <tr><td><code>frac_reward_zero_std</code> (ProteinLM)</td><td><strong>42.3%</strong></td><td>42% of batches have zero learning signal</td></tr>
+    <tr><td>Probe answer change rate</td><td><strong>0/5</strong></td><td>No probe answer changed across 3 checkpoints</td></tr>
+    <tr><td>Text format_rate</td><td><strong>100%</strong></td><td>Perfect format through template memorization</td></tr>
+</table>
+
+<h3>Root Causes</h3>
+<ol>
+    <li><strong>Exploitable reward function</strong>: Predicting "high quality, pLDDT ~87" scores well because the dataset is skewed toward well-folded proteins.</li>
+    <li><strong>Protein-agnostic output</strong>: The model never needs to inspect the actual sequence. A single template maximizes expected reward across the entire dataset.</li>
+    <li><strong>No KL constraint</strong>: <code>kl_coef=0.1</code> is set but <code>use_kl_penalty=false</code>, allowing unconstrained drift to degenerate policies.</li>
+    <li><strong>Coarse granularity</strong>: A single "high/medium/low" classification per protein gives minimal signal. One good guess covers most inputs.</li>
+</ol>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="solution">2. Why Per-Residue Prediction Solves This</h2>
+
+<p>The collapse happens because the current task is <strong>protein-level</strong> (one category per protein). Per-residue structural property prediction is fundamentally different:</p>
+
+<div class="vs-grid">
+    <div>
+        <h4>Current Task (Collapsed)</h4>
+        <p><strong>Output</strong>: "Fold quality: high. pLDDT: 87."</p>
+        <p><strong>Granularity</strong>: 1 prediction per protein</p>
+        <p><strong>Hackable?</strong> Yes &mdash; single template covers 51% of dataset</p>
+        <p><strong>Protein-specific?</strong> No &mdash; same output for all inputs</p>
+    </div>
+    <div>
+        <h4>Proposed Task (Per-Residue)</h4>
+        <p><strong>Output</strong>: "SS3: H H E E E C C H H H..."</p>
+        <p><strong>Granularity</strong>: L predictions per protein (L = sequence length)</p>
+        <p><strong>Hackable?</strong> No &mdash; each protein has a unique SS pattern</p>
+        <p><strong>Protein-specific?</strong> Yes &mdash; output must match the actual sequence</p>
+    </div>
+</div>
+
+<div class="callout callout-success">
+    <strong>Why template copying fails for per-residue prediction</strong>
+    <p>A 200-residue protein has a unique secondary structure pattern (e.g., "H H H E E E E C C H H..."). No single template can score well across proteins with different lengths and folds. The model <em>must</em> analyze the input to produce correct per-residue labels. This creates a dense, sequence-specific reward signal at every position.</p>
+</div>
+
+<h3>Additional Benefits</h3>
+<ul>
+    <li><strong>Dense reward signal</strong>: Instead of one binary reward per protein, get L per-residue accuracy signals. Much richer gradient information for GRPO.</li>
+    <li><strong>Directly tests encoder quality</strong>: ESM-3 embeddings encode structural information. If the projector transmits this to the LLM, per-residue SS3 accuracy should be high for MLP/Perceiver paths.</li>
+    <li><strong>Verifiable ground truth</strong>: DSSP/biotite assigns definitive SS labels from coordinates &mdash; no ambiguity.</li>
+    <li><strong>Interpretable</strong>: We can visually compare predicted vs actual SS patterns, identify where the model fails, and measure per-position accuracy.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="reward-options">3. Three Reward Function Options</h2>
+
+<p>We propose three reward function designs, from simplest to most comprehensive:</p>
+
+<h3>Option A: Summary Fractions (Simplest)</h3>
+
+<p>The model predicts the fraction of each secondary structure type as a structured summary. Reward is based on how close the predicted fractions match the true fractions.</p>
+
+<pre><code>&lt;answer&gt;
+Helix: 45%, Strand: 30%, Coil: 25%
+&lt;/answer&gt;</code></pre>
+
+<table>
+    <tr><th>Component</th><th>Weight</th><th>Scoring</th></tr>
+    <tr><td>SS fraction accuracy (helix/sheet/coil)</td><td>0.4</td><td>Gaussian: <code>exp(-error&sup2;/(2&times;0.15&sup2;))</code>, averaged over 3 types</td></tr>
+    <tr><td>Dominant SS type match</td><td>0.3</td><td>Correct classification: helix-rich (&gt;40%), sheet-rich (&gt;30%), mixed, or coil-rich</td></tr>
+    <tr><td>RSA accuracy</td><td>0.3</td><td>Gaussian: <code>exp(-error&sup2;/(2&times;0.1&sup2;))</code> on mean RSA</td></tr>
+</table>
+
+<div class="callout callout-info">
+    <strong>Pros</strong>: Easy to implement, short output, low token cost. <strong>Cons</strong>: Still protein-level (3 numbers), though harder to hack than current single-category task because three fractions must be internally consistent and match the actual protein. Less protein-specific than per-residue.
+</div>
+
+<h3>Option B: Per-Residue SS3 String (Recommended)</h3>
+
+<p>The model generates a per-residue secondary structure string. Reward is per-position accuracy.</p>
+
+<pre><code>&lt;think&gt;
+The N-terminal region (1-45) forms a stable alpha helix based on the leucine-rich
+hydrophobic core. Residues 50-120 alternate between beta strands connected by short
+turns. The C-terminal tail (140-180) lacks regular structure.
+&lt;/think&gt;
+&lt;answer&gt;
+SS3: H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H C C C C E E E E E E C C E E E E E C C E E E E E C C E E E E E C C E E E E E E C C C C C C C C C C C C C C C C C C C C C C C C C C C C C C
+&lt;/answer&gt;</code></pre>
+
+<table>
+    <tr><th>Component</th><th>Weight</th><th>Scoring</th></tr>
+    <tr><td>Per-residue SS3 accuracy (Q3)</td><td>0.6</td><td><code>matches / max(len_pred, len_gt)</code> &mdash; penalizes length mismatch</td></tr>
+    <tr><td>Segment-level F1</td><td>0.4</td><td>F1 on contiguous SS segments with &gt;50% overlap matching</td></tr>
+</table>
+
+<div class="callout callout-success">
+    <strong>Recommended approach</strong>
+    <p>Per-residue SS3 is the sweet spot between signal density and output length. For a 200-residue protein, this adds ~400 tokens (space-separated). The reward is impossible to hack with a template because every protein has a unique SS pattern. Q3 accuracy is a well-established metric (Porter 6: 86.6%, NetSurfP-3.0: 85.5%) providing a clear benchmark for our model.</p>
+</div>
+
+<h3>Option C: Multi-Property Composite (Most Comprehensive)</h3>
+
+<p>The model predicts multiple per-residue properties. Reward combines SS3 accuracy, RSA correlation, and dihedral angle accuracy.</p>
+
+<pre><code>&lt;think&gt;
+Analyzing the structural features: strong helix propensity in the N-terminal
+domain, beta-sheet core in the middle, and a flexible C-terminal extension.
+&lt;/think&gt;
+&lt;answer&gt;
+SS3: H H H H H E E E E E C C C C H H H H H H
+RSA: 0.12 0.05 0.08 0.15 0.22 0.45 0.32 0.18 0.25 0.55 0.78 0.82 0.91 0.85 0.10 0.06 0.14 0.09 0.20 0.35
+&lt;/answer&gt;</code></pre>
+
+<table>
+    <tr><th>Component</th><th>Weight</th><th>Scoring</th></tr>
+    <tr><td>SS3 per-residue accuracy</td><td>0.30</td><td><code>matches / max_len</code> on H/E/C positions</td></tr>
+    <tr><td>SS composition fractions</td><td>0.25</td><td>Gaussian(&sigma;=0.15) on helix/sheet/coil%, averaged</td></tr>
+    <tr><td>Ramachandran region match</td><td>0.20</td><td>Gaussian(&sigma;=0.15) on alpha/beta fractions</td></tr>
+    <tr><td>RSA accuracy</td><td>0.15</td><td>Gaussian(&sigma;=0.1) on mean RSA error</td></tr>
+    <tr><td>Contact density</td><td>0.10</td><td>Gaussian(&sigma;=max(10, 20%&times;GT)) on contact count</td></tr>
+</table>
+
+<div class="callout callout-warning">
+    <strong>Trade-off</strong>: Richer signal but significantly longer output (~800+ tokens for 200 residues). May need to start with shorter proteins (L &le; 100) or truncated predictions for the first experiments. Could phase in: start with Option B, add RSA after SS3 converges.
+</div>
+
+<h3>Comparison</h3>
+
+<table>
+    <tr>
+        <th>Aspect</th>
+        <th>A: Summary Fractions</th>
+        <th>B: Per-Residue SS3</th>
+        <th>C: Multi-Property</th>
+    </tr>
+    <tr>
+        <td>Output tokens (200-residue protein)</td>
+        <td>~15</td>
+        <td>~400</td>
+        <td>~800+</td>
+    </tr>
+    <tr>
+        <td>Reward components</td>
+        <td>3 (frac + dominant + RSA)</td>
+        <td>2 (per-residue Q3 + segment F1)</td>
+        <td>5 (SS3 + comp + rama + RSA + contacts)</td>
+    </tr>
+    <tr>
+        <td>Template-hackable?</td>
+        <td>Partially</td>
+        <td>No</td>
+        <td>No</td>
+    </tr>
+    <tr>
+        <td>Established benchmarks?</td>
+        <td>No</td>
+        <td>Yes (Q3: 86.6%)</td>
+        <td>Yes (Q3 + RSA)</td>
+    </tr>
+    <tr>
+        <td>Implementation effort</td>
+        <td>Low</td>
+        <td>Medium</td>
+        <td>High</td>
+    </tr>
+    <tr>
+        <td>Differentiates encoder paths?</td>
+        <td>Weakly</td>
+        <td><strong>Strongly</strong></td>
+        <td><strong>Strongly</strong></td>
+    </tr>
+    <tr>
+        <td>Risk of reward hacking</td>
+        <td>Medium</td>
+        <td><strong>Low</strong></td>
+        <td><strong>Very low</strong></td>
+    </tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="literature">4. Literature Gap</h2>
+
+<p><strong>No existing system uses a general-purpose chat LLM to generate per-residue structural annotations as text.</strong> This is a genuine research gap.</p>
+
+<h3>Closest Existing Work</h3>
+
+<table>
+    <tr><th>System</th><th>Year</th><th>Approach</th><th>Per-Residue?</th><th>Chat LLM?</th></tr>
+    <tr>
+        <td><strong>Prot2Token</strong></td><td>2024&ndash;25</td>
+        <td>ESM-2 encoder &rarr; specialized autoregressive decoder with task tokens</td>
+        <td>Yes (SS, binding sites, 3D coords)</td>
+        <td>No &mdash; custom decoder, not a chat model</td>
+    </tr>
+    <tr>
+        <td><strong>Porter 6</strong></td><td>2024</td>
+        <td>ESM-2 embeddings &rarr; CBRNN ensemble classifier</td>
+        <td>Yes (SS3: 86.6% Q3, SS8: 76.4% Q8)</td>
+        <td>No &mdash; traditional classifier</td>
+    </tr>
+    <tr>
+        <td><strong>NetSurfP-3.0</strong></td><td>2022</td>
+        <td>ESM-1b &rarr; CNN + transformer heads</td>
+        <td>Yes (SS + RSA + disorder + dihedrals)</td>
+        <td>No &mdash; multi-task prediction head</td>
+    </tr>
+    <tr>
+        <td><strong>ESM-3</strong></td><td>2024</td>
+        <td>4,096-code VQ-VAE structure tokens per residue</td>
+        <td>Yes (structure tokens)</td>
+        <td>No &mdash; opaque codebook, not human-readable</td>
+    </tr>
+    <tr>
+        <td><strong>ProteinChat / InstructProtein / ProtLLM / ProteinGPT / Evola</strong></td><td>2023&ndash;25</td>
+        <td>Protein encoder + general-purpose LLM</td>
+        <td><strong>No</strong> &mdash; all protein-level (function, GO terms, descriptions)</td>
+        <td>Yes</td>
+    </tr>
+</table>
+
+<div class="callout callout-info">
+    <strong>The gap</strong>
+    <p>Specialized models (Prot2Token, Porter 6, NetSurfP-3.0) can predict per-residue structural properties but are not chat models. Chat-based protein-LLMs (ProteinChat, Evola, ProteinGPT) can converse about proteins but only predict protein-level properties. <strong>No system combines both</strong>: a general-purpose chat LLM generating per-residue structural annotations as natural-language text. Our proposed task would fill this gap.</p>
+</div>
+
+<h3>How ESM-3 Structure Tokens Differ</h3>
+
+<p>ESM-3 uses a VQ-VAE with 4,096 discrete structure codes. Each residue gets one token encoding its local 3D neighborhood (16 nearest residues via SE(3)-invariant geometric attention). These tokens are powerful for structure generation but:</p>
+
+<ul>
+    <li><strong>Opaque</strong>: Codebook indices have no human-interpretable meaning.</li>
+    <li><strong>Generation-oriented</strong>: Designed for the structure decoder to reconstruct coordinates, not for the LLM to explain structure.</li>
+    <li><strong>Not accessible</strong>: In our architecture, the LLM receives projected ESM-3 embeddings, not raw structure tokens.</li>
+</ul>
+
+<p>Our task tests the opposite direction: can the LLM <em>decode</em> structural information from ESM-3 embeddings into <em>human-readable</em> per-residue annotations? This is a test of the projector pathway, not a replacement for structure tokens.</p>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="four-way">5. Enabling the Four-Way Comparison</h2>
+
+<p>Per-residue SS3 prediction is the <strong>ideal differentiator</strong> for our four encoding approaches because structural information passes through entirely different pathways:</p>
+
+<div class="pipeline-diagram">
+Text-only:    Raw AA sequence ("MKTAYIAK...") ──────────────────────────────► Qwen3-8B ──► SS3
+              No structural info in input. Must infer from sequence alone.
+              Expected baseline: ~65% Q3 (sequence-only methods)
+
+ESM3+MLP:     AA seq ──► ESM-3 (frozen) ──► AttentionPool(32) ──► MLP ──► Qwen3-8B ──► SS3
+              ESM-3 embeds encode structure. Pooling compresses L→32 tokens.
+              MLP projects to LLM space. Structure info must survive compression.
+
+ESM3+Perceiver: AA seq ──► ESM-3 (frozen) ──► PerceiverResampler(32) ──► Qwen3-8B ──► SS3
+                Cross-attention preserves more residue-level detail than pooling.
+                Potentially better per-residue accuracy.
+
+Flamingo:     AA seq ──► ESM-3 (frozen) ──► FlamingoPerceiver(64) ──► GatedCrossAttn ──► SS3
+              Cross-attention at every 4th LLM layer. No prefix injection.
+              Protein info accessed at multiple depths. Potentially best spatial reasoning.
+</div>
+
+<h3>Predictions</h3>
+
+<table>
+    <tr><th>Approach</th><th>Expected Q3</th><th>Rationale</th></tr>
+    <tr>
+        <td>Text-only</td>
+        <td>~55&ndash;65%</td>
+        <td>Must infer structure from raw AA tokens. Baseline for sequence-only methods in the literature is ~65% Q3 with simple models. A general chat LLM without specialized training may be lower.</td>
+    </tr>
+    <tr>
+        <td>ESM3+MLP</td>
+        <td>~65&ndash;75%</td>
+        <td>ESM-3 embeddings carry structural information, but attention pooling compresses to 32 tokens, losing per-residue resolution. MLP projection may further blur.</td>
+    </tr>
+    <tr>
+        <td>ESM3+Perceiver</td>
+        <td>~68&ndash;78%</td>
+        <td>Cross-attention in Perceiver may preserve more residue-level detail than attention pooling.</td>
+    </tr>
+    <tr>
+        <td>Flamingo</td>
+        <td>~70&ndash;80%</td>
+        <td>Multi-layer cross-attention gives the LLM access to protein embeddings at multiple depths, potentially best for spatial reasoning about per-residue properties.</td>
+    </tr>
+</table>
+
+<div class="callout callout-success">
+    <strong>The key test</strong>
+    <p>If MLP/Perceiver/Flamingo paths do <strong>not</strong> significantly beat text-only on per-residue SS3, it proves the projector pathway is not transmitting structural information effectively &mdash; the embeddings are wasted. This is the most direct test of whether the multimodal architecture is working.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="esmfold-outputs">6. What ESMFold Provides</h2>
+
+<p>Our <code>EsmForProteinFolding</code> wrapper currently extracts only mean pLDDT and pTM. The model returns a much richer set of structural outputs that we can leverage:</p>
+
+<h3>Direct ESMFold Outputs</h3>
+
+<table>
+    <tr><th>Output</th><th>Shape</th><th>Description</th><th>Currently Used?</th></tr>
+    <tr><td><code>positions</code></td><td><code>(B, L, 37, 3)</code></td><td>All-atom coordinates in atom37 format</td><td>Not extracted</td></tr>
+    <tr><td><code>plddt</code></td><td><code>(B, L, 1)</code></td><td>Per-residue confidence (0&ndash;100)</td><td>Mean only</td></tr>
+    <tr><td><code>ptm</code></td><td>scalar</td><td>Predicted TM-score (0&ndash;1)</td><td>Stored, unused in reward</td></tr>
+    <tr><td><code>angles</code></td><td><code>(B, L, n_angles)</code></td><td>Backbone &amp; sidechain torsion angles (phi/psi/chi)</td><td>Not extracted</td></tr>
+    <tr><td><code>distogram_logits</code></td><td><code>(B, L, L, bins)</code></td><td>Inter-residue distance predictions</td><td>Not extracted</td></tr>
+    <tr><td><code>predicted_aligned_error</code></td><td><code>(B, L, L)</code></td><td>PAE matrix (predicted pairwise error)</td><td>Not extracted</td></tr>
+    <tr><td><code>frames</code></td><td><code>(B, L, ...)</code></td><td>Backbone rigid body frames</td><td>Not extracted</td></tr>
+</table>
+
+<h3>Derived Properties (via biotite)</h3>
+
+<p><strong>biotite v1.6.0</strong> is already installed and can compute structural properties from in-memory coordinate arrays without external binaries:</p>
+
+<table>
+    <tr><th>Property</th><th>Function</th><th>Input</th><th>Output</th></tr>
+    <tr>
+        <td>Secondary structure (SS3)</td>
+        <td><code>biotite.structure.annotate_sse()</code></td>
+        <td>AtomArray from atom37 coords</td>
+        <td>Per-residue H/E/C (P-SEA algorithm, &gt;97% agreement with DSSP)</td>
+    </tr>
+    <tr>
+        <td>Solvent accessibility (SASA)</td>
+        <td><code>biotite.structure.sasa()</code></td>
+        <td>AtomArray</td>
+        <td>Per-residue &Aring;&sup2; (Shrake-Rupley rolling probe)</td>
+    </tr>
+    <tr>
+        <td>Dihedral angles</td>
+        <td><code>biotite.structure.dihedral_backbone()</code></td>
+        <td>AtomArray</td>
+        <td>Per-residue phi/psi/omega (radians)</td>
+    </tr>
+    <tr>
+        <td>Contact map</td>
+        <td>Distance matrix on CA atoms</td>
+        <td>AtomArray</td>
+        <td>Binary L&times;L contact matrix (&lt;8&Aring; threshold)</td>
+    </tr>
+</table>
+
+<div class="callout callout-info">
+    <strong>Key insight: phi/psi and contact maps need no external tool</strong>
+    <p>ESMFold already returns <code>angles</code> (torsion angles) and <code>distogram_logits</code> (distance predictions) as tensors. Only secondary structure assignment and SASA require biotite.</p>
+</div>
+
+<h3>Pipeline Diagram</h3>
+
+<div class="pipeline-diagram">
+                    ┌─────────────────────────────────────────────────────────────────┐
+                    │                     DATA GENERATION PIPELINE                     │
+                    └─────────────────────────────────────────────────────────────────┘
+
+Protein Sequence ──► ESMFold (GPU, frozen) ──┬──► positions (B, L, 37, 3) ──► biotite ──┬──► SS3 (H/E/C per residue)
+                                             │                                          ├──► SASA (Å² per residue)
+                                             ├──► plddt (B, L, 1)                       └──► contacts (L×L matrix)
+                                             ├──► angles (phi/psi/chi per residue) ──────────► direct output
+                                             └──► distogram_logits ──────────────────────────► contact map
+
+                    ┌─────────────────────────────────────────────────────────────────┐
+                    │                     TRAINING DATA FORMAT                          │
+                    └─────────────────────────────────────────────────────────────────┘
+
+{
+  "instruction": "Predict the per-residue secondary structure (SS3) of this protein...",
+  "input": "MKTAYIAKQR...",
+  "output": "&lt;answer&gt;\nSS3: H H H H H E E E E E C C C C H H H H H H\n&lt;/answer&gt;",
+  "metadata": {
+    "ss3": "H H H H H E E E E E C C C C H H H H H H",
+    "sasa": [0.12, 0.05, 0.08, ...],
+    "plddt": [92.1, 88.3, 85.7, ...],
+    "source": "esmfold+biotite"
+  }
+}
+
+                    ┌─────────────────────────────────────────────────────────────────┐
+                    │                     GRPO REWARD COMPUTATION                       │
+                    └─────────────────────────────────────────────────────────────────┘
+
+Model completion ──► _parse_ss3_string(): SS3 tag, &lt;answer&gt; block, or longest H/E/C run (≥10 chars)
+                     ──► Per-residue accuracy = matches / max(len_pred, len_gt)
+                     ──► Segment F1 = 2×precision×recall/(P+R) on SS segments (>50% overlap)
+                     ──► Final reward = 0.6 × per_residue_acc + 0.4 × segment_f1
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="implementation">7. Implementation Plan</h2>
+
+<h3>Step 1: Data Generation Script (Implemented)</h3>
+
+<p>Script: <code>scripts/data/download_structure_properties.py</code> (407 lines)</p>
+
+<ul>
+    <li>Input: Protein sequences from HuggingFace dataset or existing SFT data</li>
+    <li>Process: ESMFold &rarr; atom37 coords &rarr; biotite AtomArray &rarr; SS3 + SASA + dihedrals + contacts</li>
+    <li>Output: JSON in Mol-Instructions format with per-residue labels in metadata</li>
+    <li>Three task variants: <code>--task composition|per_residue|full</code></li>
+    <li>Target: 10K proteins, max length 512</li>
+</ul>
+
+<pre><code># Generate datasets for each option
+python scripts/data/download_structure_properties.py --task composition --max_samples 10000
+python scripts/data/download_structure_properties.py --task per_residue --max_samples 10000
+python scripts/data/download_structure_properties.py --task full --max_samples 10000
+
+# Use existing SFT data as protein source
+python scripts/data/download_structure_properties.py --task per_residue \
+    --source sft_data --sft_data_dir data/processed/combined_sft_260225_arrow</code></pre>
+
+<h4>Core Structural Extraction (src/utils/structure_properties.py, 426 lines)</h4>
+
+<pre><code># Key functions in src/utils/structure_properties.py:
+atom37_to_biotite(positions, sequence)     # ESMFold atom37 → biotite AtomArray (in-memory)
+compute_secondary_structure(atom_array)    # P-SEA → SS3 string (H/E/C) + fractions
+compute_sasa(atom_array)                   # Shrake-Rupley → per-residue RSA (Tien 2013 norms)
+compute_dihedrals(atom_array)              # Backbone phi/psi/omega
+classify_ramachandran(phi, psi)            # → alpha/beta/left_helix/other regions
+compute_contact_map(atom_array)            # Cβ-Cβ &lt; 8Å, |i-j| &gt; 5
+extract_properties(positions, sequence)    # Main entry: combines all above
+properties_to_summary(props)               # → human-readable text string</code></pre>
+
+<h3>Step 2: Reward Functions (Implemented)</h3>
+
+<p>Three new functions added to <code>src/training/rewards.py</code> with 8 registry aliases:</p>
+
+<pre><code># Registry aliases in rewards.py (lines 106-113):
+"ss_composition", "structure_properties_a"  → compute_ss_composition_reward   # Option A
+"ss_sequence", "ss_per_residue", "structure_properties_b" → compute_ss_sequence_reward  # Option B
+"structure_composite", "structure_properties", "structure_properties_c" → compute_structure_composite_reward  # Option C</code></pre>
+
+<p><strong>Option B detail</strong> (<code>compute_ss_sequence_reward</code>, lines 1002&ndash;1122): Parses SS3 string via <code>_parse_ss3_string()</code> which checks <code>SS3:</code> tags, <code>&lt;answer&gt;</code> blocks, or longest H/E/C run (&ge;10 chars). Segment F1 uses &gt;50% overlap matching on contiguous SS runs.</p>
+
+<p><strong>Option C detail</strong> (<code>compute_structure_composite_reward</code>, lines 1125&ndash;1281): Parses Ramachandran fractions via regex (<code>(\d+\.?\d*)\s*%?\s*alpha</code>), contacts via count or density patterns. All Gaussian scoring uses <code>torch.exp(-error²/(2σ²))</code>.</p>
+
+<h3>Step 3: GRPO Configs (Implemented)</h3>
+
+<p>Three configs in <code>configs/main_RL/</code>, plus a text-SFT variant:</p>
+
+<table>
+    <tr><th>Config</th><th>Task</th><th>group_size</th><th>max_tokens</th><th>CLI</th></tr>
+    <tr>
+        <td><code>grpo_structure_props_a.yaml</code></td>
+        <td><code>ss_composition</code></td>
+        <td>16</td>
+        <td>256</td>
+        <td><code>main_RL=grpo_structure_props_a</code></td>
+    </tr>
+    <tr>
+        <td><code>grpo_structure_props_b.yaml</code></td>
+        <td><code>ss_sequence</code></td>
+        <td>8</td>
+        <td>768</td>
+        <td><code>main_RL=grpo_structure_props_b</code></td>
+    </tr>
+    <tr>
+        <td><code>grpo_structure_props.yaml</code></td>
+        <td><code>structure_properties</code></td>
+        <td>8</td>
+        <td>512</td>
+        <td><code>main_RL=grpo_structure_props</code></td>
+    </tr>
+    <tr>
+        <td><code>grpo_structure_props_text_sft.yaml</code></td>
+        <td><code>structure_properties</code></td>
+        <td>8</td>
+        <td>512</td>
+        <td><code>main_RL=grpo_structure_props_text_sft</code></td>
+    </tr>
+</table>
+
+<p>Common settings across all configs: <code>lr=5e-6</code>, <code>projector_lr=2.5e-5</code>, <code>batch_size=2</code>, <code>gradient_accumulation_steps=4</code> (effective batch=64 on 8&times;H100), <code>epochs=1</code>, <code>warmup_steps=20</code>, <code>enable_thinking=false</code>, <code>fsdp.enabled=false</code>.</p>
+
+<pre><code># Run Option B (recommended) with MLP SFT parent
+python scripts/train.py main_RL=grpo_structure_props_b parent_experiment=sft_esm3_mlp_combined_qwen3_8b_it_0306_010408
+
+# Run Option A (simpler) with text SFT parent
+python scripts/train.py main_RL=grpo_structure_props_a parent_experiment=sft_text_combined_qwen3_8b_it_0307_190324 approach=text</code></pre>
+
+<h3>Step 4: Evaluation Metrics (Planned)</h3>
+
+<p>Add Q3 accuracy to evaluation suite in <code>src/evaluation/</code>:</p>
+<ul>
+    <li>Per-residue Q3 accuracy (primary metric, comparable to Porter 6's 86.6%)</li>
+    <li>Per-class precision/recall (H, E, C separately)</li>
+    <li>Segment overlap score (SOV) for structural element boundaries</li>
+    <li>Matthews correlation coefficient (MCC) for imbalanced classes</li>
+</ul>
+
+<h3>Implementation Status</h3>
+
+<table>
+    <tr><th>Step</th><th>Task</th><th>Owner</th><th>Status</th></tr>
+    <tr><td>1</td><td>Data generation script (<code>scripts/data/download_structure_properties.py</code>)</td><td>Engineer</td><td>&#x2705; Done</td></tr>
+    <tr><td>2</td><td>Structural extraction utility (<code>src/utils/structure_properties.py</code>)</td><td>Engineer</td><td>&#x2705; Done</td></tr>
+    <tr><td>3</td><td>Three reward functions in <code>rewards.py</code></td><td>Engineer</td><td>&#x2705; Done</td></tr>
+    <tr><td>4</td><td>GRPO configs (Options A/B/C + text variant)</td><td>Engineer</td><td>&#x2705; Done</td></tr>
+    <tr><td>5</td><td>Generate 10K SS3 training dataset</td><td>Engineer</td><td>&#x2B1C; Pending (GPU)</td></tr>
+    <tr><td>6</td><td>Evaluation metrics (Q3, SOV, per-class)</td><td>Researcher</td><td>&#x2B1C; Pending</td></tr>
+    <tr><td>7</td><td>Run GRPO: text-only + MLP</td><td>Engineer</td><td>&#x2B1C; Pending</td></tr>
+    <tr><td>8</td><td>Analyze results, update research log</td><td>Researcher</td><td>&#x2B1C; Pending</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2 id="summary">8. Summary &amp; Next Steps</h2>
+
+<div class="callout callout-success">
+    <strong>Why this is the right next experiment</strong>
+    <ol>
+        <li><strong>Solves collapse</strong>: Per-residue output is impossible to hack with a single template.</li>
+        <li><strong>Tests the architecture</strong>: Directly measures whether ESM-3 structural information reaches the LLM through MLP/Perceiver/Flamingo pathways.</li>
+        <li><strong>Novel contribution</strong>: No chat LLM has been trained for per-residue structural prediction. This fills a clear literature gap.</li>
+        <li><strong>Practical</strong>: ESMFold is already in the codebase, biotite is already installed, and the reward function is straightforward to implement.</li>
+        <li><strong>Benchmarkable</strong>: Q3 accuracy is a standard metric with published baselines (Porter 6: 86.6%).</li>
+    </ol>
+</div>
+
+<h3>Recommended Path Forward</h3>
+
+<ol>
+    <li><strong>Start with Option B (per-residue SS3)</strong> as the primary reward function.</li>
+    <li><strong>Limit protein length to &le;256 residues</strong> for initial experiments to keep output manageable (~512 tokens for SS3 string).</li>
+    <li><strong>Run text-only and MLP GRPO first</strong> (both have SFT checkpoints ready).</li>
+    <li><strong>Compare Q3 accuracy</strong>: if MLP &gt; text by &ge;5% Q3, the projector pathway is working.</li>
+    <li><strong>Phase in RSA (Option C)</strong> once SS3 training is stable.</li>
+</ol>
+
+<h3>Open Questions</h3>
+
+<ul>
+    <li>Should we use pre-computed SS3 labels (fast, from data pipeline) or live ESMFold during GRPO (slow, but avoids data staleness)?</li>
+    <li>How to handle proteins shorter than the SS3 prediction length (padding vs truncation)?</li>
+    <li>Should the <code>&lt;think&gt;</code> block be scored (e.g., must mention structural elements) or only the <code>&lt;answer&gt;</code> block?</li>
+    <li>Is biotite's P-SEA algorithm (SS3 only) sufficient, or do we need DSSP (SS8) for richer signal?</li>
+</ul>
+
+<hr>
+<p style="color: var(--muted); font-size: 0.85rem;">
+    <em>Related posts</em>:
+    <a href="2026-03-12_grpo-structure-text-vs-mlp.html">GRPO Structure: Text vs MLP</a> |
+    <a href="2026-03-11_grpo-multi-task-analysis.html">GRPO Multi-Task Analysis</a> |
+    <a href="2026-03-15_full-project-analysis.html">Full Project Analysis</a>
+</p>
+
+</body>
+</html>

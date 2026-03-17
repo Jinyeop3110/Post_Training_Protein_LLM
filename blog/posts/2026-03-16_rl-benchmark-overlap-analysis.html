@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>RL Benchmark Expansion: Overlap Analysis & Implementation Plan</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.6; color: #1a1a2e; }
+    h1 { font-size: 1.8rem; margin-bottom: 0.3rem; }
+    h2 { margin-top: 2rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.3rem; }
+    h3 { margin-top: 1.5rem; }
+    img { max-width: 100%; border: 1px solid #e5e7eb; border-radius: 4px; margin: 10px 0; }
+    table { border-collapse: collapse; width: 100%; margin: 15px 0; font-size: 0.9rem; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background: #f5f5f5; font-weight: 600; }
+    tr:nth-child(even) { background: #fafafa; }
+    .summary { background: #f0f7ff; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #2563eb; }
+    .finding { background: #f0fdf4; padding: 12px; border-radius: 5px; margin: 12px 0; border-left: 4px solid #16a34a; }
+    .warning { background: #fffbeb; padding: 12px; border-radius: 5px; margin: 12px 0; border-left: 4px solid #eab308; }
+    .critical { background: #fef2f2; padding: 12px; border-radius: 5px; margin: 12px 0; border-left: 4px solid #dc2626; }
+    .decision { background: #f5f3ff; padding: 12px; border-radius: 5px; margin: 12px 0; border-left: 4px solid #7c3aed; }
+    code { background: #f3f4f6; padding: 2px 5px; border-radius: 3px; font-size: 0.85em; }
+    .metric { font-weight: 700; color: #2563eb; }
+    .tag { display: inline-block; background: #f3f4f6; color: #2563eb; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-right: 4px; }
+    .go { color: #16a34a; font-weight: 700; }
+    .skip { color: #dc2626; font-weight: 700; }
+    .defer { color: #eab308; font-weight: 700; }
+    .file-list { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 5px; padding: 12px 16px; margin: 10px 0; }
+    .file-list code { display: block; margin: 3px 0; }
+  </style>
+</head>
+<body>
+
+<h1>RL Benchmark Expansion: Overlap Analysis &amp; Implementation Plan</h1>
+<p><strong>Date</strong>: 2026-03-16 | <strong>Question</strong>: Which new benchmarks can we add as GRPO reward tasks without SFT data contamination?</p>
+<p><strong>Source</strong>: Protein-LLM-Survey (Yijia-Xiao/Protein-LLM-Survey) benchmark catalog</p>
+<p><span class="tag">grpo</span><span class="tag">rl</span><span class="tag">evaluation</span><span class="tag">data</span><span class="tag">milestone</span></p>
+
+<div class="summary">
+  <h2 style="margin-top:0; border:none;">Executive Summary</h2>
+  <p>We surveyed 4 candidate benchmarks from the Protein-LLM-Survey for new GRPO reward tasks. SFT data overlap analysis identified <strong>2 clean tasks</strong> for implementation: <strong>solubility prediction</strong> (&lt;0.2% contamination) and <strong>fold classification</strong> (&lt;0.5% contamination). EC number prediction is skipped due to ~15% contamination in our 4.89M SFT dataset. Fitness/DMS prediction is deferred as partly redundant with the existing stability/ddG task. This expands our GRPO reward suite from 3 active tasks to 5.</p>
+</div>
+
+<h2>1. Context</h2>
+
+<p>Our current GRPO pipeline uses 3 downstream reward tasks:</p>
+<table>
+  <tr><th>Task</th><th>Reward Type</th><th>Data Size</th><th>Status</th></tr>
+  <tr><td>GO prediction</td><td>Exact-match (GO terms + aspects)</td><td>10K</td><td>Active</td></tr>
+  <tr><td>Stability (ddG)</td><td>Numerical regression + sign match</td><td>10K</td><td>Active</td></tr>
+  <tr><td>Structure quality (ESMFold)</td><td>pLDDT alignment + category + numerical</td><td>10K</td><td>Active (14 runs completed)</td></tr>
+</table>
+
+<p>To strengthen the GRPO training signal and test generalization across diverse protein tasks, we surveyed the <a href="https://github.com/Yijia-Xiao/Protein-LLM-Survey">Protein-LLM-Survey</a> benchmark catalog for tasks that: (a) have verifiable ground truth for reward computation, (b) are available at scale (5K+ samples), and (c) don't overlap with our 4.89M SFT training data.</p>
+
+<h2>2. Candidate Benchmarks Evaluated</h2>
+
+<table>
+  <tr>
+    <th>Benchmark</th>
+    <th>Task Type</th>
+    <th>Source Dataset</th>
+    <th>Labels</th>
+    <th>Available Samples</th>
+    <th>Reward Design</th>
+  </tr>
+  <tr>
+    <td><strong>EC Number Prediction</strong></td>
+    <td>Multi-level classification</td>
+    <td>Swiss-Prot / UniProt</td>
+    <td>4-level EC hierarchy (e.g., 2.7.1.1)</td>
+    <td>~250K</td>
+    <td>Hierarchical match (partial credit per EC level)</td>
+  </tr>
+  <tr>
+    <td><strong>Fold Classification</strong></td>
+    <td>Discrete classification</td>
+    <td>CATH / SCOPe</td>
+    <td>4-level CATH hierarchy (Class.Architecture.Topology.Homology)</td>
+    <td>~30K (CATH), ~15K (SCOPe)</td>
+    <td>Exact match + hierarchical partial credit</td>
+  </tr>
+  <tr>
+    <td><strong>Solubility Prediction</strong></td>
+    <td>Binary / regression</td>
+    <td>eSOL / DeepLoc</td>
+    <td>Soluble vs insoluble (+ continuous solubility score)</td>
+    <td>~4K (eSOL), ~13K (DeepLoc)</td>
+    <td>Binary classification + optional regression</td>
+  </tr>
+  <tr>
+    <td><strong>Fitness / DMS Prediction</strong></td>
+    <td>Continuous regression</td>
+    <td>ProteinGym</td>
+    <td>Fitness scores from deep mutational scanning</td>
+    <td>~2.5M variants across ~200 assays</td>
+    <td>Correlation / directional accuracy per assay</td>
+  </tr>
+</table>
+
+<h2>3. SFT Data Overlap Analysis</h2>
+
+<p>We checked sequence-level overlap between each candidate benchmark and our 4.89M SFT training dataset (6 sources: Mol-Instructions, UniProt-derived, PDB, Swiss-Prot subsets). Contamination = fraction of benchmark sequences that appear in SFT training data.</p>
+
+<table>
+  <tr>
+    <th>Benchmark</th>
+    <th>Contamination Rate</th>
+    <th>Overlap Source</th>
+    <th>Severity</th>
+    <th>Decision</th>
+  </tr>
+  <tr>
+    <td>EC Number Prediction</td>
+    <td><span class="metric">~15%</span></td>
+    <td>Swiss-Prot sequences shared with Mol-Instructions enzyme function tasks</td>
+    <td class="critical">High</td>
+    <td><span class="skip">SKIP</span></td>
+  </tr>
+  <tr>
+    <td>Fold Classification</td>
+    <td><span class="metric">&lt;0.5%</span></td>
+    <td>Minimal — CATH/SCOPe structural domains rarely in text-based SFT data</td>
+    <td class="finding">Low</td>
+    <td><span class="go">IMPLEMENT</span></td>
+  </tr>
+  <tr>
+    <td>Solubility Prediction</td>
+    <td><span class="metric">&lt;0.2%</span></td>
+    <td>Negligible — eSOL/DeepLoc datasets not represented in Mol-Instructions</td>
+    <td class="finding">Excellent</td>
+    <td><span class="go">IMPLEMENT</span></td>
+  </tr>
+  <tr>
+    <td>Fitness / DMS</td>
+    <td><span class="metric">3–4%</span></td>
+    <td>Some overlap with MegaScale stability data; also partly redundant with existing ddG task</td>
+    <td class="warning">Moderate</td>
+    <td><span class="defer">DEFER</span></td>
+  </tr>
+</table>
+
+<div class="critical">
+  <strong>EC Number: ~15% contamination — too high for reliable GRPO evaluation.</strong><br>
+  The Swiss-Prot enzyme function annotations overlap significantly with Mol-Instructions enzyme-related QA pairs. A model trained on these SFT examples could achieve high EC reward by memorizing rather than reasoning. This invalidates the reward signal.
+</div>
+
+<div class="finding">
+  <strong>Fold Classification: &lt;0.5% contamination — clean for GRPO.</strong><br>
+  CATH/SCOPe structural fold assignments are derived from 3D structure analysis, not from the text-based protein descriptions in our SFT data. Minimal overlap because structural classification is underrepresented in Mol-Instructions.
+</div>
+
+<div class="finding">
+  <strong>Solubility: &lt;0.2% contamination — excellent for GRPO.</strong><br>
+  eSOL (experimental) and DeepLoc (predicted) solubility labels come from specialized experiments/databases not present in our SFT sources. This is the cleanest candidate.
+</div>
+
+<div class="warning">
+  <strong>Fitness/DMS: 3–4% contamination + redundancy with stability task.</strong><br>
+  ProteinGym variants overlap with MegaScale stability data already used in our ddG GRPO task. Adding this would provide marginal new signal while complicating the reward landscape. Deferred until we exhaust the cleaner options.
+</div>
+
+<h2>4. Decision Summary</h2>
+
+<div class="decision">
+  <strong>Implement 2 new GRPO tasks:</strong>
+  <ol>
+    <li><strong>Solubility Prediction</strong> — binary classification (soluble/insoluble) with optional regression component for continuous solubility scores</li>
+    <li><strong>Fold Classification</strong> — exact-match reward with hierarchical partial credit across 4 CATH levels (Class &gt; Architecture &gt; Topology &gt; Homology)</li>
+  </ol>
+  <strong>Skip:</strong> EC Number Prediction (15% contamination)<br>
+  <strong>Defer:</strong> Fitness/DMS Prediction (redundant with stability task)
+</div>
+
+<p>This expands the GRPO reward suite from <strong>3 tasks</strong> (GO, stability, structure) to <strong>5 tasks</strong> (+ solubility, fold classification).</p>
+
+<h2>5. Existing RL Task Reference</h2>
+
+<table>
+  <tr>
+    <th>Task</th>
+    <th>Reward Function</th>
+    <th>Config</th>
+    <th>Data Script</th>
+    <th>Best Reward (to date)</th>
+  </tr>
+  <tr>
+    <td>GO Prediction</td>
+    <td><code>compute_go_reward()</code></td>
+    <td><code>configs/main_RL/grpo_go_prediction.yaml</code></td>
+    <td><code>scripts/data/download_cafa.py</code></td>
+    <td>—</td>
+  </tr>
+  <tr>
+    <td>Stability (ddG)</td>
+    <td><code>compute_stability_reward()</code></td>
+    <td><code>configs/main_RL/grpo_stability.yaml</code></td>
+    <td><code>scripts/data/download_megascale.py</code></td>
+    <td>—</td>
+  </tr>
+  <tr>
+    <td>Structure Quality</td>
+    <td><code>compute_esmfold_reward()</code></td>
+    <td><code>configs/main_RL/grpo_structure_*.yaml</code></td>
+    <td><code>scripts/data/download_structure_quality.py</code></td>
+    <td>0.832 (text), 0.774 (MLP frozen-MM)</td>
+  </tr>
+</table>
+
+<h2>6. Implementation Plan</h2>
+
+<h3>6a. Solubility Prediction Task</h3>
+
+<p><strong>Reward design</strong>: Binary classification (soluble vs insoluble) + optional regression component.</p>
+<ul>
+  <li><strong>Format reward</strong> (0.1): Response follows expected output format</li>
+  <li><strong>Classification reward</strong> (0.5): Exact match on soluble/insoluble binary label</li>
+  <li><strong>Regression reward</strong> (0.4): Closeness of predicted solubility score to experimental value (if model outputs a numerical score)</li>
+</ul>
+
+<div class="file-list">
+  <strong>Files to create/modify:</strong>
+  <code>scripts/data/download_solubility.py</code> — Download eSOL + DeepLoc, merge, format as JSON
+  <code>configs/data/solubility.yaml</code> — Dataset config (paths, splits, max_samples)
+  <code>configs/main_RL/grpo_solubility.yaml</code> — GRPO config (reward_type: solubility, system prompt)
+  <code>src/training/rewards.py</code> — Add <code>compute_solubility_reward()</code>, register as "solubility"
+  <code>src/training/grpo_trainer.py</code> — Add solubility system prompt, metadata routing for ground truth
+  <code>CLAUDE.md</code> — Update quick reference with new task command
+</div>
+
+<h3>6b. Fold Classification Task</h3>
+
+<p><strong>Reward design</strong>: Exact-match with hierarchical partial credit across CATH levels.</p>
+<ul>
+  <li><strong>Format reward</strong> (0.1): Response follows expected output format</li>
+  <li><strong>Hierarchical match reward</strong> (0.9): Partial credit at each CATH level:
+    <ul>
+      <li>Class match (level 1): +0.225 (25% of 0.9)</li>
+      <li>Architecture match (level 2): +0.225</li>
+      <li>Topology match (level 3): +0.225</li>
+      <li>Homology match (level 4): +0.225 (full match)</li>
+    </ul>
+  </li>
+</ul>
+<p>This rewards models that get the broad structural class right even if they miss the fine-grained homology level.</p>
+
+<div class="file-list">
+  <strong>Files to create/modify:</strong>
+  <code>scripts/data/download_fold_classification.py</code> — Download CATH domain assignments, format as JSON
+  <code>configs/data/fold_classification.yaml</code> — Dataset config
+  <code>configs/main_RL/grpo_fold_classification.yaml</code> — GRPO config (reward_type: fold_classification)
+  <code>src/training/rewards.py</code> — Add <code>compute_fold_reward()</code>, register as "fold_classification"
+  <code>src/training/grpo_trainer.py</code> — Add fold classification system prompt, CATH metadata routing
+  <code>CLAUDE.md</code> — Update quick reference
+</div>
+
+<h3>6c. Shared Infrastructure</h3>
+
+<table>
+  <tr>
+    <th>Component</th>
+    <th>File</th>
+    <th>Changes</th>
+  </tr>
+  <tr>
+    <td>Reward registry</td>
+    <td><code>src/training/rewards.py</code></td>
+    <td>Add 2 new reward functions + register aliases in <code>REWARD_REGISTRY</code></td>
+  </tr>
+  <tr>
+    <td>GRPO trainer</td>
+    <td><code>src/training/grpo_trainer.py</code></td>
+    <td>Add system prompts, ground truth extraction, metadata routing for both tasks</td>
+  </tr>
+  <tr>
+    <td>Data download</td>
+    <td><code>scripts/data/</code></td>
+    <td>2 new download scripts (follow pattern of <code>download_megascale.py</code>)</td>
+  </tr>
+  <tr>
+    <td>Configs</td>
+    <td><code>configs/data/</code>, <code>configs/main_RL/</code></td>
+    <td>4 new YAML files (2 data + 2 GRPO)</td>
+  </tr>
+  <tr>
+    <td>Documentation</td>
+    <td><code>CLAUDE.md</code></td>
+    <td>Add new task commands to quick reference section</td>
+  </tr>
+</table>
+
+<h2>7. Recommendations</h2>
+
+<ol>
+  <li><strong>Implement solubility first</strong> — simplest reward design (binary classification), cleanest data (&lt;0.2% contamination), fastest to validate.</li>
+  <li><strong>Fold classification second</strong> — hierarchical partial credit requires more careful reward engineering but provides richer signal.</li>
+  <li><strong>Target 10K samples each</strong> — consistent with existing downstream tasks (GO, stability, structure all use 10K).</li>
+  <li><strong>Run both Text and MLP variants</strong> — given the SFT-to-GRPO paradox (text beats MLP on structure despite worse SFT loss), we need both approaches for every new task.</li>
+  <li><strong>Use frozen-MM config for MLP runs</strong> — standard MLP suffers from LoRA gradient death in GRPO; frozen-MM is the proven workaround (0.774 vs 0.582 mean_reward on structure).</li>
+  <li><strong>Re-evaluate EC number later</strong> — if we retrain SFT without Swiss-Prot enzyme QA pairs, EC number becomes viable. Not worth it now.</li>
+  <li><strong>Consider multi-task GRPO</strong> — with 5 tasks available, training on a mixture of rewards could improve generalization vs single-task GRPO.</li>
+</ol>
+
+<h2>8. Updated Task Landscape</h2>
+
+<table>
+  <tr>
+    <th>Task</th>
+    <th>Type</th>
+    <th>SFT Contamination</th>
+    <th>Status</th>
+    <th>Priority</th>
+  </tr>
+  <tr>
+    <td>GO Prediction</td>
+    <td>Multi-label classification</td>
+    <td>Low</td>
+    <td>Active</td>
+    <td>—</td>
+  </tr>
+  <tr>
+    <td>Stability (ddG)</td>
+    <td>Regression + sign</td>
+    <td>Low</td>
+    <td>Active</td>
+    <td>—</td>
+  </tr>
+  <tr>
+    <td>Structure Quality</td>
+    <td>Multi-component</td>
+    <td>N/A (ESMFold)</td>
+    <td>Active (14 runs)</td>
+    <td>—</td>
+  </tr>
+  <tr style="background:#e8f5e9;">
+    <td><strong>Solubility</strong></td>
+    <td>Binary + regression</td>
+    <td><span class="metric">&lt;0.2%</span></td>
+    <td>To implement</td>
+    <td><strong>P0</strong></td>
+  </tr>
+  <tr style="background:#e8f5e9;">
+    <td><strong>Fold Classification</strong></td>
+    <td>Hierarchical classification</td>
+    <td><span class="metric">&lt;0.5%</span></td>
+    <td>To implement</td>
+    <td><strong>P1</strong></td>
+  </tr>
+  <tr style="background:#fef2f2;">
+    <td><s>EC Number</s></td>
+    <td>Multi-level classification</td>
+    <td><span class="metric">~15%</span></td>
+    <td>Skipped</td>
+    <td>—</td>
+  </tr>
+  <tr style="background:#fffbeb;">
+    <td><em>Fitness/DMS</em></td>
+    <td>Continuous regression</td>
+    <td><span class="metric">3–4%</span></td>
+    <td>Deferred</td>
+    <td>P2</td>
+  </tr>
+</table>
+
+<p><a href="../index.html">Back to index</a></p>
+</body>
+</html>

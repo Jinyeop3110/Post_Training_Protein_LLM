@@ -1,0 +1,70 @@
+# @package _global_
+
+# GRPO experiment: SS Composition Prediction — Option A reward
+# Simpler task: predict summary SS fractions + mean RSA
+#   - SS fraction accuracy (0.4): helix%, sheet%, coil% Gaussian decay
+#   - Dominant SS type match (0.3)
+#   - RSA accuracy (0.3)
+#
+# Data: structure_properties_composition.json
+# Requires: python scripts/data/download_structure_properties.py --task composition
+#
+# Usage:
+#   python scripts/train.py main_RL=grpo_structure_props_a parent_experiment=my_sft
+
+defaults:
+  - override /model: qwen3_8b
+  - override /encoder: esm3_small
+  - override /data: structure_properties
+  - override /training: grpo
+
+approach: esm3
+experiment_name: grpo_struct_props_a_${model.name}_${now:%m%d_%H%M%S}
+
+encoder:
+  encoder_batch_size: 4
+
+parent_experiment: null
+
+data:
+  task: ss_composition  # Routes to compute_ss_composition_reward
+  processing:
+    max_protein_length: 512
+
+training:
+  lr: 5e-6
+  projector_lr: 2.5e-5
+  batch_size: 2
+  gradient_accumulation_steps: 4
+  gradient_checkpointing: true
+  epochs: 1
+  warmup_steps: 20
+  max_grad_norm: 1.0
+
+  grpo:
+    group_size: 16  # Composition output is short; more completions
+    temperature: 0.9
+    use_kl_penalty: false
+    normalize_advantages: false
+
+  # Composition predictions are short
+  rollout:
+    max_tokens: 256
+    top_p: 0.95
+    do_sample: true
+    enable_thinking: false
+
+  save_steps: 50
+  eval_steps: 25
+  logging_steps: 5
+
+  fsdp:
+    enabled: false
+
+  wandb:
+    tags:
+      - grpo
+      - structure_properties
+      - ss_composition
+      - option_a
+      - ${model.name}

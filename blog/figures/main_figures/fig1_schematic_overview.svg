@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 720" width="1400" height="720"
+     font-family="Trebuchet MS, Arial, sans-serif">
+
+  <!-- ============================================================ -->
+  <!-- DEFS: arrowheads, filters                                     -->
+  <!-- ============================================================ -->
+  <defs>
+    <!-- Standard arrowhead -->
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse"
+            fill="#4A4A4A">
+      <path d="M 0 1 L 10 5 L 0 9 z"/>
+    </marker>
+    <!-- Dashed-path arrowhead (same shape, lighter) -->
+    <marker id="arrow-gray" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse"
+            fill="#888888">
+      <path d="M 0 1 L 10 5 L 0 9 z"/>
+    </marker>
+    <!-- Red arrowhead for flamingo cross-attn -->
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse"
+            fill="#C0392B">
+      <path d="M 0 1 L 10 5 L 0 9 z"/>
+    </marker>
+  </defs>
+
+  <!-- ============================================================ -->
+  <!-- BACKGROUND                                                    -->
+  <!-- ============================================================ -->
+  <rect width="1400" height="720" fill="#FFFFFF"/>
+
+  <!-- ============================================================ -->
+  <!-- TOP BANNER: Research Question                                 -->
+  <!-- ============================================================ -->
+  <rect x="30" y="10" width="1340" height="46" rx="8" ry="8"
+        fill="#F0F4F8" stroke="#B0BEC5" stroke-width="1.5"/>
+  <text x="700" y="39" text-anchor="middle" fill="#2C3E50"
+        font-size="13.5" font-style="italic">
+    Does ESM-3 structural embedding improve post-training (SFT + task-specific RL) of open-source LLMs for protein understanding?
+  </text>
+
+  <!-- ============================================================ -->
+  <!-- PANEL A: Four Pathways                                        -->
+  <!-- ============================================================ -->
+  <!-- Section label -->
+  <text x="40" y="82" fill="#333333" font-size="15" font-weight="bold">(A) Four Pathways</text>
+
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <!-- Protein Sequence input box                                  -->
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <rect x="35" y="160" width="145" height="70" rx="8" ry="8"
+        fill="#E8E0F0" stroke="#7B68AE" stroke-width="2"/>
+  <text x="107" y="185" text-anchor="middle" fill="#4A3878"
+        font-size="12" font-weight="bold">Protein Sequence</text>
+  <text x="107" y="204" text-anchor="middle" fill="#4A3878"
+        font-size="10" font-style="italic" font-family="Courier New, monospace">MKTL...AVFG</text>
+
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <!-- Fork dot                                                    -->
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <circle cx="215" cy="195" r="5" fill="#4A4A4A"/>
+  <!-- Line from protein box to fork -->
+  <line x1="180" y1="195" x2="210" y2="195"
+        stroke="#4A4A4A" stroke-width="1.5"/>
+
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <!-- PATH (a): Text-Only  (dashed, curves up)                    -->
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <path d="M 215 195 L 215 115 L 340 115"
+        stroke="#888888" stroke-width="1.5" stroke-dasharray="6,4"
+        fill="none" marker-end="url(#arrow-gray)"/>
+  <!-- Edge label: "direct" -->
+  <rect x="240" y="105" width="46" height="16" rx="3" ry="3" fill="#FFFFFF" stroke="none"/>
+  <text x="263" y="116" text-anchor="middle" fill="#888888" font-size="9.5" font-style="italic">direct</text>
+  <!-- Text-Only box -->
+  <rect x="348" y="95" width="140" height="42" rx="8" ry="8"
+        fill="#EDEDED" stroke="#999999" stroke-width="2"/>
+  <text x="418" y="113" text-anchor="middle" fill="#555555"
+        font-size="11" font-weight="bold">(a) Text-Only</text>
+  <text x="418" y="127" text-anchor="middle" fill="#777777"
+        font-size="9" font-style="italic">Tokenize AA sequence</text>
+
+  <!-- Arrow from text-only to LLM -->
+  <path d="M 488 116 L 560 116 L 560 260 L 580 260"
+        stroke="#888888" stroke-width="1.5" stroke-dasharray="6,4"
+        fill="none" marker-end="url(#arrow-gray)"/>
+
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <!-- PATH (b,c,d): Through ESM-3                                 -->
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <!-- Line from fork to ESM-3 -->
+  <line x1="220" y1="195" x2="260" y2="195"
+        stroke="#4A4A4A" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <!-- Edge label: "encode" -->
+  <rect x="225" y="181" width="44" height="14" rx="3" ry="3" fill="#FFFFFF" stroke="none"/>
+  <text x="247" y="192" text-anchor="middle" fill="#4A4A4A" font-size="9" font-style="italic">encode</text>
+
+  <!-- ESM-3 box -->
+  <rect x="268" y="170" width="130" height="52" rx="8" ry="8"
+        fill="#DCEEFB" stroke="#5B9BD5" stroke-width="2"/>
+  <text x="333" y="192" text-anchor="middle" fill="#2B5C8A"
+        font-size="12" font-weight="bold">&#10052; ESM-3</text>
+  <text x="333" y="207" text-anchor="middle" fill="#2B5C8A"
+        font-size="9" font-style="italic">Protein Encoder (frozen)</text>
+
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <!-- Fan-out from ESM-3 to three projectors                      -->
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <!-- Horizontal stem from ESM-3 -->
+  <line x1="398" y1="196" x2="430" y2="196"
+        stroke="#4A4A4A" stroke-width="1.5"/>
+  <!-- Vertical fan line -->
+  <line x1="430" y1="196" x2="430" y2="310"
+        stroke="#4A4A4A" stroke-width="1.5"/>
+  <line x1="430" y1="196" x2="430" y2="395"
+        stroke="#4A4A4A" stroke-width="1.5"/>
+
+  <!-- (b) MLP Projector -->
+  <line x1="430" y1="196" x2="470" y2="196"
+        stroke="#4A4A4A" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="478" y="175" width="100" height="44" rx="8" ry="8"
+        fill="#D6EAF8" stroke="#2E86C1" stroke-width="2"/>
+  <text x="528" y="194" text-anchor="middle" fill="#1A5276"
+        font-size="11" font-weight="bold">&#10037; (b) MLP</text>
+  <text x="528" y="208" text-anchor="middle" fill="#1A5276"
+        font-size="8.5" font-style="italic">AttnPool + MLP</text>
+
+  <!-- Arrow from MLP to LLM -->
+  <line x1="578" y1="197" x2="585" y2="197"
+        stroke="#4A4A4A" stroke-width="1.5"/>
+  <path d="M 578 197 L 582 197 L 582 280 L 586 280"
+        stroke="#4A4A4A" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- (c) Perceiver -->
+  <line x1="430" y1="310" x2="470" y2="310"
+        stroke="#4A4A4A" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="478" y="289" width="100" height="44" rx="8" ry="8"
+        fill="#FFF3E0" stroke="#E67E22" stroke-width="2"/>
+  <text x="528" y="307" text-anchor="middle" fill="#935116"
+        font-size="11" font-weight="bold">&#10037; (c) Perceiver</text>
+  <text x="528" y="321" text-anchor="middle" fill="#935116"
+        font-size="8.5" font-style="italic">Perceiver Resampler</text>
+
+  <!-- Arrow from Perceiver to LLM -->
+  <path d="M 578 311 L 582 311 L 582 340 L 586 340"
+        stroke="#4A4A4A" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- (d) Flamingo -->
+  <line x1="430" y1="395" x2="470" y2="395"
+        stroke="#4A4A4A" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="478" y="374" width="100" height="44" rx="8" ry="8"
+        fill="#FADBD8" stroke="#C0392B" stroke-width="2"/>
+  <text x="528" y="392" text-anchor="middle" fill="#922B21"
+        font-size="11" font-weight="bold">&#10037; (d) Flamingo</text>
+  <text x="528" y="406" text-anchor="middle" fill="#922B21"
+        font-size="8.5" font-style="italic">Gated Cross-Attn</text>
+
+  <!-- Flamingo arrow curves to side of LLM (cross-attn injection) -->
+  <path d="M 578 395 L 600 395 L 600 420 L 630 420"
+        stroke="#C0392B" stroke-width="1.5" fill="none"
+        stroke-dasharray="5,3" marker-end="url(#arrow-red)"/>
+  <!-- Small label -->
+  <text x="620" y="438" text-anchor="middle" fill="#922B21" font-size="7.5" font-style="italic">cross-attn</text>
+
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <!-- Qwen3 LLM block (tall)                                      -->
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <rect x="590" y="100" width="100" height="370" rx="8" ry="8"
+        fill="#D5F5E3" stroke="#5BAD7C" stroke-width="2"/>
+  <text x="640" y="125" text-anchor="middle" fill="#2D6A4F"
+        font-size="13" font-weight="bold">Qwen3</text>
+  <text x="640" y="141" text-anchor="middle" fill="#2D6A4F"
+        font-size="10">LLM</text>
+
+  <!-- Layer bars inside LLM -->
+  <!-- Layer 1 -->
+  <rect x="605" y="158" width="70" height="14" rx="3" ry="3"
+        fill="#A9DFBF" stroke="#5BAD7C" stroke-width="0.8"/>
+  <text x="640" y="169" text-anchor="middle" fill="#2D6A4F" font-size="7">Layer</text>
+  <!-- Layer 2 with cross-attn marker -->
+  <rect x="605" y="178" width="70" height="14" rx="3" ry="3"
+        fill="#A9DFBF" stroke="#5BAD7C" stroke-width="0.8"/>
+  <text x="630" y="189" text-anchor="middle" fill="#2D6A4F" font-size="7">Layer</text>
+  <text x="670" y="189" fill="#C0392B" font-size="9">&#9670;</text>
+  <!-- Layer 3 -->
+  <rect x="605" y="198" width="70" height="14" rx="3" ry="3"
+        fill="#A9DFBF" stroke="#5BAD7C" stroke-width="0.8"/>
+  <text x="640" y="209" text-anchor="middle" fill="#2D6A4F" font-size="7">Layer</text>
+  <!-- Layer 4 with cross-attn marker -->
+  <rect x="605" y="218" width="70" height="14" rx="3" ry="3"
+        fill="#A9DFBF" stroke="#5BAD7C" stroke-width="0.8"/>
+  <text x="630" y="229" text-anchor="middle" fill="#2D6A4F" font-size="7">Layer</text>
+  <text x="670" y="229" fill="#C0392B" font-size="9">&#9670;</text>
+  <!-- Layer 5 -->
+  <rect x="605" y="238" width="70" height="14" rx="3" ry="3"
+        fill="#A9DFBF" stroke="#5BAD7C" stroke-width="0.8"/>
+  <text x="640" y="249" text-anchor="middle" fill="#2D6A4F" font-size="7">Layer</text>
+  <!-- Layer 6 with cross-attn marker -->
+  <rect x="605" y="258" width="70" height="14" rx="3" ry="3"
+        fill="#A9DFBF" stroke="#5BAD7C" stroke-width="0.8"/>
+  <text x="630" y="269" text-anchor="middle" fill="#2D6A4F" font-size="7">Layer</text>
+  <text x="670" y="269" fill="#C0392B" font-size="9">&#9670;</text>
+  <!-- Layer 7 -->
+  <rect x="605" y="278" width="70" height="14" rx="3" ry="3"
+        fill="#A9DFBF" stroke="#5BAD7C" stroke-width="0.8"/>
+  <text x="640" y="289" text-anchor="middle" fill="#2D6A4F" font-size="7">Layer</text>
+  <!-- Layer 8 with cross-attn marker -->
+  <rect x="605" y="298" width="70" height="14" rx="3" ry="3"
+        fill="#A9DFBF" stroke="#5BAD7C" stroke-width="0.8"/>
+  <text x="630" y="309" text-anchor="middle" fill="#2D6A4F" font-size="7">Layer</text>
+  <text x="670" y="309" fill="#C0392B" font-size="9">&#9670;</text>
+
+  <!-- Dots indicating more layers -->
+  <text x="640" y="332" text-anchor="middle" fill="#2D6A4F" font-size="14">&#8942;</text>
+
+  <!-- LoRA label -->
+  <rect x="612" y="345" width="56" height="18" rx="4" ry="4"
+        fill="#FFFFFF" stroke="#5BAD7C" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="640" y="358" text-anchor="middle" fill="#2D6A4F"
+        font-size="9" font-style="italic">LoRA r=8</text>
+
+  <!-- Prefix injection bracket labels for (a)(b)(c) -->
+  <text x="595" y="385" fill="#4A4A4A" font-size="7.5" font-style="italic">prefix inject (a,b,c)</text>
+
+  <!-- Input arrows for MLP/Perceiver entering LLM mid-body -->
+  <!-- These are the convergence arrows; text-only enters at top, MLP/Perceiver at prefix position -->
+
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <!-- Text Output box                                              -->
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <rect x="600" y="485" width="100" height="35" rx="8" ry="8"
+        fill="#F5F5F5" stroke="#AAAAAA" stroke-width="1.5"/>
+  <text x="650" y="507" text-anchor="middle" fill="#555555"
+        font-size="11" font-weight="bold">Text Output</text>
+  <!-- Arrow down from LLM to output -->
+  <line x1="640" y1="470" x2="640" y2="483"
+        stroke="#4A4A4A" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <!-- Legend                                                       -->
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <rect x="35" y="540" width="655" height="36" rx="6" ry="6"
+        fill="#FAFAFA" stroke="#DDDDDD" stroke-width="1"/>
+  <!-- Frozen -->
+  <rect x="50" y="549" width="14" height="14" rx="3" ry="3"
+        fill="#DCEEFB" stroke="#5B9BD5" stroke-width="1.5"/>
+  <text x="70" y="561" fill="#2B5C8A" font-size="10">&#10052; Frozen</text>
+  <!-- Trainable -->
+  <rect x="160" y="549" width="14" height="14" rx="3" ry="3"
+        fill="#FDE8D0" stroke="#E8875B" stroke-width="1.5"/>
+  <text x="180" y="561" fill="#8B4513" font-size="10">&#10037; Trainable</text>
+  <!-- LLM + LoRA -->
+  <rect x="290" y="549" width="14" height="14" rx="3" ry="3"
+        fill="#D5F5E3" stroke="#5BAD7C" stroke-width="1.5"/>
+  <text x="310" y="561" fill="#2D6A4F" font-size="10">LLM + LoRA</text>
+  <!-- Cross-Attn -->
+  <text x="420" y="562" fill="#C0392B" font-size="12">&#9670;</text>
+  <text x="436" y="561" fill="#922B21" font-size="10">Cross-Attn (Flamingo)</text>
+  <!-- Dashed = text-only path -->
+  <line x1="580" y1="556" x2="616" y2="556"
+        stroke="#888888" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="622" y="561" fill="#777777" font-size="10">Text-only path</text>
+
+  <!-- ============================================================ -->
+  <!-- VERTICAL SEPARATOR                                            -->
+  <!-- ============================================================ -->
+  <line x1="710" y1="70" x2="710" y2="690" stroke="#DDDDDD" stroke-width="1"/>
+
+  <!-- ============================================================ -->
+  <!-- PANEL B: Training Pipeline                                    -->
+  <!-- ============================================================ -->
+  <text x="730" y="82" fill="#333333" font-size="15" font-weight="bold">(B) Training Pipeline</text>
+
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <!-- Stage 1: SFT block                                           -->
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <rect x="725" y="95" width="360" height="280" rx="10" ry="10"
+        fill="#EBF5FB" stroke="#5DADE2" stroke-width="2"/>
+  <!-- Stage title -->
+  <text x="905" y="118" text-anchor="middle" fill="#1A5276"
+        font-size="13" font-weight="bold">Stage 1: Supervised Fine-Tuning (SFT)</text>
+
+  <!-- Category rows -->
+  <!-- Row 1: Function Prediction -->
+  <rect x="740" y="130" width="330" height="34" rx="5" ry="5"
+        fill="#FFFDE7" stroke="#5DADE2" stroke-width="1"/>
+  <text x="755" y="147" fill="#1A5276" font-size="10.5" font-weight="bold">Function Prediction</text>
+  <text x="755" y="159" fill="#666666" font-size="8.5" font-style="italic">What is the function of this protein?</text>
+  <text x="1055" y="152" text-anchor="end" fill="#1A5276" font-size="10" font-weight="bold">2.15M</text>
+
+  <!-- Row 2: Catalytic Activity -->
+  <rect x="740" y="170" width="330" height="34" rx="5" ry="5"
+        fill="#FFFDE7" stroke="#5DADE2" stroke-width="1"/>
+  <text x="755" y="187" fill="#1A5276" font-size="10.5" font-weight="bold">Catalytic Activity</text>
+  <text x="755" y="199" fill="#666666" font-size="8.5" font-style="italic">Predict catalytic activity...</text>
+  <text x="1055" y="192" text-anchor="end" fill="#1A5276" font-size="10" font-weight="bold">1.24M</text>
+
+  <!-- Row 3: General QA -->
+  <rect x="740" y="210" width="330" height="34" rx="5" ry="5"
+        fill="#FFFDE7" stroke="#5DADE2" stroke-width="1"/>
+  <text x="755" y="227" fill="#1A5276" font-size="10.5" font-weight="bold">General QA</text>
+  <text x="755" y="239" fill="#666666" font-size="8.5" font-style="italic">Describe this protein's properties...</text>
+  <text x="1055" y="232" text-anchor="end" fill="#1A5276" font-size="10" font-weight="bold">0.99M</text>
+
+  <!-- Row 4: Domain Classification -->
+  <rect x="740" y="250" width="330" height="34" rx="5" ry="5"
+        fill="#FFFDE7" stroke="#5DADE2" stroke-width="1"/>
+  <text x="755" y="267" fill="#1A5276" font-size="10.5" font-weight="bold">Domain Classification</text>
+  <text x="755" y="279" fill="#666666" font-size="8.5" font-style="italic">What domains does this contain?</text>
+  <text x="1055" y="272" text-anchor="end" fill="#1A5276" font-size="10" font-weight="bold">0.46M</text>
+
+  <!-- SFT summary -->
+  <text x="905" y="308" text-anchor="middle" fill="#1A5276"
+        font-size="11" font-weight="bold">Total: 4.89M samples, ~2.1B tokens</text>
+  <text x="905" y="324" text-anchor="middle" fill="#5D6D7E"
+        font-size="9.5" font-style="italic">Chat template  |  LoRA r=8  |  1 epoch  |  FSDP 8&#215;H100</text>
+
+  <!-- Samples column header -->
+  <text x="1055" y="127" text-anchor="end" fill="#999999" font-size="8.5" font-style="italic">samples</text>
+
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <!-- Arrow: SFT -> GRPO                                          -->
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <line x1="905" y1="375" x2="905" y2="404"
+        stroke="#4A4A4A" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <!-- Edge label -->
+  <rect x="865" y="381" width="80" height="16" rx="3" ry="3" fill="#FFFFFF" stroke="#DDDDDD" stroke-width="0.5"/>
+  <text x="905" y="393" text-anchor="middle" fill="#4A4A4A"
+        font-size="9.5" font-style="italic">init from SFT</text>
+
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <!-- Stage 2: GRPO block                                          -->
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <rect x="725" y="408" width="360" height="270" rx="10" ry="10"
+        fill="#FEF9E7" stroke="#D4AC0D" stroke-width="2"/>
+  <!-- Stage title -->
+  <text x="905" y="432" text-anchor="middle" fill="#7D6608"
+        font-size="13" font-weight="bold">Stage 2: Group Relative Policy Optimization</text>
+  <text x="905" y="446" text-anchor="middle" fill="#7D6608"
+        font-size="12" font-weight="bold">(GRPO)</text>
+
+  <!-- Reward column headers -->
+  <text x="990" y="458" text-anchor="start" fill="#999999" font-size="8" font-style="italic">reward</text>
+  <text x="1055" y="458" text-anchor="end" fill="#999999" font-size="8" font-style="italic">samples</text>
+
+  <!-- Row 1: GO F1 -->
+  <rect x="740" y="463" width="330" height="42" rx="5" ry="5"
+        fill="#FFFDE7" stroke="#D4AC0D" stroke-width="1"/>
+  <text x="755" y="480" fill="#7D6608" font-size="10.5" font-weight="bold">GO F1</text>
+  <text x="755" y="498" fill="#666666" font-size="8.5" font-style="italic">Predict Gene Ontology terms</text>
+  <text x="990" y="486" fill="#7D6608" font-size="8.5">F1 score</text>
+  <text x="1055" y="486" text-anchor="end" fill="#7D6608" font-size="10" font-weight="bold">10K</text>
+
+  <!-- Row 2: Stability -->
+  <rect x="740" y="511" width="330" height="42" rx="5" ry="5"
+        fill="#FFFDE7" stroke="#D4AC0D" stroke-width="1"/>
+  <text x="755" y="528" fill="#7D6608" font-size="10.5" font-weight="bold">Stability &#916;&#916;G</text>
+  <text x="755" y="546" fill="#666666" font-size="8.5" font-style="italic">Predict stability change</text>
+  <text x="990" y="534" fill="#7D6608" font-size="8.5">Numerical acc.</text>
+  <text x="1055" y="534" text-anchor="end" fill="#7D6608" font-size="10" font-weight="bold">10K</text>
+
+  <!-- Row 3: Structure pLDDT -->
+  <rect x="740" y="559" width="330" height="42" rx="5" ry="5"
+        fill="#FFFDE7" stroke="#D4AC0D" stroke-width="1"/>
+  <text x="755" y="576" fill="#7D6608" font-size="10.5" font-weight="bold">Structure pLDDT</text>
+  <text x="755" y="594" fill="#666666" font-size="8.5" font-style="italic">Describe structure quality</text>
+  <text x="990" y="582" fill="#7D6608" font-size="8.5">ESMFold pLDDT</text>
+  <text x="1055" y="582" text-anchor="end" fill="#7D6608" font-size="10" font-weight="bold">10K</text>
+
+  <!-- GRPO summary -->
+  <text x="905" y="626" text-anchor="middle" fill="#7D6608"
+        font-size="11" font-weight="bold">Total: 30K samples</text>
+  <text x="905" y="642" text-anchor="middle" fill="#8D7B0F"
+        font-size="9.5" font-style="italic">Verifiable rewards  |  No human labels  |  KL penalty</text>
+
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <!-- Evaluation arrow (output from GRPO)                          -->
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <line x1="905" y1="678" x2="905" y2="705"
+        stroke="#4A4A4A" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="855" y="685" width="100" height="16" rx="3" ry="3" fill="#FFFFFF" stroke="#DDDDDD" stroke-width="0.5"/>
+  <text x="905" y="697" text-anchor="middle" fill="#4A4A4A"
+        font-size="9.5" font-style="italic">evaluate &amp; compare</text>
+
+</svg>

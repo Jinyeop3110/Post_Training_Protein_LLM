@@ -248,6 +248,9 @@ class TestSaveCheckpoint:
         trainer.protein_llm = protein_llm
         trainer.args = mock_args
         trainer.state = mock_state
+        # Mock accelerator so _save_sampler_state doesn't crash
+        trainer.accelerator = MagicMock()
+        trainer.accelerator._dataloaders = []
 
         return trainer
 
@@ -379,37 +382,23 @@ class TestLoadFromCheckpoint:
 
         # The method checks for pytorch_model_fsdp.bin; it must NOT exist
         # to take the new minimal path. Also need is_fsdp_enabled to be True
-        # and adapter_model.safetensors to exist for the adapter path.
-        # For this test we mock the FSDP adapter loading and focus on
-        # the multimodal weight loading section.
-        #
-        # If pytorch_model_fsdp.bin exists OR fsdp is disabled, it falls through
-        # to super(). We want to test the new path, so:
-        # - No pytorch_model_fsdp.bin (already true for tmp_path)
-        # - is_fsdp_enabled = True
-        # - mock the adapter loading part
+        # and adapter_config.json to exist for the adapter path.
         type(trainer).is_fsdp_enabled = PropertyMock(return_value=True)
 
-        # Create a dummy adapter_model.safetensors so the method doesn't skip
-        # We mock safetensors.torch.load_file to return empty dict
-        # and mock the FSDP state dict context manager
-        dummy_adapter = tmp_path / "adapter_model.safetensors"
-        dummy_adapter.touch()
+        # Create adapter_config.json (required by _load_from_checkpoint)
+        (tmp_path / "adapter_config.json").write_text("{}")
 
-        mock_fsdp = MagicMock()
-        mock_fsdp.state_dict_type = MagicMock()
-        mock_fsdp.state_dict_type.return_value.__enter__ = MagicMock()
-        mock_fsdp.state_dict_type.return_value.__exit__ = MagicMock(return_value=False)
+        # Mock FSDP.summon_full_params as a context manager (no-op)
+        # and give the model a mock .module with load_adapter
+        mock_inner = MagicMock(spec=["load_adapter", "active_adapters"])
+        mock_inner.active_adapters = ["default"]
+        trainer.model.module = mock_inner
 
-        with patch("safetensors.torch.load_file", return_value={}), \
-             patch("torch.distributed.fsdp.FullyShardedDataParallel.state_dict_type") as mock_ctx, \
-             patch("os.environ.get", return_value="0"):
-            mock_ctx.return_value.__enter__ = MagicMock()
-            mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
-
-            # model.state_dict returns empty, load_state_dict is no-op
-            trainer.model.state_dict.return_value = {}
-            trainer.model.load_state_dict = MagicMock()
+        with patch(
+            "torch.distributed.fsdp.FullyShardedDataParallel.summon_full_params"
+        ) as mock_summon:
+            mock_summon.return_value.__enter__ = MagicMock()
+            mock_summon.return_value.__exit__ = MagicMock(return_value=False)
 
             trainer._load_from_checkpoint(str(tmp_path))
 
@@ -442,16 +431,19 @@ class TestLoadFromCheckpoint:
         )
         type(trainer).is_fsdp_enabled = PropertyMock(return_value=True)
 
-        # Create adapter file but no pooling/projector .pt files
-        (tmp_path / "adapter_model.safetensors").touch()
+        # Create adapter_config.json but no pooling/projector .pt files
+        (tmp_path / "adapter_config.json").write_text("{}")
 
-        with patch("safetensors.torch.load_file", return_value={}), \
-             patch("torch.distributed.fsdp.FullyShardedDataParallel.state_dict_type") as mock_ctx, \
-             patch("os.environ.get", return_value="0"):
-            mock_ctx.return_value.__enter__ = MagicMock()
-            mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
-            trainer.model.state_dict.return_value = {}
-            trainer.model.load_state_dict = MagicMock()
+        # Mock FSDP.summon_full_params and model.module
+        mock_inner = MagicMock(spec=["load_adapter", "active_adapters"])
+        mock_inner.active_adapters = ["default"]
+        trainer.model.module = mock_inner
+
+        with patch(
+            "torch.distributed.fsdp.FullyShardedDataParallel.summon_full_params"
+        ) as mock_summon:
+            mock_summon.return_value.__enter__ = MagicMock()
+            mock_summon.return_value.__exit__ = MagicMock(return_value=False)
 
             # Should not raise
             trainer._load_from_checkpoint(str(tmp_path))
@@ -532,6 +524,9 @@ class TestNoPytorchModelFsdpBin:
         trainer.protein_llm = protein_llm
         trainer.args = mock_args
         trainer.state = mock_state
+        # Mock accelerator so _save_sampler_state doesn't crash
+        trainer.accelerator = MagicMock()
+        trainer.accelerator._dataloaders = []
 
         ckpt_dir = tmp_path / "checkpoint-200"
         ckpt_dir.mkdir(parents=True)
@@ -643,6 +638,9 @@ class TestSaveLoadIntegration:
         mock_state = MagicMock()
         mock_state.global_step = 50
         save_trainer.state = mock_state
+        # Mock accelerator so _save_sampler_state doesn't crash
+        save_trainer.accelerator = MagicMock()
+        save_trainer.accelerator._dataloaders = []
 
         ckpt_dir = tmp_path / "checkpoint-50"
         ckpt_dir.mkdir(parents=True)
@@ -668,16 +666,19 @@ class TestSaveLoadIntegration:
         load_trainer.model = MagicMock()
         type(load_trainer).is_fsdp_enabled = PropertyMock(return_value=True)
 
-        # Create dummy adapter file
-        (ckpt_dir / "adapter_model.safetensors").touch()
+        # Create adapter_config.json (required by _load_from_checkpoint)
+        (ckpt_dir / "adapter_config.json").write_text("{}")
 
-        with patch("safetensors.torch.load_file", return_value={}), \
-             patch("torch.distributed.fsdp.FullyShardedDataParallel.state_dict_type") as mock_ctx, \
-             patch("os.environ.get", return_value="0"):
-            mock_ctx.return_value.__enter__ = MagicMock()
-            mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
-            load_trainer.model.state_dict.return_value = {}
-            load_trainer.model.load_state_dict = MagicMock()
+        # Mock FSDP.summon_full_params and model.module
+        mock_inner = MagicMock(spec=["load_adapter", "active_adapters"])
+        mock_inner.active_adapters = ["default"]
+        load_trainer.model.module = mock_inner
+
+        with patch(
+            "torch.distributed.fsdp.FullyShardedDataParallel.summon_full_params"
+        ) as mock_summon:
+            mock_summon.return_value.__enter__ = MagicMock()
+            mock_summon.return_value.__exit__ = MagicMock(return_value=False)
 
             load_trainer._load_from_checkpoint(str(ckpt_dir))
 

@@ -1,0 +1,26 @@
+name: structure_properties
+source: ESMFold
+task: structure_properties  # Task type for reward routing (maps to composite reward)
+
+# Dataset paths
+paths:
+  raw: ${paths.raw_dir}/structure_properties
+  processed: ${paths.processed_dir}/structure_properties
+
+# Processing settings
+processing:
+  max_seq_length: 2048
+  max_protein_length: 512
+  include_structure: false
+
+# Split ratios
+splits:
+  train: 0.9
+  validation: 0.05
+  test: 0.05
+
+# Thinking mode for Qwen3 RL generation
+enable_thinking: true
+
+# Optional: limit number of samples (null = use all)
+limit: null

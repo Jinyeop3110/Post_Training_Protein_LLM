@@ -201,7 +201,10 @@ def main(cfg: DictConfig) -> None:
     if _is_main_process():
         log.info(f"Starting training with method: {method}")
 
-    if method == "sft_qlora":
+    if method == "ssl_lora":
+        from src.training.ssl_trainer import run_ssl
+        run_ssl(cfg)
+    elif method == "sft_qlora":
         from src.training.sft_trainer import run_sft_qlora
         run_sft_qlora(cfg)
     elif method == "sft_lora":

@@ -4,6 +4,7 @@ defaults:
   - data: mol_instructions
   - training: sft_lora
   - _self_
+  - optional main_SSL: null
   - optional main_SFT: null
   - optional main_RL: null
 

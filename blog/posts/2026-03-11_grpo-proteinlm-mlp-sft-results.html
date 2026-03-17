@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>First GRPO Run on ProteinLMBench: A Meaningful Negative Result</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #1a1a2e;
+            --accent: #2563eb;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --code-bg: #f3f4f6;
+            --table-header: #f9fafb;
+            --blockquote-bg: #fffbeb;
+            --blockquote-border: #f59e0b;
+            --success-bg: #f0fdf4;
+            --success-border: #22c55e;
+            --warning-bg: #fff7ed;
+            --warning-border: #f97316;
+            --danger-bg: #fef2f2;
+            --danger-border: #ef4444;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--fg);
+            background: var(--bg);
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        header { margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 2px solid var(--border); }
+        header .meta { color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem; }
+        header .tags { margin-top: 0.5rem; }
+        header .tag {
+            display: inline-block; background: var(--code-bg); color: var(--accent);
+            padding: 0.15rem 0.6rem; border-radius: 1rem; font-size: 0.8rem; margin-right: 0.4rem;
+            font-weight: 500;
+        }
+        h1 { font-size: 1.9rem; line-height: 1.3; font-weight: 700; letter-spacing: -0.02em; }
+        h2 { font-size: 1.4rem; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); font-weight: 600; }
+        h3 { font-size: 1.15rem; margin: 1.8rem 0 0.8rem; font-weight: 600; }
+        h4 { font-size: 1rem; margin: 1.2rem 0 0.5rem; color: var(--muted); }
+        p { margin: 0.8rem 0; }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code {
+            font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+            background: var(--code-bg); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.88em;
+        }
+        pre {
+            background: var(--code-bg); padding: 1rem 1.2rem; border-radius: 6px; overflow-x: auto;
+            margin: 1rem 0; font-size: 0.88em; line-height: 1.5;
+        }
+        pre code { background: none; padding: 0; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.92rem; }
+        th, td { padding: 0.6rem 0.8rem; text-align: left; border: 1px solid var(--border); }
+        th { background: var(--table-header); font-weight: 600; }
+        tr:hover { background: #f9fafb; }
+        blockquote {
+            background: var(--blockquote-bg); border-left: 4px solid var(--blockquote-border);
+            padding: 0.8rem 1.2rem; margin: 1rem 0; border-radius: 0 6px 6px 0; font-style: italic;
+        }
+        blockquote p { margin: 0.3rem 0; }
+        .success-box {
+            background: var(--success-bg); border-left: 4px solid var(--success-border);
+            padding: 0.8rem 1.2rem; margin: 1rem 0; border-radius: 0 6px 6px 0;
+        }
+        .success-box p { margin: 0.3rem 0; }
+        .warning-box {
+            background: var(--warning-bg); border-left: 4px solid var(--warning-border);
+            padding: 0.8rem 1.2rem; margin: 1rem 0; border-radius: 0 6px 6px 0;
+        }
+        .warning-box p { margin: 0.3rem 0; }
+        .danger-box {
+            background: var(--danger-bg); border-left: 4px solid var(--danger-border);
+            padding: 0.8rem 1.2rem; margin: 1rem 0; border-radius: 0 6px 6px 0;
+        }
+        .danger-box p { margin: 0.3rem 0; }
+        .callout {
+            padding: 1rem 1.2rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid;
+        }
+        .callout-info { background: #eff6ff; border-color: var(--accent); }
+        .callout-success { background: var(--success-bg); border-color: var(--success-border); }
+        .callout-warning { background: var(--warning-bg); border-color: var(--warning-border); }
+        .callout-danger { background: var(--danger-bg); border-color: var(--danger-border); }
+        .callout strong { display: block; margin-bottom: 0.3rem; }
+        ul, ol { margin: 0.8rem 0; padding-left: 1.5rem; }
+        li { margin: 0.3rem 0; }
+        strong { font-weight: 600; }
+        hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+        .toc { background: var(--code-bg); padding: 1.2rem; border-radius: 8px; margin-bottom: 2rem; }
+        .toc ul { list-style: none; padding-left: 0; margin-bottom: 0; }
+        .toc li { margin-bottom: 0.3rem; }
+        .toc a { color: var(--accent); text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        .flow-diagram {
+            background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 1.5rem; margin: 1rem 0; text-align: center;
+            font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85rem; line-height: 2;
+        }
+        .flow-diagram .arrow { color: var(--accent); font-weight: bold; }
+        .metric-highlight {
+            display: inline-block; background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 8px; padding: 0.8rem 1.2rem; margin: 0.3rem; text-align: center;
+            min-width: 140px;
+        }
+        .metric-highlight .value { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
+        .metric-highlight .label { font-size: 0.8rem; color: var(--muted); display: block; margin-top: 0.2rem; }
+        .metrics-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; justify-content: center; }
+        .ref { font-size: 0.85rem; color: var(--muted); }
+        .ref a { color: var(--accent); text-decoration: none; }
+        .ref a:hover { text-decoration: underline; }
+        nav.blog-nav { margin-bottom: 1.5rem; font-size: 0.9rem; }
+        nav.blog-nav a { margin-right: 1rem; }
+        footer {
+            margin-top: 3rem; padding-top: 1.5rem; border-top: 2px solid var(--border);
+            color: var(--muted); font-size: 0.85rem;
+        }
+        @media (max-width: 700px) {
+            .metrics-row { flex-direction: column; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="blog-nav">
+    <a href="../index.html">&larr; All posts</a>
+</nav>
+
+<header>
+    <h1>First GRPO Run on ProteinLMBench: A Meaningful Negative Result</h1>
+    <div class="meta">2026-03-11 &middot; Post-Training Protein LLM Project</div>
+    <div class="tags">
+        <span class="tag">GRPO</span>
+        <span class="tag">ProteinLMBench</span>
+        <span class="tag">ESM-3 + MLP</span>
+        <span class="tag">negative result</span>
+        <span class="tag">Qwen3-8B</span>
+    </div>
+</header>
+
+<div class="toc">
+    <strong>Contents</strong>
+    <ul>
+        <li><a href="#summary">1. Summary</a></li>
+        <li><a href="#setup">2. Experiment Setup</a></li>
+        <li><a href="#results">3. Results</a></li>
+        <li><a href="#probe">4. Probe Completions: Same Answers, Every Step</a></li>
+        <li><a href="#analysis">5. Analysis: Why GRPO Did Not Improve Accuracy</a></li>
+        <li><a href="#takeaways">6. Takeaways</a></li>
+        <li><a href="#next">7. Next Steps</a></li>
+    </ul>
+</div>
+
+
+<h2 id="summary">1. Summary</h2>
+
+<p>We ran the first production GRPO training on <strong>ProteinLMBench</strong>&mdash;a multiple-choice benchmark of 849 protein science questions&mdash;starting from our best ESM-3 + MLP SFT checkpoint on Qwen3-8B. The run completed 3 epochs (~40 steps) in about 12 minutes on 8xH100.</p>
+
+<div class="callout callout-warning">
+    <strong>The headline result</strong>
+    GRPO successfully taught the model to use <code>&lt;answer&gt;</code> tags (format compliance 85% &rarr; 94%), but factual accuracy on multiple-choice questions did not improve. Eval reward was flat at ~0.45 across all checkpoints. The model answered the same probe questions identically at steps 10, 20, and 30.
+</div>
+
+<p>This is a <strong>meaningful negative result</strong>: it confirms that factual recall tasks benefit from SFT, not RL. GRPO optimizes <em>how</em> the model formats its answers, but cannot inject new knowledge about protein biology.</p>
+
+<div class="metrics-row">
+    <div class="metric-highlight">
+        <span class="value">0.45</span>
+        <span class="label">Eval Reward (flat)</span>
+    </div>
+    <div class="metric-highlight">
+        <span class="value">85% &rarr; 94%</span>
+        <span class="label">Format Compliance</span>
+    </div>
+    <div class="metric-highlight">
+        <span class="value">3/5</span>
+        <span class="label">Probe Accuracy (unchanged)</span>
+    </div>
+    <div class="metric-highlight">
+        <span class="value">~12 min</span>
+        <span class="label">Total Training Time</span>
+    </div>
+</div>
+
+
+<h2 id="setup">2. Experiment Setup</h2>
+
+<h3>Run Identity</h3>
+
+<table>
+    <tr><th>Field</th><th>Value</th></tr>
+    <tr><td>Experiment</td><td><code>grpo_proteinlm_mlp_sft_qwen3_8b_it_0310_214259</code></td></tr>
+    <tr><td>Parent SFT</td><td><code>sft_esm3_mlp_combined_qwen3_8b_it_0306_010408</code></td></tr>
+    <tr><td>Model</td><td>Qwen3-8B-Instruct-2507 + ESM-3 small (frozen) + MLP projector</td></tr>
+    <tr><td>Dataset</td><td>ProteinLMBench: 849 train / 47 eval MC questions</td></tr>
+    <tr><td>Hardware</td><td>8x H100 80GB, DDP</td></tr>
+</table>
+
+<h3>GRPO Configuration</h3>
+
+<table>
+    <tr><th>Parameter</th><th>Value</th></tr>
+    <tr><td>Approach</td><td><code>esm3</code> (MLP projector)</td></tr>
+    <tr><td>Batch size</td><td>4</td></tr>
+    <tr><td>Gradient accumulation</td><td>2</td></tr>
+    <tr><td>Group size</td><td>8</td></tr>
+    <tr><td>Max new tokens</td><td>128</td></tr>
+    <tr><td>Learning rate</td><td>2e-6</td></tr>
+    <tr><td>Projector LR</td><td>1e-5</td></tr>
+    <tr><td>Temperature</td><td>0.9</td></tr>
+    <tr><td>Top-p</td><td>0.95</td></tr>
+    <tr><td>Thinking mode</td><td>Disabled (empty <code>&lt;think&gt;&lt;/think&gt;</code> prefix)</td></tr>
+    <tr><td>Format bonus</td><td>+0.1 for correct <code>&lt;answer&gt;</code> tags</td></tr>
+    <tr><td>Epochs</td><td>3</td></tr>
+</table>
+
+<p>The dataset has no protein sequences&mdash;ProteinLMBench consists entirely of text-based multiple-choice questions about protein science. This means the ESM-3 encoder and MLP projector are effectively unused during this run (confirmed by <code>grad_mm=0.0</code> throughout training).</p>
+
+
+<h2 id="results">3. Results</h2>
+
+<h3>Step-by-Step Training Metrics</h3>
+
+<table>
+    <tr>
+        <th>Step</th>
+        <th>Reward</th>
+        <th>Loss</th>
+        <th>LR</th>
+    </tr>
+    <tr><td>5</td><td>0.74</td><td>-0.025</td><td>1.00e-06</td></tr>
+    <tr><td>10</td><td>0.55</td><td>+0.015</td><td>2.00e-06</td></tr>
+    <tr><td>15</td><td>0.70</td><td>-0.006</td><td>1.86e-06</td></tr>
+    <tr><td>20</td><td>0.71</td><td>+0.012</td><td>1.47e-06</td></tr>
+    <tr><td>25</td><td>0.67</td><td>-0.016</td><td>9.46e-07</td></tr>
+    <tr><td>30</td><td>0.76</td><td>-0.026</td><td>4.39e-07</td></tr>
+    <tr><td>35</td><td>0.61</td><td>+0.016</td><td>9.24e-08</td></tr>
+</table>
+
+<p>Train reward fluctuated between 0.55 and 0.76 with no clear upward trend. The GRPO loss oscillated between small positive and negative values, indicating the policy gradient signal was noisy and weak.</p>
+
+<h3>Evaluation Metrics Across Checkpoints</h3>
+
+<table>
+    <tr>
+        <th>Checkpoint (step)</th>
+        <th>Eval Reward</th>
+        <th>Format Rate</th>
+    </tr>
+    <tr><td>Step 10</td><td>0.447</td><td>85%</td></tr>
+    <tr><td>Step 20</td><td>0.447</td><td>94%</td></tr>
+    <tr><td>Step 30</td><td>0.468</td><td>89%</td></tr>
+</table>
+
+<p>Eval reward was essentially flat: 0.447 &rarr; 0.447 &rarr; 0.468. The only measurable improvement was in format compliance, where the model learned to wrap its answers in <code>&lt;answer&gt;</code> tags more consistently.</p>
+
+<h3>Timing and Efficiency</h3>
+
+<table>
+    <tr><th>Metric</th><th>Value</th></tr>
+    <tr><td>Average step time</td><td>3.4s</td></tr>
+    <tr><td>Average generation time</td><td>1.6s</td></tr>
+    <tr><td>Completion length</td><td>~8&ndash;9 tokens</td></tr>
+    <tr><td>Total training time</td><td>~12 minutes</td></tr>
+    <tr><td>Multimodal gradient norm</td><td>0.0 (encoder unused)</td></tr>
+</table>
+
+<p>Completions were extremely concise (8&ndash;9 tokens) because multiple-choice answers require only a letter or short phrase. Generation was fast at 1.6s per step, and the entire 3-epoch run took about 12 minutes.</p>
+
+
+<h2 id="probe">4. Probe Completions: Same Answers, Every Step</h2>
+
+<p>We tracked the model's responses to 5 fixed probe questions across steps 10, 20, and 30. The result was striking: the model produced <strong>identical answers at every checkpoint</strong>, getting 3 out of 5 correct each time.</p>
+
+<div class="callout callout-info">
+    <strong>What the probe tells us</strong>
+    The model's factual knowledge is frozen in place from SFT. GRPO's policy gradient updates are too weak (or the reward signal too sparse) to shift which answer the model selects for any given question. The only behavioral change is surface-level: better formatting with <code>&lt;answer&gt;</code> tags.
+</div>
+
+<p>This is consistent with what we know about RL fine-tuning: GRPO can reshape the model's output distribution (how it answers) but does not teach new facts (what it knows). For a multiple-choice task where the answer is either right or wrong, there is no continuous reward gradient for GRPO to follow toward better answers.</p>
+
+
+<h2 id="analysis">5. Analysis: Why GRPO Did Not Improve Accuracy</h2>
+
+<h3>5.1. SFT Already Captured the Learnable Knowledge</h3>
+
+<p>The parent SFT model was trained on 4.89M protein instruction samples. Whatever protein science knowledge can be extracted from instruction tuning, the SFT run already captured it. GRPO cannot conjure new factual knowledge&mdash;it can only redistribute probability mass over existing model capabilities.</p>
+
+<div class="warning-box">
+    <p><strong>The ceiling problem:</strong> If the SFT model gets 3/5 probe questions right, GRPO can only improve by shifting probability mass from wrong answers to right ones. But the reward signal (binary right/wrong on 849 questions) provides almost no gradient information about <em>why</em> an answer is wrong or how to fix it.</p>
+</div>
+
+<h3>5.2. The Dataset Is Extremely Small</h3>
+
+<p>ProteinLMBench has only 849 training questions. With a batch size of 4, gradient accumulation of 2, and 8 GPUs, each epoch is roughly <strong>13 steps</strong>. Three epochs give ~40 total optimization steps&mdash;far too few for RL to discover meaningful policy improvements.</p>
+
+<p>For comparison, successful GRPO runs in the literature (DeepSeek-R1, Qwen3) typically involve thousands to tens of thousands of optimization steps over large datasets. Our 40-step run is orders of magnitude below this threshold.</p>
+
+<h3>5.3. Binary Reward = Sparse Signal</h3>
+
+<p>Multiple-choice questions produce a binary reward: 1.0 for correct, 0.0 for incorrect (plus the 0.1 format bonus). This creates an extremely sparse reward landscape. GRPO's group-relative advantage computation subtracts the group mean, so within a group of 8 completions for the same question, the advantage is meaningful only if some completions are correct and others are wrong.</p>
+
+<p>With temperature 0.9, the model often generates the same answer across all 8 group members&mdash;especially for short MC responses (~8 tokens). When all completions in a group get the same reward, the advantage is zero and that step contributes no gradient signal.</p>
+
+<h3>5.4. ESM-3 Encoder Was Unused</h3>
+
+<p>ProteinLMBench questions are purely textual&mdash;they ask about protein concepts, not about specific protein sequences. The ESM-3 encoder and MLP projector received zero gradient throughout training (<code>grad_mm=0.0</code>). This is expected behavior, but it means we are effectively running text-only GRPO despite using the <code>esm3</code> approach.</p>
+
+<div class="flow-diagram">
+    <strong>What Actually Happened</strong><br><br>
+    ProteinLMBench question (text only, no protein sequence)<br>
+    <span class="arrow">&darr;</span><br>
+    ESM-3 encoder: <em>skipped</em> (no protein to encode) &rarr; grad_mm = 0.0<br>
+    <span class="arrow">&darr;</span><br>
+    Qwen3-8B generates MC answer (~8 tokens)<br>
+    <span class="arrow">&darr;</span><br>
+    Binary reward: correct (1.0) or incorrect (0.0) + format bonus (0.1)<br>
+    <span class="arrow">&darr;</span><br>
+    GRPO advantage within group of 8 &rarr; often zero (same answer repeated)<br>
+    <span class="arrow">&darr;</span><br>
+    Result: format compliance improves, factual accuracy unchanged
+</div>
+
+
+<h2 id="takeaways">6. Takeaways</h2>
+
+<div class="callout callout-success">
+    <strong>Key findings from this experiment</strong>
+    <ol>
+        <li><strong>GRPO improves format compliance, not factual accuracy.</strong> The model learned <code>&lt;answer&gt;</code> tags (85% &rarr; 94%) but did not change which MC option it selected for any probe question.</li>
+        <li><strong>SFT is the right tool for factual recall tasks.</strong> Multiple-choice protein science questions are a knowledge retrieval problem. RL adds nothing when the bottleneck is what the model knows, not how it expresses it.</li>
+        <li><strong>849 questions is far too few for meaningful RL.</strong> ~13 steps per epoch, ~40 total steps, binary reward&mdash;the optimization landscape is too sparse and too short for GRPO to find a signal.</li>
+        <li><strong>This is a meaningful negative result.</strong> It validates our hypothesis that RL should be applied to generative tasks with continuous reward signals (structure quality, stability prediction), not factual MC benchmarks.</li>
+        <li><strong>The format reward works as designed.</strong> The +0.1 bonus for <code>&lt;answer&gt;</code> tags is the only component that showed clear learning, confirming that GRPO can optimize surface-level formatting even when deeper accuracy is out of reach.</li>
+    </ol>
+</div>
+
+<h3>Where GRPO Should Show More Value</h3>
+
+<p>The theoretical advantage of GRPO over SFT is in tasks where:</p>
+
+<ul>
+    <li><strong>Reward is continuous, not binary</strong>&mdash;e.g., pLDDT scores (0&ndash;100), F1 scores (0.0&ndash;1.0), MAE for stability predictions</li>
+    <li><strong>Output is generative, not retrieval</strong>&mdash;e.g., describing protein structure quality, predicting GO terms, explaining stability effects</li>
+    <li><strong>Multiple valid outputs exist</strong>&mdash;group diversity provides meaningful advantage signal</li>
+    <li><strong>Dataset is large enough</strong>&mdash;thousands of questions with varied difficulty levels</li>
+</ul>
+
+<p>Structure quality prediction with ESMFold rewards is the most promising candidate: the reward is continuous (pLDDT correlation), the output is generative (quality descriptions), and the model's protein encoder is actively engaged.</p>
+
+
+<h2 id="next">7. Next Steps</h2>
+
+<table>
+    <tr><th>Action</th><th>Rationale</th></tr>
+    <tr>
+        <td>Run GRPO on structure quality (ESMFold reward)</td>
+        <td>Continuous reward signal, generative output, ESM-3 encoder engaged</td>
+    </tr>
+    <tr>
+        <td>Run GRPO on GO prediction</td>
+        <td>F1-based reward provides richer gradient than binary MC accuracy</td>
+    </tr>
+    <tr>
+        <td>Expand ProteinLMBench with more questions</td>
+        <td>849 is insufficient for RL; need 5&ndash;10K for meaningful signal</td>
+    </tr>
+    <tr>
+        <td>Try more epochs on ProteinLMBench</td>
+        <td>Confirm that longer training also fails to move accuracy (expected)</td>
+    </tr>
+    <tr>
+        <td>Compare text-only GRPO on same task</td>
+        <td>Since ESM-3 was unused, text-only should produce identical results</td>
+    </tr>
+</table>
+
+<h3>Decision Log</h3>
+
+<table>
+    <tr><th>Decision</th><th>Rationale</th></tr>
+    <tr>
+        <td>Record as negative result, do not discard</td>
+        <td>Validates that RL is not suitable for factual MC tasks; informs future experiment design</td>
+    </tr>
+    <tr>
+        <td>Prioritize structure quality GRPO next</td>
+        <td>Continuous reward + generative output = better RL signal</td>
+    </tr>
+    <tr>
+        <td>Keep format reward at +0.1</td>
+        <td>Confirmed effective; model learned tags within 20 steps</td>
+    </tr>
+    <tr>
+        <td>Do not increase ProteinLMBench epochs without expanding dataset</td>
+        <td>More epochs on 849 questions will overfit without improving generalization</td>
+    </tr>
+</table>
+
+<hr>
+
+<h3>Experiment Artifacts</h3>
+
+<pre><code>results/grpo_proteinlm_mlp_sft_qwen3_8b_it_0310_214259/
+  config.yaml            # Full resolved Hydra config
+  lineage.json           # Stage: grpo, parent: sft_esm3_mlp_combined_...
+  training_args.json     # lr=2e-6, projector_lr=1e-5, group_size=8
+  metrics.json           # Final train/eval metrics
+  checkpoints/           # Step 10, 20, 30 checkpoints
+  logs/                  # Hydra config snapshots</code></pre>
+
+<footer>
+    <p>Post-Training Protein LLM &middot; Internal Development Blog &middot; 2026-03-11</p>
+    <p>Run: <code>grpo_proteinlm_mlp_sft_qwen3_8b_it_0310_214259</code> &middot; Parent: <code>sft_esm3_mlp_combined_qwen3_8b_it_0306_010408</code></p>
+</footer>
+
+</body>
+</html>

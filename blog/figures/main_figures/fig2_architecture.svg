@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 820"
+     width="1200" height="820" font-family="Trebuchet MS, Arial, sans-serif">
+
+  <!-- ======================================================= -->
+  <!-- DEFS: arrowhead markers, filters                         -->
+  <!-- ======================================================= -->
+  <defs>
+    <!-- Standard arrowhead -->
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse"
+            fill="#4A4A4A">
+      <path d="M 0 1 L 10 5 L 0 9 z"/>
+    </marker>
+    <!-- Subtle drop shadow for main nodes -->
+    <filter id="shadow" x="-2%" y="-2%" width="104%" height="108%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#00000012"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="820" fill="#FFFFFF"/>
+
+  <!-- ======================================================= -->
+  <!-- FIGURE TITLE                                             -->
+  <!-- ======================================================= -->
+  <text x="600" y="28" text-anchor="middle" font-size="16" font-weight="bold" fill="#333333">
+    Architecture Comparison: Four Protein-LLM Integration Approaches
+  </text>
+
+  <!-- ======================================================= -->
+  <!-- COLUMN CENTERS:  a=150  b=425  c=700  d=975              -->
+  <!-- VERTICAL STAGES (bottom-to-top):                         -->
+  <!--   Protein Seq  y=710                                     -->
+  <!--   Encoder      y=600                                     -->
+  <!--   Pooling      y=495                                     -->
+  <!--   Projector    y=400                                     -->
+  <!--   Token bar    y=335                                     -->
+  <!--   LLM          y=170  (tall: 140px)                      -->
+  <!--   Text Output  y=62                                      -->
+  <!-- ======================================================= -->
+
+  <!-- ======================================================= -->
+  <!-- COLUMN (a): TEXT-ONLY                                    -->
+  <!-- ======================================================= -->
+  <g id="col-a">
+    <!-- Column title -->
+    <text x="150" y="52" text-anchor="middle" font-size="14" font-weight="bold" fill="#333333">(a) Text-Only</text>
+
+    <!-- Text Output -->
+    <rect x="85" y="68" width="130" height="34" rx="8" ry="8"
+          fill="#FAFAFA" stroke="#CCCCCC" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="150" y="89" text-anchor="middle" font-size="11" font-weight="bold" fill="#555555">Text Output</text>
+
+    <!-- Arrow: LLM -> Text Output -->
+    <line x1="150" y1="132" x2="150" y2="105" stroke="#4A4A4A" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+    <!-- Qwen3 LLM (LoRA) -->
+    <rect x="65" y="132" width="170" height="170" rx="8" ry="8"
+          fill="#D5F5E3" stroke="#5BAD7C" stroke-width="2" filter="url(#shadow)"/>
+    <text x="150" y="160" text-anchor="middle" font-size="13" font-weight="bold" fill="#2D6A4F">Qwen3 LLM</text>
+    <text x="150" y="178" text-anchor="middle" font-size="10" font-style="italic" fill="#2D6A4F">LoRA fine-tuned</text>
+
+    <!-- Trainable icon -->
+    <text x="222" y="152" text-anchor="middle" font-size="13" fill="#E8875B" font-weight="bold">&#10038;</text>
+
+    <!-- Token bar inside LLM -->
+    <g transform="translate(86, 260)">
+      <rect x="0" y="0" width="40" height="14" rx="2" ry="2" fill="#EDEDED" stroke="#999999" stroke-width="0.8"/>
+      <text x="20" y="10" text-anchor="middle" font-size="6" fill="#555555">sys/instr</text>
+      <rect x="44" y="0" width="60" height="14" rx="2" ry="2" fill="#E8E0F0" stroke="#7B68AE" stroke-width="0.8"/>
+      <text x="74" y="10" text-anchor="middle" font-size="6" fill="#4A3878">AA tokens</text>
+      <rect x="108" y="0" width="40" height="14" rx="2" ry="2" fill="#EDEDED" stroke="#999999" stroke-width="0.8"/>
+      <text x="128" y="10" text-anchor="middle" font-size="6" fill="#555555">instr</text>
+    </g>
+    <text x="150" y="292" text-anchor="middle" font-size="7" fill="#888888">mixed token sequence</text>
+
+    <!-- Dashed annotation: no mixing -->
+    <rect x="68" y="320" width="164" height="48" rx="6" ry="6"
+          fill="#FAFAFA" stroke="#BBBBBB" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="150" y="338" text-anchor="middle" font-size="9" font-style="italic" fill="#777777">No encoder mixing:</text>
+    <text x="150" y="352" text-anchor="middle" font-size="9" font-style="italic" fill="#777777">raw AA chars as text tokens</text>
+
+    <!-- Arrow: Tokenizer -> LLM -->
+    <line x1="150" y1="408" x2="150" y2="305" stroke="#4A4A4A" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <!-- Edge label -->
+    <rect x="118" y="374" width="64" height="16" rx="3" ry="3" fill="white" stroke="#DDDDDD" stroke-width="0.5"/>
+    <text x="150" y="385" text-anchor="middle" font-size="8" fill="#666666">~100 tokens</text>
+
+    <!-- Tokenizer -->
+    <rect x="75" y="408" width="150" height="50" rx="8" ry="8"
+          fill="#EDEDED" stroke="#999999" stroke-width="2" filter="url(#shadow)"/>
+    <text x="150" y="430" text-anchor="middle" font-size="12" font-weight="bold" fill="#555555">Tokenizer</text>
+    <text x="150" y="446" text-anchor="middle" font-size="9" font-style="italic" fill="#777777">AA chars as text tokens</text>
+
+    <!-- Arrow: Protein -> Tokenizer -->
+    <line x1="150" y1="700" x2="150" y2="462" stroke="#4A4A4A" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <!-- Edge label -->
+    <rect x="117" y="580" width="66" height="16" rx="3" ry="3" fill="white" stroke="#DDDDDD" stroke-width="0.5"/>
+    <text x="150" y="591" text-anchor="middle" font-size="8" fill="#666666">raw AA chars</text>
+
+    <!-- Protein Sequence -->
+    <rect x="70" y="700" width="160" height="40" rx="8" ry="8"
+          fill="#E8E0F0" stroke="#7B68AE" stroke-width="2" filter="url(#shadow)"/>
+    <text x="150" y="720" text-anchor="middle" font-size="11" font-weight="bold" fill="#4A3878">Protein Sequence</text>
+    <text x="150" y="734" text-anchor="middle" font-size="8" font-style="italic" fill="#4A3878">MKTLLILAVL...</text>
+  </g>
+
+  <!-- ======================================================= -->
+  <!-- COLUMN (b): ESM-3 + MLP                                 -->
+  <!-- ======================================================= -->
+  <g id="col-b">
+    <!-- Column title -->
+    <text x="425" y="52" text-anchor="middle" font-size="14" font-weight="bold" fill="#333333">(b) ESM-3 + MLP</text>
+
+    <!-- Text Output -->
+    <rect x="360" y="68" width="130" height="34" rx="8" ry="8"
+          fill="#FAFAFA" stroke="#CCCCCC" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="425" y="89" text-anchor="middle" font-size="11" font-weight="bold" fill="#555555">Text Output</text>
+
+    <!-- Arrow: LLM -> Text Output -->
+    <line x1="425" y1="132" x2="425" y2="105" stroke="#4A4A4A" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+    <!-- Qwen3 LLM (LoRA) -->
+    <rect x="340" y="132" width="170" height="150" rx="8" ry="8"
+          fill="#D5F5E3" stroke="#5BAD7C" stroke-width="2" filter="url(#shadow)"/>
+    <text x="425" y="160" text-anchor="middle" font-size="13" font-weight="bold" fill="#2D6A4F">Qwen3 LLM</text>
+    <text x="425" y="178" text-anchor="middle" font-size="10" font-style="italic" fill="#2D6A4F">LoRA fine-tuned</text>
+    <text x="497" y="152" text-anchor="middle" font-size="13" fill="#E8875B" font-weight="bold">&#10038;</text>
+
+    <!-- Token bar inside LLM -->
+    <g transform="translate(356, 240)">
+      <rect x="0" y="0" width="30" height="14" rx="2" ry="2" fill="#EDEDED" stroke="#999999" stroke-width="0.8"/>
+      <text x="15" y="10" text-anchor="middle" font-size="6" fill="#555555">sys</text>
+      <rect x="34" y="0" width="70" height="14" rx="2" ry="2" fill="#DCEEFB" stroke="#5B9BD5" stroke-width="0.8"/>
+      <text x="69" y="10" text-anchor="middle" font-size="6" fill="#2B5C8A">protein (32)</text>
+      <rect x="108" y="0" width="30" height="14" rx="2" ry="2" fill="#EDEDED" stroke="#999999" stroke-width="0.8"/>
+      <text x="123" y="10" text-anchor="middle" font-size="6" fill="#555555">instr</text>
+    </g>
+    <text x="425" y="272" text-anchor="middle" font-size="7" fill="#888888">prefix-injected sequence</text>
+
+    <!-- Arrow: Projector -> LLM -->
+    <line x1="425" y1="395" x2="425" y2="286" stroke="#4A4A4A" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <rect x="393" y="338" width="64" height="16" rx="3" ry="3" fill="white" stroke="#DDDDDD" stroke-width="0.5"/>
+    <text x="425" y="349" text-anchor="middle" font-size="8" fill="#666666">32 tokens</text>
+
+    <!-- MLP Projector -->
+    <rect x="348" y="395" width="154" height="50" rx="8" ry="8"
+          fill="#D6EAF8" stroke="#2E86C1" stroke-width="2" filter="url(#shadow)"/>
+    <text x="425" y="416" text-anchor="middle" font-size="12" font-weight="bold" fill="#1A5276">MLP Projector</text>
+    <text x="425" y="434" text-anchor="middle" font-size="9" font-style="italic" fill="#1A5276">1536 &#8594; 5120 &#8594; 2560</text>
+    <text x="492" y="406" text-anchor="middle" font-size="13" fill="#E8875B" font-weight="bold">&#10038;</text>
+
+    <!-- Arrow: Pooling -> Projector -->
+    <line x1="425" y1="505" x2="425" y2="448" stroke="#4A4A4A" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <rect x="393" y="470" width="64" height="16" rx="3" ry="3" fill="white" stroke="#DDDDDD" stroke-width="0.5"/>
+    <text x="425" y="481" text-anchor="middle" font-size="8" fill="#666666">32 tokens</text>
+
+    <!-- Attention Pooling -->
+    <rect x="348" y="505" width="154" height="44" rx="8" ry="8"
+          fill="#FDE8D0" stroke="#E8875B" stroke-width="2" filter="url(#shadow)"/>
+    <text x="425" y="524" text-anchor="middle" font-size="11" font-weight="bold" fill="#8B4513">Attention Pooling</text>
+    <text x="425" y="540" text-anchor="middle" font-size="9" font-style="italic" fill="#8B4513">500 &#8594; 32 queries</text>
+    <text x="492" y="516" text-anchor="middle" font-size="13" fill="#E8875B" font-weight="bold">&#10038;</text>
+
+    <!-- Arrow: ESM-3 -> Pooling -->
+    <line x1="425" y1="610" x2="425" y2="552" stroke="#4A4A4A" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <rect x="389" y="572" width="72" height="16" rx="3" ry="3" fill="white" stroke="#DDDDDD" stroke-width="0.5"/>
+    <text x="425" y="583" text-anchor="middle" font-size="8" fill="#666666">500 &#215; 1536</text>
+
+    <!-- ESM-3 Encoder -->
+    <rect x="348" y="610" width="154" height="50" rx="8" ry="8"
+          fill="#DCEEFB" stroke="#5B9BD5" stroke-width="2" filter="url(#shadow)"/>
+    <text x="425" y="632" text-anchor="middle" font-size="12" font-weight="bold" fill="#2B5C8A">ESM-3 Encoder</text>
+    <text x="425" y="648" text-anchor="middle" font-size="9" font-style="italic" fill="#2B5C8A">protein language model</text>
+    <text x="492" y="622" text-anchor="middle" font-size="13" fill="#5B9BD5">&#10052;</text>
+
+    <!-- Arrow: Protein -> ESM-3 -->
+    <line x1="425" y1="700" x2="425" y2="663" stroke="#4A4A4A" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+    <!-- Protein Sequence -->
+    <rect x="345" y="700" width="160" height="40" rx="8" ry="8"
+          fill="#E8E0F0" stroke="#7B68AE" stroke-width="2" filter="url(#shadow)"/>
+    <text x="425" y="720" text-anchor="middle" font-size="11" font-weight="bold" fill="#4A3878">Protein Sequence</text>
+    <text x="425" y="734" text-anchor="middle" font-size="8" font-style="italic" fill="#4A3878">MKTLLILAVL...</text>
+  </g>
+
+  <!-- ======================================================= -->
+  <!-- COLUMN (c): ESM-3 + PERCEIVER                            -->
+  <!-- ======================================================= -->
+  <g id="col-c">
+    <!-- Column title -->
+    <text x="700" y="52" text-anchor="middle" font-size="14" font-weight="bold" fill="#333333">(c) ESM-3 + Perceiver</text>
+
+    <!-- Text Output -->
+    <rect x="635" y="68" width="130" height="34" rx="8" ry="8"
+          fill="#FAFAFA" stroke="#CCCCCC" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="700" y="89" text-anchor="middle" font-size="11" font-weight="bold" fill="#555555">Text Output</text>
+
+    <!-- Arrow: LLM -> Text Output -->
+    <line x1="700" y1="132" x2="700" y2="105" stroke="#4A4A4A" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+    <!-- Qwen3 LLM (LoRA) -->
+    <rect x="615" y="132" width="170" height="150" rx="8" ry="8"
+          fill="#D5F5E3" stroke="#5BAD7C" stroke-width="2" filter="url(#shadow)"/>
+    <text x="700" y="160" text-anchor="middle" font-size="13" font-weight="bold" fill="#2D6A4F">Qwen3 LLM</text>
+    <text x="700" y="178" text-anchor="middle" font-size="10" font-style="italic" fill="#2D6A4F">LoRA fine-tuned</text>
+    <text x="772" y="152" text-anchor="middle" font-size="13" fill="#E8875B" font-weight="bold">&#10038;</text>
+
+    <!-- Token bar inside LLM -->
+    <g transform="translate(631, 240)">
+      <rect x="0" y="0" width="30" height="14" rx="2" ry="2" fill="#EDEDED" stroke="#999999" stroke-width="0.8"/>
+      <text x="15" y="10" text-anchor="middle" font-size="6" fill="#555555">sys</text>
+      <rect x="34" y="0" width="70" height="14" rx="2" ry="2" fill="#DCEEFB" stroke="#5B9BD5" stroke-width="0.8"/>
+      <text x="69" y="10" text-anchor="middle" font-size="6" fill="#2B5C8A">protein (32)</text>
+      <rect x="108" y="0" width="30" height="14" rx="2" ry="2" fill="#EDEDED" stroke="#999999" stroke-width="0.8"/>
+      <text x="123" y="10" text-anchor="middle" font-size="6" fill="#555555">instr</text>
+    </g>
+    <text x="700" y="272" text-anchor="middle" font-size="7" fill="#888888">prefix-injected sequence</text>
+
+    <!-- Arrow: Perceiver -> LLM -->
+    <line x1="700" y1="395" x2="700" y2="286" stroke="#4A4A4A" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <rect x="668" y="338" width="64" height="16" rx="3" ry="3" fill="white" stroke="#DDDDDD" stroke-width="0.5"/>
+    <text x="700" y="349" text-anchor="middle" font-size="8" fill="#666666">32 tokens</text>
+
+    <!-- Perceiver Resampler (replaces pooling + projector) -->
+    <rect x="618" y="395" width="164" height="100" rx="8" ry="8"
+          fill="#FFF3E0" stroke="#E67E22" stroke-width="2" filter="url(#shadow)"/>
+    <text x="700" y="420" text-anchor="middle" font-size="12" font-weight="bold" fill="#935116">Perceiver</text>
+    <text x="700" y="436" text-anchor="middle" font-size="12" font-weight="bold" fill="#935116">Resampler</text>
+    <text x="700" y="454" text-anchor="middle" font-size="9" font-style="italic" fill="#935116">learned queries (32)</text>
+    <text x="700" y="470" text-anchor="middle" font-size="9" font-style="italic" fill="#935116">self-attn &#8594; cross-attn &#8594; FFN</text>
+    <text x="772" y="410" text-anchor="middle" font-size="13" fill="#E8875B" font-weight="bold">&#10038;</text>
+
+    <!-- Dashed annotation: token mixing -->
+    <rect x="618" y="505" width="164" height="36" rx="6" ry="6"
+          fill="#FAFAFA" stroke="#BBBBBB" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="700" y="520" text-anchor="middle" font-size="8" font-style="italic" fill="#777777">Token mixing: Cross-Attn</text>
+    <text x="700" y="532" text-anchor="middle" font-size="8" font-style="italic" fill="#777777">(500 &#8594; 32 queries)</text>
+
+    <!-- Arrow: ESM-3 -> Perceiver -->
+    <line x1="700" y1="610" x2="700" y2="498" stroke="#4A4A4A" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <rect x="664" y="555" width="72" height="16" rx="3" ry="3" fill="white" stroke="#DDDDDD" stroke-width="0.5"/>
+    <text x="700" y="566" text-anchor="middle" font-size="8" fill="#666666">500 &#215; 1536</text>
+
+    <!-- ESM-3 Encoder -->
+    <rect x="623" y="610" width="154" height="50" rx="8" ry="8"
+          fill="#DCEEFB" stroke="#5B9BD5" stroke-width="2" filter="url(#shadow)"/>
+    <text x="700" y="632" text-anchor="middle" font-size="12" font-weight="bold" fill="#2B5C8A">ESM-3 Encoder</text>
+    <text x="700" y="648" text-anchor="middle" font-size="9" font-style="italic" fill="#2B5C8A">protein language model</text>
+    <text x="767" y="622" text-anchor="middle" font-size="13" fill="#5B9BD5">&#10052;</text>
+
+    <!-- Arrow: Protein -> ESM-3 -->
+    <line x1="700" y1="700" x2="700" y2="663" stroke="#4A4A4A" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+    <!-- Protein Sequence -->
+    <rect x="620" y="700" width="160" height="40" rx="8" ry="8"
+          fill="#E8E0F0" stroke="#7B68AE" stroke-width="2" filter="url(#shadow)"/>
+    <text x="700" y="720" text-anchor="middle" font-size="11" font-weight="bold" fill="#4A3878">Protein Sequence</text>
+    <text x="700" y="734" text-anchor="middle" font-size="8" font-style="italic" fill="#4A3878">MKTLLILAVL...</text>
+  </g>
+
+  <!-- ======================================================= -->
+  <!-- COLUMN (d): ESM-3 + FLAMINGO                             -->
+  <!-- ======================================================= -->
+  <g id="col-d">
+    <!-- Column title -->
+    <text x="975" y="52" text-anchor="middle" font-size="14" font-weight="bold" fill="#333333">(d) ESM-3 + Flamingo</text>
+
+    <!-- Text Output -->
+    <rect x="910" y="68" width="130" height="34" rx="8" ry="8"
+          fill="#FAFAFA" stroke="#CCCCCC" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="975" y="89" text-anchor="middle" font-size="11" font-weight="bold" fill="#555555">Text Output</text>
+
+    <!-- Arrow: LLM -> Text Output -->
+    <line x1="975" y1="132" x2="975" y2="105" stroke="#4A4A4A" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+    <!-- Qwen3 LLM (FROZEN - key difference!) -->
+    <rect x="890" y="132" width="170" height="150" rx="8" ry="8"
+          fill="#D5F5E3" stroke="#5BAD7C" stroke-width="2" filter="url(#shadow)"/>
+    <text x="975" y="160" text-anchor="middle" font-size="13" font-weight="bold" fill="#2D6A4F">Qwen3 LLM</text>
+    <text x="975" y="178" text-anchor="middle" font-size="10" font-style="italic" fill="#2D6A4F">Frozen (no LoRA)</text>
+    <text x="1047" y="152" text-anchor="middle" font-size="13" fill="#5B9BD5">&#10052;</text>
+
+    <!-- Gated cross-attention indicators inside LLM -->
+    <g transform="translate(906, 195)">
+      <!-- Cross-attn blocks at every 4th layer -->
+      <rect x="0" y="0" width="138" height="12" rx="2" ry="2" fill="#FADBD8" stroke="#C0392B" stroke-width="0.8"/>
+      <text x="69" y="9" text-anchor="middle" font-size="7" fill="#922B21">Gated Cross-Attn (layer 4)</text>
+      <rect x="0" y="16" width="138" height="12" rx="2" ry="2" fill="#FADBD8" stroke="#C0392B" stroke-width="0.8"/>
+      <text x="69" y="25" text-anchor="middle" font-size="7" fill="#922B21">Gated Cross-Attn (layer 8)</text>
+      <rect x="0" y="32" width="138" height="12" rx="2" ry="2" fill="#FADBD8" stroke="#C0392B" stroke-width="0.8"/>
+      <text x="69" y="41" text-anchor="middle" font-size="7" fill="#922B21">Gated Cross-Attn (layer 12)</text>
+      <text x="69" y="56" text-anchor="middle" font-size="7" fill="#888888">... every 4th layer</text>
+      <!-- Trainable marker for cross-attn -->
+      <text x="145" y="9" font-size="10" fill="#E8875B" font-weight="bold">&#10038;</text>
+    </g>
+
+    <!-- Token bar inside LLM (no protein prefix for flamingo!) -->
+    <g transform="translate(916, 260)">
+      <rect x="0" y="0" width="50" height="14" rx="2" ry="2" fill="#EDEDED" stroke="#999999" stroke-width="0.8"/>
+      <text x="25" y="10" text-anchor="middle" font-size="6" fill="#555555">sys/instr</text>
+      <rect x="54" y="0" width="70" height="14" rx="2" ry="2" fill="#EDEDED" stroke="#999999" stroke-width="0.8"/>
+      <text x="89" y="10" text-anchor="middle" font-size="6" fill="#555555">text only</text>
+    </g>
+    <text x="975" y="292" text-anchor="middle" font-size="7" fill="#888888">no prefix injection</text>
+
+    <!-- Curved arrow: Flamingo Perceiver -> cross-attn layers in LLM -->
+    <!-- Using a path to show the side-injection pattern -->
+    <path d="M 1070 420 C 1100 420, 1100 230, 1062 230"
+          fill="none" stroke="#C0392B" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+    <rect x="1074" y="310" width="60" height="16" rx="3" ry="3" fill="white" stroke="#DDDDDD" stroke-width="0.5"/>
+    <text x="1104" y="321" text-anchor="middle" font-size="7" fill="#922B21">64 tokens</text>
+
+    <!-- Arrow label: "side injection" -->
+    <rect x="1078" y="330" width="58" height="14" rx="3" ry="3" fill="white" stroke="#DDDDDD" stroke-width="0.5"/>
+    <text x="1107" y="340" text-anchor="middle" font-size="7" font-style="italic" fill="#922B21">side inject</text>
+
+    <!-- Flamingo Perceiver -->
+    <rect x="893" y="395" width="164" height="100" rx="8" ry="8"
+          fill="#FADBD8" stroke="#C0392B" stroke-width="2" filter="url(#shadow)"/>
+    <text x="975" y="420" text-anchor="middle" font-size="12" font-weight="bold" fill="#922B21">Flamingo</text>
+    <text x="975" y="436" text-anchor="middle" font-size="12" font-weight="bold" fill="#922B21">Perceiver</text>
+    <text x="975" y="454" text-anchor="middle" font-size="9" font-style="italic" fill="#922B21">cross-attn queries (64)</text>
+    <text x="975" y="470" text-anchor="middle" font-size="9" font-style="italic" fill="#922B21">6 layers, latent_dim=1024</text>
+    <text x="1047" y="410" text-anchor="middle" font-size="13" fill="#E8875B" font-weight="bold">&#10038;</text>
+
+    <!-- Dashed annotation: gated cross-attn -->
+    <rect x="893" y="505" width="164" height="36" rx="6" ry="6"
+          fill="#FAFAFA" stroke="#BBBBBB" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="975" y="520" text-anchor="middle" font-size="8" font-style="italic" fill="#777777">Token mixing: Gated</text>
+    <text x="975" y="532" text-anchor="middle" font-size="8" font-style="italic" fill="#777777">Cross-Attn at every 4th layer</text>
+
+    <!-- Arrow: ESM-3 -> Flamingo Perceiver -->
+    <line x1="975" y1="610" x2="975" y2="498" stroke="#4A4A4A" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <rect x="939" y="555" width="72" height="16" rx="3" ry="3" fill="white" stroke="#DDDDDD" stroke-width="0.5"/>
+    <text x="975" y="566" text-anchor="middle" font-size="8" fill="#666666">500 &#215; 1536</text>
+
+    <!-- ESM-3 Encoder -->
+    <rect x="898" y="610" width="154" height="50" rx="8" ry="8"
+          fill="#DCEEFB" stroke="#5B9BD5" stroke-width="2" filter="url(#shadow)"/>
+    <text x="975" y="632" text-anchor="middle" font-size="12" font-weight="bold" fill="#2B5C8A">ESM-3 Encoder</text>
+    <text x="975" y="648" text-anchor="middle" font-size="9" font-style="italic" fill="#2B5C8A">protein language model</text>
+    <text x="1042" y="622" text-anchor="middle" font-size="13" fill="#5B9BD5">&#10052;</text>
+
+    <!-- Arrow: Protein -> ESM-3 -->
+    <line x1="975" y1="700" x2="975" y2="663" stroke="#4A4A4A" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+    <!-- Protein Sequence -->
+    <rect x="895" y="700" width="160" height="40" rx="8" ry="8"
+          fill="#E8E0F0" stroke="#7B68AE" stroke-width="2" filter="url(#shadow)"/>
+    <text x="975" y="720" text-anchor="middle" font-size="11" font-weight="bold" fill="#4A3878">Protein Sequence</text>
+    <text x="975" y="734" text-anchor="middle" font-size="8" font-style="italic" fill="#4A3878">MKTLLILAVL...</text>
+  </g>
+
+  <!-- ======================================================= -->
+  <!-- LEGEND                                                   -->
+  <!-- ======================================================= -->
+  <g id="legend" transform="translate(140, 775)">
+    <!-- Frozen -->
+    <rect x="0" y="0" width="16" height="16" rx="3" ry="3" fill="#DCEEFB" stroke="#5B9BD5" stroke-width="1.5"/>
+    <text x="7" y="12" text-anchor="middle" font-size="10" fill="#5B9BD5">&#10052;</text>
+    <text x="22" y="12" font-size="10" fill="#444444">Frozen (pretrained)</text>
+
+    <!-- Trainable -->
+    <rect x="160" y="0" width="16" height="16" rx="3" ry="3" fill="#FDE8D0" stroke="#E8875B" stroke-width="1.5"/>
+    <text x="167" y="12" text-anchor="middle" font-size="10" fill="#E8875B">&#10038;</text>
+    <text x="182" y="12" font-size="10" fill="#444444">Trainable</text>
+
+    <!-- LLM -->
+    <rect x="280" y="0" width="16" height="16" rx="3" ry="3" fill="#D5F5E3" stroke="#5BAD7C" stroke-width="1.5"/>
+    <text x="302" y="12" font-size="10" fill="#444444">LLM (LoRA / frozen)</text>
+
+    <!-- ESM-3 embeddings -->
+    <rect x="450" y="2" width="30" height="12" rx="2" ry="2" fill="#DCEEFB" stroke="#5B9BD5" stroke-width="0.8"/>
+    <text x="486" y="12" font-size="10" fill="#444444">Protein embeddings</text>
+
+    <!-- Protein tokens -->
+    <rect x="610" y="2" width="30" height="12" rx="2" ry="2" fill="#E8E0F0" stroke="#7B68AE" stroke-width="0.8"/>
+    <text x="646" y="12" font-size="10" fill="#444444">Protein text tokens</text>
+
+    <!-- System/Instruction -->
+    <rect x="780" y="2" width="30" height="12" rx="2" ry="2" fill="#EDEDED" stroke="#999999" stroke-width="0.8"/>
+    <text x="816" y="12" font-size="10" fill="#444444">System / Instruction</text>
+  </g>
+
+</svg>

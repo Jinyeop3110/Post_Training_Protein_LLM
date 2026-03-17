@@ -1,0 +1,18 @@
+name: fold_classification
+source: CATH
+task: fold_classification
+
+paths:
+  raw: ${paths.raw_dir}/fold_classification
+  processed: ${paths.processed_dir}/fold_classification
+
+processing:
+  max_seq_length: 2048
+  include_structure: false
+
+splits:
+  train: 0.9
+  validation: 0.05
+  test: 0.05
+
+limit: null

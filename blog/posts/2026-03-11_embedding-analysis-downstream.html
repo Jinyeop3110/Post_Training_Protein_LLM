@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Embedding Analysis: Why Trained Projectors Don't Improve Clustering</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #1a1a2e;
+            --accent: #2563eb;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --code-bg: #f3f4f6;
+            --table-header: #f9fafb;
+            --blockquote-bg: #fffbeb;
+            --blockquote-border: #f59e0b;
+            --success-bg: #f0fdf4;
+            --success-border: #22c55e;
+            --warning-bg: #fff7ed;
+            --warning-border: #f97316;
+            --danger-bg: #fef2f2;
+            --danger-border: #ef4444;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--fg);
+            background: var(--bg);
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        header { margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 2px solid var(--border); }
+        header .meta { color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem; }
+        header .tags { margin-top: 0.5rem; }
+        header .tag {
+            display: inline-block; background: var(--code-bg); color: var(--accent);
+            padding: 0.15rem 0.6rem; border-radius: 1rem; font-size: 0.8rem; margin-right: 0.4rem;
+            font-weight: 500;
+        }
+        h1 { font-size: 1.9rem; line-height: 1.3; font-weight: 700; letter-spacing: -0.02em; }
+        h2 { font-size: 1.4rem; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); font-weight: 600; }
+        h3 { font-size: 1.15rem; margin: 1.8rem 0 0.8rem; font-weight: 600; }
+        h4 { font-size: 1rem; margin: 1.2rem 0 0.5rem; color: var(--muted); }
+        p { margin: 0.8rem 0; }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code {
+            font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+            background: var(--code-bg); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.88em;
+        }
+        pre {
+            background: var(--code-bg); padding: 1rem 1.2rem; border-radius: 6px; overflow-x: auto;
+            margin: 1rem 0; font-size: 0.88em; line-height: 1.5;
+        }
+        pre code { background: none; padding: 0; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.92rem; }
+        th, td { padding: 0.6rem 0.8rem; text-align: left; border: 1px solid var(--border); }
+        th { background: var(--table-header); font-weight: 600; }
+        tr:hover { background: #f9fafb; }
+        blockquote {
+            background: var(--blockquote-bg); border-left: 4px solid var(--blockquote-border);
+            padding: 0.8rem 1.2rem; margin: 1rem 0; border-radius: 0 6px 6px 0; font-style: italic;
+        }
+        blockquote p { margin: 0.3rem 0; }
+        .success-box {
+            background: var(--success-bg); border-left: 4px solid var(--success-border);
+            padding: 0.8rem 1.2rem; margin: 1rem 0; border-radius: 0 6px 6px 0;
+        }
+        .success-box p { margin: 0.3rem 0; }
+        .warning-box {
+            background: var(--warning-bg); border-left: 4px solid var(--warning-border);
+            padding: 0.8rem 1.2rem; margin: 1rem 0; border-radius: 0 6px 6px 0;
+        }
+        .warning-box p { margin: 0.3rem 0; }
+        .callout {
+            padding: 1rem 1.2rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid;
+        }
+        .callout-info { background: #eff6ff; border-color: var(--accent); }
+        .callout-success { background: var(--success-bg); border-color: var(--success-border); }
+        .callout-warning { background: var(--warning-bg); border-color: var(--warning-border); }
+        .callout strong { display: block; margin-bottom: 0.3rem; }
+        ul, ol { margin: 0.8rem 0; padding-left: 1.5rem; }
+        li { margin: 0.3rem 0; }
+        strong { font-weight: 600; }
+        hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+        .toc { background: var(--code-bg); padding: 1.2rem; border-radius: 8px; margin-bottom: 2rem; }
+        .toc ul { list-style: none; padding-left: 0; margin-bottom: 0; }
+        .toc li { margin-bottom: 0.3rem; }
+        .toc a { color: var(--accent); text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        .metric-highlight {
+            display: inline-block; background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 8px; padding: 0.8rem 1.2rem; margin: 0.3rem; text-align: center;
+            min-width: 140px;
+        }
+        .metric-highlight .value { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
+        .metric-highlight .label { font-size: 0.8rem; color: var(--muted); display: block; margin-top: 0.2rem; }
+        .metrics-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; justify-content: center; }
+        .ref { font-size: 0.85rem; color: var(--muted); }
+        .ref a { color: var(--accent); text-decoration: none; }
+        .ref a:hover { text-decoration: underline; }
+        nav.blog-nav { margin-bottom: 1.5rem; font-size: 0.9rem; }
+        nav.blog-nav a { margin-right: 1rem; }
+        figure { margin: 1.5rem 0; text-align: center; }
+        figure img { max-width: 100%; border: 1px solid var(--border); border-radius: 6px; }
+        figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 0.5rem; }
+        footer {
+            margin-top: 3rem; padding-top: 1.5rem; border-top: 2px solid var(--border);
+            color: var(--muted); font-size: 0.85rem;
+        }
+        @media (max-width: 700px) {
+            .metrics-row { flex-direction: column; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="blog-nav">
+    <a href="../index.html">&larr; All posts</a>
+</nav>
+
+<header>
+    <h1>Embedding Analysis: Why Trained Projectors Don't Improve Clustering</h1>
+    <div class="meta">2026-03-11 &middot; Post-Training Protein LLM Project</div>
+    <div class="tags">
+        <span class="tag">embeddings</span>
+        <span class="tag">ESM-3 + MLP</span>
+        <span class="tag">projector analysis</span>
+        <span class="tag">literature review</span>
+        <span class="tag">novel finding</span>
+    </div>
+</header>
+
+<div class="toc">
+    <strong>Contents</strong>
+    <ul>
+        <li><a href="#tldr">1. TL;DR</a></li>
+        <li><a href="#setup">2. Experimental Setup</a></li>
+        <li><a href="#results">3. Results</a></li>
+        <li><a href="#figures">4. Figures</a></li>
+        <li><a href="#literature">5. Literature Context</a></li>
+        <li><a href="#interpretation">6. Interpretation &amp; Implications</a></li>
+        <li><a href="#rl-implications">7. Implications for RL (GRPO)</a></li>
+        <li><a href="#references">8. References</a></li>
+    </ul>
+</div>
+
+<h2 id="tldr">1. TL;DR</h2>
+
+<div class="callout callout-warning">
+    <strong>Key Finding</strong>
+    The trained MLP projector does NOT improve embedding-level classification over raw ESM-3 or even a random projector.
+    This is <strong>expected and well-documented</strong> in the vision-LLM literature, but <strong>novel in the protein domain</strong>.
+    The projector's job is to reformat features for the LLM decoder, not to create separable clusters.
+</div>
+
+<p>We ran a comprehensive embedding quality analysis comparing three conditions &mdash; raw ESM-3 (attention-pooled), trained MLP projector, and random MLP projector &mdash; on 27,818 proteins from downstream biological tasks. All three conditions scored within ~2% of each other on kNN and linear probe accuracy (~54%), with the random projector slightly ahead. Literature from the vision-LLM community confirms this is a general property of generative multimodal systems, not a bug in our training.</p>
+
+<h2 id="setup">2. Experimental Setup</h2>
+
+<h3>Data: 27,818 Proteins with Biological Labels</h3>
+
+<p>Instead of using the 18 question-type labels from Mol-Instructions (which proved uninformative), we extracted proteins from three downstream datasets with real biological annotations:</p>
+
+<table>
+    <tr><th>Dataset</th><th>Samples</th><th>Labels</th><th>Source</th></tr>
+    <tr><td>GO Prediction</td><td>8,818</td><td>go</td><td>CAFA5</td></tr>
+    <tr><td>Stability</td><td>10,000</td><td>neutral, stabilizing, destabilizing</td><td>MegaScale (ddG)</td></tr>
+    <tr><td>Structure Quality</td><td>10,000</td><td>high, medium, low</td><td>pLDDT / fold category</td></tr>
+</table>
+
+<p><strong>7 biological classes</strong> total, reflecting real protein properties rather than question formats.</p>
+
+<h3>Embedding Pipeline</h3>
+
+<pre><code>ESM-3 (frozen, 1536-dim) &rarr; AttentionPooling (32 tokens) &rarr; Condition-specific:
+  Raw:     32 &times; 1536 = 49,152-dim flattened &rarr; PCA(128)
+  Trained: 32 &times; 2560 = 81,920-dim flattened &rarr; PCA(128)
+  Random:  32 &times; 2560 = 81,920-dim flattened &rarr; PCA(128)</code></pre>
+
+<p>We use <strong>flatten + PCA</strong> instead of mean-pooling to preserve token-level information that pooling discards. PCA to 128 dims retains 97&ndash;99% variance for ESM3/trained, 86% for random.</p>
+
+<h3>Metrics Computed</h3>
+<ul>
+    <li><strong>kNN accuracy</strong> (k=1, 5, 10, 20) &mdash; nearest-neighbor classification</li>
+    <li><strong>Linear probe</strong> &mdash; logistic regression on frozen embeddings</li>
+    <li><strong>Silhouette score</strong> &mdash; cluster cohesion vs separation</li>
+    <li><strong>CKA</strong> (Centered Kernel Alignment) &mdash; representational similarity between conditions</li>
+    <li><strong>Cosine distributions</strong> &mdash; intra- vs inter-class similarity separation</li>
+    <li><strong>Retrieval</strong> &mdash; Precision@5, MRR</li>
+    <li><strong>Geometry</strong> &mdash; effective rank, isotropy</li>
+    <li><strong>UMAP</strong> &mdash; 2D visualization</li>
+</ul>
+
+<h2 id="results">3. Results</h2>
+
+<div class="metrics-row">
+    <div class="metric-highlight">
+        <span class="value">54.2%</span>
+        <span class="label">kNN@5 (ESM3 Raw)</span>
+    </div>
+    <div class="metric-highlight">
+        <span class="value">54.0%</span>
+        <span class="label">kNN@5 (Trained)</span>
+    </div>
+    <div class="metric-highlight">
+        <span class="value">55.4%</span>
+        <span class="label">kNN@5 (Random)</span>
+    </div>
+</div>
+
+<table>
+    <tr><th>Metric</th><th>ESM3 Raw</th><th>Trained</th><th>Random</th></tr>
+    <tr><td>kNN@5 Accuracy</td><td>0.542</td><td>0.540</td><td><strong>0.554</strong></td></tr>
+    <tr><td>Linear Probe Acc.</td><td>0.544</td><td>0.526</td><td><strong>0.572</strong></td></tr>
+    <tr><td>Silhouette Score</td><td>-0.094</td><td>-0.168</td><td><strong>-0.067</strong></td></tr>
+    <tr><td>Precision@5</td><td>0.456</td><td>0.439</td><td><strong>0.473</strong></td></tr>
+    <tr><td>MRR</td><td>0.665</td><td>0.648</td><td><strong>0.686</strong></td></tr>
+    <tr><td>Cosine Separation</td><td><strong>0.165</strong></td><td>0.149</td><td>0.083</td></tr>
+    <tr><td>Effective Rank</td><td>67.2</td><td>58.8</td><td><strong>93.7</strong></td></tr>
+    <tr><td>Isotropy</td><td>0.003</td><td><strong>0.125</strong></td><td>0.002</td></tr>
+</table>
+
+<h3>CKA (Representational Similarity)</h3>
+<table>
+    <tr><th></th><th>ESM3 Raw</th><th>Trained</th><th>Random</th></tr>
+    <tr><td><strong>ESM3 Raw</strong></td><td>1.000</td><td>0.311</td><td>0.180</td></tr>
+    <tr><td><strong>Trained</strong></td><td>0.311</td><td>1.000</td><td>0.053</td></tr>
+    <tr><td><strong>Random</strong></td><td>0.180</td><td>0.053</td><td>1.000</td></tr>
+</table>
+
+<p>The trained projector learns a substantially different transformation from the random one (CKA=0.053), but this different transformation does <em>not</em> translate to better embedding-level classification.</p>
+
+<h2 id="figures">4. Figures</h2>
+
+<figure>
+    <img src="../figures/main_figures/fig12_embedding_umap.png" alt="UMAP 3-panel comparison">
+    <figcaption><strong>Fig. 12.</strong> UMAP projections of protein embeddings under three conditions. Raw ESM-3 shows diffuse spread; trained projector produces a compact core with partial collapse; random projector creates clear dataset-level islands.</figcaption>
+</figure>
+
+<figure>
+    <img src="../figures/supple_figures/embedding_metrics_comparison.png" alt="Metrics comparison bar chart">
+    <figcaption><strong>Fig. S1.</strong> Embedding quality metrics. All three conditions score within ~2% on kNN and linear probe. The random projector slightly outperforms both ESM3 and trained.</figcaption>
+</figure>
+
+<figure>
+    <img src="../figures/supple_figures/embedding_cka_heatmap.png" alt="CKA heatmap">
+    <figcaption><strong>Fig. S2.</strong> CKA similarity heatmap. Trained&harr;random similarity is only 0.053, confirming the trained projector learns a genuinely different transformation &mdash; but one that doesn't improve discriminability.</figcaption>
+</figure>
+
+<figure>
+    <img src="../figures/supple_figures/embedding_cosine_distributions.png" alt="Cosine distributions">
+    <figcaption><strong>Fig. S3.</strong> Cosine similarity distributions (intra- vs inter-class). The trained projector has a distinctive spike near cosine=1.0, indicating partial embedding collapse. Raw ESM-3 has the broadest and best-separated distributions.</figcaption>
+</figure>
+
+<figure>
+    <img src="../figures/supple_figures/embedding_knn_vs_k.png" alt="kNN accuracy vs k">
+    <figcaption><strong>Fig. S4.</strong> kNN accuracy across k values. All curves nearly overlap; the random projector maintains a consistent ~1&ndash;2% lead across all k.</figcaption>
+</figure>
+
+<figure>
+    <img src="../figures/supple_figures/embedding_rank_isotropy.png" alt="Effective rank and isotropy">
+    <figcaption><strong>Fig. S5.</strong> Representation geometry. The trained projector has notably higher isotropy (0.125) but lower effective rank (58.8), meaning it spreads energy more evenly across fewer dimensions. Random has highest rank (93.7).</figcaption>
+</figure>
+
+<h2 id="literature">5. Literature Context</h2>
+
+<div class="callout callout-info">
+    <strong>This is a documented phenomenon in vision-LLMs</strong>
+    Multiple papers confirm that generative training (next-token prediction) does not improve &mdash; and may degrade &mdash; embedding-level structure. Our protein-LLM analysis is the first to demonstrate this in the protein domain.
+</div>
+
+<h3>5.1 Projectors Don't Extract Modality-Specific Attributes</h3>
+
+<p>Verma et al. (<strong>ACL 2024</strong>) directly tested whether the projector in multimodal LLMs extracts visual attributes. <em>It does not.</em> The projector merely learns to "route" information to leverage pre-existing LLM knowledge. Domain-specific understanding is modeled by the LLM parameters, not the projector.</p>
+
+<p class="ref">[1] Verma et al., "Cross-Modal Projection in Multimodal LLMs Doesn't Really Project Visual Attributes to Textual Space," ACL 2024 Short Papers.</p>
+
+<h3>5.2 Generative Training Degrades Embedding Discriminability</h3>
+
+<p><strong>VIRAL</strong> (KAIST, 2025) showed that text-only supervision causes representations to drift away from encoder features &mdash; the model retains only features that aid text prediction, discarding other cues. They propose explicit intermediate supervision to counteract this degradation.</p>
+
+<p>Tong et al. (<strong>CVPR 2024</strong>) documented that generative training does not fix, and may exacerbate, CLIP's embedding-level discriminability issues ("CLIP-blind pairs").</p>
+
+<p class="ref">[2] "VIRAL: Visual Representation Alignment for MLLMs," KAIST CVLAB, 2025.<br>
+[3] Tong et al., "Eyes Wide Shut? Exploring Visual Shortcomings of Multimodal LLMs," CVPR 2024.</p>
+
+<h3>5.3 Visual Token Redundancy</h3>
+
+<p>Recent work (2026) shows visual tokens partition into <strong>sink, dead, and alive</strong> groups &mdash; only ~60% carry image-specific meaning. Since the projector performs a linear transformation, it inherits this redundancy from the encoder.</p>
+
+<p class="ref">[4] "What Do Visual Tokens Really Encode? Uncovering Sparsity and Redundancy in MLLMs," 2026.</p>
+
+<h3>5.4 Random Projections Preserve Structure (Johnson-Lindenstrauss)</h3>
+
+<p>LLaVA's single linear projection layer (trained on only 600K pairs) achieved strong results. Extreme token reduction (75&ndash;89%) shows comparable performance. Since our projector maps 1536&rarr;2560 (dimensionality <em>increases</em>), random projections are even more likely to preserve pairwise distances via the Johnson-Lindenstrauss effect.</p>
+
+<p class="ref">[5] Liu et al., "LLaVA-1.5: Improved Baselines with Visual Instruction Tuning," CVPR 2024.</p>
+
+<h3>5.5 Over-Alignment Can Hurt</h3>
+
+<p>Fang et al. (2025) show the optimal alignment level depends on data characteristics &mdash; over-alignment can hurt unimodal performance. This provides theoretical grounding for why a trained projector might worsen embedding-level metrics.</p>
+
+<p class="ref">[6] Fang et al., "To Align or Not to Align: Strategic Multimodal Representation Alignment," 2025.</p>
+
+<h3>5.6 No Protein-LLM Embedding Analysis Exists</h3>
+
+<p>No published work analyzes post-projection embedding quality in protein-LLMs. The closest work:</p>
+<ul>
+    <li><strong>Aligning LLMs and GDMs for Protein</strong> (Patterns/Cell, 2025): Found that LLM fine-tuning, not the projector, drives alignment quality.</li>
+    <li><strong>ProtST</strong>: Uses contrastive learning (not generative), which preserves embedding discriminability by design &mdash; a fundamentally different training signal.</li>
+</ul>
+
+<p class="ref">[7] "Aligning Large Language Models and Geometric Deep Models for Protein Representation," Patterns, 2025.<br>
+[8] Xu et al., "ProtST: Multi-Modality Learning of Protein Sequences and Biomedical Texts," 2023.</p>
+
+<h2 id="interpretation">6. Interpretation &amp; Implications</h2>
+
+<h3>Why This Happens</h3>
+
+<p>The next-token prediction objective optimizes P(next_token | context), which is a <strong>lossy compression</strong> of the full embedding space. The LLM only needs the projected embeddings to carry information useful for generating text &mdash; geometric properties like cluster separation, isotropy, or kNN discriminability are irrelevant to this objective. The LLM compensates for projector limitations through its own parameters (LoRA fine-tuning).</p>
+
+<h3>What This Means for Our Project</h3>
+
+<div class="success-box">
+    <p><strong>1. Embedding-level metrics are NOT the right evaluation</strong> for generative protein-LLMs. The projector is doing its job &mdash; reformatting ESM-3 features for the LLM decoder.</p>
+    <p><strong>2. Generation quality</strong> (BLEU, task accuracy, expert evaluation) is the appropriate metric for comparing approaches.</p>
+    <p><strong>3. This analysis is novel</strong> &mdash; no protein-LLM paper has measured this. It confirms that findings from the vision-LLM community extend to the protein domain.</p>
+</div>
+
+<h3>The Cosine Collapse Signal</h3>
+
+<p>The trained projector's spike at cosine similarity ~1.0 (Fig. S3) is noteworthy. This partial collapse suggests the projector maps many proteins to similar regions &mdash; likely because the SFT training signal rewards generating correct text regardless of how distinct the embeddings are. This is consistent with the "alignment tax" described by VIRAL.</p>
+
+<h3>Random Projector's Advantage</h3>
+
+<p>The random projector slightly outperforms because: (1) it applies a structure-preserving random transformation (JL effect), (2) the higher output dimensionality (81,920 flattened) gives PCA more room to find separable directions, and (3) it doesn't suffer from the partial collapse induced by generative training.</p>
+
+<h2 id="rl-implications">7. Implications for RL (GRPO)</h2>
+
+<div class="callout callout-warning">
+    <strong>Does poor embedding clustering mean embeddings won't help for RL?</strong>
+    No. Embedding clustering &ne; information content. But the cosine collapse is a real concern, and early GRPO results show mixed signals.
+</div>
+
+<h3>Clustering vs Information Content</h3>
+
+<p>The embedding analysis measures <strong>geometric structure</strong> (cluster separation, kNN discriminability). But the LLM is a powerful nonlinear decoder &mdash; it can extract subtle signals from embeddings that don't form clean clusters. The relevant question is not "do embeddings cluster well?" but "does the LLM generate better answers with embeddings than without?"</p>
+
+<h3>SFT Evidence: Embeddings DO Carry Information</h3>
+
+<p>The SFT stage provides strong evidence that protein information flows through the projector:</p>
+
+<table>
+    <tr><th>Approach</th><th>SFT Eval Loss</th><th>Gap</th></tr>
+    <tr><td>ESM-3 + MLP</td><td><strong>0.361</strong></td><td>&mdash;</td></tr>
+    <tr><td>Text-only</td><td>1.266</td><td>3.5&times; worse</td></tr>
+</table>
+
+<p>The MLP approach achieves 3.5&times; better eval loss than text-only, proving the projected embeddings carry substantial protein information that the LLM successfully decodes. This gap persists despite the projector's poor embedding-level metrics.</p>
+
+<h3>Early GRPO Results: Mixed Signals</h3>
+
+<p>Our initial GRPO experiments reveal a nuanced picture:</p>
+
+<h4>ProteinLMBench (Multiple Choice QA)</h4>
+<table>
+    <tr><th>Metric</th><th>ESM-3 + MLP</th></tr>
+    <tr><td>Mean Reward</td><td>0.676&ndash;0.695</td></tr>
+    <tr><td>Format Compliance</td><td>85% &rarr; 94%</td></tr>
+    <tr><td>Factual Accuracy</td><td>3/5 (unchanged)</td></tr>
+    <tr><td>Zero-std Batches</td><td>37&ndash;42% (problematic)</td></tr>
+</table>
+<p>GRPO improved format compliance but factual accuracy remained flat. However, this task (binary MC) is unsuitable for RL &mdash; the reward is too sparse and the SFT model already captured the knowledge.</p>
+
+<h4>Structure Quality (ESMFold pLDDT)</h4>
+<table>
+    <tr><th>Metric</th><th>ESM-3 + MLP</th></tr>
+    <tr><td>Mean Reward</td><td>0.780</td></tr>
+    <tr><td>Reward Std</td><td>0.154 (good variance)</td></tr>
+    <tr><td>Quality Alignment</td><td>0.354</td></tr>
+    <tr><td>LoRA Grad Norm</td><td>4.93e-10 (near zero)</td></tr>
+    <tr><td>Multimodal Grad Norm</td><td>1.0 (clipped)</td></tr>
+</table>
+
+<div class="warning-box">
+    <p><strong>Critical issue:</strong> The structure quality task shows a promising reward landscape (good variance, continuous reward) but LoRA gradients are near zero &mdash; the LLM is not actually updating while the projector receives gradients. This is a training bug, not a fundamental limitation of the embeddings.</p>
+</div>
+
+<h3>What the Embedding Analysis Tells Us About RL</h3>
+
+<table>
+    <tr><th>Factor</th><th>Helps RL</th><th>Hurts RL</th></tr>
+    <tr>
+        <td>Embeddings carry protein info</td>
+        <td>SFT eval loss 0.36 vs 1.27 proves info flows through</td>
+        <td>&mdash;</td>
+    </tr>
+    <tr>
+        <td>Cosine collapse (Fig. S3)</td>
+        <td>&mdash;</td>
+        <td>Some proteins become indistinguishable &rarr; LLM gives same answer</td>
+    </tr>
+    <tr>
+        <td>RL reward signal</td>
+        <td>Could reshape projector to encode task-relevant features</td>
+        <td>If collapse is severe, gradient signal may be too noisy</td>
+    </tr>
+    <tr>
+        <td>Low CKA (trained&harr;random = 0.053)</td>
+        <td>Trained projector learned something genuinely different</td>
+        <td>What it learned doesn't help linear classification</td>
+    </tr>
+</table>
+
+<h3>Key Question: Text vs MLP Under RL</h3>
+
+<p>The definitive test is whether <strong>text-only GRPO vs MLP GRPO</strong> shows a gap on downstream tasks with continuous rewards (stability, structure quality). If the 3.5&times; SFT advantage carries through to RL, then the embeddings are valuable despite poor clustering. If the gap closes under RL, it would suggest the LLM learns to extract protein information from raw text when given reward signal.</p>
+
+<p>A text-only GRPO run on structure quality is currently in progress. The comparison will be the most informative test of whether ESM-3 embeddings add value in the RL setting.</p>
+
+<h3>Prediction</h3>
+
+<div class="callout callout-info">
+    <strong>Our prediction:</strong> ESM-3 embeddings will still help for RL, because:
+    <ul>
+        <li>The 3.5&times; SFT advantage is too large to disappear under RL</li>
+        <li>RL reward gradients flow through the projector &mdash; unlike SFT, task-specific rewards could reshape embeddings to encode task-relevant features</li>
+        <li>The projector's cosine collapse may actually <em>decrease</em> under RL, since the reward penalizes giving the same answer for different proteins</li>
+    </ul>
+    <strong>But:</strong> the LoRA gradient bug must be fixed first for a fair comparison.
+</div>
+
+<h2 id="references">8. References</h2>
+
+<ol>
+    <li>Verma et al., "Cross-Modal Projection in Multimodal LLMs Doesn't Really Project Visual Attributes to Textual Space," ACL 2024.</li>
+    <li>"VIRAL: Visual Representation Alignment for Multimodal LLMs," KAIST CVLAB, 2025.</li>
+    <li>Tong et al., "Eyes Wide Shut? Exploring the Visual Shortcomings of Multimodal LLMs," CVPR 2024.</li>
+    <li>"What Do Visual Tokens Really Encode? Uncovering Sparsity and Redundancy in MLLMs," 2026.</li>
+    <li>Liu et al., "LLaVA-1.5: Improved Baselines with Visual Instruction Tuning," CVPR 2024.</li>
+    <li>Fang et al., "To Align or Not to Align: Strategic Multimodal Representation Alignment," 2025.</li>
+    <li>"Aligning Large Language Models and Geometric Deep Models for Protein Representation," Patterns (Cell), 2025.</li>
+    <li>Xu et al., "ProtST: Multi-Modality Learning of Protein Sequences and Biomedical Texts," 2023.</li>
+    <li>Maniparambil et al., "From Unimodal to Multimodal: Scaling up Projectors to Align Modalities," CVPR 2025.</li>
+</ol>
+
+<hr>
+
+<footer>
+    <p><strong>Data</strong>: <code>blog/data/03-11/embeddings_downstream/</code></p>
+    <p><strong>Scripts</strong>: <code>scripts/analysis/{extract,analyze,plot}_embedding*.py</code></p>
+    <p><strong>Figures</strong>: <code>blog/figures/{main_figures/fig12_*,supple_figures/embedding_*}</code></p>
+    <p><strong>Research log</strong>: <code>docs/research/agents_research_log.md</code> (2026-03-11 entry)</p>
+</footer>
+
+</body>
+</html>

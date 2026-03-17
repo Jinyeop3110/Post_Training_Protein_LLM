@@ -1,12 +1,14 @@
 # @package _global_
 
-# GRPO experiment: GO Term Prediction
-# Uses CAFA 5 data with GO term set-F1 reward.
+# GRPO experiment: GO Term Prediction (ESM3+MLP SFT -> GRPO)
+# Uses CAFA 5 data with GO term F1 reward.
 # Chain from a trained SFT checkpoint via parent_experiment.
 #
+# Reward: F1 score of predicted GO terms (precision + recall).
+# GO terms median ~24 per protein; output can be long.
+#
 # Usage:
-#   python scripts/train.py main_RL=grpo_go_prediction \
-#     parent_experiment=sft_esm3_mlp_XXXX
+#   python scripts/train.py main_RL=grpo_go_prediction
 
 defaults:
   - override /model: qwen3_8b
@@ -17,20 +19,53 @@ defaults:
 approach: esm3
 experiment_name: grpo_go_${model.name}_${now:%m%d_%H%M%S}
 
+# ESM-3 sub-batch
+encoder:
+  encoder_batch_size: 4
+
+# Chain from ESM3+MLP SFT
+parent_experiment: sft_esm3_mlp_combined_qwen3_8b_it_0306_010408
+
 # Data task for reward routing
 data:
   task: go_prediction
+  processing:
+    max_protein_length: 512
 
 training:
-  grpo:
-    group_size: 4
+  # --- DDP on 8x H100 80GB ---
+  lr: 5e-6
+  projector_lr: 2.5e-5
+  batch_size: 2
+  gradient_accumulation_steps: 4  # effective batch = 2 * 8 GPUs * 4 = 64
+  gradient_checkpointing: true
+  epochs: 1
+  warmup_steps: 20
+  max_grad_norm: 1.0
 
-  # GO term outputs are short lists
+  grpo:
+    group_size: 8  # GO lists are long; fewer completions to fit in memory
+    temperature: 0.9
+    use_kl_penalty: false
+    normalize_advantages: false
+
+  # GO term outputs can be long (median 24 terms)
   rollout:
-    max_tokens: 512       # Qwen3 generates think blocks before answer
+    max_tokens: 512
+    top_p: 0.95
+    do_sample: true
+    enable_thinking: false
+
+  save_steps: 50
+  eval_steps: 25
+  logging_steps: 5
+
+  fsdp:
+    enabled: false
 
   wandb:
     tags:
       - grpo
       - go_prediction
+      - mlp_sft
       - ${model.name}

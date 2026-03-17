@@ -31,6 +31,7 @@ from .sft_trainer import (
     run_sft_lora,
     run_sft_qlora,
 )
+from .ssl_trainer import SSLTrainer, run_ssl
 from .token_budget_sampler import TokenBudgetBatchSampler
 
 __all__ = [
@@ -56,7 +57,10 @@ __all__ = [
     "compute_stability_reward",
     "compute_esmfold_reward",
     "compute_generic_reward",
+    # SSL Trainer
+    "SSLTrainer",
     # Training functions
+    "run_ssl",
     "run_sft",
     "run_sft_qlora",
     "run_sft_lora",

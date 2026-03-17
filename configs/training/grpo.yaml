@@ -6,6 +6,10 @@ grpo:
   temperature: 0.9
   use_kl_penalty: false  # DAPO improvement
   normalize_advantages: false  # Dr. GRPO improvement
+  focal_enabled: false   # Focal reward weighting for category imbalance
+  focal_gamma: 2.0       # Focal exponent (only used when focal_enabled=true)
+  binary_alignment: false  # Strict binary quality alignment (no partial 0.2 credit)
+  classification_only: false  # Pure binary classification reward (correct category=1, wrong=0)
 
 # Quantization (disabled for GRPO)
 quantization:

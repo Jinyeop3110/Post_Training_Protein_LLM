@@ -10,19 +10,27 @@ python src/data/download.py --dataset list              # List datasets
 python src/data/download.py --dataset ipd_pdb_sample    # Download raw
 python scripts/prepare_data.py data=mol_instructions    # Preprocess
 python scripts/prepare_arrow.py \                       # Arrow (one-time, fast load)
-  --input data/processed/combined_sft_260225 \
-  --output data/processed/combined_sft_260225_arrow \
+  --input data/processed/combined_sft_260316 \
+  --output data/processed/combined_sft_260316_arrow \
   --sampling-temperature 0.7 --max-protein-length 1024 \
   --exclude mol_protein_design.json
 
-# Train (approach: text | esm3)
-python scripts/train.py experiment_name=my_sft_run      # Custom experiment name
+# SSL (continued pre-training on biology literature, Qwen3.5 BASE)
+python scripts/train.py training=ssl_lora data=combined_ssl_260316
+
+# SFT (chain from SSL)
+python scripts/train.py experiment_name=my_sft_run parent_experiment=my_ssl
 python scripts/train.py approach=esm3 model=qwen3_4b    # ESM-3 + Qwen3-4B
 python scripts/train.py approach=text                    # Text-only baseline
 
 # GRPO (chain from SFT)
 python scripts/train.py training=grpo experiment_name=my_grpo \
   parent_experiment=my_sft_run
+
+# Pre-compute ESM embeddings (LMDB cache for fast training)
+python scripts/precompute_esm_embeddings.py \
+  --data-dir data/processed/combined_sft_260316 \
+  --output data/esm_cache/combined_sft_260316.lmdb
 
 # Downstream task data (10K samples each)
 python scripts/data/download_cafa.py --max_samples 10000          # GO prediction
@@ -72,8 +80,21 @@ results/{experiment_name}/
     └── {task}_metrics.json
 ```
 
-Pipeline lineage: `parent_experiment` in config chains SFT → GRPO experiments.
+Pipeline lineage: `parent_experiment` in config chains SSL → SFT → GRPO experiments.
 `lineage.json` tracks stage, parent, encoder, approach, and timestamps.
+
+## Training Pipeline
+```
+SSL (Qwen3.5 BASE, LoRA) → merge → SFT (Instruct, LoRA) → GRPO (rewards)
+```
+- **SSL**: Continued pre-training on biology literature (50GB, causal LM, no chat template)
+- **SFT**: Instruction fine-tuning on curated protein tasks (1.83M samples, chat template)
+- **GRPO**: Reinforcement learning with verifiable rewards (GO, Stability, ESMFold)
+
+## ESM Embedding Cache
+Pre-computed ESM-3 embeddings stored in LMDB, keyed by `sha256(sequence)`.
+Eliminates ESM-3 GPU memory (~6GB) and ~40% of forward pass time during SFT/GRPO.
+Config: `encoder.embedding_cache_path=data/esm_cache/combined_sft_260316.lmdb`
 
 ## Critical Rules
 - NEVER modify ESM-3 encoder weights (always frozen)
@@ -82,8 +103,10 @@ Pipeline lineage: `parent_experiment` in config chains SFT → GRPO experiments.
 - Use attention pooling, NOT mean (for MLP path)
 - FSDP enabled by default (`training.fsdp.enabled: true`). Shards LLM across 8×H100 GPUs. Disable with `training.fsdp.enabled=false`.
 - TRITON_CACHE_DIR must be local (`/tmp/triton_cache_$USER`)
-- Always use Instruct model variants (e.g., Qwen3-4B-Instruct-2507)
-- Use chat template format with system prompt for training (not Alpaca ### format)
+- Always use Instruct model variants for SFT/GRPO (e.g., Qwen3-4B-Instruct-2507)
+- Use BASE model variants for SSL (e.g., Qwen3.5-4B)
+- Use chat template format with system prompt for SFT training (not Alpaca ### format)
+- SSL uses plain causal LM (no chat template, no system prompt)
 - Log to wandb only (tensorboard disabled)
 
 ## Config Overrides
@@ -101,6 +124,10 @@ python scripts/train.py --cfg job  # Print config
 | results/ | **Experiment outputs** (one dir per experiment) |
 | configs/ | Hydra configurations |
 | scripts/prepare_arrow.py | One-time Arrow preprocessing (JSON→Arrow) |
+| scripts/precompute_esm_embeddings.py | Pre-compute ESM-3 embeddings → LMDB cache |
+| data/processed/combined_sft_260316/ | **Curated SFT data** (mol+clap+plm, 1.83M) |
+| data/processed/combined_ssl_260316/ | **SSL data** (ProteinLMDataset, 50GB) |
+| data/esm_cache/ | **Pre-computed ESM embeddings** (LMDB) |
 | scripts/ | Entry points (train, eval, inference) |
 | src/ | Core implementation |
 | src/utils/experiment.py | Lineage tracking utilities |

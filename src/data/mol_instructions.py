@@ -486,23 +486,35 @@ class MolInstructionsDataset(Dataset):
         return all_records
 
     def _create_splits(self, dataset: HFDataset) -> HFDataset:
-        """Create train/val/test splits from a single dataset."""
-        # Calculate split sizes
-        total = len(dataset)
-        train_size = int(total * self.config.train_split)
-        val_size = int(total * self.config.val_split)
+        """Create train/val/test splits grouped by protein sequence.
 
-        # Shuffle and split
-        dataset = dataset.shuffle(seed=self.config.seed)
+        All examples sharing the same protein sequence are assigned to the
+        same split, preventing data leakage where the model sees the same
+        protein during both training and evaluation.
+        """
+        from src.data.protein_utils import extract_protein_sequence, protein_level_split
+
+        split_indices = protein_level_split(
+            inputs=[
+                row.get("input", row.get("Input", ""))
+                for row in dataset
+            ],
+            train_ratio=self.config.train_split,
+            val_ratio=self.config.val_split,
+            seed=self.config.seed,
+            extract_fn=extract_protein_sequence,
+        )
 
         if self.split == "train":
-            return dataset.select(range(train_size))
+            indices = split_indices["train"]
         elif self.split in ("validation", "val"):
-            return dataset.select(range(train_size, train_size + val_size))
+            indices = split_indices["validation"]
         elif self.split == "test":
-            return dataset.select(range(train_size + val_size, total))
+            indices = split_indices["test"]
         else:
             raise ValueError(f"Unknown split: {self.split}. Use 'train', 'validation', or 'test'")
+
+        return dataset.select(indices)
 
     def _extract_protein_sequence(self, input_text: str) -> str:
         """

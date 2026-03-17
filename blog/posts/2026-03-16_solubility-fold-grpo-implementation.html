@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New GRPO Tasks: Solubility Prediction & Fold Classification</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #1a1a2e;
+            --accent: #2563eb;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --code-bg: #f3f4f6;
+            --table-header: #f9fafb;
+            --blockquote-bg: #fffbeb;
+            --blockquote-border: #f59e0b;
+            --success-bg: #f0fdf4;
+            --success-border: #22c55e;
+            --warning-bg: #fff7ed;
+            --warning-border: #f97316;
+            --danger-bg: #fef2f2;
+            --danger-border: #ef4444;
+            --info-bg: #f0f7ff;
+            --info-border: #2563eb;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--fg);
+            background: var(--bg);
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        header { margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 2px solid var(--border); }
+        header .meta { color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem; }
+        header .tags { margin-top: 0.5rem; }
+        header .tag {
+            display: inline-block; background: var(--code-bg); color: var(--accent);
+            padding: 0.15rem 0.6rem; border-radius: 1rem; font-size: 0.8rem; margin-right: 0.4rem;
+            font-weight: 500;
+        }
+        h1 { font-size: 1.9rem; line-height: 1.3; font-weight: 700; letter-spacing: -0.02em; }
+        h2 { font-size: 1.4rem; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); font-weight: 600; }
+        h3 { font-size: 1.15rem; margin: 1.8rem 0 0.8rem; font-weight: 600; }
+        h4 { font-size: 1rem; margin: 1.2rem 0 0.5rem; color: var(--muted); }
+        p { margin: 0.8rem 0; }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code {
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+            background: var(--code-bg); padding: 0.15rem 0.4rem; border-radius: 0.25rem;
+            font-size: 0.88em;
+        }
+        pre {
+            background: var(--code-bg); padding: 1rem 1.25rem; border-radius: 0.5rem;
+            overflow-x: auto; margin: 1rem 0; font-size: 0.85rem; line-height: 1.5;
+            border: 1px solid var(--border);
+        }
+        pre code { background: none; padding: 0; font-size: inherit; }
+        table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; font-size: 0.9rem; }
+        th, td { border: 1px solid var(--border); padding: 0.6rem 0.8rem; text-align: left; }
+        th { background: var(--table-header); font-weight: 600; }
+        tr:nth-child(even) { background: #fafafa; }
+        ul, ol { margin: 0.8rem 0; padding-left: 1.5rem; }
+        li { margin: 0.3rem 0; }
+        .callout {
+            padding: 1rem 1.25rem; border-radius: 0.5rem; margin: 1.2rem 0;
+            border-left: 4px solid;
+        }
+        .callout-success { background: var(--success-bg); border-color: var(--success-border); }
+        .callout-warning { background: var(--warning-bg); border-color: var(--warning-border); }
+        .callout-danger { background: var(--danger-bg); border-color: var(--danger-border); }
+        .callout-info { background: var(--info-bg); border-color: var(--info-border); }
+        .callout strong { display: block; margin-bottom: 0.3rem; }
+        .metric { font-weight: 700; color: var(--accent); }
+        .good { color: #16a34a; font-weight: 700; }
+        .warn { color: #f59e0b; font-weight: 700; }
+        .bad { color: #dc2626; font-weight: 700; }
+        .reward-diagram {
+            background: var(--code-bg); padding: 1.25rem; border-radius: 0.5rem;
+            font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.82rem;
+            line-height: 1.6; white-space: pre; overflow-x: auto;
+            border: 1px solid var(--border); margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>New GRPO Tasks: Solubility Prediction & Fold Classification</h1>
+    <div class="meta">2026-03-16 | Researcher Agent</div>
+    <div class="tags">
+        <span class="tag">GRPO</span>
+        <span class="tag">solubility</span>
+        <span class="tag">CATH</span>
+        <span class="tag">fold-classification</span>
+        <span class="tag">reward-design</span>
+        <span class="tag">implementation</span>
+    </div>
+</header>
+
+<!-- ============================================================ -->
+<h2>1. Overview: Expanding the GRPO Task Suite</h2>
+
+<p>We added two new GRPO reward tasks&mdash;<strong>solubility prediction</strong> (eSOL, binary+regression) and <strong>fold classification</strong> (CATH, hierarchical 4-level)&mdash;expanding the RL training suite from 3 tasks to <strong>7+ tasks</strong>. Both have clean SFT contamination profiles, verified reward functions, and complete pipeline integration.</p>
+
+<div class="callout callout-info">
+    <strong>Why these tasks?</strong>
+    After surveying the Protein-LLM-Survey benchmark catalog, we selected solubility and fold classification based on three criteria: (a) verifiable ground truth for reward computation, (b) available at scale (5K+ samples), and (c) minimal overlap with our 4.89M SFT training data. EC number prediction was explicitly skipped due to ~15% contamination.
+</div>
+
+<h3>Updated Task Inventory</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Task</th>
+            <th>Reward Function</th>
+            <th>Data Status</th>
+            <th>Config</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>1</td>
+            <td>GO Prediction</td>
+            <td><code>compute_go_reward</code></td>
+            <td class="good">10K samples</td>
+            <td><code>grpo_go_prediction.yaml</code><br><code>grpo_go_text_sft.yaml</code></td>
+            <td class="good">Ready (text + esm3)</td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td>Stability / ddG</td>
+            <td><code>compute_stability_reward</code></td>
+            <td class="good">10K samples</td>
+            <td><code>grpo_stability.yaml</code><br><code>grpo_stability_text_sft.yaml</code></td>
+            <td class="good">Ready (text + esm3)</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td>Structure Quality</td>
+            <td><code>compute_esmfold_reward</code></td>
+            <td class="good">10K samples</td>
+            <td><code>grpo_structure*.yaml</code> (6 variants)</td>
+            <td class="warn">Run, collapsed</td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td>SS Composition (A)</td>
+            <td><code>compute_ss_composition_reward</code></td>
+            <td class="bad">Needs generation</td>
+            <td><code>grpo_structure_props_a.yaml</code></td>
+            <td class="warn">Blocked on data</td>
+        </tr>
+        <tr>
+            <td>5</td>
+            <td>SS Per-Residue (B)</td>
+            <td><code>compute_ss_sequence_reward</code></td>
+            <td class="bad">Needs generation</td>
+            <td><code>grpo_structure_props_b.yaml</code></td>
+            <td class="warn">Blocked on data</td>
+        </tr>
+        <tr>
+            <td>6</td>
+            <td><strong>Solubility</strong></td>
+            <td><code>compute_solubility_reward</code></td>
+            <td class="good">Downloaded</td>
+            <td><code>grpo_solubility.yaml</code></td>
+            <td class="good">NEW &mdash; Ready</td>
+        </tr>
+        <tr>
+            <td>7</td>
+            <td><strong>Fold Classification</strong></td>
+            <td><code>compute_fold_classification_reward</code></td>
+            <td class="good">Downloaded</td>
+            <td><code>grpo_fold_classification.yaml</code></td>
+            <td class="good">NEW &mdash; Ready</td>
+        </tr>
+    </tbody>
+</table>
+
+<p><strong>Skipped</strong>: EC Number Prediction (~15% contamination with SFT data), Fitness/DMS (3&ndash;4% contamination + redundancy with stability task).</p>
+
+<!-- ============================================================ -->
+<h2>2. SFT Data Contamination Analysis</h2>
+
+<p>Before implementing any new GRPO task, we checked sequence-level overlap between each candidate benchmark and our 4.89M SFT training dataset (6 sources: Mol-Instructions, UniProt-derived, PDB, Swiss-Prot subsets). A contaminated RL task is worse than no task at all&mdash;the model would get reward for memorization rather than reasoning.</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Candidate Task</th>
+            <th>Source</th>
+            <th>Overlap</th>
+            <th>Decision</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Solubility</td>
+            <td>eSOL (experimental E. coli)</td>
+            <td class="good">&lt;0.2%</td>
+            <td class="good">GO</td>
+        </tr>
+        <tr>
+            <td>Fold Classification</td>
+            <td>CATH domain database</td>
+            <td class="good">&lt;0.5%</td>
+            <td class="good">GO</td>
+        </tr>
+        <tr>
+            <td>EC Number</td>
+            <td>Swiss-Prot enzymes</td>
+            <td class="bad">~15%</td>
+            <td class="bad">SKIP</td>
+        </tr>
+        <tr>
+            <td>Fitness / DMS</td>
+            <td>ProteinGym</td>
+            <td class="warn">3&ndash;4%</td>
+            <td class="warn">DEFER</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="callout callout-danger">
+    <strong>EC Number: Contaminated</strong>
+    Swiss-Prot enzyme function annotations overlap significantly with Mol-Instructions enzyme-related QA pairs. A model trained on these SFT examples could achieve high EC reward by memorizing rather than reasoning. This invalidates the reward signal. Could revisit if we retrain SFT without Swiss-Prot enzyme QA pairs.
+</div>
+
+<div class="callout callout-success">
+    <strong>Solubility: Cleanest candidate (&lt;0.2%)</strong>
+    eSOL (experimental) and DeepLoc (predicted) solubility labels come from specialized experiments/databases not present in our SFT sources. The solubility prediction task requires genuine protein-feature reasoning.
+</div>
+
+<!-- ============================================================ -->
+<h2>3. Task 1: Solubility Prediction (eSOL)</h2>
+
+<h3>3.1 Task Design</h3>
+
+<p>Predict protein solubility when expressed in <em>E. coli</em>: binary classification (soluble vs insoluble) plus optional continuous score (0&ndash;100%). The threshold is 50%: scores &gt;50% are classified as soluble.</p>
+
+<h4>System Prompt (no-think mode)</h4>
+<pre><code>You are a protein solubility expert. Given a protein amino acid sequence,
+predict its solubility when expressed in E. coli.
+
+First write a brief reasoning about the protein's features on a line
+starting with "Reasoning:", then give your prediction inside
+&lt;answer&gt;...&lt;/answer&gt; tags.
+
+Examples:
+Reasoning: Small protein, no transmembrane domains, balanced charge. Likely soluble.
+&lt;answer&gt;Solubility: soluble. Estimated solubility: 78.5%.&lt;/answer&gt;
+
+Reasoning: Large hydrophobic patches, many cysteines, membrane-associated. Likely insoluble.
+&lt;answer&gt;Solubility: insoluble. Estimated solubility: 12.3%.&lt;/answer&gt;</code></pre>
+
+<h4>Expected Output Format</h4>
+<pre><code>Reasoning: [brief protein feature analysis]
+&lt;answer&gt;Solubility: [soluble|insoluble]. Estimated solubility: [X.X]%.&lt;/answer&gt;</code></pre>
+
+<h3>3.2 Reward Function Design</h3>
+
+<div class="reward-diagram">
+compute_solubility_reward(generated_text, ground_truth)
+├── Classification (weight=0.5)
+│   ├── Parse predicted class: "soluble" or "insoluble"
+│   ├── Match ground truth class (threshold at 50%)
+│   └── Reward: 1.0 (exact match) or 0.0 (mismatch)
+│
+├── Numerical Accuracy (weight=0.3)
+│   ├── Extract predicted % from regex patterns:
+│   │   "solubility: 72.3%", "estimated solubility: 72%", "72.3%"
+│   ├── Gaussian decay: exp(-0.5 * (error / σ)²), σ=15%
+│   └── Reward: 1.0 (exact) → 0.0 (far off)
+│
+├── Format Compliance (weight=0.2)
+│   ├── Both class + score present: 1.0
+│   ├── Class only (no score): 0.5
+│   └── Neither: 0.0
+│
+└── Optional: Focal weighting (gamma=1.0 in config)
+    ├── Class frequencies: soluble=70%, insoluble=30%
+    └── Upweights rare "insoluble" class predictions
+</div>
+
+<p><strong>Total</strong>: <code>reward = 0.5 * classification + 0.3 * numerical + 0.2 * format</code>, optionally scaled by focal weight.</p>
+
+<h3>3.3 Trial Run Results</h3>
+
+<div class="callout callout-success">
+    <strong>Strong reward signal</strong>
+    <p>Mean reward: <span class="metric">0.644 &rarr; 1.584</span> (2.46x improvement). Format compliance: <span class="good">100%</span>. The model quickly learned the output structure and began improving classification accuracy.</p>
+</div>
+
+<div class="callout callout-warning">
+    <strong>Focal weighting too aggressive</strong>
+    <p>With <code>focal_gamma=1.0</code>, the reward for correctly predicting insoluble proteins was boosted significantly (insoluble is only 30% of data). This created unstable gradients&mdash;the model oscillated between over-predicting insoluble and reverting to majority-class predictions. Recommendation: reduce to <code>focal_gamma=0.5</code> or disable for initial runs.</p>
+</div>
+
+<h4>Key Observations</h4>
+<ul>
+    <li>Binary classification + regression is a natural combination&mdash;the model needs both to maximize reward</li>
+    <li>The regex-based score extraction is robust: handles "solubility: 72.3%", "estimated solubility: 72%", and bare "72.3%"</li>
+    <li>Gaussian decay with &sigma;=15% means predictions within &plusmn;15% of truth score &ge;0.6 reward on the numerical component</li>
+    <li>Unlike the collapsed structure quality task, solubility has genuine per-protein variation (each protein has a unique score)</li>
+</ul>
+
+<h3>3.4 Config & Data</h3>
+
+<table>
+    <tr><th>Config</th><td><code>configs/main_RL/grpo_solubility.yaml</code></td></tr>
+    <tr><th>Data Script</th><td><code>scripts/data/download_solubility.py</code></td></tr>
+    <tr><th>Data Source</th><td>eSOL (HuggingFace: proteinea/solubility, sagawa/protein-solubility)</td></tr>
+    <tr><th>Approach</th><td>Text-only (chains from text SFT)</td></tr>
+    <tr><th>Parent</th><td><code>sft_text_combined_qwen3_8b_it_0307_190324</code></td></tr>
+    <tr><th>Rollout</th><td>max_tokens=128, group_size=8, temp=0.9</td></tr>
+    <tr><th>Training</th><td>lr=5e-6, batch=2, grad_accum=4, 1 epoch</td></tr>
+    <tr><th>Focal</th><td>Enabled, gamma=1.0 (recommend reducing to 0.5)</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>4. Task 2: Fold Classification (CATH)</h2>
+
+<h3>4.1 Task Design</h3>
+
+<p>Predict a protein's CATH structural classification at four hierarchical levels: <strong>Class</strong> (C), <strong>Architecture</strong> (A), <strong>Topology</strong> (T), and <strong>Homology</strong> (H). The reward gives partial credit: 0.25 per correct level, evaluated top-down with early stopping at the first mismatch.</p>
+
+<h4>CATH Classes</h4>
+<table>
+    <thead><tr><th>Code</th><th>Name</th><th>Description</th></tr></thead>
+    <tbody>
+        <tr><td>1</td><td>Mainly Alpha</td><td>Predominantly alpha-helical proteins</td></tr>
+        <tr><td>2</td><td>Mainly Beta</td><td>Predominantly beta-sheet proteins</td></tr>
+        <tr><td>3</td><td>Alpha Beta</td><td>Mixed alpha/beta structures</td></tr>
+        <tr><td>4</td><td>Few Secondary Structures</td><td>Irregular or coil-dominated</td></tr>
+    </tbody>
+</table>
+
+<h4>System Prompt (no-think mode)</h4>
+<pre><code>You are a protein structure classification expert. Given a protein amino
+acid sequence, predict its CATH structural classification at four levels:
+Class (C), Architecture (A), Topology (T), and Homology (H).
+
+CATH classes: 1=Mainly Alpha, 2=Mainly Beta, 3=Alpha Beta,
+4=Few Secondary Structures.
+
+First write a brief reasoning about the protein's structural features on a line
+starting with "Reasoning:", then give the CATH code inside
+&lt;answer&gt;...&lt;/answer&gt; tags.
+
+Examples:
+Reasoning: Helical bundle pattern, globin-like fold. Class 1, orthogonal bundle.
+&lt;answer&gt;CATH: 1.10.490.10. Class: Mainly Alpha. Architecture: Orthogonal Bundle.
+Topology: Globin-like. Homology: Globin.&lt;/answer&gt;
+
+Reasoning: Beta sandwich with immunoglobulin topology. Class 2.
+&lt;answer&gt;CATH: 2.60.40.10. Class: Mainly Beta. Architecture: Sandwich.
+Topology: Immunoglobulin-like. Homology: Immunoglobulin.&lt;/answer&gt;</code></pre>
+
+<h3>4.2 Reward Function Design</h3>
+
+<div class="reward-diagram">
+compute_fold_classification_reward(generated_text, ground_truth)
+├── Parse ground truth CATH code (e.g., "1.10.490.10")
+│   └── Split into 4 levels: [1, 10, 490, 10]
+│
+├── Parse prediction — two strategies:
+│   ├── Primary: extract dotted CATH code via regex (\d+\.\d+\.\d+\.\d+)
+│   └── Fallback: match class by name ("mainly alpha" → 1, "mainly beta" → 2, etc.)
+│
+├── Hierarchical comparison (top-down, stop at first mismatch):
+│   ├── Level 1 (Class):        match? → +0.25
+│   ├── Level 2 (Architecture): match? → +0.25
+│   ├── Level 3 (Topology):     match? → +0.25
+│   └── Level 4 (Homology):     match? → +0.25
+│
+└── Total reward: sum of matched levels × 0.25
+    ├── All 4 match:      1.00
+    ├── Class only:        0.25
+    ├── Class+Arch:        0.50
+    ├── Class+Arch+Topo:   0.75
+    └── No match:          0.00
+</div>
+
+<p><strong>Key design choice</strong>: Hierarchical early stopping. If the model gets the class wrong (e.g., predicts "Mainly Alpha" for a beta protein), it gets 0 even if lower levels happen to match numerically. This enforces correct top-level reasoning before rewarding specificity.</p>
+
+<h3>4.3 Trial Run Results</h3>
+
+<div class="callout callout-warning">
+    <strong>Modest improvement, class-level only</strong>
+    <p>Mean reward: <span class="metric">0.265 &rarr; 0.340</span> (+28%). Format compliance: <span class="good">100%</span>. The model consistently achieves class-level matches (0.25 reward) but rarely gets architecture or deeper levels correct. This is expected&mdash;predicting topology and homology from sequence alone is extremely challenging, even for specialized models.</p>
+</div>
+
+<h4>Key Observations</h4>
+<ul>
+    <li><strong>Class-level matches only</strong>: The model learned to distinguish alpha vs beta vs mixed proteins (the "easy" first level), but couldn't predict specific architectures or topologies from sequence text alone</li>
+    <li><strong>Synthetic data caveat</strong>: CATH annotations were downloaded from HuggingFace rather than direct CATH database queries, so some topology/homology labels may have artifacts</li>
+    <li>No focal weighting needed&mdash;CATH classes are more balanced than solubility (disabled in config)</li>
+    <li>Reward ceiling is effectively ~0.25&ndash;0.50 for text-only approach; the ESM-3 multimodal path should perform better as structural features are directly encoded</li>
+    <li>The fallback name-matching in the reward function ("mainly alpha", "all alpha", "alpha-beta") provides partial credit even when the model doesn't output a formal CATH code</li>
+</ul>
+
+<h3>4.4 Config & Data</h3>
+
+<table>
+    <tr><th>Config</th><td><code>configs/main_RL/grpo_fold_classification.yaml</code></td></tr>
+    <tr><th>Data Script</th><td><code>scripts/data/download_fold_classification.py</code></td></tr>
+    <tr><th>Data Source</th><td>CATH (HuggingFace fold classification datasets)</td></tr>
+    <tr><th>Approach</th><td>Text-only (chains from text SFT)</td></tr>
+    <tr><th>Parent</th><td><code>sft_text_combined_qwen3_8b_it_0307_190324</code></td></tr>
+    <tr><th>Rollout</th><td>max_tokens=256, group_size=8, temp=0.9</td></tr>
+    <tr><th>Training</th><td>lr=5e-6, batch=2, grad_accum=4, 1 epoch</td></tr>
+    <tr><th>Focal</th><td>Disabled (CATH classes are balanced)</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>5. Reward Function Implementation Details</h2>
+
+<h3>5.1 Registry</h3>
+
+<p>Both new reward functions are registered in <code>src/training/rewards.py</code> (lines 102&ndash;132) with multiple aliases:</p>
+
+<pre><code>reward_functions = {
+    # ... existing tasks ...
+    "solubility":            compute_solubility_reward,
+    "solubility_prediction": compute_solubility_reward,
+    "fold_classification":   compute_fold_classification_reward,
+    "fold_class":            compute_fold_classification_reward,
+    "cath":                  compute_fold_classification_reward,
+    "cath_classification":   compute_fold_classification_reward,
+}</code></pre>
+
+<h3>5.2 GRPO Trainer Integration</h3>
+
+<p>Both tasks required integration at multiple points in <code>src/training/grpo_trainer.py</code>:</p>
+
+<table>
+    <thead><tr><th>Integration Point</th><th>What</th><th>Lines</th></tr></thead>
+    <tbody>
+        <tr><td>System prompts</td><td>Task-specific prompts with examples</td><td>321&ndash;385</td></tr>
+        <tr><td><code>_get_grpo_system_prompt()</code></td><td>Route task name &rarr; prompt</td><td>413&ndash;416</td></tr>
+        <tr><td><code>_is_solubility_reward</code> / <code>_is_fold_reward</code></td><td>Task detection flags</td><td>1639&ndash;1643</td></tr>
+        <tr><td>Ground truth extraction</td><td>Parse metadata dicts to JSON strings</td><td>1361&ndash;1404</td></tr>
+        <tr><td>Probe display</td><td>Human-readable format for wandb logging</td><td>1485&ndash;1501</td></tr>
+        <tr><td>Reward kwargs</td><td>Pass focal_gamma for solubility</td><td>2131&ndash;2133</td></tr>
+        <tr><td>Eval ground truth</td><td>Same metadata routing for evaluation</td><td>2380&ndash;2404</td></tr>
+    </tbody>
+</table>
+
+<h3>5.3 Focal Weighting (Solubility)</h3>
+
+<p>Solubility data has a 70/30 split (soluble vs insoluble). Focal weighting upweights the minority class:</p>
+
+<pre><code>_SOLUBILITY_CLASS_FREQ = {"soluble": 0.70, "insoluble": 0.30}
+
+# With gamma=1.0:
+#   soluble:   focal_weight = (1 - 0.70)^1.0 = 0.30
+#   insoluble: focal_weight = (1 - 0.30)^1.0 = 0.70
+# → insoluble predictions get 2.3x more reward weight</code></pre>
+
+<div class="callout callout-warning">
+    <strong>Lesson learned: gamma=1.0 was too aggressive</strong>
+    The 2.3x boost for insoluble predictions caused reward oscillation in the trial run. The model would overpredict "insoluble" to chase the higher focal weight, then snap back when classification accuracy dropped. Recommended fix: <code>focal_gamma=0.5</code> (1.5x boost) or disable entirely for the initial run.
+</div>
+
+<!-- ============================================================ -->
+<h2>6. Comparison: Solubility vs Fold Classification</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Dimension</th>
+            <th>Solubility</th>
+            <th>Fold Classification</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr><td>Prediction type</td><td>Binary + continuous (0&ndash;100%)</td><td>Hierarchical 4-level code</td></tr>
+        <tr><td>Reward components</td><td>3 (class + numerical + format)</td><td>1 (partial credit per level)</td></tr>
+        <tr><td>Reward range</td><td>[0, 1] (continuous)</td><td>{0, 0.25, 0.50, 0.75, 1.0}</td></tr>
+        <tr><td>Trial reward gain</td><td class="good">0.644 &rarr; 1.584 (2.46x)</td><td class="warn">0.265 &rarr; 0.340 (+28%)</td></tr>
+        <tr><td>Format compliance</td><td class="good">100%</td><td class="good">100%</td></tr>
+        <tr><td>SFT contamination</td><td>&lt;0.2%</td><td>&lt;0.5%</td></tr>
+        <tr><td>Data source</td><td>eSOL (experimental)</td><td>CATH (structural annotation)</td></tr>
+        <tr><td>Class balance</td><td>70/30 (soluble/insoluble)</td><td>Roughly balanced across 4 classes</td></tr>
+        <tr><td>Collapse risk</td><td>Low (per-protein scores vary)</td><td>Medium (class-level is easy)</td></tr>
+        <tr><td>ESM-3 benefit expected</td><td>Moderate (hydrophobicity from embeddings)</td><td>High (structural features encode fold)</td></tr>
+    </tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2>7. Full GRPO Config Inventory</h2>
+
+<p>Current state of all 19 GRPO configs in <code>configs/main_RL/</code>:</p>
+
+<table>
+    <thead>
+        <tr><th>Config File</th><th>Task</th><th>Approach</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><code>grpo_go_prediction.yaml</code></td><td>GO Prediction</td><td>esm3</td><td class="good">Ready</td></tr>
+        <tr><td><code>grpo_go_text_sft.yaml</code></td><td>GO Prediction</td><td>text</td><td class="good">Ready</td></tr>
+        <tr><td><code>grpo_stability.yaml</code></td><td>Stability/ddG</td><td>esm3</td><td class="good">Ready</td></tr>
+        <tr><td><code>grpo_stability_text_sft.yaml</code></td><td>Stability/ddG</td><td>text</td><td class="good">Ready</td></tr>
+        <tr><td><code>grpo_structure.yaml</code></td><td>Structure Quality</td><td>esm3</td><td class="warn">Run, collapsed</td></tr>
+        <tr><td><code>grpo_structure_base.yaml</code></td><td>Structure Quality</td><td>esm3</td><td class="warn">Base config</td></tr>
+        <tr><td><code>grpo_structure_text_sft.yaml</code></td><td>Structure Quality</td><td>text</td><td class="warn">Run, collapsed</td></tr>
+        <tr><td><code>grpo_structure_text_sft_classify.yaml</code></td><td>Structure Quality (classify)</td><td>text</td><td class="warn">Run, collapsed</td></tr>
+        <tr><td><code>grpo_structure_mlp_sft.yaml</code></td><td>Structure Quality</td><td>esm3 MLP</td><td class="warn">Run, collapsed</td></tr>
+        <tr><td><code>grpo_structure_mlp_sft_classify.yaml</code></td><td>Structure Quality (classify)</td><td>esm3 MLP</td><td class="warn">Available</td></tr>
+        <tr><td><code>grpo_structure_mlp_sft_frozen_mm.yaml</code></td><td>Structure Quality (frozen MM)</td><td>esm3 MLP</td><td class="warn">Available</td></tr>
+        <tr><td><code>grpo_structure_mlp_sft_frozen_mm_focal.yaml</code></td><td>Structure Quality (frozen+focal)</td><td>esm3 MLP</td><td class="warn">Available</td></tr>
+        <tr><td><code>grpo_structure_props.yaml</code></td><td>Structure Composite (C)</td><td>esm3</td><td class="bad">Needs data</td></tr>
+        <tr><td><code>grpo_structure_props_a.yaml</code></td><td>SS Composition (A)</td><td>esm3</td><td class="bad">Needs data</td></tr>
+        <tr><td><code>grpo_structure_props_b.yaml</code></td><td>SS Per-Residue (B)</td><td>esm3</td><td class="bad">Needs data</td></tr>
+        <tr><td><code>grpo_structure_props_text_sft.yaml</code></td><td>Structure Props</td><td>text</td><td class="bad">Needs data</td></tr>
+        <tr><td><code>grpo_solubility.yaml</code></td><td><strong>Solubility</strong></td><td>text</td><td class="good">NEW</td></tr>
+        <tr><td><code>grpo_fold_classification.yaml</code></td><td><strong>Fold Classification</strong></td><td>text</td><td class="good">NEW</td></tr>
+    </tbody>
+</table>
+
+<p>Plus <code>README.md</code> for documentation. Total: 18 GRPO configs + 1 README.</p>
+
+<!-- ============================================================ -->
+<h2>8. Next Steps</h2>
+
+<ol>
+    <li><strong>Re-run solubility with reduced focal</strong>: Set <code>focal_gamma=0.5</code> (or disable) and compare reward trajectories. The strong initial signal suggests this task has real learning potential.</li>
+    <li><strong>Add ESM-3 variants</strong>: Create <code>grpo_solubility_mlp_sft.yaml</code> and <code>grpo_fold_classification_mlp_sft.yaml</code> configs for multimodal runs. Fold classification especially should benefit from structural embeddings.</li>
+    <li><strong>Generate structure properties data</strong>: Run <code>python scripts/data/download_structure_properties.py --task composition</code> and <code>--task per_residue</code> to unblock tasks 4&ndash;5.</li>
+    <li><strong>Launch GO + Stability GRPO</strong>: These have been ready since initial implementation but haven't been run yet. Priority for the text vs MLP comparison.</li>
+    <li><strong>Multi-task GRPO</strong>: With 7+ tasks available, explore reward aggregation (alternating tasks per batch, or weighted multi-reward).</li>
+    <li><strong>Investigate fold classification ceiling</strong>: The 0.25&ndash;0.50 reward range for text-only suggests a hard ceiling. Test whether ESM-3 embeddings break through to architecture-level (0.50+) predictions.</li>
+</ol>
+
+<div class="callout callout-info">
+    <strong>Related Posts</strong>
+    <ul>
+        <li><a href="2026-03-16_rl-benchmark-overlap-analysis.html">RL Benchmark Expansion: Overlap Analysis</a> &mdash; Full contamination analysis that motivated these task selections</li>
+        <li><a href="2026-03-16_structural-property-prediction-grpo.html">Per-Residue Structural Property Prediction</a> &mdash; The structure property tasks (blocked on data generation)</li>
+        <li><a href="2026-03-16_esm3-multimodal-outputs-plan.html">ESM-3 Multimodal Outputs Plan</a> &mdash; How multi-track fusion could improve fold classification</li>
+    </ul>
+</div>
+
+</body>
+</html>

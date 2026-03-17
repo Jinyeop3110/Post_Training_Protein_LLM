@@ -89,7 +89,6 @@ from .rewards import (  # noqa: F401, E402
     compute_generic_reward,
     compute_go_reward,
     compute_ppi_reward,
-    compute_proteinlm_bench_reward,
     compute_stability_reward,
     get_reward_function,
 )
@@ -146,31 +145,243 @@ _ESMFOLD_SYSTEM_PROMPT_NO_THINK = (
     "<answer>Fold quality: low. pLDDT: 35.7. This protein is likely disordered with low confidence.</answer>"
 )
 
-# --- ProteinLMBench (MC) ---
-_PROTEINLM_SYSTEM_PROMPT_THINK = (
-    "You are a protein science expert. Given a protein amino acid sequence, "
-    "you analyze its properties, predict its function, structure, and "
-    "biological associations based on your knowledge of protein biology.\n\n"
-    "Think BRIEFLY (1-2 sentences only) inside <think>...</think> tags, then "
-    "give your final answer inside <answer>...</answer> tags. Keep thinking SHORT.\n\n"
+# --- GO Prediction ---
+_GO_SYSTEM_PROMPT_THINK = (
+    "You are a protein function expert. Given a protein amino acid sequence, "
+    "predict its Gene Ontology (GO) terms covering molecular function (MF), "
+    "biological process (BP), and cellular component (CC).\n\n"
+    "Think BRIEFLY (1-2 sentences only) inside <think>...</think> tags about "
+    "the protein's likely function, then list the GO terms inside "
+    "<answer>...</answer> tags. Keep your thinking SHORT.\n\n"
     "Examples:\n"
-    "<think>Hemoglobin is the primary oxygen carrier. Option 2 matches.</think>\n"
-    "<answer>option 2</answer>\n\n"
-    "<think>Active site residues suggest serine protease. Option 4.</think>\n"
-    "<answer>option 4</answer>"
+    "<think>Contains zinc-finger domain, likely DNA-binding transcription factor.</think>\n"
+    "<answer>GO:0003700, GO:0005634, GO:0006355</answer>\n\n"
+    "<think>Signal peptide + lectin fold suggests secreted carbohydrate binding.</think>\n"
+    "<answer>GO:0030246, GO:0005576, GO:0005488</answer>\n\n"
+    "<think>Kinase domain with ATP binding site, cytoplasmic localization.</think>\n"
+    "<answer>GO:0004672, GO:0005524, GO:0005737, GO:0006468</answer>"
 )
 
-_PROTEINLM_SYSTEM_PROMPT_NO_THINK = (
-    "You are a protein science expert. Given a protein amino acid sequence, "
-    "you analyze its properties, predict its function, structure, and "
-    "biological associations based on your knowledge of protein biology.\n\n"
-    "First write a brief reasoning on a line starting with \"Reasoning:\", "
-    "then give your final answer inside <answer>...</answer> tags.\n\n"
+_GO_SYSTEM_PROMPT_NO_THINK = (
+    "You are a protein function expert. Given a protein amino acid sequence, "
+    "predict its Gene Ontology (GO) terms covering molecular function (MF), "
+    "biological process (BP), and cellular component (CC).\n\n"
+    "First write a brief reasoning about the protein's features on a line "
+    "starting with \"Reasoning:\", then list the GO terms inside "
+    "<answer>...</answer> tags.\n\n"
     "Examples:\n"
-    "Reasoning: Hemoglobin is the primary oxygen carrier. Option 2 matches.\n"
-    "<answer>option 2</answer>\n\n"
-    "Reasoning: Active site residues suggest serine protease. Option 4.\n"
-    "<answer>option 4</answer>"
+    "Reasoning: Contains zinc-finger domain, likely DNA-binding transcription factor.\n"
+    "<answer>GO:0003700, GO:0005634, GO:0006355</answer>\n\n"
+    "Reasoning: Signal peptide + lectin fold suggests secreted carbohydrate binding.\n"
+    "<answer>GO:0030246, GO:0005576, GO:0005488</answer>\n\n"
+    "Reasoning: Kinase domain with ATP binding site, cytoplasmic localization.\n"
+    "<answer>GO:0004672, GO:0005524, GO:0005737, GO:0006468</answer>"
+)
+
+# --- Stability Prediction ---
+_STABILITY_SYSTEM_PROMPT_THINK = (
+    "You are a protein stability expert. You are given a wild-type protein "
+    "sequence, a mutant sequence, and the mutation notation. Compare the two "
+    "sequences and predict the change in thermodynamic stability "
+    "(ddG in kcal/mol). Classify the effect as stabilizing, neutral, or "
+    "destabilizing.\n\n"
+    "- Stabilizing: ddG < -1.0 kcal/mol\n"
+    "- Neutral: -1.0 <= ddG <= 1.0 kcal/mol\n"
+    "- Destabilizing: ddG > 1.0 kcal/mol\n\n"
+    "Think BRIEFLY (1-2 sentences only) inside <think>...</think> tags, then "
+    "give your prediction inside <answer>...</answer> tags. Keep thinking SHORT.\n\n"
+    "Examples:\n"
+    "<think>Replacing a core hydrophobic with polar residue disrupts packing.</think>\n"
+    "<answer>ddG = 2.3 kcal/mol. This mutation is destabilizing.</answer>\n\n"
+    "<think>Conservative substitution at a solvent-exposed position.</think>\n"
+    "<answer>ddG = -0.2 kcal/mol. This mutation is neutral.</answer>\n\n"
+    "<think>Introducing a disulfide-compatible cysteine, improves core packing.</think>\n"
+    "<answer>ddG = -1.8 kcal/mol. This mutation is stabilizing.</answer>"
+)
+
+_STABILITY_SYSTEM_PROMPT_NO_THINK = (
+    "You are a protein stability expert. You are given a wild-type protein "
+    "sequence, a mutant sequence, and the mutation notation. Compare the two "
+    "sequences and predict the change in thermodynamic stability "
+    "(ddG in kcal/mol). Classify the effect as stabilizing, neutral, or "
+    "destabilizing.\n\n"
+    "- Stabilizing: ddG < -1.0 kcal/mol\n"
+    "- Neutral: -1.0 <= ddG <= 1.0 kcal/mol\n"
+    "- Destabilizing: ddG > 1.0 kcal/mol\n\n"
+    "First write a brief reasoning on a line starting with \"Reasoning:\", "
+    "then give your prediction inside <answer>...</answer> tags.\n\n"
+    "Examples:\n"
+    "Reasoning: Replacing a core hydrophobic with polar residue disrupts packing.\n"
+    "<answer>ddG = 2.3 kcal/mol. This mutation is destabilizing.</answer>\n\n"
+    "Reasoning: Conservative substitution at a solvent-exposed position.\n"
+    "<answer>ddG = -0.2 kcal/mol. This mutation is neutral.</answer>\n\n"
+    "Reasoning: Introducing a disulfide-compatible cysteine, improves core packing.\n"
+    "<answer>ddG = -1.8 kcal/mol. This mutation is stabilizing.</answer>"
+)
+
+# --- SS Composition (Option A) ---
+_SS_COMPOSITION_SYSTEM_PROMPT_THINK = (
+    "You are a protein structure expert. Given a protein sequence, predict its "
+    "secondary structure composition and solvent accessibility.\n\n"
+    "Report the percentage of helix, sheet, and coil residues, plus the mean "
+    "relative solvent accessibility (RSA, 0-1 scale).\n\n"
+    "Think BRIEFLY (1-2 sentences only) inside <think>...</think> tags, then "
+    "give your prediction inside <answer>...</answer> tags. Keep thinking SHORT.\n\n"
+    "Examples:\n"
+    "<think>Leucine zipper motif, mostly alpha-helical with exposed charged residues.</think>\n"
+    "<answer>45.2% helix, 5.1% sheet, 49.7% coil. Mean RSA: 0.42.</answer>\n\n"
+    "<think>Immunoglobulin fold with beta sandwich architecture, compact core.</think>\n"
+    "<answer>8.3% helix, 48.7% sheet, 43.0% coil. Mean RSA: 0.31.</answer>\n\n"
+    "<think>Intrinsically disordered region, no stable secondary structure.</think>\n"
+    "<answer>2.0% helix, 1.5% sheet, 96.5% coil. Mean RSA: 0.68.</answer>"
+)
+
+_SS_COMPOSITION_SYSTEM_PROMPT_NO_THINK = (
+    "You are a protein structure expert. Given a protein sequence, predict its "
+    "secondary structure composition and solvent accessibility.\n\n"
+    "Report the percentage of helix, sheet, and coil residues, plus the mean "
+    "relative solvent accessibility (RSA, 0-1 scale).\n\n"
+    "First write brief reasoning on a line starting with \"Reasoning:\", "
+    "then give your prediction inside <answer>...</answer> tags.\n\n"
+    "Examples:\n"
+    "Reasoning: Leucine zipper motif, mostly alpha-helical with exposed charged residues.\n"
+    "<answer>45.2% helix, 5.1% sheet, 49.7% coil. Mean RSA: 0.42.</answer>\n\n"
+    "Reasoning: Immunoglobulin fold with beta sandwich architecture, compact core.\n"
+    "<answer>8.3% helix, 48.7% sheet, 43.0% coil. Mean RSA: 0.31.</answer>\n\n"
+    "Reasoning: Intrinsically disordered region, no stable secondary structure.\n"
+    "<answer>2.0% helix, 1.5% sheet, 96.5% coil. Mean RSA: 0.68.</answer>"
+)
+
+# --- SS Per-Residue (Option B) ---
+_SS_SEQUENCE_SYSTEM_PROMPT_THINK = (
+    "You are a protein structure expert. Given a protein sequence, predict the "
+    "per-residue secondary structure using H (helix), E (sheet), C (coil).\n\n"
+    "The SS3 string must match the input sequence length exactly. Also report "
+    "the overall composition percentages.\n\n"
+    "Think BRIEFLY (1-2 sentences only) inside <think>...</think> tags, then "
+    "give your prediction inside <answer>...</answer> tags. Keep thinking SHORT.\n\n"
+    "Examples:\n"
+    "<think>N-terminal helix, central beta hairpin, C-terminal coil.</think>\n"
+    "<answer>SS3: CHHHHHHHEEEEEECCCEEEEECCCC\n"
+    "Composition: 29.6% helix, 37.0% sheet, 33.3% coil.</answer>\n\n"
+    "<think>All-alpha bundle, short loops between helices.</think>\n"
+    "<answer>SS3: CCHHHHHHHHCCHHHHHHHHHCC\n"
+    "Composition: 78.3% helix, 0.0% sheet, 21.7% coil.</answer>"
+)
+
+_SS_SEQUENCE_SYSTEM_PROMPT_NO_THINK = (
+    "You are a protein structure expert. Given a protein sequence, predict the "
+    "per-residue secondary structure using H (helix), E (sheet), C (coil).\n\n"
+    "The SS3 string must match the input sequence length exactly. Also report "
+    "the overall composition percentages.\n\n"
+    "First write brief reasoning on a line starting with \"Reasoning:\", "
+    "then give your prediction inside <answer>...</answer> tags.\n\n"
+    "Examples:\n"
+    "Reasoning: N-terminal helix, central beta hairpin, C-terminal coil.\n"
+    "<answer>SS3: CHHHHHHHEEEEEECCCEEEEECCCC\n"
+    "Composition: 29.6% helix, 37.0% sheet, 33.3% coil.</answer>\n\n"
+    "Reasoning: All-alpha bundle, short loops between helices.\n"
+    "<answer>SS3: CCHHHHHHHHCCHHHHHHHHHCC\n"
+    "Composition: 78.3% helix, 0.0% sheet, 21.7% coil.</answer>"
+)
+
+# --- Structure Composite (Option C) ---
+_STRUCTURE_COMPOSITE_SYSTEM_PROMPT_THINK = (
+    "You are a protein structure expert. Given a protein sequence, provide a "
+    "comprehensive structural analysis including secondary structure, backbone "
+    "geometry, solvent accessibility, and long-range contacts.\n\n"
+    "Think BRIEFLY (1-2 sentences only) inside <think>...</think> tags, then "
+    "give your analysis inside <answer>...</answer> tags. Keep thinking SHORT.\n\n"
+    "Example:\n"
+    "<think>TIM barrel fold — alternating alpha/beta with buried core.</think>\n"
+    "<answer>SS3: CEEEECCHHHHHHCCEEEECCHHHHHHCCEEEECCHHHHHH\n"
+    "Secondary structure: 42.9% helix, 28.6% sheet, 28.6% coil.\n"
+    "Ramachandran: 40.5% alpha, 26.2% beta, 0.0% left-helix, 33.3% other.\n"
+    "Mean RSA: 0.35. Buried: 62.0%.\n"
+    "Long-range contacts: 58 (density 0.0085).\n"
+    "pLDDT: 82.3.</answer>"
+)
+
+_STRUCTURE_COMPOSITE_SYSTEM_PROMPT_NO_THINK = (
+    "You are a protein structure expert. Given a protein sequence, provide a "
+    "comprehensive structural analysis including secondary structure, backbone "
+    "geometry, solvent accessibility, and long-range contacts.\n\n"
+    "First write brief reasoning on a line starting with \"Reasoning:\", "
+    "then give your analysis inside <answer>...</answer> tags.\n\n"
+    "Example:\n"
+    "Reasoning: TIM barrel fold — alternating alpha/beta with buried core.\n"
+    "<answer>SS3: CEEEECCHHHHHHCCEEEECCHHHHHHCCEEEECCHHHHHH\n"
+    "Secondary structure: 42.9% helix, 28.6% sheet, 28.6% coil.\n"
+    "Ramachandran: 40.5% alpha, 26.2% beta, 0.0% left-helix, 33.3% other.\n"
+    "Mean RSA: 0.35. Buried: 62.0%.\n"
+    "Long-range contacts: 58 (density 0.0085).\n"
+    "pLDDT: 82.3.</answer>"
+)
+
+# ── Solubility system prompts ──
+
+_SOLUBILITY_SYSTEM_PROMPT_THINK = (
+    "You are a protein solubility expert. Given a protein amino acid sequence, "
+    "predict its solubility when expressed in E. coli.\n\n"
+    "Think BRIEFLY (1-2 sentences only) inside <think>...</think> tags about "
+    "the protein's solubility-related features, then give your prediction inside "
+    "<answer>...</answer> tags. Keep your thinking SHORT.\n\n"
+    "Examples:\n"
+    "<think>Small protein, no transmembrane domains, balanced charge. Likely soluble.</think>\n"
+    "<answer>Solubility: soluble. Estimated solubility: 78.5%.</answer>\n\n"
+    "<think>Large hydrophobic patches, many cysteines, membrane-associated. Likely insoluble.</think>\n"
+    "<answer>Solubility: insoluble. Estimated solubility: 12.3%.</answer>"
+)
+
+_SOLUBILITY_SYSTEM_PROMPT_NO_THINK = (
+    "You are a protein solubility expert. Given a protein amino acid sequence, "
+    "predict its solubility when expressed in E. coli.\n\n"
+    "First write a brief reasoning about the protein's features on a line "
+    "starting with \"Reasoning:\", then give your prediction inside "
+    "<answer>...</answer> tags.\n\n"
+    "Examples:\n"
+    "Reasoning: Small protein, no transmembrane domains, balanced charge. Likely soluble.\n"
+    "<answer>Solubility: soluble. Estimated solubility: 78.5%.</answer>\n\n"
+    "Reasoning: Large hydrophobic patches, many cysteines, membrane-associated. Likely insoluble.\n"
+    "<answer>Solubility: insoluble. Estimated solubility: 12.3%.</answer>"
+)
+
+# ── Fold Classification (CATH) system prompts ──
+
+_FOLD_CLASSIFICATION_SYSTEM_PROMPT_THINK = (
+    "You are a protein structure classification expert. Given a protein amino "
+    "acid sequence, predict its CATH structural classification at four levels: "
+    "Class (C), Architecture (A), Topology (T), and Homology (H).\n\n"
+    "CATH classes: 1=Mainly Alpha, 2=Mainly Beta, 3=Alpha Beta, "
+    "4=Few Secondary Structures.\n\n"
+    "Think BRIEFLY (1-2 sentences only) inside <think>...</think> tags about "
+    "the protein's structural features, then give the CATH code inside "
+    "<answer>...</answer> tags. Keep your thinking SHORT.\n\n"
+    "Examples:\n"
+    "<think>Helical bundle pattern, globin-like fold. Class 1, orthogonal bundle.</think>\n"
+    "<answer>CATH: 1.10.490.10. Class: Mainly Alpha. Architecture: Orthogonal Bundle. "
+    "Topology: Globin-like. Homology: Globin.</answer>\n\n"
+    "<think>Beta sandwich with immunoglobulin topology. Class 2.</think>\n"
+    "<answer>CATH: 2.60.40.10. Class: Mainly Beta. Architecture: Sandwich. "
+    "Topology: Immunoglobulin-like. Homology: Immunoglobulin.</answer>"
+)
+
+_FOLD_CLASSIFICATION_SYSTEM_PROMPT_NO_THINK = (
+    "You are a protein structure classification expert. Given a protein amino "
+    "acid sequence, predict its CATH structural classification at four levels: "
+    "Class (C), Architecture (A), Topology (T), and Homology (H).\n\n"
+    "CATH classes: 1=Mainly Alpha, 2=Mainly Beta, 3=Alpha Beta, "
+    "4=Few Secondary Structures.\n\n"
+    "First write a brief reasoning about the protein's structural features on a line "
+    "starting with \"Reasoning:\", then give the CATH code inside "
+    "<answer>...</answer> tags.\n\n"
+    "Examples:\n"
+    "Reasoning: Helical bundle pattern, globin-like fold. Class 1, orthogonal bundle.\n"
+    "<answer>CATH: 1.10.490.10. Class: Mainly Alpha. Architecture: Orthogonal Bundle. "
+    "Topology: Globin-like. Homology: Globin.</answer>\n\n"
+    "Reasoning: Beta sandwich with immunoglobulin topology. Class 2.\n"
+    "<answer>CATH: 2.60.40.10. Class: Mainly Beta. Architecture: Sandwich. "
+    "Topology: Immunoglobulin-like. Homology: Immunoglobulin.</answer>"
 )
 
 # Empty thinking prefix appended after the generation prompt.
@@ -183,14 +394,26 @@ def _get_grpo_system_prompt(task: str, enable_thinking: bool = True) -> str:
     """Return the task-specific GRPO system prompt.
 
     Args:
-        task: Task name (esmfold, proteinlm_bench, etc.)
+        task: Task name (esmfold, go_prediction, stability, etc.)
         enable_thinking: If True, use think+answer format. If False, answer-only.
     """
     task = task.lower()
     if task in ("esmfold", "structure", "structure_prediction", "fold_quality"):
         return _ESMFOLD_SYSTEM_PROMPT_THINK if enable_thinking else _ESMFOLD_SYSTEM_PROMPT_NO_THINK
-    if task in ("proteinlm_bench", "protein_lm_bench", "multiple_choice"):
-        return _PROTEINLM_SYSTEM_PROMPT_THINK if enable_thinking else _PROTEINLM_SYSTEM_PROMPT_NO_THINK
+    if task in ("go_prediction", "go_terms", "go", "function", "function_prediction"):
+        return _GO_SYSTEM_PROMPT_THINK if enable_thinking else _GO_SYSTEM_PROMPT_NO_THINK
+    if task in ("stability", "stability_prediction", "ddg"):
+        return _STABILITY_SYSTEM_PROMPT_THINK if enable_thinking else _STABILITY_SYSTEM_PROMPT_NO_THINK
+    if task in ("ss_composition", "structure_properties_a"):
+        return _SS_COMPOSITION_SYSTEM_PROMPT_THINK if enable_thinking else _SS_COMPOSITION_SYSTEM_PROMPT_NO_THINK
+    if task in ("ss_sequence", "ss_per_residue", "structure_properties_b"):
+        return _SS_SEQUENCE_SYSTEM_PROMPT_THINK if enable_thinking else _SS_SEQUENCE_SYSTEM_PROMPT_NO_THINK
+    if task in ("structure_composite", "structure_properties", "structure_properties_c"):
+        return _STRUCTURE_COMPOSITE_SYSTEM_PROMPT_THINK if enable_thinking else _STRUCTURE_COMPOSITE_SYSTEM_PROMPT_NO_THINK
+    if task in ("solubility", "solubility_prediction"):
+        return _SOLUBILITY_SYSTEM_PROMPT_THINK if enable_thinking else _SOLUBILITY_SYSTEM_PROMPT_NO_THINK
+    if task in ("fold_classification", "fold_class", "cath", "cath_classification"):
+        return _FOLD_CLASSIFICATION_SYSTEM_PROMPT_THINK if enable_thinking else _FOLD_CLASSIFICATION_SYSTEM_PROMPT_NO_THINK
     # Fallback: generic
     from src.data.mol_instructions import DEFAULT_SYSTEM_PROMPT
     return DEFAULT_SYSTEM_PROMPT + _GRPO_ANSWER_SUFFIX
@@ -360,11 +583,36 @@ class GRPOTrainer:
         if self.grpo_config["use_kl_penalty"]:
             self._create_reference_model()
 
+        # Load ESM embedding cache (if configured)
+        embedding_cache_path = self.cfg.get("encoder", {}).get(
+            "embedding_cache_path", None
+        )
+        self._embedding_cache = None
+        if embedding_cache_path is not None:
+            try:
+                from src.data.esm_embedding_cache import ESMEmbeddingCache
+                self._embedding_cache = ESMEmbeddingCache(
+                    embedding_cache_path, readonly=True
+                )
+                if self.is_main_process:
+                    log.info(
+                        f"ESM embedding cache loaded: {embedding_cache_path} "
+                        f"({len(self._embedding_cache)} entries)"
+                    )
+            except Exception as e:
+                log.warning(f"Failed to load ESM embedding cache: {e}")
+
         # Load datasets
         self._load_datasets()
 
-        # Select fixed probe prompts for wandb completion logging
-        self._select_probe_prompts(num_probes=5)
+        # Set up reward function (must be before probe selection, which
+        # uses _is_esmfold_reward / _is_stability_reward for stratification)
+        self._setup_reward_function()
+
+        # Select fixed probe prompts for wandb completion logging.
+        # Classification tasks: 8 per class = 24 total (ESMFold: 3 classes, stability: 3 classes).
+        probe_count = 8 if (self._is_esmfold_reward or self._is_stability_reward or self._is_solubility_reward) else 5
+        self._select_probe_prompts(num_probes=probe_count)
 
         # Optionally freeze multimodal head (pooling + projector) so only
         # LoRA adapters are optimized.  Eliminates joint gradient clipping
@@ -375,9 +623,6 @@ class GRPOTrainer:
 
         # Set up optimizer and scheduler (with differential LR)
         self._setup_optimizer()
-
-        # Set up reward function
-        self._setup_reward_function()
 
         log.info("GRPO trainer setup complete")
 
@@ -993,22 +1238,59 @@ class GRPOTrainer:
     def _select_probe_prompts(self, num_probes: int = 5) -> None:
         """Select fixed probe prompts from training data for wandb logging.
 
-        Picks evenly-spaced indices so probes span the dataset diversity.
+        For ESMFold or stability tasks, selects ``num_probes`` samples per
+        class so the probe table covers all categories. For other tasks,
+        picks evenly-spaced indices.
+
         Stores indices in ``self._probe_indices`` for use during eval.
         """
         if self.train_dataset is None or len(self.train_dataset) == 0:
             return
 
         n = len(self.train_dataset)
-        num_probes = min(num_probes, n)
-        # Evenly spaced indices
-        self._probe_indices = [
-            int(i * n / num_probes) for i in range(num_probes)
-        ]
+
+        # Stratified selection for classification tasks
+        if self._is_esmfold_reward or self._is_stability_reward:
+            per_class = num_probes
+            buckets: Dict[str, List[int]] = {}
+            for idx in range(n):
+                sample = self.train_dataset[idx]
+                metadata = sample.get("metadata", {})
+                if not isinstance(metadata, dict):
+                    continue
+                if self._is_esmfold_reward:
+                    plddt = metadata.get("plddt")
+                    if plddt is None:
+                        continue
+                    plddt = float(plddt)
+                    cat = "high" if plddt > 80 else "medium" if plddt > 50 else "low"
+                else:
+                    cat = metadata.get("stability_class")
+                    if cat is None:
+                        continue
+                buckets.setdefault(cat, []).append(idx)
+
+            import random as _rng
+            gen = _rng.Random(42)  # deterministic
+            selected = []
+            for cat in sorted(buckets.keys()):
+                pool = buckets[cat]
+                k = min(per_class, len(pool))
+                if k > 0:
+                    selected.extend(gen.sample(pool, k))
+
+            self._probe_indices = selected if selected else [
+                int(i * n / num_probes) for i in range(min(num_probes, n))
+            ]
+        else:
+            num_probes = min(num_probes, n)
+            self._probe_indices = [
+                int(i * n / num_probes) for i in range(num_probes)
+            ]
 
         if self.is_main_process:
             log.info(
-                f"Selected {num_probes} probe prompts at indices: "
+                f"Selected {len(self._probe_indices)} probe prompts at indices: "
                 f"{self._probe_indices}"
             )
 
@@ -1058,11 +1340,15 @@ class GRPOTrainer:
                         sample.get("formatted_prompt", ""),
                     )
 
-                # Ground truth for reward
+                # Ground truth for reward (mirrors _training_step)
                 task = self.cfg.data.get("task", "go_prediction").lower()
                 metadata = sample.get("metadata", {})
-                if task in ("stability", "ddg") and isinstance(metadata, dict) and "ddG" in metadata:
-                    ground_truth = metadata["ddG"]
+                if task in ("stability", "ddg", "stability_prediction") and isinstance(metadata, dict) and "ddG" in metadata:
+                    ground_truth = json.dumps({
+                        "ddG": metadata.get("ddG", 0),
+                        "stability_class": metadata.get("stability_class"),
+                        "mutation": metadata.get("mutation"),
+                    })
                 elif (
                     task in ("esmfold", "structure", "structure_prediction", "fold_quality")
                     and isinstance(metadata, dict) and "plddt" in metadata
@@ -1070,6 +1356,25 @@ class GRPOTrainer:
                     ground_truth = json.dumps({
                         "plddt": metadata.get("plddt", 0),
                         "ptm": metadata.get("ptm", 0),
+                    })
+                elif (
+                    task in ("solubility", "solubility_prediction")
+                    and isinstance(metadata, dict) and "solubility_score" in metadata
+                ):
+                    ground_truth = json.dumps({
+                        "solubility_score": metadata.get("solubility_score", 0),
+                        "solubility_class": metadata.get("solubility_class"),
+                    })
+                elif (
+                    task in ("fold_classification", "fold_class", "cath", "cath_classification")
+                    and isinstance(metadata, dict) and "cath_code" in metadata
+                ):
+                    ground_truth = json.dumps({
+                        "cath_code": metadata.get("cath_code"),
+                        "class_name": metadata.get("class_name"),
+                        "architecture_name": metadata.get("architecture_name"),
+                        "topology_name": metadata.get("topology_name"),
+                        "homology_name": metadata.get("homology_name"),
                     })
                 else:
                     ground_truth = sample.get("response", sample.get("output", ""))
@@ -1123,6 +1428,7 @@ class GRPOTrainer:
 
                     # Extract answer and compute reward
                     answer_text, has_tags = extract_answer_content(completion)
+                    extra_kw = {}
                     if self._is_esmfold_reward:
                         gt_str = str(ground_truth)
                         if gt_str.strip().startswith("{"):
@@ -1131,16 +1437,74 @@ class GRPOTrainer:
                             second_arg = protein_seq
                         else:
                             second_arg = ground_truth
-                        reward = self.reward_fn(answer_text, second_arg)
+                        if self._focal_gamma > 0:
+                            extra_kw["focal_gamma"] = self._focal_gamma
+                        if self._binary_alignment:
+                            extra_kw["binary_alignment"] = True
+                        if self._classification_only:
+                            extra_kw["classification_only"] = True
+                    elif self._is_stability_reward:
+                        second_arg = ground_truth
+                        if self._focal_gamma > 0:
+                            extra_kw["focal_gamma"] = self._focal_gamma
+                    elif self._is_solubility_reward:
+                        second_arg = ground_truth
+                        if self._focal_gamma > 0:
+                            extra_kw["focal_gamma"] = self._focal_gamma
                     else:
-                        reward = self.reward_fn(answer_text, ground_truth)
+                        second_arg = ground_truth
+                    reward = self.reward_fn(answer_text, second_arg, **extra_kw)
 
                     completions.append(completion[:500])  # truncate for table
                     rewards.append(round(reward, 4))
 
+                # Build ground truth display string
+                gt_display = str(ground_truth)[:200]
+                true_category = ""
+                if self._is_esmfold_reward:
+                    try:
+                        gt_parsed = json.loads(str(ground_truth))
+                        plddt_val = float(gt_parsed.get("plddt", 0))
+                        true_category = (
+                            "high" if plddt_val > 80
+                            else "medium" if plddt_val > 50
+                            else "low"
+                        )
+                        gt_display = f"pLDDT={plddt_val:.1f} ({true_category})"
+                    except (json.JSONDecodeError, ValueError, TypeError):
+                        pass
+                elif self._is_stability_reward:
+                    try:
+                        gt_parsed = json.loads(str(ground_truth))
+                        ddg_val = float(gt_parsed.get("ddG", 0))
+                        true_category = gt_parsed.get("stability_class", "")
+                        mutation = gt_parsed.get("mutation", "")
+                        gt_display = f"ddG={ddg_val:.2f} ({true_category}) {mutation}"
+                    except (json.JSONDecodeError, ValueError, TypeError):
+                        pass
+                elif self._is_solubility_reward:
+                    try:
+                        gt_parsed = json.loads(str(ground_truth))
+                        sol_score = float(gt_parsed.get("solubility_score", 0))
+                        true_category = gt_parsed.get("solubility_class", "")
+                        gt_display = f"solubility={sol_score:.1f}% ({true_category})"
+                    except (json.JSONDecodeError, ValueError, TypeError):
+                        pass
+                elif self._is_fold_reward:
+                    try:
+                        gt_parsed = json.loads(str(ground_truth))
+                        cath_code = gt_parsed.get("cath_code", "")
+                        class_name = gt_parsed.get("class_name", "")
+                        true_category = class_name
+                        gt_display = f"CATH={cath_code} ({class_name})"
+                    except (json.JSONDecodeError, ValueError, TypeError):
+                        pass
+
                 row = {
                     "step": self.global_step,
                     "prompt": raw_prompt[:200],
+                    "ground_truth": gt_display,
+                    "true_category": true_category if true_category else "",
                     "protein_seq": (protein_seq[:50] + "...") if protein_seq and len(protein_seq) > 50 else (protein_seq or ""),
                 }
                 for ci in range(num_completions):
@@ -1265,8 +1629,59 @@ class GRPOTrainer:
         esmfold_tasks = {
             "esmfold", "structure", "structure_prediction", "fold_quality",
         }
+        stability_tasks = {
+            "stability", "stability_prediction", "ddg",
+        }
         task_normalized = task_type.lower().replace("-", "_").replace(" ", "_")
         self._is_esmfold_reward = task_normalized in esmfold_tasks
+        self._is_stability_reward = task_normalized in stability_tasks
+
+        solubility_tasks = {"solubility", "solubility_prediction"}
+        self._is_solubility_reward = task_normalized in solubility_tasks
+
+        fold_tasks = {"fold_classification", "fold_class", "cath", "cath_classification"}
+        self._is_fold_reward = task_normalized in fold_tasks
+
+        # Focal reward weighting for category imbalance
+        grpo_cfg = self.cfg.training.get("grpo", {})
+        focal_enabled = grpo_cfg.get("focal_enabled", False)
+        self._focal_gamma = grpo_cfg.get("focal_gamma", 2.0) if focal_enabled else 0.0
+        self._binary_alignment = grpo_cfg.get("binary_alignment", False)
+        self._classification_only = grpo_cfg.get("classification_only", False)
+        if self._classification_only and self._is_esmfold_reward:
+            log.info("Classification-only reward: correct category=1.0, wrong=0.0")
+        if self._binary_alignment and self._is_esmfold_reward:
+            log.info("Binary alignment scoring enabled: no partial credit, medium claims detected")
+        if self._focal_gamma > 0 and self._is_esmfold_reward:
+            from .rewards import _ESMFOLD_CATEGORY_FREQ, _focal_weight
+            weights = {
+                cat: round(_focal_weight(cat, self._focal_gamma), 3)
+                for cat in _ESMFOLD_CATEGORY_FREQ
+            }
+            log.info(
+                f"Focal reward weighting enabled (esmfold): gamma={self._focal_gamma}, "
+                f"weights={weights}"
+            )
+        if self._focal_gamma > 0 and self._is_stability_reward:
+            from .rewards import _STABILITY_CLASS_FREQ, _focal_weight
+            weights = {
+                cat: round(_focal_weight(cat, self._focal_gamma, _STABILITY_CLASS_FREQ), 3)
+                for cat in _STABILITY_CLASS_FREQ
+            }
+            log.info(
+                f"Focal reward weighting enabled (stability): gamma={self._focal_gamma}, "
+                f"weights={weights}"
+            )
+        if self._focal_gamma > 0 and self._is_solubility_reward:
+            from .rewards import _SOLUBILITY_CLASS_FREQ, _focal_weight
+            weights = {
+                cat: round(_focal_weight(cat, self._focal_gamma, _SOLUBILITY_CLASS_FREQ), 3)
+                for cat in _SOLUBILITY_CLASS_FREQ
+            }
+            log.info(
+                f"Focal reward weighting enabled (solubility): gamma={self._focal_gamma}, "
+                f"weights={weights}"
+            )
 
         try:
             self.reward_fn = get_reward_function(task_type)
@@ -1275,6 +1690,9 @@ class GRPOTrainer:
             log.warning(f"Unknown task type: {task_type}. Using generic reward function.")
             self.reward_fn = compute_generic_reward
             self._is_esmfold_reward = False
+            self._is_stability_reward = False
+            self._is_solubility_reward = False
+            self._is_fold_reward = False
 
     def _generate_completions(
         self,
@@ -1687,7 +2105,7 @@ class GRPOTrainer:
                 # Extract answer content from <answer> tags
                 answer_text, has_answer_tags = extract_answer_content(completion)
 
-                # ESMFold reward: prefer pre-computed metrics (JSON) over live fold
+                # Route ground truth to reward function
                 if self._is_esmfold_reward:
                     gt_str = str(ground_truth)
                     if gt_str.strip().startswith("{"):
@@ -1698,8 +2116,24 @@ class GRPOTrainer:
                         second_arg = ground_truth
                 else:
                     second_arg = ground_truth
+
+                reward_kwargs = {"detailed": True}
+                # ESMFold-specific kwargs
+                if self._is_esmfold_reward and self._focal_gamma > 0:
+                    reward_kwargs["focal_gamma"] = self._focal_gamma
+                if self._is_esmfold_reward and self._binary_alignment:
+                    reward_kwargs["binary_alignment"] = True
+                if self._is_esmfold_reward and self._classification_only:
+                    reward_kwargs["classification_only"] = True
+                # Stability-specific kwargs
+                if self._is_stability_reward and self._focal_gamma > 0:
+                    reward_kwargs["focal_gamma"] = self._focal_gamma
+                # Solubility-specific kwargs
+                if self._is_solubility_reward and self._focal_gamma > 0:
+                    reward_kwargs["focal_gamma"] = self._focal_gamma
+
                 reward, metrics = self.reward_fn(
-                    answer_text, second_arg, detailed=True
+                    answer_text, second_arg, **reward_kwargs
                 )
 
                 # Format reward: bonus for using <answer> tags
@@ -1900,17 +2334,24 @@ class GRPOTrainer:
             )
 
         # Task-aware ground truth extraction:
-        # - stability/ddg: use metadata.ddG (float) instead of text output
+        # - stability/ddg: pass JSON with ddG, stability_class, mutation from metadata
         # - esmfold/structure: pre-computed pLDDT from metadata, or protein_sequences
-        # - default (go_prediction, etc.): use text response
+        # - go_prediction: use text response (comma-separated GO terms)
+        # - default: use text response
         task = self.cfg.data.get("task", "go_prediction").lower()
-        if task in ("stability", "ddg"):
+        if task in ("stability", "ddg", "stability_prediction"):
             metadata_list = batch.get("metadata", [])
             if metadata_list and isinstance(metadata_list, list):
-                ground_truths = [
-                    m.get("ddG", m.get("ddg", "")) if isinstance(m, dict) else ""
-                    for m in metadata_list
-                ]
+                ground_truths = []
+                for m in metadata_list:
+                    if isinstance(m, dict) and "ddG" in m:
+                        ground_truths.append(json.dumps({
+                            "ddG": m.get("ddG", 0),
+                            "stability_class": m.get("stability_class"),
+                            "mutation": m.get("mutation"),
+                        }))
+                    else:
+                        ground_truths.append("")
             else:
                 ground_truths = batch.get("response", batch.get("output", []))
         elif task in ("esmfold", "structure", "structure_prediction", "fold_quality"):
@@ -1924,14 +2365,47 @@ class GRPOTrainer:
             else:
                 # No pre-computed metrics — fall through to protein_sequences path
                 ground_truths = batch.get("response", batch.get("output", []))
-        elif task in ("proteinlm_bench", "protein_lm_bench", "multiple_choice"):
-            # ProteinLMBench: ground truth is "option N" from metadata or response
+        elif task in (
+            "ss_composition", "structure_properties_a",
+            "ss_sequence", "ss_per_residue", "structure_properties_b",
+            "structure_composite", "structure_properties", "structure_properties_c",
+        ):
+            # Structural property tasks: reward functions expect metadata dict
+            # with keys like helix_fraction, ss3_string, mean_rsa, etc.
             metadata_list = batch.get("metadata", [])
-            if metadata_list and isinstance(metadata_list, list) and isinstance(metadata_list[0], dict):
-                ground_truths = [
-                    m.get("answer", m.get("correct_answer", ""))
-                    for m in metadata_list
-                ]
+            if metadata_list and isinstance(metadata_list[0], dict):
+                ground_truths = [json.dumps(m) for m in metadata_list]
+            else:
+                ground_truths = batch.get("response", batch.get("output", []))
+        elif task in ("solubility", "solubility_prediction"):
+            metadata_list = batch.get("metadata", [])
+            if metadata_list and isinstance(metadata_list, list):
+                ground_truths = []
+                for m in metadata_list:
+                    if isinstance(m, dict) and "solubility_score" in m:
+                        ground_truths.append(json.dumps({
+                            "solubility_score": m.get("solubility_score", 0),
+                            "solubility_class": m.get("solubility_class"),
+                        }))
+                    else:
+                        ground_truths.append("")
+            else:
+                ground_truths = batch.get("response", batch.get("output", []))
+        elif task in ("fold_classification", "fold_class", "cath", "cath_classification"):
+            metadata_list = batch.get("metadata", [])
+            if metadata_list and isinstance(metadata_list, list):
+                ground_truths = []
+                for m in metadata_list:
+                    if isinstance(m, dict) and "cath_code" in m:
+                        ground_truths.append(json.dumps({
+                            "cath_code": m.get("cath_code"),
+                            "class_name": m.get("class_name"),
+                            "architecture_name": m.get("architecture_name"),
+                            "topology_name": m.get("topology_name"),
+                            "homology_name": m.get("homology_name"),
+                        }))
+                    else:
+                        ground_truths.append("")
             else:
                 ground_truths = batch.get("response", batch.get("output", []))
         else:
@@ -1989,10 +2463,16 @@ class GRPOTrainer:
         ):
             unique_seqs = list(set(s for s in protein_sequences if s))
             if unique_seqs:
+                # Try persistent LMDB cache first
+                lmdb_cache = getattr(self, "_embedding_cache", None)
                 with torch.no_grad():
                     for seq in unique_seqs:
-                        enc_out = self.protein_llm.encoder.encode([seq])
-                        esm_cache[seq] = enc_out["embeddings"]  # [1, L, D]
+                        cached = lmdb_cache.get(seq) if lmdb_cache else None
+                        if cached is not None:
+                            esm_cache[seq] = cached.unsqueeze(0).to(self.device)
+                        else:
+                            enc_out = self.protein_llm.encoder.encode([seq])
+                            esm_cache[seq] = enc_out["embeddings"]  # [1, L, D]
 
         # Step 4: Re-compute log probs WITH gradients (differentiable forward)
         # Batch all completions for each prompt into a single forward pass.
@@ -2352,6 +2832,8 @@ class GRPOTrainer:
         num_samples = min(num_samples, len(self.eval_dataset))
         eval_rewards = []
         format_hits = 0
+        # Per-class reward tracking for classification tasks
+        class_rewards: Dict[str, List[float]] = {}
 
         with torch.no_grad():
             for i in range(num_samples):
@@ -2372,16 +2854,49 @@ class GRPOTrainer:
                 # Task-aware ground truth extraction (mirrors _training_step)
                 task = self.cfg.data.get("task", "go_prediction").lower()
                 metadata = sample.get("metadata", {})
-                if task in ("stability", "ddg") and isinstance(metadata, dict) and "ddG" in metadata:
-                    ground_truth = metadata["ddG"]
+                true_category = None
+                if task in ("stability", "ddg", "stability_prediction") and isinstance(metadata, dict) and "ddG" in metadata:
+                    ground_truth = json.dumps({
+                        "ddG": metadata.get("ddG", 0),
+                        "stability_class": metadata.get("stability_class"),
+                        "mutation": metadata.get("mutation"),
+                    })
+                    true_category = metadata.get("stability_class")
                 elif (
                     task in ("esmfold", "structure", "structure_prediction", "fold_quality")
                     and isinstance(metadata, dict) and "plddt" in metadata
                 ):
+                    plddt_val = float(metadata.get("plddt", 0))
+                    true_category = (
+                        "high" if plddt_val > 80
+                        else "medium" if plddt_val > 50
+                        else "low"
+                    )
                     ground_truth = json.dumps({
                         "plddt": metadata.get("plddt", 0),
                         "ptm": metadata.get("ptm", 0),
                     })
+                elif (
+                    task in ("solubility", "solubility_prediction")
+                    and isinstance(metadata, dict) and "solubility_score" in metadata
+                ):
+                    ground_truth = json.dumps({
+                        "solubility_score": metadata.get("solubility_score", 0),
+                        "solubility_class": metadata.get("solubility_class"),
+                    })
+                    true_category = metadata.get("solubility_class")
+                elif (
+                    task in ("fold_classification", "fold_class", "cath", "cath_classification")
+                    and isinstance(metadata, dict) and "cath_code" in metadata
+                ):
+                    ground_truth = json.dumps({
+                        "cath_code": metadata.get("cath_code"),
+                        "class_name": metadata.get("class_name"),
+                        "architecture_name": metadata.get("architecture_name"),
+                        "topology_name": metadata.get("topology_name"),
+                        "homology_name": metadata.get("homology_name"),
+                    })
+                    true_category = metadata.get("class_name")
                 else:
                     ground_truth = sample.get("response", sample.get("output", ""))
 
@@ -2438,7 +2953,8 @@ class GRPOTrainer:
                 if has_answer_tags:
                     format_hits += 1
 
-                # ESMFold reward: pass pre-computed metrics or protein sequence
+                # Route reward computation with task-specific kwargs
+                extra_kw = {}
                 if self._is_esmfold_reward:
                     gt_str = str(ground_truth)
                     if gt_str.strip().startswith("{"):
@@ -2447,21 +2963,43 @@ class GRPOTrainer:
                         second_arg = protein_seq
                     else:
                         second_arg = ground_truth
-                    reward = self.reward_fn(answer_text, second_arg)
+                elif self._is_stability_reward:
+                    second_arg = ground_truth
+                    if self._focal_gamma > 0:
+                        extra_kw["focal_gamma"] = self._focal_gamma
+                elif self._is_solubility_reward:
+                    second_arg = ground_truth
+                    if self._focal_gamma > 0:
+                        extra_kw["focal_gamma"] = self._focal_gamma
                 else:
-                    reward = self.reward_fn(answer_text, ground_truth)
+                    second_arg = ground_truth
+                reward = self.reward_fn(answer_text, second_arg, **extra_kw)
                 eval_rewards.append(reward)
+
+                # Track per-class reward for classification tasks
+                if true_category is not None:
+                    class_rewards.setdefault(true_category, []).append(reward)
 
         # Re-enable gradient checkpointing and train mode
         self.model.train()
         self._ensure_grad_ckpt_on()
 
-        return {
+        results = {
             "mean_reward": sum(eval_rewards) / len(eval_rewards),
             "max_reward": max(eval_rewards),
             "min_reward": min(eval_rewards),
             "format_rate": format_hits / max(num_samples, 1),
         }
+
+        # Per-class average rewards for classification tasks (ESMFold or stability)
+        for cat, cat_rewards in class_rewards.items():
+            if cat_rewards:
+                results[f"reward/mean_{cat}"] = (
+                    sum(cat_rewards) / len(cat_rewards)
+                )
+                results[f"reward/count_{cat}"] = len(cat_rewards)
+
+        return results
 
     def _save_model_inner(self, path: Path) -> None:
         """Save model weights, handling FSDP2 sharded params if needed.

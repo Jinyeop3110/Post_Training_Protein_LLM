@@ -180,10 +180,10 @@ class TestCriticalRuleEnforcement:
         )
 
     def test_sft_config_yaml_lora_targets(self):
-        """Test that the sft_qlora.yaml config specifies all 7 linear layers."""
+        """Test that the sft_lora.yaml config specifies all 7 linear layers."""
         config = OmegaConf.load(
             "/orcd/pool/006/yeopjin/workspace/Post_Training_Protein_LLM/"
-            "configs/training/sft_qlora.yaml"
+            "configs/training/sft_lora.yaml"
         )
         targets = list(config.lora.target_modules)
         expected = [

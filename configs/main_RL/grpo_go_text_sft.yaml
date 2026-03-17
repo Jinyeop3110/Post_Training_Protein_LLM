@@ -1,0 +1,59 @@
+# @package _global_
+
+# GRPO GO Prediction: Text SFT -> GRPO
+# Text-only approach — protein sequence as raw tokens, no ESM-3 encoder.
+#
+# Usage:
+#   python scripts/train.py main_RL=grpo_go_text_sft
+
+defaults:
+  - override /model: qwen3_8b
+  - override /data: cafa5_go
+  - override /training: grpo
+
+approach: text
+experiment_name: grpo_go_text_${model.name}_${now:%m%d_%H%M%S}
+
+# Chain from text SFT
+parent_experiment: sft_text_combined_qwen3_8b_it_0307_190324
+
+# Data task for reward routing
+data:
+  task: go_prediction
+  processing:
+    max_protein_length: 512
+
+training:
+  lr: 5e-6
+  batch_size: 2
+  gradient_accumulation_steps: 4
+  gradient_checkpointing: true
+  epochs: 1
+  warmup_steps: 20
+  max_grad_norm: 1.0
+
+  grpo:
+    group_size: 8
+    temperature: 0.9
+    use_kl_penalty: false
+    normalize_advantages: false
+
+  rollout:
+    max_tokens: 512
+    top_p: 0.95
+    do_sample: true
+    enable_thinking: false
+
+  save_steps: 50
+  eval_steps: 25
+  logging_steps: 5
+
+  fsdp:
+    enabled: false
+
+  wandb:
+    tags:
+      - grpo
+      - go_prediction
+      - text_sft
+      - ${model.name}

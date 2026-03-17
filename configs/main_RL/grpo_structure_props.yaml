@@ -1,0 +1,77 @@
+# @package _global_
+
+# GRPO experiment: Structural Property Prediction (ESM3+MLP SFT -> GRPO)
+# Uses ESMFold-derived structural properties with composite reward (Option C):
+#   - SS3 per-residue accuracy (0.30)
+#   - SS composition fractions (0.25)
+#   - Ramachandran region match (0.20)
+#   - RSA + contact density (0.25)
+#
+# Data: structure_properties_full.json (10K samples from ESMFold)
+# Requires: python scripts/data/download_structure_properties.py --task full
+#
+# Usage:
+#   python scripts/train.py main_RL=grpo_structure_props parent_experiment=my_sft
+
+defaults:
+  - override /model: qwen3_8b
+  - override /encoder: esm3_small
+  - override /data: structure_properties
+  - override /training: grpo
+
+approach: esm3
+experiment_name: grpo_struct_props_${model.name}_${now:%m%d_%H%M%S}
+
+# ESM-3 sub-batch
+encoder:
+  encoder_batch_size: 4
+
+# Chain from ESM3+MLP SFT
+parent_experiment: null  # Set via CLI: parent_experiment=my_sft_run
+
+# Data task for reward routing
+data:
+  task: structure_properties  # Routes to compute_structure_composite_reward
+  processing:
+    max_protein_length: 512
+
+training:
+  # --- DDP on 8x H100 80GB ---
+  lr: 5e-6
+  projector_lr: 2.5e-5
+  batch_size: 2
+  gradient_accumulation_steps: 4  # effective batch = 2 * 8 GPUs * 4 = 64
+  gradient_checkpointing: true
+  epochs: 1
+  warmup_steps: 20
+  max_grad_norm: 1.0
+
+  grpo:
+    group_size: 8  # Structural output is long; fewer completions
+    temperature: 0.9
+    use_kl_penalty: false
+    normalize_advantages: false
+    focal_enabled: false
+    focal_gamma: 2.0
+
+  # Structural analysis outputs can be long (SS3 string + fractions + contacts)
+  rollout:
+    max_tokens: 512
+    top_p: 0.95
+    do_sample: true
+    enable_thinking: false
+
+  save_steps: 50
+  eval_steps: 25
+  logging_steps: 5
+
+  fsdp:
+    enabled: false
+
+  wandb:
+    tags:
+      - grpo
+      - structure_properties
+      - composite_reward
+      - mlp_sft
+      - ${model.name}

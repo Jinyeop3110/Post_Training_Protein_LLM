@@ -513,6 +513,115 @@ class TestProteinSequenceExtraction:
         assert seq == "MKTAYIAK"
 
 
+class TestProteinLevelSplit:
+    """Tests for protein-level data splitting to prevent leakage."""
+
+    def test_no_protein_leakage(self):
+        """Same protein must not appear in multiple splits."""
+        from src.data.protein_utils import extract_protein_sequence, protein_level_split
+
+        # Simulate: protein A appears in 3 tasks, protein B in 2, protein C in 1
+        inputs = [
+            "MKTAYIAK",  # protein A - task 1
+            "ACDEFGHIK",  # protein B - task 1
+            "MKTAYIAK",  # protein A - task 2
+            "WWWWWWWW",  # protein C - task 1
+            "ACDEFGHIK",  # protein B - task 2
+            "MKTAYIAK",  # protein A - task 3
+        ]
+
+        result = protein_level_split(
+            inputs=inputs,
+            train_ratio=0.5,
+            val_ratio=0.25,
+            seed=42,
+            extract_fn=extract_protein_sequence,
+        )
+
+        # Every index must appear in exactly one split
+        all_indices = sorted(
+            result["train"] + result["validation"] + result["test"]
+        )
+        assert all_indices == list(range(len(inputs)))
+
+        # Check no protein appears in multiple splits
+        def proteins_in_split(indices):
+            return {extract_protein_sequence(inputs[i]) for i in indices}
+
+        train_prots = proteins_in_split(result["train"])
+        val_prots = proteins_in_split(result["validation"])
+        test_prots = proteins_in_split(result["test"])
+
+        assert train_prots.isdisjoint(val_prots), "Train/val protein overlap!"
+        assert train_prots.isdisjoint(test_prots), "Train/test protein overlap!"
+        assert val_prots.isdisjoint(test_prots), "Val/test protein overlap!"
+
+    def test_all_indices_covered(self):
+        """Every row index must appear in exactly one split."""
+        from src.data.protein_utils import protein_level_split
+
+        inputs = [f"MKTAYIAK{'A' * i}" for i in range(100)]
+        result = protein_level_split(inputs, train_ratio=0.8, val_ratio=0.1, seed=0)
+
+        all_idx = sorted(result["train"] + result["validation"] + result["test"])
+        assert all_idx == list(range(100))
+
+    def test_deterministic(self):
+        """Same seed must produce identical splits."""
+        from src.data.protein_utils import protein_level_split
+
+        inputs = ["MKTAYIAK", "ACDEFGHIK", "MKTAYIAK", "WWWWWWWW"] * 10
+
+        r1 = protein_level_split(inputs, seed=42)
+        r2 = protein_level_split(inputs, seed=42)
+
+        assert r1 == r2
+
+    def test_different_seed_changes_split(self):
+        """Different seeds should (generally) produce different splits."""
+        from src.data.protein_utils import protein_level_split
+
+        inputs = [f"{'ACDEFGHIK'[:4]}{'A' * i}" for i in range(50)]
+
+        r1 = protein_level_split(inputs, seed=1)
+        r2 = protein_level_split(inputs, seed=2)
+
+        assert r1 != r2
+
+    def test_backtick_wrapped_sequences(self):
+        """Sequences wrapped in ``` should be treated same as bare sequences."""
+        from src.data.protein_utils import extract_protein_sequence, protein_level_split
+
+        inputs = [
+            "```\nMKTAYIAK\n```",  # backtick-wrapped
+            "MKTAYIAK",             # bare — same protein
+            "ACDEFGHIK",            # different protein
+        ]
+
+        result = protein_level_split(
+            inputs=inputs,
+            train_ratio=0.6,
+            val_ratio=0.2,
+            seed=42,
+            extract_fn=extract_protein_sequence,
+        )
+
+        # The two MKTAYIAK rows must be in the same split
+        idx_0_split = next(s for s, ids in result.items() if 0 in ids)
+        idx_1_split = next(s for s, ids in result.items() if 1 in ids)
+        assert idx_0_split == idx_1_split
+
+    def test_empty_inputs_handled(self):
+        """Rows with empty protein (e.g. protein design) should not crash."""
+        from src.data.protein_utils import protein_level_split
+
+        inputs = ["MKTAYIAK", "", "", "ACDEFGHIK"]
+        result = protein_level_split(inputs, train_ratio=0.5, val_ratio=0.25, seed=42)
+
+        all_idx = sorted(result["train"] + result["validation"] + result["test"])
+        assert all_idx == [0, 1, 2, 3]
+
+
 class TestPromptFormatting:
     """Tests for prompt formatting."""
 

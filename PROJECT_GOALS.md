@@ -10,7 +10,7 @@
 Build a **modular, extensible multimodal LLM system** for protein understanding that:
 1. Combines **ESM-3** protein embeddings with LLM capabilities
 2. Supports **multiple encoding approaches** (text-based, embedding-based, TBD)
-3. Supports flexible training pipelines (SFT → GRPO/DPO)
+3. Supports flexible training pipelines (**SSL → SFT → GRPO/DPO**)
 4. Evaluates on standard protein benchmarks (GO, PPI, Stability)
 5. Maintains reproducibility through proper versioning and logging
 
@@ -51,76 +51,55 @@ approach: esm3  # or "text" or "tbd"
 
 | Training Phase | wandb Project | Purpose |
 |----------------|---------------|---------|
+| **SSL** | `protein-llm-ssl` | Self-supervised continued pre-training |
 | **SFT** | `protein-llm-sft` | Supervised fine-tuning experiments |
 | **RL (GRPO/DPO)** | `protein-llm-rl` | Reinforcement learning alignment |
 
 ---
 
-## Training Data Strategy
-
-### SFT Data Sources
-
-| Dataset | Status | SFT Ready? | Conversion Needed |
-|---------|--------|------------|-------------------|
-| **Mol-Instructions** | ✅ Available | ✅ Yes | None - already instruction format |
-| **Swiss-Prot** | ✅ Available | ❌ No | Convert to Mol-Instructions format |
-| **IPD-PDB** | ✅ Available | ❌ No | Convert to Mol-Instructions format |
-
-### Mol-Instructions Data Format
+## Training Pipeline: SSL → SFT → RL
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│  instruction: "Predict the GO terms for this protein"          │  ← Task
-│  input: "MKTLLIAAAVAAGIATA..."                                  │  ← Protein Seq
-│  output: "GO:0003674, GO:0005575, GO:0008150"                  │  ← Answer
-└─────────────────────────────────────────────────────────────────┘
+Qwen3.5 BASE ──► SSL (domain text) ──► Merge LoRA ──► SFT (instruction) ──► GRPO (rewards)
+                      │                                      │                     │
+                      ├─ pmc_full_text.json                  ├─ mol_* (495K)       ├─ GO rewards
+                      ├─ pubmed_abstract (×2)                ├─ clap_* (511K)      ├─ Stability
+                      ├─ seq_in_text.json                    └─ plm_* (826K)       ├─ ESMFold
+                      └─ (50 GB total)                       = 1.83M total         └─ Multi-task
 ```
 
-**Tasks in Mol-Instructions** (~505K total):
-- Protein Design
-- Catalytic Activity Prediction
-- Protein Function Prediction
-- Functional Description Generation
-- Domain/Motif Prediction
+### SSL Data Sources (continued pre-training)
+
+| Dataset | File | Size | Content |
+|---------|------|------|---------|
+| **ProteinLMDataset** | seq_in_text.json | 13 GB | Literature with inline `<seq>` protein sequences |
+| | pmc_full_text.json | 11 GB | Full PMC papers |
+| | pubmed_abstract_part1.json | 13 GB | PubMed abstracts |
+| | pubmed_abstract_part2.json | 13 GB | PubMed abstracts |
+| **Total** | `combined_ssl_260316/` | **50 GB** | ~17B tokens |
+
+**SSL approach**: Text-only causal LM on Qwen3.5 BASE model (not Instruct). No ESM-3 encoder.
+LoRA during SSL, merge into base before SFT.
+
+### SFT Data Sources (curated, 2026-03-16)
+
+| Source | Files | Samples | Tasks |
+|--------|-------|---------|-------|
+| **mol** (Mol-Instructions) | 5 | 495,004 | Catalytic activity, domain/motif, function, protein design, protein function |
+| **clap** (SwissProtCLAP) | 1 | 511,322 | Protein description |
+| **plm** (ProteinLMDataset) | 6 | 825,978 | Functionality, subunit, tissue specificity, PTM, induction, disease |
+| **Total** | **12** | **1,832,304** | `combined_sft_260316/` |
+
+**Removed** (data leakage risk — same proteins across pd/sp/clap/plm with different questions):
+- `pd_*` (ProtDescribe, 1.76M) — 84-100% protein overlap with other sources
+- `sp_*` (Swiss-Prot, 1.08M) — 94-100% protein overlap
+- `p2t_*` (Protein2Text-QA, 52K)
 
 ### SFT Task Split Strategy
 
-> **DECISION**: Random 90/5/5 split per task (all tasks in train AND test)
+> **DECISION**: Random 90/5/5 split (seed=42), protein-level split needed (TODO)
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Per-Task Split (90/5/5)                      │
-├─────────────────────────────────────────────────────────────────┤
-│  Task Type                    │ Train (90%) │ Val (5%) │ Test  │
-│  ─────────────────────────────┼─────────────┼──────────┼───────│
-│  Protein Design               │     90%     │    5%    │   5%  │
-│  Catalytic Activity           │     90%     │    5%    │   5%  │
-│  Function Prediction          │     90%     │    5%    │   5%  │
-│  Domain/Motif Prediction      │     90%     │    5%    │   5%  │
-│  Functional Description       │     90%     │    5%    │   5%  │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Swiss-Prot / IPD-PDB Conversion
-
-> **DECISION**: Match Mol-Instructions instruction format
-
-**Target conversion** (use same instruction templates):
-```python
-# Swiss-Prot → SFT
-{
-    "instruction": "Predict the function of this protein",
-    "input": sequence,
-    "output": function_annotation
-}
-
-# IPD-PDB → SFT
-{
-    "instruction": "Predict the secondary structure of this protein",
-    "input": sequence,
-    "output": secondary_structure
-}
-```
+**Known issue**: Current split is sample-level, not protein-level. Same protein can appear in train and val with different questions. 98.7% of val inputs overlap with train inputs.
 
 ### RL Training Strategy
 
@@ -135,12 +114,12 @@ approach: esm3  # or "text" or "tbd"
 
 **RL Pipeline**:
 ```
-SFT Checkpoint ──► GRPO Training ──► Final Model
-                        │
-                        ├─ GO term rewards (F1-based)
-                        ├─ PPI interaction rewards (binary)
-                        ├─ Stability rewards (regression)
-                        └─ ESMFold rewards (structural quality)
+SSL ──► SFT Checkpoint ──► GRPO Training ──► Final Model
+                                │
+                                ├─ GO term rewards (F1-based)
+                                ├─ PPI interaction rewards (binary)
+                                ├─ Stability rewards (regression)
+                                └─ ESMFold rewards (structural quality)
 ```
 
 **Note**: GRPO uses **verifiable rewards** (no separate reward model needed)
@@ -205,34 +184,41 @@ SFT Checkpoint ──► GRPO Training ──► Final Model
 
 ---
 
-## Current Sprint
+## Current Sprint (2026-03-16)
 
-> **Sprint Focus**: Four-way comparison (text vs MLP vs Perceiver vs Flamingo) + GRPO with ESMFold rewards
+> **Sprint Focus**: SSL pipeline + ESM embedding cache + curated SFT retraining
 
 ### Sprint Goals
-1. ✅ ESM-3 + Qwen3-4B SFT working (50K run, eval_loss 3.64)
-2. ✅ Three encoding approaches implemented (text, MLP, Perceiver)
-3. ✅ GRPO trainer with 4 reward functions (GO, PPI, Stability, ESMFold)
-4. ✅ Run MLP SFT on combined dataset (Qwen3-8B, FSDP)
-5. ✅ Run text-only SFT on combined dataset (Qwen3-8B, FSDP)
-6. ⬜ Run Perceiver SFT on combined dataset
-7. ⬜ Run Flamingo SFT
-8. ⬜ Run first GRPO training (SFT checkpoint → GRPO)
-9. ⬜ Evaluate all four approaches on GO/PPI/Stability benchmarks
+1. ⬜ **SSL pre-training stage** — continued pre-training on biology literature (50GB, Qwen3.5 BASE)
+2. ⬜ **Pre-computed ESM embedding cache** — LMDB hash map for O(1) embedding lookup
+3. ⬜ **Curated SFT retraining** — new `combined_sft_260316` (mol+clap+plm, 1.83M samples)
+4. ⬜ **Protein-level train/val split** — fix data leakage in SFT
+5. ⬜ Perceiver SFT on curated data
+6. ⬜ Flamingo SFT on curated data
+7. ⬜ End-to-end: SSL → SFT → GRPO pipeline
 
 ### Active Tasks
 
 | Task | Status | Notes |
 |------|--------|-------|
-| MLP SFT (combined dataset) | ✅ Running | `main_SFT=sft_esm3_mlp_combined` on Qwen3-8B |
-| Text SFT (combined dataset) | ✅ Running | `main_SFT=sft_text_combined` on Qwen3-8B |
-| Perceiver SFT run | ⬜ Pending | `main_SFT=sft_esm3_perceiver_combined` |
-| Flamingo SFT run | ⬜ Pending | `main_SFT=sft_flamingo` |
-| GRPO with downstream tasks | ⬜ Pending | Needs SFT checkpoint first |
-| Four-way evaluation comparison | ⬜ Pending | GO, PPI, Stability metrics |
+| SSL trainer implementation | ⬜ Pending | `src/training/ssl_trainer.py`, `src/data/ssl_dataset.py` |
+| SSL Arrow preprocessing | ⬜ Pending | `scripts/prepare_ssl_arrow.py` (50GB JSON → Arrow) |
+| ESM embedding LMDB cache | ⬜ Pending | `src/data/esm_embedding_cache.py` + precompute script |
+| Curated SFT data prepared | ✅ Done | `combined_sft_260316/` (mol+clap+plm, 1.83M) |
+| Curated SSL data prepared | ✅ Done | `combined_ssl_260316/` (4 files, 50GB) |
+| Protein-level split | ⬜ Pending | Fix data leakage in `_create_splits()` |
+| Curated SFT Arrow build | ⬜ Pending | `prepare_arrow.py` on `combined_sft_260316` |
+
+### Completed (Previous Sprint)
+- ✅ ESM-3 + Qwen3-4B SFT working
+- ✅ Four encoding approaches implemented (text, MLP, Perceiver, Flamingo)
+- ✅ GRPO trainer with 4 reward functions
+- ✅ MLP SFT on combined dataset (eval_loss=0.361)
+- ✅ Text SFT on combined dataset (eval_loss=1.266)
+- ✅ 14 GRPO runs (structure quality, proteinlm-bench)
 
 ### Sprint Blockers
-- None — all implementation complete, ready for experiments
+- Need user decision: Qwen3.5-4B or Qwen3.5-9B for SSL base model?
 
 ---
 
@@ -338,8 +324,11 @@ SFT Checkpoint ──► GRPO Training ──► Final Model
 
 ### Open Questions
 - How to handle very long sequences (>1024)? (ESMFold wrapper truncates at 1024)
-- Should we pre-compute ESM-3 embeddings for efficiency?
+- ~~Should we pre-compute ESM-3 embeddings for efficiency?~~ → **YES**, LMDB cache planned
 - Which GRPO reward function to use first for experiments?
+- Qwen3.5 BASE model size for SSL: 4B or 9B?
+- SSL LoRA rank: same r=8 as SFT, or larger for domain adaptation?
+- `<seq>` tag handling in SSL: text-only (v1) or ESM embeddings (v2)?
 
 ---
 

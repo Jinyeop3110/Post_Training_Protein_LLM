@@ -4,8 +4,37 @@ Consolidates amino-acid detection logic previously duplicated in
 mol_instructions.py and scripts/prepare_arrow.py.
 """
 
+import re
+
 # Standard 20 amino acids + IUPAC ambiguous codes (X=unknown, B=D/N, Z=E/Q, U=Sec, O=Pyl)
 AA_CHARS = frozenset("ACDEFGHIKLMNPQRSTVWYBXZUO")
+
+# Pattern for <seq>M K M R F...</seq> tags (space-separated AAs)
+_SEQ_TAG_PATTERN = re.compile(r"<seq>\s*(.*?)\s*</seq>", re.DOTALL)
+
+
+def extract_seq_tag_proteins(text: str) -> list[str]:
+    """Extract protein sequences from <seq>...</seq> tags.
+
+    SSL data uses ``<seq>M K M R F L G...</seq>`` format with space-separated
+    single-letter amino acid codes. This function extracts and joins them into
+    standard contiguous sequences.
+
+    Args:
+        text: Text possibly containing one or more <seq>...</seq> tags.
+
+    Returns:
+        List of protein sequences (uppercase, no spaces). Empty if no tags found.
+    """
+    matches = _SEQ_TAG_PATTERN.findall(text)
+    sequences = []
+    for match in matches:
+        # Join space-separated AA letters: "M K M R F" -> "MKMRF"
+        aa = match.replace(" ", "").replace("\n", "").replace("\t", "").upper()
+        # Validate that it's actually amino acids
+        if aa and all(c in AA_CHARS for c in aa):
+            sequences.append(aa)
+    return sequences
 
 
 def extract_protein_sequence(text: str) -> str:
@@ -85,3 +114,70 @@ def protein_sequence_length(text: str) -> int:
                 return len(line)
 
     return len(text)
+
+
+def protein_level_split(
+    inputs: list[str],
+    train_ratio: float = 0.9,
+    val_ratio: float = 0.05,
+    seed: int = 42,
+    extract_fn=None,
+) -> dict[str, list[int]]:
+    """Split row indices by unique protein so no protein spans multiple splits.
+
+    Groups rows by their extracted protein sequence, shuffles the unique
+    proteins, and assigns each protein (with all its rows) to train, val, or
+    test.  The split ratios target *row* counts, not protein counts.
+
+    Args:
+        inputs: List of raw ``input`` field strings (one per row).
+        train_ratio: Fraction of rows for training.
+        val_ratio: Fraction of rows for validation (remainder → test).
+        seed: Random seed for reproducibility.
+        extract_fn: Callable to extract protein sequence from input text.
+            Defaults to :func:`extract_protein_sequence`.
+
+    Returns:
+        Dict with keys ``"train"``, ``"validation"``, ``"test"``, each
+        mapping to a sorted list of row indices.
+    """
+    import random
+
+    if extract_fn is None:
+        extract_fn = extract_protein_sequence
+
+    # Group row indices by canonical protein sequence
+    protein_to_rows: dict[str, list[int]] = {}
+    for i, text in enumerate(inputs):
+        seq = extract_fn(text)
+        protein_to_rows.setdefault(seq, []).append(i)
+
+    # Deterministic shuffle of unique proteins
+    proteins = list(protein_to_rows.keys())
+    rng = random.Random(seed)
+    rng.shuffle(proteins)
+
+    total = len(inputs)
+    train_target = int(total * train_ratio)
+    val_target = int(total * val_ratio)
+
+    split_indices: dict[str, list[int]] = {"train": [], "validation": [], "test": []}
+    train_count = 0
+    val_count = 0
+
+    for prot in proteins:
+        rows = protein_to_rows[prot]
+        if train_count < train_target:
+            split_indices["train"].extend(rows)
+            train_count += len(rows)
+        elif val_count < val_target:
+            split_indices["validation"].extend(rows)
+            val_count += len(rows)
+        else:
+            split_indices["test"].extend(rows)
+
+    # Sort within each split for deterministic ordering
+    for key in split_indices:
+        split_indices[key].sort()
+
+    return split_indices

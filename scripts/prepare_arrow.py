@@ -209,18 +209,22 @@ def main():
     full_dataset = Dataset.from_list(all_records)
     logger.info(f"Dataset: {len(full_dataset):,} rows, columns: {full_dataset.column_names}")
 
-    # 6. Shuffle and split
-    logger.info(f"Shuffling (seed={args.seed}) and splitting...")
-    full_dataset = full_dataset.shuffle(seed=args.seed)
+    # 6. Protein-level split (prevents data leakage)
+    from src.data.protein_utils import extract_protein_sequence, protein_level_split
 
-    total = len(full_dataset)
-    train_end = int(total * args.train_split)
-    val_end = train_end + int(total * args.val_split)
+    logger.info(f"Protein-level split (seed={args.seed})...")
+    inputs = [r.get("input", r.get("Input", "")) for r in full_dataset]
+    split_indices = protein_level_split(
+        inputs=inputs,
+        train_ratio=args.train_split,
+        val_ratio=args.val_split,
+        seed=args.seed,
+        extract_fn=extract_protein_sequence,
+    )
 
     splits = {
-        "train": full_dataset.select(range(train_end)),
-        "validation": full_dataset.select(range(train_end, val_end)),
-        "test": full_dataset.select(range(val_end, total)),
+        name: full_dataset.select(indices)
+        for name, indices in split_indices.items()
     }
 
     for name, ds in splits.items():

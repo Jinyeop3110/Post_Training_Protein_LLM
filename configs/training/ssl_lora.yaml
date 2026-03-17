@@ -1,0 +1,89 @@
+method: ssl_lora
+framework: trl
+
+# No quantization (full precision LoRA)
+quantization:
+  enabled: false
+
+# LoRA configuration — same as SFT for consistency
+lora:
+  r: 8
+  alpha: 16
+  dropout: 0.05
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+  bias: none
+  task_type: CAUSAL_LM
+
+# No projector or multimodal components
+freeze_lora: false
+
+# Training parameters
+max_steps: -1
+lr: 5e-5  # Conservative for continued pre-training
+projector_lr: null  # No projector in SSL
+epochs: 1  # Single epoch over large corpus
+batch_size: 8
+gradient_accumulation_steps: 8  # Effective batch = 8 * 8 * 8 GPUs = 512
+max_seq_length: 4096  # Longer context for full-text documents
+packing_sequences: true  # Pack documents into fixed-length blocks for efficiency
+max_tokens_per_batch: null  # Not used with packing
+max_batch_size: 16
+eval_batch_size: 4
+max_eval_samples: 5000
+warmup_ratio: 0.03
+max_grad_norm: 1.0
+weight_decay: 0.01
+
+# torch.compile for speedup
+torch_compile: true
+
+# Optimizer
+optimizer:
+  type: adamw
+  betas: [0.9, 0.999]
+  eps: 1e-8
+
+lr_scheduler:
+  type: cosine
+  num_warmup_steps: 200
+
+# No projector alignment (SSL has no projector)
+freeze_lora_steps: 0
+
+# Checkpointing — save frequently for long runs
+save_strategy: steps
+save_steps: 1000
+save_total_limit: 3
+
+# Logging
+logging_steps: 10
+eval_steps: 1000
+
+# FSDP
+fsdp:
+  enabled: true
+  strategy: shard_grad_op
+  auto_wrap: true
+  min_num_params: 100000000
+  backward_prefetch: backward_pre
+  forward_prefetch: true
+  use_orig_params: true
+  sync_module_states: true
+  limit_all_gathers: true
+  activation_checkpointing: true
+  cpu_offload: false
+
+# wandb
+wandb:
+  project: protein-llm-ssl
+  tags:
+    - ssl_lora
+    - ${model.name}
+    - continued_pretraining

@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESM-3's Hidden Outputs: 6 Tracks We're Throwing Away</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #1a1a2e;
+            --accent: #2563eb;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --code-bg: #f3f4f6;
+            --table-header: #f9fafb;
+            --blockquote-bg: #fffbeb;
+            --blockquote-border: #f59e0b;
+            --success-bg: #f0fdf4;
+            --success-border: #22c55e;
+            --warning-bg: #fff7ed;
+            --warning-border: #f97316;
+            --danger-bg: #fef2f2;
+            --danger-border: #ef4444;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--fg);
+            background: var(--bg);
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        header { margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 2px solid var(--border); }
+        header .meta { color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem; }
+        header .tags { margin-top: 0.5rem; }
+        header .tag {
+            display: inline-block; background: var(--code-bg); color: var(--accent);
+            padding: 0.15rem 0.6rem; border-radius: 1rem; font-size: 0.8rem; margin-right: 0.4rem;
+            font-weight: 500;
+        }
+        h1 { font-size: 1.9rem; line-height: 1.3; font-weight: 700; letter-spacing: -0.02em; }
+        h2 { font-size: 1.4rem; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); font-weight: 600; }
+        h3 { font-size: 1.15rem; margin: 1.8rem 0 0.8rem; font-weight: 600; }
+        h4 { font-size: 1rem; margin: 1.2rem 0 0.5rem; color: var(--muted); }
+        p { margin: 0.8rem 0; }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code {
+            font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+            background: var(--code-bg); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.88em;
+        }
+        pre {
+            background: var(--code-bg); padding: 1rem 1.2rem; border-radius: 6px; overflow-x: auto;
+            margin: 1rem 0; font-size: 0.88em; line-height: 1.5;
+        }
+        pre code { background: none; padding: 0; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.92rem; }
+        th, td { padding: 0.6rem 0.8rem; text-align: left; border: 1px solid var(--border); }
+        th { background: var(--table-header); font-weight: 600; }
+        tr:hover { background: #f9fafb; }
+        blockquote {
+            background: var(--blockquote-bg); border-left: 4px solid var(--blockquote-border);
+            padding: 0.8rem 1.2rem; margin: 1rem 0; border-radius: 0 6px 6px 0; font-style: italic;
+        }
+        blockquote p { margin: 0.3rem 0; }
+        .callout {
+            padding: 1rem 1.2rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid;
+        }
+        .callout-info { background: #eff6ff; border-color: var(--accent); }
+        .callout-success { background: var(--success-bg); border-color: var(--success-border); }
+        .callout-warning { background: var(--warning-bg); border-color: var(--warning-border); }
+        .callout-danger { background: var(--danger-bg); border-color: var(--danger-border); }
+        .callout strong { display: block; margin-bottom: 0.3rem; }
+        ul, ol { margin: 0.8rem 0; padding-left: 1.5rem; }
+        li { margin: 0.3rem 0; }
+        strong { font-weight: 600; }
+        hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+        .toc { background: var(--code-bg); padding: 1.2rem; border-radius: 8px; margin-bottom: 2rem; }
+        .toc ul { list-style: none; padding-left: 0; margin-bottom: 0; }
+        .toc li { margin-bottom: 0.3rem; }
+        .toc a { color: var(--accent); text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        .metric-highlight {
+            display: inline-block; background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 8px; padding: 0.8rem 1.2rem; margin: 0.3rem; text-align: center;
+            min-width: 140px;
+        }
+        .metric-highlight .value { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
+        .metric-highlight .label { font-size: 0.8rem; color: var(--muted); display: block; margin-top: 0.2rem; }
+        .metrics-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; justify-content: center; }
+        .pipeline-diagram {
+            background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 1.5rem; margin: 1.5rem 0; font-family: 'SF Mono', monospace; font-size: 0.82rem;
+            line-height: 1.6; white-space: pre; overflow-x: auto;
+        }
+        .track-card {
+            background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 1rem 1.2rem; margin: 1rem 0;
+        }
+        .track-card .track-header {
+            font-weight: 700; font-size: 1.05rem; margin-bottom: 0.5rem;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .track-card .track-shape {
+            font-family: 'SF Mono', monospace; font-size: 0.82rem; color: var(--accent);
+            background: white; padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid var(--border);
+        }
+        .track-card .track-status {
+            font-size: 0.8rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 1rem;
+        }
+        .status-used { background: var(--success-bg); color: #16a34a; }
+        .status-discarded { background: var(--danger-bg); color: #dc2626; }
+        .fusion-diagram {
+            background: #f8fafc; border: 2px solid var(--accent); border-radius: 10px;
+            padding: 1.5rem; margin: 1.5rem 0; font-family: 'SF Mono', monospace; font-size: 0.8rem;
+            line-height: 1.7; white-space: pre; overflow-x: auto; text-align: center;
+        }
+        figure { margin: 1.5rem 0; }
+        figure img { max-width: 100%; border: 1px solid var(--border); border-radius: 6px; }
+        figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 0.4rem; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>ESM-3's Hidden Outputs: 6 Tracks We're Throwing Away</h1>
+    <div class="meta">March 16, 2026 &mdash; Protein-LLM Project &mdash; Research Deep-Dive</div>
+    <div class="tags">
+        <span class="tag">ESM-3</span>
+        <span class="tag">multimodal</span>
+        <span class="tag">architecture</span>
+        <span class="tag">multi-track fusion</span>
+        <span class="tag">novel contribution</span>
+    </div>
+</header>
+
+<div class="toc">
+    <strong>Contents</strong>
+    <ul>
+        <li><a href="#tldr">TL;DR</a></li>
+        <li><a href="#tracks">1. ESM-3's 7 Output Tracks</a></li>
+        <li><a href="#current">2. What We Use vs What We Discard</a></li>
+        <li><a href="#architecture">3. Architecture Plan: Multi-Track Fusion</a></li>
+        <li><a href="#task-mapping">4. Which Tracks Matter for Which Tasks</a></li>
+        <li><a href="#roadmap">5. Implementation Roadmap</a></li>
+        <li><a href="#literature">6. Literature Context</a></li>
+    </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="tldr">TL;DR</h2>
+
+<div class="callout callout-danger">
+    <strong>The Problem</strong>
+    ESM-3 produces 7 output tracks per residue: embeddings, sequence, structure tokens, SS8, SASA, InterPro function, and residue annotations. We use only the embeddings (1,536 dims) and discard the other 6 tracks (7,684 dims). We're literally throwing away ESM-3's function predictions while asking the LLM to predict protein function.
+</div>
+
+<div class="callout callout-success">
+    <strong>The Opportunity</strong>
+    No published work uses ESM-3's decoded track outputs as input to an LLM. By concatenating even just SS8 probabilities (+8 dims) and SASA probabilities (+16 dims), we add explicit structural annotations at near-zero cost. For GO prediction, ESM-3's InterPro function head is directly relevant. This would be a novel architectural contribution.
+</div>
+
+<div class="metrics-row">
+    <div class="metric-highlight">
+        <span class="value">1,536</span>
+        <span class="label">dims we use (embeddings)</span>
+    </div>
+    <div class="metric-highlight">
+        <span class="value">7,684</span>
+        <span class="label">dims we discard (6 tracks)</span>
+    </div>
+    <div class="metric-highlight">
+        <span class="value">6.0x</span>
+        <span class="label">information multiplier</span>
+    </div>
+    <div class="metric-highlight">
+        <span class="value">0</span>
+        <span class="label">papers using decoded tracks</span>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="tracks">1. ESM-3's 7 Output Tracks</h2>
+
+<p>
+ESM-3 is a <strong>multimodal generative protein model</strong> from EvolutionaryScale. It was trained via masked language modeling across 6 input tracks simultaneously on 2.78 billion proteins (771 billion tokens). When given only a protein sequence, the model predicts all other tracks &mdash; structure, secondary structure, solvent accessibility, function, and residue annotations.
+</p>
+
+<p>
+Internally, <code>EncodeInputs</code> embeds each track into d_model (1536) dimensional vectors and <strong>sums them all</strong> into a single representation:
+</p>
+
+<pre><code># ESM-3 EncodeInputs.forward()
+return (sequence_embed + plddt_embed + structure_per_res_plddt
+        + structure_embed + ss8_embed + sasa_embed
+        + function_embed + residue_embed)</code></pre>
+
+<p>
+This summed representation passes through <strong>48 transformer layers</strong> with geometric attention (SE(3)-invariant for structure coordinates). The transformer produces two outputs:
+</p>
+
+<ul>
+    <li><code>x</code> (post-LayerNorm): fed to 6 separate <code>RegressionHead</code>s to decode each track</li>
+    <li><code>embedding</code> (pre-LayerNorm): the raw hidden states &mdash; <strong>this is what we currently extract</strong></li>
+</ul>
+
+<p>Here are all 7 output fields in <code>ESMOutput</code>, verified empirically by running the model:</p>
+
+<!-- Track 1: Embeddings -->
+<div class="track-card">
+    <div class="track-header">
+        <span>1. <code>embeddings</code> &mdash; Transformer Hidden States</span>
+        <span class="track-status status-used">USED</span>
+    </div>
+    <p><strong>Shape:</strong> <span class="track-shape">[B, L+2, 1536]</span> (includes BOS/EOS; we strip to [B, L, 1536])</p>
+    <p><strong>Biology:</strong> Dense, continuous vector representation encoding the full context of each residue. These are the pre-LayerNorm activations from the final transformer block &mdash; they capture sequence, structural, and functional context from all 48 layers of self-attention.</p>
+    <p><strong>Training:</strong> Produced as a byproduct of masked language modeling across all tracks. The transformer must build representations rich enough to predict masked positions in <em>every</em> track simultaneously.</p>
+    <p><strong>Downstream use:</strong> General-purpose protein representation. Used for virtually all downstream tasks. This is the standard output everyone uses.</p>
+    <p><strong>Example:</strong> 1536-dim float vector per residue. Not human-interpretable, but encodes evolutionary, structural, and functional information in a distributed manner.</p>
+</div>
+
+<!-- Track 2: Sequence Logits -->
+<div class="track-card">
+    <div class="track-header">
+        <span>2. <code>sequence_logits</code> &mdash; Amino Acid Predictions</span>
+        <span class="track-status status-discarded">DISCARDED</span>
+    </div>
+    <p><strong>Shape:</strong> <span class="track-shape">[B, L+2, 64]</span> (20 standard AAs + special tokens + padding)</p>
+    <p><strong>Biology:</strong> Per-residue probability distribution over amino acids. At each position, the model predicts which amino acid is most likely given the surrounding context. High entropy positions tend to be more tolerant of mutations; low entropy positions are typically conserved and functionally important.</p>
+    <p><strong>Training:</strong> Standard masked language modeling &mdash; predict the identity of masked amino acid tokens from context. This is the original ESM/ESM-2 training objective.</p>
+    <p><strong>Downstream use:</strong> Mutation effect prediction (the log-likelihood ratio between wild-type and mutant is a strong predictor of fitness effects), variant effect prediction, evolutionary conservation scoring.</p>
+    <p><strong>Example:</strong> For a buried leucine, the model might predict: L=0.45, I=0.25, V=0.18, M=0.05, A=0.03, ... (hydrophobic residues dominate). For a catalytic histidine: H=0.92, ... (highly conserved).</p>
+    <p><strong>Relevance to us:</strong> Low priority. The embeddings already capture this implicitly. Could be useful for stability/ddG tasks (mutation tolerance signal).</p>
+</div>
+
+<!-- Track 3: Structure Logits -->
+<div class="track-card">
+    <div class="track-header">
+        <span>3. <code>structure_logits</code> &mdash; VQ-VAE Structure Tokens</span>
+        <span class="track-status status-discarded">DISCARDED</span>
+    </div>
+    <p><strong>Shape:</strong> <span class="track-shape">[B, L+2, 4096]</span></p>
+    <p><strong>Biology:</strong> Each residue's local 3D structural environment encoded as a discrete code from a 4096-entry VQ-VAE codebook. Each code represents a specific backbone geometry (phi/psi angles, local curvature) and local packing environment. This is ESM-3's primary structural representation &mdash; the tokens that, when decoded, reconstruct full 3D coordinates.</p>
+    <p><strong>Training:</strong> ESM-3 uses a separate VQ-VAE encoder to convert 3D protein structures into discrete tokens (one per residue). During training, the model learns to predict these structure tokens from sequence and other tracks. The codebook was learned from millions of experimental structures.</p>
+    <p><strong>Downstream use:</strong> Structure prediction (decode tokens to 3D coordinates), fold classification, structural quality assessment. Each token encodes richer local geometry than SS8 &mdash; it captures backbone angles, side-chain orientation, and local environment simultaneously.</p>
+    <p><strong>Example output:</strong> For a 15-residue peptide: <code>[2048, 264, 588, 588, 588, 588, 588, 3961, 3961, 588, 588, 987, 987, 2585]</code>. Repeated codes (e.g., 588) indicate similar local geometry, often seen in helices or sheets.</p>
+    <p><strong>Relevance to us:</strong> <strong>Very high.</strong> This is the richest structural signal ESM-3 produces. Using full logits is expensive (4096 dims), but argmax token IDs or top-k logits could be compact and powerful for structure-related tasks.</p>
+</div>
+
+<!-- Track 4: SS8 Logits -->
+<div class="track-card">
+    <div class="track-header">
+        <span>4. <code>secondary_structure_logits</code> &mdash; SS8 Predictions</span>
+        <span class="track-status status-discarded">DISCARDED</span>
+    </div>
+    <p><strong>Shape:</strong> <span class="track-shape">[B, L+2, 11]</span> (8 SS states + 3 special: pad, BOS, EOS)</p>
+    <p><strong>Biology:</strong> Per-residue secondary structure classification into 8 DSSP states:</p>
+    <table>
+        <tr><th>Code</th><th>State</th><th>Description</th></tr>
+        <tr><td>H</td><td>Alpha-helix</td><td>Main-chain H-bonds i&rarr;i+4</td></tr>
+        <tr><td>E</td><td>Beta-strand</td><td>Extended, part of beta-sheet</td></tr>
+        <tr><td>C</td><td>Coil</td><td>No regular secondary structure</td></tr>
+        <tr><td>T</td><td>Turn</td><td>H-bond between i and i+3</td></tr>
+        <tr><td>S</td><td>Bend</td><td>High backbone curvature</td></tr>
+        <tr><td>G</td><td>3<sub>10</sub>-helix</td><td>H-bonds i&rarr;i+3</td></tr>
+        <tr><td>I</td><td>Pi-helix</td><td>H-bonds i&rarr;i+5 (rare)</td></tr>
+        <tr><td>B</td><td>Beta-bridge</td><td>Single H-bond pair</td></tr>
+    </table>
+    <p><strong>Training:</strong> DSSP-derived SS8 assignments from experimental structures are tokenized into 8 classes. During MLM, the model predicts masked SS8 tokens from sequence and other tracks.</p>
+    <p><strong>Downstream use:</strong> Secondary structure prediction, fold classification, structural quality assessment. SS8 is a simplified but highly informative summary of local backbone geometry.</p>
+    <p><strong>Example output:</strong> For <code>MKTLLILAVVAAALA</code>: predicted SS8 = <code>SSSSSSSSSSSSSSI</code> (short peptide, mostly coil/bend). For a longer protein, you'd see patterns like <code>CCHHHHHHHEEEEEECCCEEEEECC</code>.</p>
+    <p><strong>Relevance to us:</strong> <strong>Critical.</strong> This is <em>exactly</em> what our SS3 GRPO task asks the LLM to predict. We're throwing away ESM-3's SS prediction and then asking the LLM to rediscover it. Adding 8-dim softmax probabilities costs virtually nothing.</p>
+</div>
+
+<!-- Track 5: SASA Logits -->
+<div class="track-card">
+    <div class="track-header">
+        <span>5. <code>sasa_logits</code> &mdash; Solvent Accessibility Bins</span>
+        <span class="track-status status-discarded">DISCARDED</span>
+    </div>
+    <p><strong>Shape:</strong> <span class="track-shape">[B, L+2, 19]</span> (16 SASA bins + 3 special tokens)</p>
+    <p><strong>Biology:</strong> Per-residue <strong>solvent-accessible surface area</strong> discretized into 16 bins. SASA measures how exposed each residue is to the surrounding solvent. Buried residues (low SASA) are typically hydrophobic and critical for stability; exposed residues (high SASA) are often polar and involved in interactions.</p>
+    <p><strong>Training:</strong> SASA values computed from experimental structures are binned into 16 levels and tokenized. The model predicts masked SASA tokens from context.</p>
+    <p><strong>Downstream use:</strong> Stability prediction (buried vs. exposed mutations), binding site identification, protein-protein interaction interfaces, disorder prediction.</p>
+    <p><strong>Example output:</strong> For a 15-residue peptide: SASA bins = <code>[15, 15, 15, 15, 15, 15, 15, 11, 15, 14, 11, 14, 14, 15, 15]</code>. Higher bins = more exposed. A globular protein would show a characteristic mix of buried (low bins) and exposed (high bins) residues.</p>
+    <p><strong>Relevance to us:</strong> <strong>High.</strong> Directly relevant to our structure composite reward (RSA component), stability task (buried mutations are more destabilizing), and protein-protein interaction prediction. 16-dim softmax is near-zero cost.</p>
+</div>
+
+<!-- Track 6: Function Logits -->
+<div class="track-card">
+    <div class="track-header">
+        <span>6. <code>function_logits</code> &mdash; InterPro Function Tracks</span>
+        <span class="track-status status-discarded">DISCARDED</span>
+    </div>
+    <p><strong>Shape:</strong> <span class="track-shape">[B, L+2, 8, 260]</span> (8 parallel InterPro tracks &times; 260 token vocabulary each)</p>
+    <p><strong>Biology:</strong> Per-residue function annotations derived from the <a href="https://www.ebi.ac.uk/interpro/">InterPro database</a>. InterPro classifies proteins into families, domains, and functional sites. ESM-3 encodes these annotations as 8 parallel token tracks using TF-IDF + locally-sensitive hashing to convert keyword frequencies into a discrete vocabulary of 260 tokens per track.</p>
+    <p><strong>Training:</strong> InterPro annotations from UniProt are tokenized into 8 tracks of 260-token vocabularies. The model predicts masked function tokens from sequence, structure, and other tracks. The 8 tracks capture different granularities of functional annotation.</p>
+    <p><strong>Downstream use:</strong> Protein function prediction, GO term prediction, enzyme classification, domain annotation. The InterPro ontology directly maps to Gene Ontology (GO) terms.</p>
+    <p><strong>Example output:</strong> For a short peptide with no known function, most tracks predict token 3 (likely a "no annotation" or generic token). For a well-characterized kinase domain, the tracks would predict tokens encoding "protein kinase", "ATP binding", "transferase activity" etc.</p>
+    <p><strong>Relevance to us:</strong> <strong>Critical for GO prediction.</strong> We are discarding ESM-3's InterPro function predictions while asking the LLM to predict GO terms &mdash; which are derived from the same InterPro annotations ESM-3 was trained on. This is perhaps the most egregious waste.</p>
+</div>
+
+<!-- Track 7: Residue Logits -->
+<div class="track-card">
+    <div class="track-header">
+        <span>7. <code>residue_logits</code> &mdash; Residue-Level Annotations</span>
+        <span class="track-status status-discarded">DISCARDED</span>
+    </div>
+    <p><strong>Shape:</strong> <span class="track-shape">[B, L+2, 1478]</span></p>
+    <p><strong>Biology:</strong> Per-residue annotation predictions from a 1478-class vocabulary. These encode fine-grained residue-level features such as: active site residues, binding sites, disulfide bonds, signal peptides, transmembrane regions, post-translational modifications (phosphorylation sites, glycosylation sites), metal-binding residues, and other UniProt-derived annotations.</p>
+    <p><strong>Training:</strong> UniProt residue annotations are tokenized via <code>EmbeddingBag</code> (mode="sum") into the 1478-class vocabulary. The model predicts masked annotations from context.</p>
+    <p><strong>Downstream use:</strong> Active site prediction, binding site identification, PTM prediction, signal peptide detection, transmembrane helix prediction.</p>
+    <p><strong>Example output:</strong> For a short generic peptide: mostly token 3 (no annotation). For a catalytic residue in an enzyme: specific annotation tokens indicating "active site" or "catalytic residue".</p>
+    <p><strong>Relevance to us:</strong> <strong>Moderate.</strong> Useful for function prediction tasks and potentially stability (active site mutations are more disruptive). Raw logits (1478 dims) are expensive, but argmax token (1 dim) or top-k (5&ndash;10 dims) is cheap.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="current">2. What We Use vs What We Discard</h2>
+
+<h3>Current Architecture</h3>
+
+<div class="pipeline-diagram">
+Protein Sequence: "MKTLLILAVVAAALA..."
+        |
+        v
+  +-----------+
+  |   ESM-3   |  (frozen, 1.4B params, 48 layers)
+  |  forward() |
+  +-----------+
+        |
+        +-- embeddings [B, L, 1536]  -------->  AttentionPooling  -->  MLP Projector  -->  LLM
+        |                                         (32 tokens)       (1536->5120->2560)
+        +-- sequence_logits [B, L, 64]        }
+        +-- structure_logits [B, L, 4096]     }
+        +-- ss8_logits [B, L, 11]             }-- ALL DISCARDED
+        +-- sasa_logits [B, L, 19]            }
+        +-- function_logits [B, L, 8, 260]    }
+        +-- residue_logits [B, L, 1478]       }
+</div>
+
+<h3>The Irony: Task-Specific Waste</h3>
+
+<div class="callout callout-warning">
+    <strong>GO Prediction Task</strong>
+    We discard <code>function_logits</code> (InterPro predictions trained on the same ontology as GO terms), then ask the LLM to predict GO terms from generic embeddings. ESM-3 was literally trained to predict function annotations &mdash; and we throw that prediction away.
+</div>
+
+<div class="callout callout-warning">
+    <strong>SS3 / Structure Prediction Task</strong>
+    We discard <code>secondary_structure_logits</code> (SS8 predictions per residue) and <code>sasa_logits</code> (solvent accessibility), then ask the LLM to predict per-residue SS3 and RSA from generic embeddings. ESM-3 already knows the answer.
+</div>
+
+<div class="callout callout-warning">
+    <strong>Stability / ddG Task</strong>
+    We discard <code>structure_logits</code> (local 3D geometry per residue) and <code>sasa_logits</code> (buried/exposed classification), then ask the LLM to predict how mutations affect stability &mdash; precisely the information encoded in those tracks.
+</div>
+
+<h3>Implicit vs Explicit Information</h3>
+
+<p>
+A natural question: don't the embeddings already contain all this information? <strong>Yes, implicitly.</strong> The 1536-dim embedding is produced by a transformer that sees the summed representation from all tracks. In theory, the information is there.
+</p>
+
+<p>
+But there's a critical difference between <strong>implicit encoding</strong> (buried in a 1536-dim vector that the projector and LLM must learn to decode) versus <strong>explicit prediction</strong> (ESM-3's decoded, human-interpretable output from a trained head). Consider the analogy to vision-language models:
+</p>
+
+<ul>
+    <li>CLIP embeddings encode visual information implicitly &mdash; but models that also receive explicit object detection boxes, segmentation masks, or depth maps perform better on tasks requiring spatial reasoning</li>
+    <li>The bottleneck is not in the encoder &mdash; it's in the <strong>projector's ability to extract and present task-relevant features</strong> from the entangled embedding</li>
+    <li>Adding explicit track predictions gives the LLM <strong>pre-decoded, disentangled features</strong> that it can directly leverage</li>
+</ul>
+
+<p>
+Our current 2-layer MLP projector (1536 &rarr; 5120 &rarr; 2560) must simultaneously learn to extract sequence features, structural features, and functional features from a single entangled vector. Giving it disentangled track predictions is like giving a student both the textbook <em>and</em> the answer key &mdash; they can focus on reasoning rather than information extraction.
+</p>
+
+<!-- ============================================================ -->
+<h2 id="architecture">3. Architecture Plan: Multi-Track Fusion</h2>
+
+<p>We propose five fusion strategies of increasing complexity. Each builds on the previous and is independently testable within our four-way comparison framework.</p>
+
+<h3>Strategy A: Simple Concatenation (Baseline)</h3>
+
+<div class="fusion-diagram">
+ESM-3 Output Tracks:
+
+  embeddings [B,L,1536]  ss8_probs [B,L,8]  sasa_probs [B,L,16]
+       |                      |                   |
+       +----------+-----------+-------------------+
+                  |
+            torch.cat(dim=-1)
+                  |
+           [B, L, 1560]
+                  |
+          AttentionPooling (32 tokens)
+                  |
+           [B, 32, 1560]
+                  |
+       MLP Projector (1560 -> 5120 -> LLM_dim)
+                  |
+              LLM prefix
+</div>
+
+<p><strong>Implementation:</strong> Minimal code change. In <code>ESM3ProteinEncoder.encode()</code>:</p>
+
+<pre><code># After existing: embeddings = output.embeddings[:, 1:-1, :]
+ss8_probs = F.softmax(output.secondary_structure_logits[:, 1:-1, :8], dim=-1)
+sasa_probs = F.softmax(output.sasa_logits[:, 1:-1, :16], dim=-1)
+embeddings = torch.cat([embeddings, ss8_probs, sasa_probs], dim=-1)  # [B, L, 1560]</code></pre>
+
+<p><strong>Config change:</strong> <code>encoder.projector.input_dim: 1560</code> (was 1536)</p>
+
+<table>
+    <tr><th>Pros</th><th>Cons</th></tr>
+    <tr><td>Trivial implementation (~5 lines)</td><td>No learned importance weighting</td></tr>
+    <tr><td>Near-zero memory overhead (+0.1 MB)</td><td>Fixed feature set (can't adapt per task)</td></tr>
+    <tr><td>Compatible with existing MLP projector</td><td>SS8/SASA scale differs from embeddings</td></tr>
+    <tr><td>Independently testable immediately</td><td>Only 2 of 6 discarded tracks used</td></tr>
+</table>
+
+<h3>Strategy B: Weighted Concatenation with Learned Track Weights</h3>
+
+<div class="fusion-diagram">
+ESM-3 Output Tracks:
+
+  embed [1536]    ss8 [8]    sasa [16]    struct [K]    func [8]
+       |             |           |            |            |
+       x w_e         x w_ss     x w_sa       x w_st       x w_fn
+       |             |           |            |            |
+       +------+------+-----------+------------+------------+
+              |
+        torch.cat(dim=-1)  -->  projector  -->  LLM
+              |
+        [B, L, 1536+8+16+K+8]
+
+  w_e, w_ss, w_sa, w_st, w_fn = learnable scalars (initialized to 1.0)
+  Logged to wandb for interpretability
+</div>
+
+<p><strong>Key idea:</strong> Each track gets a <strong>learned scalar weight</strong> (initialized to 1.0). During training, the model learns which tracks matter most for the current task. The weights are interpretable and logged to wandb &mdash; we can directly see if the LLM relies more on structure tokens for stability tasks and more on function tokens for GO prediction.</p>
+
+<pre><code>class WeightedTrackFusion(nn.Module):
+    def __init__(self, track_dims):
+        super().__init__()
+        # Learned scalar weight per track, initialized to 1.0
+        self.track_weights = nn.ParameterDict({
+            name: nn.Parameter(torch.ones(1))
+            for name in track_dims
+        })
+
+    def forward(self, track_dict):
+        weighted = [
+            self.track_weights[name] * features
+            for name, features in track_dict.items()
+        ]
+        return torch.cat(weighted, dim=-1)</code></pre>
+
+<table>
+    <tr><th>Pros</th><th>Cons</th></tr>
+    <tr><td>Interpretable track importance</td><td>Still concatenation (linear mixing)</td></tr>
+    <tr><td>Task-adaptive (weights differ per training run)</td><td>All tracks projected through same MLP</td></tr>
+    <tr><td>Minimal param overhead (5 scalars)</td><td>Can't capture cross-track interactions</td></tr>
+</table>
+
+<h3>Strategy C: Track-Specific MLPs + Cross-Attention Fusion</h3>
+
+<div class="fusion-diagram">
+ESM-3 Output Tracks:
+
+  embed [1536]    ss8 [8]     sasa [16]    struct [K]    func [8]
+       |              |            |             |            |
+   MLP_e(1536,D)  MLP_ss(8,D) MLP_sa(16,D)  MLP_st(K,D) MLP_fn(8,D)
+       |              |            |             |            |
+       v              v            v             v            v
+    [B,L,D]       [B,L,D]      [B,L,D]       [B,L,D]     [B,L,D]
+       |              |            |             |            |
+       +-------+------+------------+-------------+
+               |
+    Stack: [B, L, 5, D]  (5 track representations)
+               |
+    Cross-Attention (queries=embed, keys/values=all_tracks)
+               |
+          [B, L, D]  (fused representation)
+               |
+    AttentionPooling (32 tokens) -> Projector -> LLM
+</div>
+
+<p><strong>Key idea:</strong> Each track is projected to a shared hidden dimension D through its own MLP, then <strong>cross-attention</strong> lets the embedding track attend to all other tracks. This allows the model to learn complex, non-linear interactions between tracks &mdash; e.g., "when SS8 says helix AND SASA says buried, upweight the structural interpretation."</p>
+
+<table>
+    <tr><th>Pros</th><th>Cons</th></tr>
+    <tr><td>Captures cross-track interactions</td><td>More parameters (~1-5M per MLP)</td></tr>
+    <tr><td>Each track in its own learned space</td><td>More complex to implement and debug</td></tr>
+    <tr><td>Attention weights show which tracks matter per-residue</td><td>Cross-attention adds compute cost</td></tr>
+</table>
+
+<h3>Strategy D: Multi-Head Attention Pooling Over Tracks</h3>
+
+<div class="fusion-diagram">
+ESM-3 Output Tracks (5 tracks, each projected to D):
+
+  [B, L, D] x 5 tracks
+       |
+  Reshape: [B, L*5, D]  (treat tracks as extra "tokens")
+       |
+  Multi-Head Attention Pooling
+  (num_queries=32, over L*5 key/value tokens)
+       |
+  [B, 32, D]  (32 pooled tokens, fused across residues AND tracks)
+       |
+  MLP Projector (D -> LLM_dim)
+       |
+  LLM prefix
+</div>
+
+<p><strong>Key idea:</strong> Instead of pooling first then fusing, we <strong>pool across tracks and residues simultaneously</strong>. Each of the 32 learned query tokens can attend to any residue of any track. This is the most flexible &mdash; a query can specialize in "helix regions from SS8 + buried regions from SASA" or "functional residues from InterPro + structural context from embeddings."</p>
+
+<table>
+    <tr><th>Pros</th><th>Cons</th></tr>
+    <tr><td>Maximum flexibility (joint track+residue attention)</td><td>5x more key/value tokens = more memory</td></tr>
+    <tr><td>Query specialization (different queries attend to different track combinations)</td><td>Harder to interpret</td></tr>
+    <tr><td>Subsumes Strategy C</td><td>May need more training data to learn good queries</td></tr>
+</table>
+
+<h3>Strategy E: Gated Fusion (Flamingo-Style)</h3>
+
+<div class="fusion-diagram">
+ESM-3 Output Tracks:
+
+  embed [1536]   ss8 [8]    sasa [16]    struct [K]   func [8]
+       |             |           |            |           |
+       |         MLP_ss(8,D) MLP_sa(16,D) MLP_st(K,D) MLP_fn(8,D)
+       |             |           |            |           |
+       |          x tanh(g_ss) x tanh(g_sa) x tanh(g_st) x tanh(g_fn)
+       |             |           |            |           |
+       +---- SUM ----+-----------+------------+-----------+
+       |
+  [B, L, D]  (gated sum of all tracks)
+       |
+  AttentionPooling -> Projector -> LLM
+
+  g_ss, g_sa, g_st, g_fn = learned gates (initialized to 0)
+  tanh(0) = 0  -->  model starts as embeddings-only, learns to open gates
+</div>
+
+<p><strong>Key idea:</strong> Inspired by Flamingo's gated cross-attention. Each non-embedding track contributes through a <strong>learned gate initialized to zero</strong>. At initialization, <code>tanh(0) = 0</code>, so the model starts identical to our current architecture (embeddings only). During training, gates learn to open for useful tracks. This provides a smooth interpolation from "current architecture" to "full multi-track."</p>
+
+<div class="callout callout-info">
+    <strong>Why tanh(0) initialization matters</strong>
+    Our previous experiments showed that random initialization of projector components causes loss spikes and NaN explosions. Gated fusion avoids this: at step 0, the output is exactly the same as the current embeddings-only path. Tracks are "mixed in" gradually as the gates open during training, ensuring stable optimization.
+</div>
+
+<table>
+    <tr><th>Pros</th><th>Cons</th></tr>
+    <tr><td>Starts as current architecture (safe initialization)</td><td>Additive fusion only (no multiplicative interactions)</td></tr>
+    <tr><td>Gates are interpretable (log to wandb)</td><td>Gate dynamics can be slow to open</td></tr>
+    <tr><td>Can load existing checkpoints unchanged</td><td>All tracks must be projected to same dim</td></tr>
+    <tr><td>Proven in Flamingo (tanh gate = industry standard)</td><td></td></tr>
+</table>
+
+<h3>Strategy Comparison Summary</h3>
+
+<table>
+    <tr><th>Strategy</th><th>Complexity</th><th>New Params</th><th>Cross-Track Interactions</th><th>Interpretable</th><th>Safe Init</th></tr>
+    <tr><td>A. Simple concat</td><td>Trivial</td><td>~0</td><td>No (linear only)</td><td>No</td><td>Yes</td></tr>
+    <tr><td>B. Weighted concat</td><td>Easy</td><td>5 scalars</td><td>No (linear)</td><td>Yes (weights)</td><td>Yes</td></tr>
+    <tr><td>C. Track MLPs + attn</td><td>Medium</td><td>~5-10M</td><td>Yes (cross-attention)</td><td>Yes (attn weights)</td><td>Needs care</td></tr>
+    <tr><td>D. Joint pooling</td><td>Medium-High</td><td>~5-10M</td><td>Yes (full attention)</td><td>Partial</td><td>Needs care</td></tr>
+    <tr><td>E. Gated fusion</td><td>Medium</td><td>~5-10M + 4 gates</td><td>No (additive gated)</td><td>Yes (gate values)</td><td>Yes (tanh(0)=0)</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="task-mapping">4. Which Tracks Matter for Which Tasks</h2>
+
+<table>
+    <tr>
+        <th>Task</th>
+        <th>Primary Tracks</th>
+        <th>Why</th>
+    </tr>
+    <tr>
+        <td><strong>GO Prediction</strong></td>
+        <td><code>function_logits</code>, <code>residue_logits</code>, <code>embeddings</code></td>
+        <td>InterPro function tracks directly map to GO terms. Residue annotations capture active sites and functional domains. Embeddings provide overall context.</td>
+    </tr>
+    <tr>
+        <td><strong>SS3 / Per-Residue Structure</strong></td>
+        <td><code>secondary_structure_logits</code>, <code>sasa_logits</code>, <code>structure_logits</code></td>
+        <td>SS8 is a superset of SS3 (just group H/G/I&rarr;H, E/B&rarr;E, C/T/S&rarr;C). SASA provides RSA. Structure tokens encode full local geometry.</td>
+    </tr>
+    <tr>
+        <td><strong>Stability / ddG</strong></td>
+        <td><code>structure_logits</code>, <code>sasa_logits</code>, <code>sequence_logits</code></td>
+        <td>Local structure tokens indicate how packed/constrained each position is. SASA tells buried vs. exposed. Sequence logits indicate mutation tolerance.</td>
+    </tr>
+    <tr>
+        <td><strong>Structure Quality (pLDDT)</strong></td>
+        <td><code>structure_logits</code>, <code>secondary_structure_logits</code></td>
+        <td>Structure token confidence correlates with fold quality. Regular SS patterns indicate well-folded proteins.</td>
+    </tr>
+    <tr>
+        <td><strong>PPI Prediction</strong></td>
+        <td><code>sasa_logits</code>, <code>residue_logits</code>, <code>embeddings</code></td>
+        <td>Interface residues are often moderately exposed (mid SASA). Residue annotations capture known binding sites.</td>
+    </tr>
+    <tr>
+        <td><strong>General Protein QA</strong></td>
+        <td><code>embeddings</code> (all tracks as supplement)</td>
+        <td>Broad knowledge requires the full entangled representation; explicit tracks help with specific sub-questions.</td>
+    </tr>
+</table>
+
+<div class="callout callout-success">
+    <strong>Prediction: Largest Impact</strong>
+    We expect the largest improvement from multi-track fusion on <strong>GO prediction</strong> (function_logits directly relevant) and <strong>SS3 prediction</strong> (SS8 logits are literally the answer). These are the two tasks where we're most egregiously discarding relevant information.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="roadmap">5. Implementation Roadmap</h2>
+
+<h3>Phase 1: Quick Win &mdash; Concat SS8 + SASA (1 day)</h3>
+
+<p><strong>Goal:</strong> Validate that adding explicit track features helps, with minimal engineering risk.</p>
+
+<ol>
+    <li>Modify <code>ESM3ProteinEncoder.encode()</code> to optionally return SS8 probs + SASA probs concatenated to embeddings</li>
+    <li>Add config flag: <code>encoder.use_track_features: [ss8, sasa]</code></li>
+    <li>Update <code>encoder.projector.input_dim: 1560</code> in relevant configs</li>
+    <li>Run SFT with new encoder &rarr; GRPO on SS3 task</li>
+    <li>Compare to current embeddings-only baseline</li>
+</ol>
+
+<p><strong>Expected outcome:</strong> Measurable improvement on SS3 GRPO (the LLM gets ESM-3's SS prediction as a hint). May also help stability/ddG through SASA signal.</p>
+
+<p><strong>Memory impact:</strong> +0.1 MB per batch &mdash; negligible.</p>
+
+<h3>Phase 2: Track-Specific MLPs + Gated Fusion (3&ndash;5 days)</h3>
+
+<p><strong>Goal:</strong> Implement Strategy E (gated fusion) with compact representations for all tracks.</p>
+
+<ol>
+    <li>Create <code>src/models/track_fusion.py</code> with <code>GatedTrackFusion</code> module</li>
+    <li>Each track: small MLP (track_dim &rarr; 256 &rarr; D) &rarr; gated contribution</li>
+    <li>Structure tokens: use argmax + learned embedding (32-dim) instead of full 4096 logits</li>
+    <li>Function tokens: argmax per track &rarr; 8 learned embeddings &rarr; concat &rarr; MLP</li>
+    <li>Gate initialization: tanh(0) = 0 (starts as embeddings-only)</li>
+    <li>Log gate values to wandb every N steps</li>
+    <li>Save/load gate states in checkpoint</li>
+</ol>
+
+<p><strong>Expected outcome:</strong> Task-specific improvements. Gates reveal which tracks matter most per task. Compatible with existing checkpoints (gates start at zero = no-op).</p>
+
+<p><strong>Memory impact:</strong> +5&ndash;10M parameters for track MLPs + gates. Minimal memory for compact track representations.</p>
+
+<h3>Phase 3: Full Multi-Track Architecture (1 week)</h3>
+
+<p><strong>Goal:</strong> Implement Strategy D (joint multi-head attention pooling over tracks and residues).</p>
+
+<ol>
+    <li>Replace separate pooling + projector with unified multi-track attention pooler</li>
+    <li>32 learned queries attend to L&times;T key/value tokens (L residues &times; T tracks)</li>
+    <li>Per-track positional encoding so queries can distinguish track origin</li>
+    <li>Ablation: which track combinations help most for each task?</li>
+    <li>Full four-way comparison: text vs MLP vs MLP+tracks vs Perceiver vs Flamingo</li>
+</ol>
+
+<p><strong>Expected outcome:</strong> Best performance ceiling. Query specialization enables task-adaptive feature extraction.</p>
+
+<h3>Phase Dependency</h3>
+
+<div class="pipeline-diagram">
+Phase 1 (concat, 1 day)
+    |
+    +---> Validates: "do explicit tracks help at all?"
+    |
+    v
+Phase 2 (gated fusion, 3-5 days)
+    |
+    +---> Validates: "which tracks matter for which tasks?"
+    |     (gate values logged to wandb)
+    |
+    v
+Phase 3 (joint attention, 1 week)
+    |
+    +---> Full architecture: task-adaptive multi-track fusion
+    |
+    v
+Paper contribution: Novel multi-track ESM-3 fusion for protein-LLM
+</div>
+
+<p>Each phase is <strong>independently valuable</strong> and produces a publishable comparison point. If Phase 1 shows no improvement, we save the effort of Phases 2 and 3.</p>
+
+<!-- ============================================================ -->
+<h2 id="literature">6. Literature Context</h2>
+
+<h3>Current State of the Field</h3>
+
+<p>
+We surveyed recent protein-LLM papers for how they use protein encoder outputs:
+</p>
+
+<table>
+    <tr><th>Paper</th><th>Year</th><th>Encoder</th><th>What They Use</th><th>Multi-Track?</th></tr>
+    <tr><td><a href="https://arxiv.org/html/2408.11363v1">ProteinGPT</a></td><td>2024</td><td>ESM-2 + inverse folding</td><td>Sequence emb + structure emb (separate encoders)</td><td>No &mdash; two separate models</td></tr>
+    <tr><td><a href="https://arxiv.org/html/2502.06846">Prot2Chat</a></td><td>2025</td><td>ESM-2</td><td>Sequence embeddings only (early fusion with text)</td><td>No</td></tr>
+    <tr><td><a href="https://arxiv.org/html/2412.11618v1">EvoLlama</a></td><td>2024</td><td>ESM-2 + structure encoder</td><td>Sequence emb + structure emb (separate)</td><td>No &mdash; two encoders</td></tr>
+    <tr><td><a href="https://arxiv.org/html/2506.03800v1">STELLA</a></td><td>2025</td><td>ESM-3</td><td>Joint sequence-structure embeddings</td><td>Unclear &mdash; uses ESM-3 but doesn't specify tracks</td></tr>
+    <tr><td><a href="https://arxiv.org/html/2402.09649v1">ProtChatGPT</a></td><td>2024</td><td>ESM-2</td><td>Sequence embeddings only</td><td>No</td></tr>
+    <tr><td>InstructProtein</td><td>2024</td><td>ESM-2</td><td>Sequence embeddings</td><td>No</td></tr>
+</table>
+
+<div class="callout callout-info">
+    <strong>Key Finding: No one uses ESM-3's decoded track outputs.</strong>
+    Every published protein-LLM paper either (a) uses only the generic embeddings from a protein encoder, or (b) adds a <em>separate</em> structure encoder. No one has extracted and used ESM-3's secondary structure, SASA, function, or structure token predictions as explicit input features to an LLM. This would be a novel architectural contribution.
+</div>
+
+<h3>Analogy to Vision-Language Models</h3>
+
+<p>
+The multi-track fusion problem has close parallels in vision-language modeling:
+</p>
+
+<ul>
+    <li><strong>Multi-scale features:</strong> Vision models (like SigLIP, DINOv2) produce features at multiple spatial scales. Models like LLaVA-OneVision and InternVL2 combine multi-scale features through cross-attention or concatenation &mdash; similar to our track fusion proposals.</li>
+    <li><strong>Depth/segmentation as extra modalities:</strong> Some VLMs incorporate depth maps, segmentation masks, or detection boxes alongside visual features. These "decoded" outputs from specialized heads help with spatial reasoning &mdash; analogous to our SS8/SASA/structure tracks helping with structural reasoning.</li>
+    <li><strong>Gated fusion:</strong> Flamingo introduced tanh-gated cross-attention for mixing visual and language information. Our Strategy E directly adapts this for protein tracks.</li>
+</ul>
+
+<h3>What Makes Our Approach Novel</h3>
+
+<ol>
+    <li><strong>First use of ESM-3's decoded track outputs for LLM input.</strong> Everyone uses embeddings; we use the model's explicit predictions about structure, function, and accessibility.</li>
+    <li><strong>Task-adaptive gated fusion.</strong> Different GRPO tasks can learn to weight different tracks, with interpretable gate values.</li>
+    <li><strong>Zero additional compute for ESM-3.</strong> The output heads run automatically during <code>forward()</code> &mdash; we just need to stop discarding their output. The structure/function predictions come "for free."</li>
+    <li><strong>Compatible with existing training pipeline.</strong> Gated fusion with tanh(0) initialization means existing checkpoints work unchanged; new tracks are mixed in gradually during fine-tuning.</li>
+</ol>
+
+<hr>
+
+<h2>Summary</h2>
+
+<p>
+ESM-3 is a 6-track multimodal model, but we treat it as a 1-track sequence encoder. The 5 discarded tracks contain explicit, per-residue predictions about structure (4096-codebook tokens), secondary structure (SS8), solvent accessibility (16 SASA bins), protein function (InterPro annotations), and residue annotations (active sites, binding sites, PTMs). These predictions are produced for free during the forward pass and are directly relevant to our downstream tasks.
+</p>
+
+<p>
+No published work uses these decoded track outputs as input to an LLM. Our proposed multi-track fusion &mdash; from simple concatenation to gated fusion to joint attention pooling &mdash; would be a novel architectural contribution. We recommend starting with Phase 1 (concatenate SS8+SASA, 1 day) to validate the approach, then progressing to gated fusion (Phase 2) for task-adaptive track selection.
+</p>
+
+<p style="color: var(--muted); font-size: 0.85rem; margin-top: 2rem;">
+    Generated by the Protein-LLM Research Agent. Sources:
+    <a href="https://arxiv.org/html/2408.11363v1">ProteinGPT</a>,
+    <a href="https://arxiv.org/html/2506.03800v1">STELLA</a>,
+    <a href="https://arxiv.org/html/2502.06846">Prot2Chat</a>,
+    <a href="https://arxiv.org/html/2412.11618v1">EvoLlama</a>,
+    <a href="https://www.evolutionaryscale.ai/blog/esm3-release">ESM-3 Blog</a>,
+    <a href="https://github.com/evolutionaryscale/esm">ESM-3 GitHub</a>.
+</p>
+
+</body>
+</html>

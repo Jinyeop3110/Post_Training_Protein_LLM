@@ -874,6 +874,7 @@ class ProteinLLM(nn.Module):
         input_ids: torch.Tensor,
         attention_mask: torch.Tensor,
         labels: Optional[torch.Tensor] = None,
+        precomputed_encoder_embeds: Optional[torch.Tensor] = None,
         **kwargs,
     ) -> Dict[str, torch.Tensor]:
         """
@@ -884,6 +885,9 @@ class ProteinLLM(nn.Module):
             input_ids: Text input token IDs [B, T].
             attention_mask: Text attention mask [B, T].
             labels: Labels for language modeling loss [B, T].
+            precomputed_encoder_embeds: If provided, skip ESM-3 encoding
+                and pass directly to pooling/projector.  Shape [B, L, D].
+                Used by ESM embedding cache to avoid redundant encoder runs.
             **kwargs: Additional arguments passed to the LLM.
 
         Returns:
@@ -903,6 +907,7 @@ class ProteinLLM(nn.Module):
             text_input_ids=input_ids,
             text_attention_mask=attention_mask,
             labels=labels,
+            precomputed_encoder_embeds=precomputed_encoder_embeds,
         )
 
         # Forward through LLM

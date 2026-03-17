@@ -87,6 +87,7 @@ class ProteinLLMTrainer(Trainer):
         max_tokens_per_batch: Optional[int] = None,
         max_batch_size: int = 16,
         freeze_lora_steps: int = 0,
+        embedding_cache_path: Optional[str] = None,
         **kwargs,
     ):
         """
@@ -102,6 +103,9 @@ class ProteinLLMTrainer(Trainer):
                 budget (prevents OOM on many short sequences). Default 16.
             freeze_lora_steps: Number of initial steps to freeze LoRA params,
                 training only pooling+projector. 0 = disabled (default).
+            embedding_cache_path: Path to LMDB cache of pre-computed ESM-3
+                embeddings. When set, skips ESM-3 encoding for cached sequences
+                (saves ~6 GB GPU memory + ~40% forward pass time). None = disabled.
             **kwargs: Arguments passed to the base Trainer.
         """
         super().__init__(**kwargs)
@@ -111,6 +115,22 @@ class ProteinLLMTrainer(Trainer):
         self.max_batch_size_cap = max_batch_size
         self.freeze_lora_steps = freeze_lora_steps
         self._lora_frozen = False
+
+        # ESM embedding cache (LMDB-backed, read-only during training)
+        self._embedding_cache = None
+        if embedding_cache_path is not None:
+            try:
+                from src.data.esm_embedding_cache import ESMEmbeddingCache
+                self._embedding_cache = ESMEmbeddingCache(
+                    embedding_cache_path, readonly=True
+                )
+                log.info(
+                    f"ESM embedding cache loaded: {embedding_cache_path} "
+                    f"({len(self._embedding_cache)} entries)"
+                )
+            except Exception as e:
+                log.warning(f"Failed to load ESM embedding cache: {e}")
+                self._embedding_cache = None
 
         # Token-level loss tracking for fair train/eval comparison.
         # HF Trainer reports "average of per-batch means" which is biased
@@ -614,12 +634,30 @@ class ProteinLLMTrainer(Trainer):
                     f"Synced protein_llm.llm to {type(model).__name__}"
                 )
 
+            # Look up pre-computed ESM embeddings from cache
+            precomputed = None
+            if self._embedding_cache is not None and protein_sequences:
+                cached = self._embedding_cache.get_batch(protein_sequences)
+                if all(c is not None for c in cached):
+                    # All sequences cached — pad to max length and stack
+                    max_len = max(c.shape[0] for c in cached)
+                    dim = cached[0].shape[1]
+                    device = inputs["input_ids"].device
+                    padded = torch.zeros(
+                        len(cached), max_len, dim,
+                        dtype=cached[0].dtype, device=device,
+                    )
+                    for i, c in enumerate(cached):
+                        padded[i, : c.shape[0], :] = c.to(device)
+                    precomputed = padded
+
             # Use the full ProteinLLM forward pass
             outputs = self.protein_llm(
                 protein_sequences=protein_sequences,
                 input_ids=inputs["input_ids"],
                 attention_mask=inputs["attention_mask"],
                 labels=inputs.get("labels"),
+                precomputed_encoder_embeds=precomputed,
             )
             loss = outputs["loss"]
             labels = inputs.get("labels")
@@ -1283,12 +1321,18 @@ class SFTTrainer:
 
         freeze_lora_steps = self.cfg.training.get("freeze_lora_steps", 0)
 
+        # ESM embedding cache path (null = live encoding)
+        embedding_cache_path = self.cfg.get("encoder", {}).get(
+            "embedding_cache_path", None
+        )
+
         self.trainer = ProteinLLMTrainer(
             protein_llm=self.protein_llm,
             projector_lr=projector_lr,
             max_tokens_per_batch=max_tokens_per_batch,
             max_batch_size=max_batch_size,
             freeze_lora_steps=freeze_lora_steps,
+            embedding_cache_path=embedding_cache_path,
             model=self.model,
             args=training_args,
             train_dataset=self.train_dataset,

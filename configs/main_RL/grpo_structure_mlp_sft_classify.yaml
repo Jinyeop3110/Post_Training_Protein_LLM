@@ -1,0 +1,75 @@
+# @package _global_
+
+# GRPO Structure Quality: Classification-only reward
+# Pure binary classification: correct category (high/medium/low) = 1.0, wrong = 0.0
+# No pLDDT numerical accuracy, no quality claim alignment — just category match.
+# Focal weighting (gamma=2) to combat dataset imbalance (51% high, 45% medium, 3.5% low).
+#
+# Usage:
+#   python scripts/train.py main_RL=grpo_structure_mlp_sft_classify
+
+defaults:
+  - override /model: qwen3_8b
+  - override /encoder: esm3_small
+  - override /data: structure_quality
+  - override /training: grpo
+
+approach: esm3
+experiment_name: grpo_structure_classify_${model.name}_${now:%m%d_%H%M%S}
+
+# ESM-3 sub-batch
+encoder:
+  encoder_batch_size: 4
+
+# Chain from ESM3+MLP SFT
+parent_experiment: sft_esm3_mlp_combined_qwen3_8b_it_0306_010408
+
+# Data task for reward routing
+data:
+  task: esmfold
+  processing:
+    max_protein_length: 512
+
+training:
+  # --- DDP on 8×H100 80GB ---
+  lr: 5e-6
+  batch_size: 1
+  gradient_accumulation_steps: 8  # effective batch = 1 * 8 GPUs * 8 = 64
+  gradient_checkpointing: true
+  epochs: 1
+  warmup_steps: 20
+  max_grad_norm: 1.0
+
+  # Freeze multimodal head: only LoRA trains
+  freeze_multimodal: true
+
+  grpo:
+    group_size: 16
+    temperature: 0.9
+    use_kl_penalty: false
+    normalize_advantages: false
+    classification_only: true    # Pure binary: correct category = 1.0, wrong = 0.0
+    focal_enabled: true
+    focal_gamma: 2.0
+
+  rollout:
+    max_tokens: 512
+    top_p: 0.95
+    do_sample: true
+    enable_thinking: false
+
+  save_steps: 50
+  eval_steps: 25
+  logging_steps: 5
+
+  fsdp:
+    enabled: false
+
+  wandb:
+    tags:
+      - grpo
+      - structure_quality
+      - classify_only
+      - frozen_mm
+      - focal
+      - ${model.name}

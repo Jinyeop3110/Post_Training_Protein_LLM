@@ -1,0 +1,62 @@
+# @package _global_
+
+# GRPO: Solubility Prediction (Text SFT -> GRPO)
+# Binary classification (soluble/insoluble) + regression (0-100%)
+# Reward: classification (0.5) + numerical (0.3) + format (0.2)
+#
+# Usage:
+#   python scripts/train.py main_RL=grpo_solubility
+
+defaults:
+  - override /model: qwen3_8b
+  - override /data: solubility_dataset
+  - override /training: grpo
+
+approach: text
+experiment_name: grpo_solubility_${model.name}_${now:%m%d_%H%M%S}
+
+# Chain from text SFT
+parent_experiment: sft_text_combined_qwen3_8b_it_0307_190324
+
+data:
+  task: solubility
+  processing:
+    max_protein_length: 512
+
+training:
+  lr: 5e-6
+  projector_lr: 2.5e-5
+  batch_size: 2
+  gradient_accumulation_steps: 4
+  gradient_checkpointing: true
+  epochs: 1
+  warmup_steps: 10
+  max_grad_norm: 1.0
+
+  grpo:
+    group_size: 8
+    temperature: 0.9
+    use_kl_penalty: false
+    normalize_advantages: false
+    focal_enabled: true
+    focal_gamma: 1.0
+
+  rollout:
+    max_tokens: 128  # Solubility answers are short
+    top_p: 0.95
+    do_sample: true
+    enable_thinking: false
+
+  save_steps: 25
+  eval_steps: 25
+  logging_steps: 5
+
+  fsdp:
+    enabled: false
+
+  wandb:
+    tags:
+      - grpo
+      - solubility
+      - text_sft
+      - ${model.name}
